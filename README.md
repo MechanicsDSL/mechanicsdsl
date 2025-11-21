@@ -5,7 +5,7 @@ Badges
 - License: MIT
 - Status: Prototype / Research
 
-# Quick highlights
+Quick highlights
 - DSL → AST → SymPy → NumPy pipeline
 - Automatic Euler–Lagrange & Hamiltonian derivation
 - Safe AST-based unit parsing (no eval)
@@ -14,7 +14,7 @@ Badges
 - Built-in validation: energy conservation & analytic checks
 - Designed for research, teaching, and reproducible simulation
 
-# Getting started (local)
+Getting started (local)
 1. Clone the repo:
    ```bash
    git clone https://github.com/<org>/mechanicsdsl.git
@@ -32,14 +32,14 @@ Badges
    pytest
    ```
 
-# Quick example (Python)
+Quick example (Python)
 ```python
 from mechanicsdsl import run_example
 out = run_example('simple_pendulum', t_span=(0, 10), show_animation=False)
 print(out['result'])
 ```
 
-# Contributing
+Contributing
 We welcome contributions. See CONTRIBUTING.md and CODE_OF_CONDUCT.md for guidance.
 
 # License
