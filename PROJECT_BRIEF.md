@@ -1,4 +1,4 @@
-# MechanicsDSL — Project Brief (one page)
+# MechanicsDSL — Project Brief
 
 Mission
 MechanicsDSL provides a safe, extensible, and easy-to-use domain-specific language and toolchain to define, symbolically derive, numerically simulate, and visualize classical mechanical systems. It lowers the barrier for researchers, instructors, and students to prototype mechanics models with correct symbolic derivations and robust numerical execution.
