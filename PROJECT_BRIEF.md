@@ -1,4 +1,3 @@
-```markdown
 # MechanicsDSL — Project Brief (one page)
 
 Mission
@@ -21,4 +20,3 @@ Asks (initial)
 Contact
 Project lead: GuiloScion
 Repo: https://github.com/<org>/mechanicsdsl
-```
