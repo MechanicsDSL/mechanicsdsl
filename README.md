@@ -1,9 +1,9 @@
 MechanicsDSL is an open-source domain-specific language (DSL) and compiler for classical mechanics. It converts LaTeX-inspired model descriptions into symbolic equations (Lagrangian & Hamiltonian), numerical solvers, and animated visualizations — with production-focused safety, units, and testing.
 
-Badges
-- CI / Tests: (setup CI after repository creation)
-- License: MIT
-- Status: Prototype / Research
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/downloads/)
+[![Status](https://img.shields.io/badge/status-prototype%20%2F%20research-orange)](https://github.com/MechanicsDSL/mechanics-dsl)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 Quick highlights
 - DSL → AST → SymPy → NumPy pipeline
