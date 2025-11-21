@@ -41,5 +41,5 @@ print(out['result'])
 Contributing
 We welcome contributions. See CONTRIBUTING.md and CODE_OF_CONDUCT.md for guidance.
 
-# License
+License
 This project is MIT licensed. See LICENSE.
