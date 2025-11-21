@@ -18,5 +18,7 @@ Asks (initial)
 - Fiscal or infrastructure support: cloud credits, CI sponsorship, or a fiscal sponsor for donation acceptance.
 
 Contact
+
 Project lead: GuiloScion
+
 Repo: https://github.com/MechanicsDSL/mechanicsdsl
