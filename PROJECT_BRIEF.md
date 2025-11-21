@@ -19,4 +19,4 @@ Asks (initial)
 
 Contact
 Project lead: GuiloScion
-Repo: https://github.com/<org>/mechanicsdsl
+Repo: https://github.com/MechanicsDSL/mechanicsdsl
