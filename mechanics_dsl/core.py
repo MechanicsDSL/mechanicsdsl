@@ -1390,6 +1390,22 @@ class MechanicsParser:
         self.expect("RBRACE")
         return NonHolonomicConstraintDef(expr)
 
+    def parse_force(self) -> ForceDef:
+        """Parse \\force{expression}"""
+        self.expect("FORCE")
+        self.expect("LBRACE")
+        expr = self.parse_expression()
+        self.expect("RBRACE")
+        return ForceDef(expr)
+
+    def parse_damping(self) -> DampingDef:
+        """Parse \\damping{expression}"""
+        self.expect("DAMPING")
+        self.expect("LBRACE")
+        expr = self.parse_expression()
+        self.expect("RBRACE")
+        return DampingDef(expr)
+
     def parse_initial(self) -> InitialCondition:
         """Parse \\initial{var1=val1, var2=val2, ...}"""
         self.expect("INITIAL")
@@ -4304,3 +4320,4 @@ Running interactive demo with simple pendulum...
         print("="*70)
     else:
         sys.exit(main())
+
