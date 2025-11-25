@@ -2369,60 +2369,87 @@ class NumericalSimulator:
         return expr
 
     def equations_of_motion(self, t: float, y: np.ndarray) -> np.ndarray:
-        """ODE system for numerical integration"""
+        \"\"\"ODE system for numerical integration with bounds checking\"\"\"
         
         if self.use_hamiltonian:
             return self._hamiltonian_ode(t, y)
         
         dydt = np.zeros_like(y)
         
-        # Position derivatives = velocities
+        # Position derivatives = velocities (with bounds checking)
         for i in range(len(self.coordinates)):
-            if 2*i + 1 < len(y):
-                dydt[2*i] = y[2*i + 1]
-        
-        # Velocity derivatives = accelerations
+            for i in range(len(self.coordinates)):
+                pos_idx = 2 * i 
+                vel_idx = 2 * i + 1 
+
+                if vel_idx < len(y) and pos_idx < len(dydt):
+                    dydt[pos_idx] = y[vel_idx]
+                elif pos_idx < len(dydt):
+                    dydt[pos_idx] = 0.0
+
         for i, q in enumerate(self.coordinates):
             accel_key = f"{q}_ddot"
-            if accel_key in self.equations and 2*i + 1 < len(dydt):
+            vel_idx = 2 * i + 1
+
+            if accel_key in self.equations and vel_idx < len(dydt):
                 try:
                     accel_value = self.equations[accel_key](*y)
                     if np.isfinite(accel_value):
-                        dydt[2*i + 1] = accel_value
+                        dydt[vel_idx] = accel_value
                     else:
-                        dydt[2*i + 1] = 0.0
+                        dydt[vel_idx] = 0.0
                         logger.warning(f"Non-finite acceleration for {q} at t={t}")
-                except (ValueError, TypeError, ZeroDivisionError) as e:
-                    dydt[2*i + 1] = 0.0
+                except (ValueErorr, TypeError, ZeroDivisionError, IndexError) as e:
+                    dydt[vel_idx] = 0.0
                     logger.debug(f"Evaluation error for {q}: {e}")
-                    
+            elif vel_idx < len(dydt):
+                dydt[vel_idx] = 0.0
+                
         return dydt
+    
 
     def _hamiltonian_ode(self, t: float, y: np.ndarray) -> np.ndarray:
-        """ODE system for Hamiltonian formulation"""
+        \"\"\"ODE system for Hamiltonian formulation with validation\"\"\"
         dydt = np.zeros_like(y)
         
         for i, q in enumerate(self.coordinates):
             # dq/dt
             func, indices = self.hamiltonian_equations['q_dots'][i]
-            try:
-                args = [y[j] for j in indices if j < len(y)]
-                dydt[2*i] = float(func(*args))
-            except (ValueError, TypeError, ZeroDivisionError) as e:
-                dydt[2*i] = 0.0
-                logger.debug(f"Evaluation error for d{q}/dt: {e}")
-            
-            # dp/dt
+            q_idx = 2 * i 
+
+            if q_idx < len(dydt):
+                try:
+                    args = [y[j] for j in indices if j < len(y)]
+                    if len(args) == len(indices):
+                        result = func(*args)
+                        dydt[q_idx] = safe_float_conversion(result)
+                    else:
+                        dydt[q_idx] = 0.0
+                        logger.warning(f"Incomplete arguements for d{q}/dt")
+
+                except (ValueError, TypeError, ZeroDivisionError, IndexError) as e:
+                    dydt[q_idx] = 0.0
+                    logger.debug(f"Evaluation error for d{q}/dt: {e}")
+
             func, indices = self.hamiltonian_equations['p_dots'][i]
-            try:
-                args = [y[j] for j in indices if j < len(y)]
-                dydt[2*i + 1] = float(func(*args))
-            except (ValueError, TypeError, ZeroDivisionError) as e:
-                dydt[2*i + 1] = 0.0
-                logger.debug(f"Evaluation error for dp_{q}/dt: {e}")
-        
+            p_idx = 2 * i + 1
+
+            if p_idx < len(dydt):
+                try:
+                    args = [y[j] for j in indices if j < len(y)]
+                    if len(args) == len(indices):
+                        result = func(*args)
+                        dydt[p_idx] = safe_float_conversion(result)
+                    else: 
+                        dydt[p_idx] = 0.0
+                        logger.warning(f"Incomplete arguements for dp_{q}/dt")
+                except (ValueError, TypeError, ZeroDivisionError, IndexError) as e:
+                    dydt[p_idx] = 0.0
+                    logger.debug(f"Evaluation error for dp_{q}/dt: {e}")
+
         return dydt
 
+                        
     @profile_function
     def simulate(self, t_span: Tuple[float, float], num_points: int = 1000,
                  method: str = 'RK45', rtol: float = None, atol: float = None,
@@ -4334,6 +4361,7 @@ Running interactive demo with simple pendulum...
         print("="*70)
     else:
         sys.exit(main())
+
 
 
 
