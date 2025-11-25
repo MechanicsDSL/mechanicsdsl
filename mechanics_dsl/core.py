@@ -84,6 +84,25 @@ TERTIARY_COLOR = '#F1FAEE'
 LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 LOG_DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 
+def safe_float_conversion(value):
+    \"\"\"Safely convert any value to Python float\"\"\"
+    if isinstance(value, np.ndarray):
+        if value.size == 0:
+            return 0.0
+        elif value.size == 1:
+            return float(value.item())
+        else:
+            return float(value.flat[0]) # Take first element
+    elif isinstance(value, (np.integer, np.floating)):
+        return float(value)
+    elif isinstance(value, np.bool_):
+        return float(bool(value))
+    return float(value)
+
+# Use everywhere float() is called on potentially numpy values
+result = safe_float_conversion(result)
+
+
 class Config:
     """
     Global configuration for MechanicsDSL with validation.
@@ -2225,23 +2244,22 @@ class NumericalSimulator:
                         func = sp.lambdify(ordered_symbols, eq, modules=['numpy', 'math'])
                         
                         def make_wrapper(func, indices):
-                            def wrapper(*state_vector):
+                            # Force capture by value using default arguements
+                            def wrapper(*state_vector, _func=func, _indices=indices):
                                 try:
-                                    args = [state_vector[i] for i in indices if i < len(state_vector)]
+                                    args = [state_vector[i] for i in _indices if i < len(state_vector)]
                                     if len(args) == len(indices):
-                                        result = func(*args)
+                                        result = _func(*args)
                                         if isinstance(result, np.ndarray):
-                                            result = float(result.item()) if result.size == 1 else float(result[0])
+                                            if result.size == 1:
+                                                result = float(result.item())
+                                            else:
+                                                result = float(result.flat[0])
                                         result = float(result)
                                         return result if np.isfinite(result) else 0.0
                                     return 0.0
-                                except (ValueError, TypeError, ZeroDivisionError, 
-                                        OverflowError, AttributeError) as e:
+                                except (ValueError, TypeError, ZeroDivisionError, OverflowError) as e:
                                     logger.debug(f"Evaluation error: {e}")
-                                    return 0.0
-                                except Exception as e:
-                                    # Catch-all for unexpected errors, but log them
-                                    logger.warning(f"Unexpected evaluation error: {type(e).__name__}: {e}")
                                     return 0.0
                             return wrapper
                         
@@ -4320,4 +4338,5 @@ Running interactive demo with simple pendulum...
         print("="*70)
     else:
         sys.exit(main())
+
 
