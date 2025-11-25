@@ -87,7 +87,3 @@ MechanicsDSL will:
 - Compile to a fast numerical function.
 - Solve using Runge-Kutta (RK45).
 - Launch an interactive Matplotlib animation.
-
-```
-
-This format preserves all intended Markdown hierarchy and code distinction in a single code block for easy use and sharing on GitHub.[10][1]
