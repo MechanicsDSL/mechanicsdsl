@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import matplotlib
 import os
-from mechanics_dsl.core import PhysicsCompiler, SystemValidator
+from mechanics_dsl import PhysicsCompiler, SystemValidator
 
 # Force matplotlib to not use a GUI (prevents crashes in Codespaces)
 matplotlib.use('Agg')
