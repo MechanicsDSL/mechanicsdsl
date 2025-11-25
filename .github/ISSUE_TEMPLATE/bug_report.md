@@ -1,19 +1,29 @@
-name: Bug reportabout: Create a report to help us improve MechanicsDSLtitle: "[BUG] "labels: bugassignees: 
+---
+name: "Bug Report"
+about: Create a report to help us improve MechanicsDSL
+title: "[BUG] "
+labels: bug
+assignees: ''
 
-''Describe the bugA clear and concise description of what the bug is.
+---
 
-DSL Code to ReproducePlease provide the specific DSL code snippet that causes the issue:
+## Describe the bug
+A clear and concise description of what the bug is.
 
-\system{test_case}
-% Paste code here
+## DSL Code to Reproduce
+Please provide the specific DSL code snippet that causes the issue
 
-Expected behavior A clear description of what you expected to happen.
 
-Screenshots/TracebackIf applicable, add screenshots or paste the full Python traceback error here.
+## Expected behavior
+A clear description of what you expected to happen.
 
-Environment (please complete the following information):
-  OS: [e.g. Windows 11, Ubuntu 22.04]
-  Python Version: [e.g. 3.9]
-  MechanicsDSL Version: [e.g. 0.5.0]
-  
-  Additional context Add any other context about the problem here.
+## Screenshots/Traceback
+If applicable, add screenshots or paste the full Python traceback error here.
+
+## Environment (please complete the following information)
+- **OS**: [e.g. Windows 11, Ubuntu 22.04]
+- **Python Version**: [e.g. 3.9]
+- **MechanicsDSL Version**: [e.g. 0.5.0]
+
+## Additional context
+Add any other context about the problem here.
