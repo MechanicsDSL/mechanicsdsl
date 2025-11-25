@@ -82,4 +82,3 @@ See [CONTRIBUTING.md](https://www.google.com/search?q=CONTRIBUTING.md) for how t
 
 MIT License. Copyright (©) 2025 Noah Parsons.
 ```
-
