@@ -99,10 +99,6 @@ def safe_float_conversion(value):
         return float(bool(value))
     return float(value)
 
-# Use everywhere float() is called on potentially numpy values
-result = safe_float_conversion(result)
-
-
 class Config:
     """
     Global configuration for MechanicsDSL with validation.
@@ -4338,5 +4334,6 @@ Running interactive demo with simple pendulum...
         print("="*70)
     else:
         sys.exit(main())
+
 
 
