@@ -1382,6 +1382,14 @@ class MechanicsParser:
         self.expect("RBRACE")
         return ConstraintDef(expr)
 
+    def parse_nonholonomic(self) -> NonHolonomicConstraintDef:
+        """Parse \\nonholonomic{expression}"""
+        self.expect("NONHOLONOMIC")
+        self.expect("LBRACE")
+        expr = self.parse_expression()
+        self.expect("RBRACE")
+        return NonHolonomicConstraintDef(expr)
+
     def parse_initial(self) -> InitialCondition:
         """Parse \\initial{var1=val1, var2=val2, ...}"""
         self.expect("INITIAL")
