@@ -2997,7 +2997,7 @@ class NumericalSimulator:
                 y = y[:expected_size]
         
         try:
-        dydt = np.zeros_like(y)
+            dydt = np.zeros_like(y)
         
             # Position derivatives = velocities (with comprehensive bounds checking)
             for i in range(len(self.coordinates)):
@@ -5342,6 +5342,7 @@ Running interactive demo with simple pendulum...
         print("="*70)
     else:
         sys.exit(main())
+
 
 
 
