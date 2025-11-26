@@ -3016,27 +3016,28 @@ class NumericalSimulator:
 
             if accel_key in self.equations and vel_idx < len(dydt):
                 try:
+                    # Validate equation function exists
                     eq_func = self.equations.get(accel_key)
-                        if eq_func is None:
-                            logger.warning(f"equations_of_motion: equation function for {accel_key} is None")
+                    if eq_func is None:
+                        logger.warning(f"equations_of_motion: equation function for {accel_key} is None")
+                        dydt[vel_idx] = 0.0
+                        continue
+                    
+                    # Call with safe argument handling
+                    try:
+                        accel_value = eq_func(*y)
+                        accel_value = safe_float_conversion(accel_value)
+                        if np.isfinite(accel_value):
+                            dydt[vel_idx] = accel_value
+                        else:
                             dydt[vel_idx] = 0.0
-                            continue
-                        
-                        # Call with safe argument handling
-                        try:
-                            accel_value = eq_func(*y)
-                            accel_value = safe_float_conversion(accel_value)
-                    if np.isfinite(accel_value):
-                        dydt[vel_idx] = accel_value
-                    else:
+                            logger.warning(f"Non-finite acceleration for {q} at t={t:.6f}")
+                    except (ValueError, TypeError, ZeroDivisionError, IndexError, OverflowError) as e:
                         dydt[vel_idx] = 0.0
-                                logger.warning(f"Non-finite acceleration for {q} at t={t:.6f}")
-                        except (ValueError, TypeError, ZeroDivisionError, IndexError, OverflowError) as e:
+                        logger.debug(f"Evaluation error for {q} at t={t:.6f}: {e}")
+                except Exception as e:
                     dydt[vel_idx] = 0.0
-                            logger.debug(f"Evaluation error for {q} at t={t:.6f}: {e}")
-                    except Exception as e:
-                        dydt[vel_idx] = 0.0
-                        logger.error(f"Unexpected error evaluating {accel_key}: {e}", exc_info=True)
+                    logger.error(f"Unexpected error evaluating {accel_key}: {e}", exc_info=True)
             elif vel_idx < len(dydt):
                 dydt[vel_idx] = 0.0
                 
@@ -3107,15 +3108,15 @@ class NumericalSimulator:
                 return dydt
             
         for i, q in enumerate(self.coordinates):
-                # Validate q is a string
-                if not isinstance(q, str):
-                    logger.warning(f"_hamiltonian_ode: coordinate {i} is not string: {type(q).__name__}")
-                    continue
-                
+            # Validate q is a string
+            if not isinstance(q, str):
+                logger.warning(f"_hamiltonian_ode: coordinate {i} is not string: {type(q).__name__}")
+                continue
+            
             # dq/dt
             if i >= len(self.hamiltonian_equations['q_dots']):
                 logger.warning(f"_hamiltonian_ode: Index {i} out of range for q_dots (len={len(self.hamiltonian_equations['q_dots'])})")
-                    continue
+                continue
                 
                 try:
                     q_dot_data = self.hamiltonian_equations['q_dots'][i]
@@ -3134,25 +3135,25 @@ class NumericalSimulator:
                     
             q_idx = 2 * i 
 
-            if q_idx < len(dydt):
+           if q_idx < len(dydt):
                 try:
-                            args = [safe_array_access(y, j, 0.0) for j in indices if isinstance(j, int) and j >= 0]
+                    args = [safe_array_access(y, j, 0.0) for j in indices if isinstance(j, int) and j >= 0]
                     if len(args) == len(indices):
                         result = func(*args)
                         dydt[q_idx] = safe_float_conversion(result)
-                                if not np.isfinite(dydt[q_idx]):
-                                    logger.warning(f"_hamiltonian_ode: non-finite d{q}/dt, setting to 0.0")
-                                    dydt[q_idx] = 0.0
+                        if not np.isfinite(dydt[q_idx]):
+                            logger.warning(f"_hamiltonian_ode: non-finite d{q}/dt, setting to 0.0")
+                            dydt[q_idx] = 0.0
                     else:
                         dydt[q_idx] = 0.0
-                                logger.warning(f"_hamiltonian_ode: Incomplete arguments for d{q}/dt (got {len(args)}, expected {len(indices)})")
+                        logger.warning(f"_hamiltonian_ode: Incomplete arguments for d{q}/dt (got {len(args)}, expected {len(indices)})")
 
-                        except (ValueError, TypeError, ZeroDivisionError, IndexError, OverflowError) as e:
+                except (ValueError, TypeError, ZeroDivisionError, IndexError, OverflowError) as e:
                     dydt[q_idx] = 0.0
-                            logger.debug(f"_hamiltonian_ode: Evaluation error for d{q}/dt: {e}")
-                        except Exception as e:
-                            dydt[q_idx] = 0.0
-                            logger.error(f"_hamiltonian_ode: Unexpected error for d{q}/dt: {e}", exc_info=True)
+                    logger.debug(f"_hamiltonian_ode: Evaluation error for d{q}/dt: {e}")
+                except Exception as e:
+                    dydt[q_idx] = 0.0
+                    logger.error(f"_hamiltonian_ode: Unexpected error for d{q}/dt: {e}", exc_info=True)
                 except (IndexError, TypeError, ValueError) as e:
                     logger.error(f"_hamiltonian_ode: Error accessing q_dots[{i}]: {e}")
                     continue
@@ -3181,22 +3182,22 @@ class NumericalSimulator:
 
             if p_idx < len(dydt):
                 try:
-                            args = [safe_array_access(y, j, 0.0) for j in indices if isinstance(j, int) and j >= 0]
+                    args = [safe_array_access(y, j, 0.0) for j in indices if isinstance(j, int) and j >= 0]
                     if len(args) == len(indices):
                         result = func(*args)
                         dydt[p_idx] = safe_float_conversion(result)
-                                if not np.isfinite(dydt[p_idx]):
-                                    logger.warning(f"_hamiltonian_ode: non-finite dp_{q}/dt, setting to 0.0")
-                                    dydt[p_idx] = 0.0
+                        if not np.isfinite(dydt[p_idx]):
+                            logger.warning(f"_hamiltonian_ode: non-finite dp_{q}/dt, setting to 0.0")
+                            dydt[p_idx] = 0.0
                     else: 
                         dydt[p_idx] = 0.0
-                                logger.warning(f"_hamiltonian_ode: Incomplete arguments for dp_{q}/dt (got {len(args)}, expected {len(indices)})")
-                        except (ValueError, TypeError, ZeroDivisionError, IndexError, OverflowError) as e:
+                        logger.warning(f"_hamiltonian_ode: Incomplete arguments for dp_{q}/dt (got {len(args)}, expected {len(indices)})")
+                except (ValueError, TypeError, ZeroDivisionError, IndexError, OverflowError) as e:
                     dydt[p_idx] = 0.0
-                            logger.debug(f"_hamiltonian_ode: Evaluation error for dp_{q}/dt: {e}")
-                        except Exception as e:
-                            dydt[p_idx] = 0.0
-                            logger.error(f"_hamiltonian_ode: Unexpected error for dp_{q}/dt: {e}", exc_info=True)
+                    logger.debug(f"_hamiltonian_ode: Evaluation error for dp_{q}/dt: {e}")
+                except Exception as e:
+                    dydt[p_idx] = 0.0
+                    logger.error(f"_hamiltonian_ode: Unexpected error for dp_{q}/dt: {e}", exc_info=True)
                 except (IndexError, TypeError, ValueError) as e:
                     logger.error(f"_hamiltonian_ode: Error accessing p_dots[{i}]: {e}")
                     continue
@@ -4370,24 +4371,24 @@ class PhysicsCompiler:
             _perf_monitor.snapshot_memory("pre_compilation")
             _perf_monitor.start_timer('compilation')
         
-        try:
+try:
             # Tokenize with error handling
             try:
                 tokens = tokenize(dsl_source)
                 if not tokens:
                     raise ValueError("Tokenization produced no tokens")
-            logger.info(f"Tokenized {len(tokens)} tokens")
+                logger.info(f"Tokenized {len(tokens)} tokens")
             except Exception as e:
                 logger.error(f"Tokenization failed: {e}", exc_info=True)
                 raise ValueError(f"Tokenization failed: {e}") from e
             
             # Parse with error handling
             try:
-            parser = MechanicsParser(tokens)
-            self.ast = parser.parse()
-            
-            if parser.errors:
-                logger.warning(f"Parser found {len(parser.errors)} errors")
+                parser = MechanicsParser(tokens)
+                self.ast = parser.parse()
+                
+                if parser.errors:
+                    logger.warning(f"Parser found {len(parser.errors)} errors")
                     if len(parser.errors) >= config.max_parser_errors:
                         raise ValueError(f"Too many parser errors ({len(parser.errors)})")
             except Exception as e:
@@ -4396,7 +4397,7 @@ class PhysicsCompiler:
             
             # Semantic analysis with error handling
             try:
-            self.analyze_semantics()
+                self.analyze_semantics()
             except Exception as e:
                 logger.error(f"Semantic analysis failed: {e}", exc_info=True)
                 raise ValueError(f"Semantic analysis failed: {e}") from e
@@ -4412,31 +4413,31 @@ class PhysicsCompiler:
             
             # Derive equations with error handling
             try:
-            if use_hamiltonian:
-                equations = self.derive_hamiltonian_equations()
-                self.use_hamiltonian_formulation = True
-                logger.info("Using Hamiltonian formulation")
-            else:
-                # Check for constraints
-                if use_constraints and len(self.constraints) > 0:
-                    equations = self.derive_constrained_equations()
-                    logger.info(f"Using constrained Lagrangian with {len(self.constraints)} constraints")
+                if use_hamiltonian:
+                    equations = self.derive_hamiltonian_equations()
+                    self.use_hamiltonian_formulation = True
+                    logger.info("Using Hamiltonian formulation")
                 else:
-                    equations = self.derive_equations()
-                    logger.info("Using standard Lagrangian formulation")
-                self.use_hamiltonian_formulation = False
-            
+                    # Check for constraints
+                    if use_constraints and len(self.constraints) > 0:
+                        equations = self.derive_constrained_equations()
+                        logger.info(f"Using constrained Lagrangian with {len(self.constraints)} constraints")
+                    else:
+                        equations = self.derive_equations()
+                        logger.info("Using standard Lagrangian formulation")
+                    self.use_hamiltonian_formulation = False
+                
                 if equations is None:
                     raise ValueError("Equation derivation returned None")
-                
-            self.equations = equations
+                    
+                self.equations = equations
             except Exception as e:
                 logger.error(f"Equation derivation failed: {e}", exc_info=True)
                 raise ValueError(f"Equation derivation failed: {e}") from e
             
             # Setup simulation with error handling
             try:
-            self.setup_simulation(equations)
+                self.setup_simulation(equations)
             except Exception as e:
                 logger.error(f"Simulation setup failed: {e}", exc_info=True)
                 raise ValueError(f"Simulation setup failed: {e}") from e
@@ -5341,6 +5342,7 @@ Running interactive demo with simple pendulum...
         print("="*70)
     else:
         sys.exit(main())
+
 
 
 
