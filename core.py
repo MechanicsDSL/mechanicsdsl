@@ -3092,7 +3092,7 @@ class NumericalSimulator:
             y = np.nan_to_num(y, nan=0.0, posinf=1e10, neginf=-1e10)
         
         try:
-        dydt = np.zeros_like(y)
+            dydt = np.zeros_like(y)
         
             if self.hamiltonian_equations is None:
                 logger.error("_hamiltonian_ode: hamiltonian_equations is None, cannot compute ODE")
@@ -3113,8 +3113,8 @@ class NumericalSimulator:
                     continue
                 
             # dq/dt
-                if i >= len(self.hamiltonian_equations['q_dots']):
-                    logger.warning(f"_hamiltonian_ode: Index {i} out of range for q_dots (len={len(self.hamiltonian_equations['q_dots'])})")
+            if i >= len(self.hamiltonian_equations['q_dots']):
+                logger.warning(f"_hamiltonian_ode: Index {i} out of range for q_dots (len={len(self.hamiltonian_equations['q_dots'])})")
                     continue
                 
                 try:
@@ -4373,7 +4373,7 @@ class PhysicsCompiler:
         try:
             # Tokenize with error handling
             try:
-            tokens = tokenize(dsl_source)
+                tokens = tokenize(dsl_source)
                 if not tokens:
                     raise ValueError("Tokenization produced no tokens")
             logger.info(f"Tokenized {len(tokens)} tokens")
@@ -5341,6 +5341,7 @@ Running interactive demo with simple pendulum...
         print("="*70)
     else:
         sys.exit(main())
+
 
 
 
