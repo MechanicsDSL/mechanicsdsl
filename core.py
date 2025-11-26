@@ -154,26 +154,26 @@ def safe_float_conversion(value: Any) -> float:
         if isinstance(value, np.ndarray):
             if value.size == 0:
                 return 0.0
-        elif value.size == 1:
+            elif value.size == 1:
                 result = float(value.item())
                 if not np.isfinite(result):
                     logger.warning(f"safe_float_conversion: non-finite array value, returning 0.0")
                     return 0.0
                 return result
-        else:
+            else:
                 result = float(value.flat[0])
                 if not np.isfinite(result):
                     logger.warning(f"safe_float_conversion: non-finite array value, returning 0.0")
                     return 0.0
                 return result
-    elif isinstance(value, (np.integer, np.floating)):
+        elif isinstance(value, (np.integer, np.floating)):
             result = float(value)
             if not np.isfinite(result):
                 logger.warning(f"safe_float_conversion: non-finite numpy value, returning 0.0")
                 return 0.0
             return result
-    elif isinstance(value, np.bool_):
-        return float(bool(value))
+        elif isinstance(value, np.bool_):
+            return float(bool(value))
         elif isinstance(value, (int, float)):
             result = float(value)
             if not np.isfinite(result):
@@ -2946,7 +2946,7 @@ class NumericalSimulator:
                 continue
         return expr
 
-    def equations_of_motion(self, t: float, y: np.ndarray) -> np.ndarray:
+def equations_of_motion(self, t: float, y: np.ndarray) -> np.ndarray:
         """
         ODE system for numerical integration with comprehensive bounds checking and validation.
         
@@ -2998,7 +2998,7 @@ class NumericalSimulator:
         
         try:
             dydt = np.zeros_like(y)
-        
+            
             # Position derivatives = velocities (with comprehensive bounds checking)
             for i in range(len(self.coordinates)):
                 pos_idx = 2 * i 
@@ -3010,43 +3010,43 @@ class NumericalSimulator:
                 elif pos_idx < len(dydt):
                     dydt[pos_idx] = 0.0
 
-        for i, q in enumerate(self.coordinates):
-            accel_key = f"{q}_ddot"
-            vel_idx = 2 * i + 1
+            for i, q in enumerate(self.coordinates):
+                accel_key = f"{q}_ddot"
+                vel_idx = 2 * i + 1
 
-            if accel_key in self.equations and vel_idx < len(dydt):
-                try:
-                    # Validate equation function exists
-                    eq_func = self.equations.get(accel_key)
-                    if eq_func is None:
-                        logger.warning(f"equations_of_motion: equation function for {accel_key} is None")
-                        dydt[vel_idx] = 0.0
-                        continue
-                    
-                    # Call with safe argument handling
+                if accel_key in self.equations and vel_idx < len(dydt):
                     try:
-                        accel_value = eq_func(*y)
-                        accel_value = safe_float_conversion(accel_value)
-                        if np.isfinite(accel_value):
-                            dydt[vel_idx] = accel_value
-                        else:
+                        # Validate equation function exists
+                        eq_func = self.equations.get(accel_key)
+                        if eq_func is None:
+                            logger.warning(f"equations_of_motion: equation function for {accel_key} is None")
                             dydt[vel_idx] = 0.0
-                            logger.warning(f"Non-finite acceleration for {q} at t={t:.6f}")
-                    except (ValueError, TypeError, ZeroDivisionError, IndexError, OverflowError) as e:
+                            continue
+                        
+                        # Call with safe argument handling
+                        try:
+                            accel_value = eq_func(*y)
+                            accel_value = safe_float_conversion(accel_value)
+                            if np.isfinite(accel_value):
+                                dydt[vel_idx] = accel_value
+                            else:
+                                dydt[vel_idx] = 0.0
+                                logger.warning(f"Non-finite acceleration for {q} at t={t:.6f}")
+                        except (ValueError, TypeError, ZeroDivisionError, IndexError, OverflowError) as e:
+                            dydt[vel_idx] = 0.0
+                            logger.debug(f"Evaluation error for {q} at t={t:.6f}: {e}")
+                    except Exception as e:
                         dydt[vel_idx] = 0.0
-                        logger.debug(f"Evaluation error for {q} at t={t:.6f}: {e}")
-                except Exception as e:
+                        logger.error(f"Unexpected error evaluating {accel_key}: {e}", exc_info=True)
+                elif vel_idx < len(dydt):
                     dydt[vel_idx] = 0.0
-                    logger.error(f"Unexpected error evaluating {accel_key}: {e}", exc_info=True)
-            elif vel_idx < len(dydt):
-                dydt[vel_idx] = 0.0
-                
+                    
             # Final validation of result
             if not validate_array_safe(dydt, "dydt", check_finite=True):
                 logger.warning("equations_of_motion: result validation failed, fixing non-finite values")
                 dydt = np.nan_to_num(dydt, nan=0.0, posinf=1e10, neginf=-1e10)
             
-        return dydt
+            return dydt
             
         except Exception as e:
             logger.error(f"equations_of_motion: unexpected error: {e}", exc_info=True)
@@ -3054,9 +3054,8 @@ class NumericalSimulator:
             if self.coordinates:
                 return np.zeros(2 * len(self.coordinates))
             return np.zeros(1)
-    
 
-    def _hamiltonian_ode(self, t: float, y: np.ndarray) -> np.ndarray:
+def _hamiltonian_ode(self, t: float, y: np.ndarray) -> np.ndarray:
         """
         ODE system for Hamiltonian formulation with comprehensive validation.
         
@@ -3094,7 +3093,7 @@ class NumericalSimulator:
         
         try:
             dydt = np.zeros_like(y)
-        
+            
             if self.hamiltonian_equations is None:
                 logger.error("_hamiltonian_ode: hamiltonian_equations is None, cannot compute ODE")
                 return dydt
@@ -3107,16 +3106,16 @@ class NumericalSimulator:
                 logger.error("_hamiltonian_ode: hamiltonian_equations missing required keys")
                 return dydt
             
-        for i, q in enumerate(self.coordinates):
-            # Validate q is a string
-            if not isinstance(q, str):
-                logger.warning(f"_hamiltonian_ode: coordinate {i} is not string: {type(q).__name__}")
-                continue
-            
-            # dq/dt
-            if i >= len(self.hamiltonian_equations['q_dots']):
-                logger.warning(f"_hamiltonian_ode: Index {i} out of range for q_dots (len={len(self.hamiltonian_equations['q_dots'])})")
-                continue
+            for i, q in enumerate(self.coordinates):
+                # Validate q is a string
+                if not isinstance(q, str):
+                    logger.warning(f"_hamiltonian_ode: coordinate {i} is not string: {type(q).__name__}")
+                    continue
+                
+                # dq/dt
+                if i >= len(self.hamiltonian_equations['q_dots']):
+                    logger.warning(f"_hamiltonian_ode: Index {i} out of range for q_dots (len={len(self.hamiltonian_equations['q_dots'])})")
+                    continue
                 
                 try:
                     q_dot_data = self.hamiltonian_equations['q_dots'][i]
@@ -3133,27 +3132,26 @@ class NumericalSimulator:
                         logger.warning(f"_hamiltonian_ode: indices is not list/tuple for d{q}/dt")
                         indices = []
                     
-            q_idx = 2 * i 
+                    q_idx = 2 * i 
 
-           if q_idx < len(dydt):
-                try:
-                    args = [safe_array_access(y, j, 0.0) for j in indices if isinstance(j, int) and j >= 0]
-                    if len(args) == len(indices):
-                        result = func(*args)
-                        dydt[q_idx] = safe_float_conversion(result)
-                        if not np.isfinite(dydt[q_idx]):
-                            logger.warning(f"_hamiltonian_ode: non-finite d{q}/dt, setting to 0.0")
+                    if q_idx < len(dydt):
+                        try:
+                            args = [safe_array_access(y, j, 0.0) for j in indices if isinstance(j, int) and j >= 0]
+                            if len(args) == len(indices):
+                                result = func(*args)
+                                dydt[q_idx] = safe_float_conversion(result)
+                                if not np.isfinite(dydt[q_idx]):
+                                    logger.warning(f"_hamiltonian_ode: non-finite d{q}/dt, setting to 0.0")
+                                    dydt[q_idx] = 0.0
+                            else:
+                                dydt[q_idx] = 0.0
+                                logger.warning(f"_hamiltonian_ode: Incomplete arguments for d{q}/dt (got {len(args)}, expected {len(indices)})")
+                        except (ValueError, TypeError, ZeroDivisionError, IndexError, OverflowError) as e:
                             dydt[q_idx] = 0.0
-                    else:
-                        dydt[q_idx] = 0.0
-                        logger.warning(f"_hamiltonian_ode: Incomplete arguments for d{q}/dt (got {len(args)}, expected {len(indices)})")
-
-                except (ValueError, TypeError, ZeroDivisionError, IndexError, OverflowError) as e:
-                    dydt[q_idx] = 0.0
-                    logger.debug(f"_hamiltonian_ode: Evaluation error for d{q}/dt: {e}")
-                except Exception as e:
-                    dydt[q_idx] = 0.0
-                    logger.error(f"_hamiltonian_ode: Unexpected error for d{q}/dt: {e}", exc_info=True)
+                            logger.debug(f"_hamiltonian_ode: Evaluation error for d{q}/dt: {e}")
+                        except Exception as e:
+                            dydt[q_idx] = 0.0
+                            logger.error(f"_hamiltonian_ode: Unexpected error for d{q}/dt: {e}", exc_info=True)
                 except (IndexError, TypeError, ValueError) as e:
                     logger.error(f"_hamiltonian_ode: Error accessing q_dots[{i}]: {e}")
                     continue
@@ -3178,26 +3176,26 @@ class NumericalSimulator:
                         logger.warning(f"_hamiltonian_ode: indices is not list/tuple for dp_{q}/dt")
                         indices = []
                     
-            p_idx = 2 * i + 1
+                    p_idx = 2 * i + 1
 
-            if p_idx < len(dydt):
-                try:
-                    args = [safe_array_access(y, j, 0.0) for j in indices if isinstance(j, int) and j >= 0]
-                    if len(args) == len(indices):
-                        result = func(*args)
-                        dydt[p_idx] = safe_float_conversion(result)
-                        if not np.isfinite(dydt[p_idx]):
-                            logger.warning(f"_hamiltonian_ode: non-finite dp_{q}/dt, setting to 0.0")
+                    if p_idx < len(dydt):
+                        try:
+                            args = [safe_array_access(y, j, 0.0) for j in indices if isinstance(j, int) and j >= 0]
+                            if len(args) == len(indices):
+                                result = func(*args)
+                                dydt[p_idx] = safe_float_conversion(result)
+                                if not np.isfinite(dydt[p_idx]):
+                                    logger.warning(f"_hamiltonian_ode: non-finite dp_{q}/dt, setting to 0.0")
+                                    dydt[p_idx] = 0.0
+                            else: 
+                                dydt[p_idx] = 0.0
+                                logger.warning(f"_hamiltonian_ode: Incomplete arguments for dp_{q}/dt (got {len(args)}, expected {len(indices)})")
+                        except (ValueError, TypeError, ZeroDivisionError, IndexError, OverflowError) as e:
                             dydt[p_idx] = 0.0
-                    else: 
-                        dydt[p_idx] = 0.0
-                        logger.warning(f"_hamiltonian_ode: Incomplete arguments for dp_{q}/dt (got {len(args)}, expected {len(indices)})")
-                except (ValueError, TypeError, ZeroDivisionError, IndexError, OverflowError) as e:
-                    dydt[p_idx] = 0.0
-                    logger.debug(f"_hamiltonian_ode: Evaluation error for dp_{q}/dt: {e}")
-                except Exception as e:
-                    dydt[p_idx] = 0.0
-                    logger.error(f"_hamiltonian_ode: Unexpected error for dp_{q}/dt: {e}", exc_info=True)
+                            logger.debug(f"_hamiltonian_ode: Evaluation error for dp_{q}/dt: {e}")
+                        except Exception as e:
+                            dydt[p_idx] = 0.0
+                            logger.error(f"_hamiltonian_ode: Unexpected error for dp_{q}/dt: {e}", exc_info=True)
                 except (IndexError, TypeError, ValueError) as e:
                     logger.error(f"_hamiltonian_ode: Error accessing p_dots[{i}]: {e}")
                     continue
@@ -3207,7 +3205,7 @@ class NumericalSimulator:
                 logger.warning("_hamiltonian_ode: result validation failed, fixing non-finite values")
                 dydt = np.nan_to_num(dydt, nan=0.0, posinf=1e10, neginf=-1e10)
 
-        return dydt
+            return dydt
 
         except Exception as e:
             logger.error(f"_hamiltonian_ode: unexpected error: {e}", exc_info=True)
@@ -3215,7 +3213,6 @@ class NumericalSimulator:
                 return np.zeros(2 * len(self.coordinates))
             return np.zeros(1)
 
-                        
     def _select_optimal_solver(self, t_span: Tuple[float, float], 
                               y0: np.ndarray) -> str:
         """v6.0: Intelligently select optimal solver based on system characteristics"""
@@ -4043,7 +4040,7 @@ class MechanicsVisualizer:
             logger.info(f"Max Relative Error:   {np.max(np.abs(E_error)):.6f}%")
         logger.info(f"{'='*50}\n")
 
-    def plot_phase_space(self, solution: dict, coordinate_index: int = 0):
+def plot_phase_space(self, solution: dict, coordinate_index: int = 0):
         """
         Plot phase space trajectory with validation.
         
@@ -4103,10 +4100,10 @@ class MechanicsVisualizer:
         
         plt.figure(figsize=(10, 10))
         try:
-        plt.plot(position, velocity, 'b-', alpha=0.7, linewidth=1.5, label='Trajectory')
+            plt.plot(position, velocity, 'b-', alpha=0.7, linewidth=1.5, label='Trajectory')
             if len(position) > 0:
-        plt.plot(position[0], velocity[0], 'go', markersize=10, label='Start', zorder=5)
-        plt.plot(position[-1], velocity[-1], 'ro', markersize=10, label='End', zorder=5)
+                plt.plot(position[0], velocity[0], 'go', markersize=10, label='Start', zorder=5)
+                plt.plot(position[-1], velocity[-1], 'ro', markersize=10, label='End', zorder=5)
         except Exception as e:
             logger.error(f"plot_phase_space: error plotting: {e}", exc_info=True)
             return
@@ -4363,7 +4360,7 @@ class PhysicsCompiler:
             logger.error(f"compile_dsl: {error_msg}")
             raise TypeError(error_msg)
         
-        start_time = time.time()
+start_time = time.time()
         logger.info(f"Starting DSL compilation (source length: {len(dsl_source)} chars)")
         
         # Performance monitoring
@@ -4371,7 +4368,7 @@ class PhysicsCompiler:
             _perf_monitor.snapshot_memory("pre_compilation")
             _perf_monitor.start_timer('compilation')
         
-try:
+        try:
             # Tokenize with error handling
             try:
                 tokens = tokenize(dsl_source)
@@ -5342,6 +5339,7 @@ Running interactive demo with simple pendulum...
         print("="*70)
     else:
         sys.exit(main())
+
 
 
 
