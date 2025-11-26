@@ -151,9 +151,9 @@ def safe_float_conversion(value: Any) -> float:
         return 0.0
     
     try:
-    if isinstance(value, np.ndarray):
-        if value.size == 0:
-            return 0.0
+        if isinstance(value, np.ndarray):
+            if value.size == 0:
+                return 0.0
         elif value.size == 1:
                 result = float(value.item())
                 if not np.isfinite(result):
@@ -5342,6 +5342,7 @@ Running interactive demo with simple pendulum...
         print("="*70)
     else:
         sys.exit(main())
+
 
 
 
