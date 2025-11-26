@@ -3016,8 +3016,7 @@ class NumericalSimulator:
 
             if accel_key in self.equations and vel_idx < len(dydt):
                 try:
-                        # Validate equation function exists
-                        eq_func = self.equations.get(accel_key)
+                    eq_func = self.equations.get(accel_key)
                         if eq_func is None:
                             logger.warning(f"equations_of_motion: equation function for {accel_key} is None")
                             dydt[vel_idx] = 0.0
@@ -5342,6 +5341,7 @@ Running interactive demo with simple pendulum...
         print("="*70)
     else:
         sys.exit(main())
+
 
 
 
