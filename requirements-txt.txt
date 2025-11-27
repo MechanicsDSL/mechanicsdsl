@@ -1,8 +1,0 @@
-flask==3.0.0
-flask-cors==4.0.0
-numpy==1.24.3
-scipy==1.11.3
-sympy==1.12
-matplotlib==3.8.0
-psutil==5.9.6
-gunicorn==21.2.0
