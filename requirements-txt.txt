@@ -1,23 +1,8 @@
-# MechanicsDSL Backend Requirements
-# Install with: pip install -r requirements.txt
-
-# Web Framework
 flask==3.0.0
 flask-cors==4.0.0
-
-# Scientific Computing
 numpy==1.24.3
 scipy==1.11.3
 sympy==1.12
-
-# Visualization
 matplotlib==3.8.0
-
-# Optional: Performance monitoring
 psutil==5.9.6
-
-# Optional: Better server for production
 gunicorn==21.2.0
-
-# Optional: For async support
-eventlet==0.33.3
