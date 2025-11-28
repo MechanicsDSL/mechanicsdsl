@@ -88,7 +88,7 @@ class TestRollingBall:
 class TestAtwoodMachine:
     """Test Atwood machine with constraint"""
     
-    @pytest.mark.skip(reason="Constraint solver needs update for Lagrange multipliers - symbolic engine differentiation issue")
+    @pytest.mark.skip(reason="Constraint engine requires update for index-1 DAEs")
     def test_atwood_machine(self):
         """Test Atwood machine (two masses connected by string)"""
         dsl_code = r"""
