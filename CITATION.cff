@@ -7,8 +7,8 @@ title: "MechanicsDSL: A Domain-Specific Language for Classical Mechanics"
 version: 0.6.0
 doi: 10.5281/zenodo.XXXXXXX
 date-released: 2025-11-28
-url: "https://github.com/yourusername/mechanics_dsl"
-repository-code: "https://github.com/yourusername/mechanics_dsl"
+url: "https://github.com/MechanicsDSL/mechanics_dsl"
+repository-code: "https://github.com/MechanicsDSL/mechanics_dsl"
 license: MIT
 keywords:
   - physics
@@ -18,4 +18,5 @@ keywords:
   - symbolic computation
   - numerical methods
 abstract: "MechanicsDSL is a comprehensive framework for symbolic and numerical analysis of classical mechanical systems using a LaTeX-inspired domain-specific language. It automatically derives equations of motion from Lagrangians or Hamiltonians and provides advanced numerical simulation capabilities."
+
 
