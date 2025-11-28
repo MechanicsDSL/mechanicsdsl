@@ -513,7 +513,8 @@ class NumericalSimulator:
                               y0: np.ndarray) -> str:
         """v6.0: Intelligently select optimal solver based on system characteristics"""
         if not config.enable_adaptive_solver:
-            return 'RK45'
+            # Default to LSODA for better stability in CI environments
+            return 'LSODA'
         
         # Analyze system characteristics
         n_dof = len(self.coordinates)
@@ -531,7 +532,7 @@ class NumericalSimulator:
         if n_dof <= 2 and time_span < 10:
             return 'RK45'
         
-        # Default to adaptive method
+        # Default to LSODA for better stability (especially in CI)
         return 'LSODA'
                         
     @profile_function
@@ -572,13 +573,13 @@ class NumericalSimulator:
         if num_points > 10_000_000:
             raise ValueError(f"num_points too large (>{10_000_000}), got {num_points}")
         
-        if method is None:
-            method = 'RK45'
-        elif not isinstance(method, str):
-            raise TypeError(f"method must be str, got {type(method).__name__}")
-        valid_methods = ['RK45', 'RK23', 'DOP853', 'Radau', 'BDF', 'LSODA']
-        if method not in valid_methods:
-            raise ValueError(f"method must be one of {valid_methods}, got {method}")
+        # Validate method if provided, but don't set default yet (will be set by solver selection)
+        if method is not None:
+            if not isinstance(method, str):
+                raise TypeError(f"method must be str, got {type(method).__name__}")
+            valid_methods = ['RK45', 'RK23', 'DOP853', 'Radau', 'BDF', 'LSODA']
+            if method not in valid_methods:
+                raise ValueError(f"method must be one of {valid_methods}, got {method}")
         
         if rtol is not None:
             if not isinstance(rtol, (int, float)):
@@ -595,19 +596,14 @@ class NumericalSimulator:
         if not isinstance(detect_stiff, bool):
             raise TypeError(f"detect_stiff must be bool, got {type(detect_stiff).__name__}")
         
-        # v6.0: Adaptive solver selection
-        if method is None:
-            method = 'RK45'  # Temporary default for solver selection
-        if method == 'RK45' and config.enable_adaptive_solver:
-            # Will be set after y0 is created
-            adaptive_method = True
-        else:
-            adaptive_method = False
+        # START PERFORMANCE TIMER
+        if config.enable_performance_monitoring:
+            _perf_monitor.start_timer('simulation')
         
         rtol = rtol or config.default_rtol
         atol = atol or config.default_atol
         
-        # Build initial state vector
+        # Build initial state vector first to get y0 for solver selection
         y0 = []
         for q in self.coordinates:
             if self.use_hamiltonian:
@@ -624,6 +620,16 @@ class NumericalSimulator:
                 y0.append(vel_val)
 
         y0 = np.array(y0, dtype=float)
+        
+        # FIX: Actually select the solver if method is not provided
+        if method is None:
+            method = self._select_optimal_solver(t_span, y0)
+            logger.info(f"Automatically selected solver: {method}")
+        elif method == 'RK45' and config.enable_adaptive_solver:
+            # Check if we should switch to a more stable method
+            adaptive_method = True
+        else:
+            adaptive_method = False
         t_eval = np.linspace(t_span[0], t_span[1], num_points)
 
         # Validate initial conditions
@@ -719,4 +725,3 @@ class NumericalSimulator:
                 'success': False,
                 'error': str(e)
             }
-
