@@ -3,82 +3,72 @@
 [![Status](https://img.shields.io/badge/status-prototype%20%2F%20research-orange)](https://github.com/MechanicsDSL/mechanics-dsl)
 # MechanicsDSL
 
-A Domain-Specific Language for Classical Mechanics.
+A Domain-Specific Language for Classical Mechanics - A comprehensive framework for symbolic and numerical analysis of classical mechanical systems using LaTeX-inspired notation.
 
-> "Computational tools for physics education often have a fundamental problem: they prioritize power over pedagogy. MechanicsDSL makes Lagrangian mechanics computationally accessible without sacrificing rigor."
+## Features
 
-MechanicsDSL is a Python framework and custom language compiler that converts LaTeX-inspired descriptions of physical systems into symbolic equations of motion, numerical simulations, and interactive visualizations. It is designed to lower the cognitive load of computational physics, allowing students and researchers to focus on the physics, not the boilerplate.
-
----
-
-## Key Features
-
-- **Pedagogy-First Syntax**: Define systems using familiar LaTeX-style commands (`\system`, `\lagrangian`, `\initial`).
-- **Symbolic Power**: Automated derivation of Euler-Lagrange and Hamiltonian equations using SymPy.
-- **Numerical Rigor**: Production-grade solvers (RK45, LSODA) with stiffness detection.
-- **True 3D Motion**: Built-in support for Euler angles, quaternions, and 3D visualizations.
-- **Safety**: AST-based parsing (no eval()) ensuring secure execution of DSL code.
-
----
+- **Symbolic Computation**: Automatic derivation of equations of motion from Lagrangians and Hamiltonians
+- **Numerical Simulation**: Advanced ODE solvers with adaptive step sizing
+- **Visualization**: Interactive animations and phase space plots
+- **Unit System**: Comprehensive dimensional analysis and unit checking
+- **Constraint Handling**: Support for holonomic and non-holonomic constraints
+- **Performance Monitoring**: Built-in profiling and optimization tools
 
 ## Installation
 
-```
+```bash
 pip install mechanics-dsl
 ```
 
----
+Or install from source:
+
+```bash
+git clone https://github.com/yourusername/mechanics_dsl.git
+cd mechanics_dsl
+pip install -e .
+```
 
 ## Quick Start
 
-Define a Simple Pendulum in 5 lines of DSL code:
+```python
+from mechanics_dsl import PhysicsCompiler
 
-```
-\system{simple_pendulum}
-\defvar{theta}{Angle}{rad}
-\defvar{l}{Length}{m}
-\defvar{g}{Acceleration}{m/s^2}
-\parameter{l}{1.0}{m}
-\parameter{g}{9.81}{m/s^2}
+# Define a simple pendulum system
+dsl_code = """
+system pendulum
+var theta: angle [rad]
+parameter g = 9.81 [m/s^2]
+parameter L = 1.0 [m]
+lagrangian = 0.5 * m * L^2 * \\dot{theta}^2 - m * g * L * (1 - \\cos{theta})
+initial theta = 0.1, \\dot{theta} = 0
+solve method=rk45 t_span=[0, 10]
+animate
+"""
 
-% The Physics
-\lagrangian{ \frac{1}{2} * l^2 * \dot{theta}^2 - g * l * (1 - \cos{theta}) }
-
-\initial{theta=0.5, theta_dot=0.0}
-\solve{RK45}
-\animate{pendulum}
-```
-
-Run it from the command line:
-
-```
-mechanics-dsl --file pendulum.dsl
+# Compile and run
+compiler = PhysicsCompiler()
+result = compiler.compile_dsl(dsl_code)
+solution = compiler.simulate(t_span=(0, 10))
+compiler.animate(solution)
 ```
 
----
+## Documentation
 
-## Why MechanicsDSL?
-
-- Existing tools like Mathematica or MATLAB are powerful but impose a steep learning curve. MechanicsDSL bridges the gap between handwritten derivation and computational simulation.
-- **Write physics, not code:** The DSL mirrors the mathematical formulation found in textbooks.
-- **Immediate Feedback:** Go from abstract Lagrangian to animated simulation in seconds.
-- **Bridge to Python:** Export generated systems to pure Python code for advanced analysis.
-
----
-
-## Roadmap & Contributing
-
-We are actively developing v1.0 for Fall 2026. Current focus areas:
-
-- [ ] Quantum Mechanics module
-- [ ] Plugin architecture for custom forces
-- [ ] Jupyter Notebook integration
-
-See [CONTRIBUTING.md](https://www.google.com/search?q=CONTRIBUTING.md) for how to get involved.
-
----
+Full documentation is available at [https://mechanics-dsl.readthedocs.io](https://mechanics-dsl.readthedocs.io)
 
 ## License
 
-MIT License. Copyright (©) 2025 Noah Parsons.
+MIT License - see LICENSE file for details.
+
+## Citation
+
+If you use MechanicsDSL in your research, please cite:
+
+```bibtex
+@software{mechanics_dsl,
+  author = {Parsons, Noah},
+  title = {MechanicsDSL: A Domain-Specific Language for Classical Mechanics},
+  year = {2025},
+  url = {https://github.com/yourusername/mechanics_dsl}
+}
 ```
