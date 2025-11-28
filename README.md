@@ -1,7 +1,8 @@
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/downloads/)
-[![Status](https://img.shields.io/badge/status-prototype%20%2F%20research-orange)](https://github.com/MechanicsDSL/mechanics-dsl)
 # MechanicsDSL
+
+[![Tests](https://github.com/yourusername/mechanics_dsl/workflows/Python%20CI/badge.svg)](https://github.com/MechanicsDSL/mechanicsdsl/actions)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A Domain-Specific Language for Classical Mechanics - A comprehensive framework for symbolic and numerical analysis of classical mechanical systems using LaTeX-inspired notation.
 
@@ -52,6 +53,16 @@ solution = compiler.simulate(t_span=(0, 10))
 compiler.animate(solution)
 ```
 
+## Testing
+
+Run the test suite:
+
+```bash
+pytest tests/ -v
+```
+
+Or run tests in Google Colab - see `COLAB_TESTING.md` for instructions!
+
 ## Documentation
 
 Full documentation is available at [https://mechanics-dsl.readthedocs.io](https://mechanics-dsl.readthedocs.io)
@@ -69,6 +80,6 @@ If you use MechanicsDSL in your research, please cite:
   author = {Parsons, Noah},
   title = {MechanicsDSL: A Domain-Specific Language for Classical Mechanics},
   year = {2025},
-  url = {https://github.com/yourusername/mechanics_dsl}
+  url = {https://github.com/MechanicsDSL/mechanicsdsl}
 }
 ```
