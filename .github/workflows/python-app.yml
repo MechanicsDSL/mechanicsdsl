@@ -10,11 +10,13 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
     
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
@@ -22,40 +24,65 @@ jobs:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
     
+    - name: Upgrade pip, setuptools, and wheel
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+    
     - name: Install build dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install setuptools wheel build
+        pip install build
     
-    - name: Install package and dependencies
+    - name: Install runtime dependencies
       run: |
-        # Install runtime dependencies first
         pip install numpy scipy sympy matplotlib
-        # Then install package in editable mode
+    
+    - name: Install package in editable mode
+      run: |
         pip install -e .
-        # Install test dependencies
+    
+    - name: Install test dependencies
+      run: |
         pip install pytest pytest-cov
     
     - name: Verify installation
+      env:
+        PYTHONPATH: ${{ github.workspace }}/src
       run: |
-        python -c "import mechanics_dsl; print(f'Version: {mechanics_dsl.__version__}')"
-        python -c "from mechanics_dsl import PhysicsCompiler; print('Import successful')"
+        python -c "import sys; sys.path.insert(0, 'src'); import mechanics_dsl; print(f'✓ Import successful: {mechanics_dsl.__version__}')"
+        python -c "import sys; sys.path.insert(0, 'src'); from mechanics_dsl import PhysicsCompiler; print('✓ PhysicsCompiler import successful')"
     
-    - name: Set matplotlib backend (headless)
-      run: |
-        python -c "import matplotlib; matplotlib.use('Agg'); print('Matplotlib backend set to Agg')"
-    
-    - name: Run tests
+    - name: Configure matplotlib for headless environment
       env:
         MPLBACKEND: Agg
         PYTHONPATH: ${{ github.workspace }}/src
       run: |
-        pytest tests/ -v --cov=mechanics_dsl --cov-report=xml --cov-report=term-missing --tb=short
+        python -c "import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt; print('✓ Matplotlib backend configured: Agg')"
+    
+    - name: Run tests with coverage
+      env:
+        CI: true
+        GITHUB_ACTIONS: true
+        MPLBACKEND: Agg
+        PYTHONPATH: ${{ github.workspace }}/src
+      run: |
+        pytest tests/ \
+          -v \
+          --cov=mechanics_dsl \
+          --cov-report=xml \
+          --cov-report=term-missing \
+          --cov-report=html \
+          --tb=short \
+          --maxfail=5 \
+          -W ignore::DeprecationWarning \
+          -W ignore::PendingDeprecationWarning
     
     - name: Upload coverage to Codecov
-      if: matrix.python-version == '3.11'
+      if: matrix.python-version == '3.11' && always()
       uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
         fail_ci_if_error: false
         token: ${{ secrets.CODECOV_TOKEN }}
+        flags: unittests
+        name: codecov-umbrella
+        verbose: true
