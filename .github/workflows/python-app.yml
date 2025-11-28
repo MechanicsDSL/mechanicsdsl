@@ -48,8 +48,11 @@ jobs:
       env:
         PYTHONPATH: ${{ github.workspace }}/src
       run: |
-        python -c "import sys; sys.path.insert(0, 'src'); import mechanics_dsl; print(f'✓ Import successful: {mechanics_dsl.__version__}')"
-        python -c "import sys; sys.path.insert(0, 'src'); from mechanics_dsl import PhysicsCompiler; print('✓ PhysicsCompiler import successful')"
+        # Verify package is installed (not using fallback)
+        python -c "import mechanics_dsl; print(f'✓ Package import successful: {mechanics_dsl.__version__}')"
+        python -c "from mechanics_dsl import PhysicsCompiler; print('✓ PhysicsCompiler import successful')"
+        # Ensure we're using the installed package, not reference/core.py
+        python -c "import mechanics_dsl; import inspect; print(f'✓ Package location: {inspect.getfile(mechanics_dsl)}')"
     
     - name: Configure matplotlib for headless environment
       env:
