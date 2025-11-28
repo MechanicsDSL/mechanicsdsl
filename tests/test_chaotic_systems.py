@@ -74,7 +74,8 @@ class TestLorenzSystem:
         assert result['success']
         assert len(result['coordinates']) == 3
         
-        solution = compiler.simulate(t_span=(0, 10), num_points=1000, method='RK45')
+        # Use automatic solver selection (will choose LSODA for stability)
+        solution = compiler.simulate(t_span=(0, 10), num_points=1000)
         
         assert solution['success']
         assert solution['y'].shape[0] == 6  # x, x_dot, y, y_dot, z, z_dot
@@ -132,14 +133,15 @@ class TestRosslerAttractor:
         
         assert result['success']
         
-        solution = compiler.simulate(t_span=(0, 50), num_points=2000, method='RK45')
+        # Use automatic solver selection (will choose LSODA for stability)
+        solution = compiler.simulate(t_span=(0, 50), num_points=2000)
         
         assert solution['success']
         
         # Rössler attractor should show bounded chaotic motion
         x = solution['y'][0]
-        # Use more lenient bound in CI - Rossler can diverge if unstable
-        max_bound = 1e15 if IS_CI else 1e5
+        # Use significantly lenient bound in CI as RK45 can diverge on stiff sections
+        max_bound = 1e15 if IS_CI else 100.0
         assert np.max(np.abs(x)) < max_bound, f"Rössler x not bounded: max = {np.max(np.abs(x)):.3f}"
         assert np.all(np.isfinite(x))
 
@@ -171,7 +173,8 @@ class TestHenonHeiles:
         
         assert result['success']
         
-        solution = compiler.simulate(t_span=(0, 20), num_points=1000, method='RK45')
+        # Use automatic solver selection (will choose LSODA for stability)
+        solution = compiler.simulate(t_span=(0, 20), num_points=1000)
         
         assert solution['success']
         
