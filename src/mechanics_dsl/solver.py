@@ -621,10 +621,10 @@ class NumericalSimulator:
 
         y0 = np.array(y0, dtype=float)
         
-        # FIX: Actually select the solver if method is not provided
+        # FIX: Actually select the optimal solver if none provided
         if method is None:
             method = self._select_optimal_solver(t_span, y0)
-            logger.info(f"Automatically selected solver: {method}")
+            logger.info(f"Adaptive solver selected: {method}")
         elif method == 'RK45' and config.enable_adaptive_solver:
             # Check if we should switch to a more stable method
             adaptive_method = True
