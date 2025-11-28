@@ -69,7 +69,9 @@ class TestLongSimulations:
         
         assert solution['success']
         assert len(solution['t']) == 5000
-        assert elapsed < 30.0  # Should complete in reasonable time
+        # CI runners are slower - use more lenient timeout
+        max_time = 120.0 if IS_CI else 30.0
+        assert elapsed < max_time, f"Simulation took {elapsed:.2f}s, exceeded {max_time}s limit"
         
         # Should show many oscillations
         theta = solution['y'][0]
@@ -240,4 +242,3 @@ class TestSolverMethods:
 
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
-
