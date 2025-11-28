@@ -102,16 +102,20 @@ class NumericalSimulator:
                             # Wrapper accepts (t, *state_vector) but only uses t if needed
                             def wrapper(*args_with_time, _func=func, _indices=indices, _has_time=has_time_flag):
                                 try:
+                                    # CRITICAL FIX: Solver always passes (t, *y), so we must always skip first arg
+                                    # even if the equation doesn't use time explicitly
+                                    if len(args_with_time) < 1:
+                                        return 0.0
+                                    
                                     if _has_time:
                                         # First arg is time, rest are state vector
-                                        if len(args_with_time) < 1:
-                                            return 0.0
                                         t_val = float(args_with_time[0])
                                         state_vector = args_with_time[1:] if len(args_with_time) > 1 else []
                                     else:
-                                        # No time, all args are state vector
-                                        t_val = 0.0
-                                        state_vector = args_with_time
+                                        # Equation doesn't use time, but solver still passes it as first arg
+                                        # Skip the time argument and use the rest as state vector
+                                        t_val = 0.0  # Not used, but set for consistency
+                                        state_vector = args_with_time[1:] if len(args_with_time) > 1 else []
                                     
                                     func_args = []
                                     for idx in _indices:
