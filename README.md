@@ -16,7 +16,7 @@ A Domain-Specific Language for Classical Mechanics - A comprehensive framework f
 - **Performance Monitoring**: Built-in profiling and optimization tools
 
 ## Installation
-
+ 
 ```bash
 pip install mechanics-dsl
 ```
