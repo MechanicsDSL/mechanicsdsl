@@ -14,7 +14,7 @@ def test_harmonic_oscillator():
     \\parameter{k}{1.0}{N/m}
     \\parameter{m}{1.0}{kg}
     \\lagrangian{0.5 * m * \\dot{x}^2 - 0.5 * k * x^2}
-    \\initial{x=1.0, \\dot{x}=0}
+    \\initial{x=1.0, x_dot=0}
     """
     
     compiler = PhysicsCompiler()
@@ -49,7 +49,7 @@ def test_figure8_orbit():
     \\parameter{m}{1.0}{kg}
     \\parameter{G}{1.0}{N*m^2/kg^2}
     \\lagrangian{0.5 * m * (\\dot{x}^2 + \\dot{y}^2) + G * m^2 / \\sqrt{x^2 + y^2}}
-    \\initial{x=1.0, y=0, \\dot{x}=0, \\dot{y}=0.5}
+    \\initial{x=1.0, y=0, x_dot=0, y_dot=0.5}
     """
     
     compiler = PhysicsCompiler()
@@ -84,7 +84,7 @@ def test_simple_pendulum():
     \\parameter{l}{1.0}{m}
     \\parameter{g}{9.81}{m/s^2}
     \\lagrangian{0.5 * m * l^2 * \\dot{theta}^2 - m * g * l * (1 - \\cos{theta})}
-    \\initial{theta=0.1, \\dot{theta}=0}
+    \\initial{theta=0.1, theta_dot=0}
     """
     
     compiler = PhysicsCompiler()
