@@ -110,7 +110,7 @@ class TestDoublePendulum:
             + m2 * g * l2 * \cos{theta2}
         }
         
-        \initial{theta1=0.5, theta1_dot=0.0, theta2=0.0, theta2_dot=0.0}
+        \initial{theta1=0.5, theta1_dot=0.0, theta2=0.1, theta2_dot=0.0}
         """
         
         compiler = get_compiler()
