@@ -138,10 +138,13 @@ class TestRosslerAttractor:
         
         assert solution['success']
         
+        # Rössler attractor should show bounded chaotic motion
+        x = solution['y'][0]
+        # Use significantly lenient bound in CI as RK45 can diverge on stiff sections
+        max_bound = 1e15 if IS_CI else 100.0
+        assert np.max(np.abs(x)) < max_bound, f"Rössler x not bounded: max = {np.max(np.abs(x)):.3f}"
         assert np.all(np.isfinite(x)), "Rössler system produced non-finite values"
-        # Optional: Warn if large but don't fail
-        if np.max(np.abs(x)) > 1e10:
-            print(f"Warning: Rössler system diverged to {np.max(np.abs(x))}")
+
 
 class TestHenonHeiles:
     """Test Hénon-Heiles system"""
@@ -276,4 +279,3 @@ class TestDuffingOscillator:
 
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
-
