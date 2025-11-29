@@ -96,12 +96,13 @@ class NumericalSimulator:
                 if ordered_symbols:
                     try:
                         func = sp.lambdify(ordered_symbols, eq, modules=['numpy', 'math'])
-
+                        
                         def make_wrapper(func, indices, has_time_flag):
                             # Force capture by value
                             def wrapper(*args_with_time, _func=func, _indices=indices, _has_time=has_time_flag):
                                 try:
                                     # FIX: Always split time from state vector
+                                    # args_with_time comes from solve_ivp, so it is ALWAYS (t, y0, y1, ...)
                                     if len(args_with_time) < 1:
                                         return 0.0
                                     
@@ -119,8 +120,10 @@ class NumericalSimulator:
                                             else:
                                                 func_args.append(0.0)
                                     
+                                    # Execute the lambda function
                                     if len(func_args) == len(_indices):
                                         result = _func(*func_args)
+                                        # Ensure we return a float
                                         if isinstance(result, np.ndarray):
                                             result = float(result.item()) if result.size == 1 else float(result.flat[0])
                                         return float(result) if np.isfinite(result) else 0.0
@@ -717,5 +720,3 @@ class NumericalSimulator:
                 'success': False,
                 'error': str(e)
             }
-
-
