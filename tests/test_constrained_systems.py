@@ -85,9 +85,13 @@ class TestRollingBall:
         assert np.all(x >= -0.01), f"Ball went backwards: min x = {np.min(x):.6f}"
 
 
+
+
+
 class TestAtwoodMachine:
     """Test Atwood machine with constraint"""
     
+    # --- ADD THIS SKIP MARKER ---
     @pytest.mark.skip(reason="Constraint engine requires update for index-1 DAEs")
     def test_atwood_machine(self):
         """Test Atwood machine (two masses connected by string)"""
@@ -183,3 +187,4 @@ class TestPendulumWithConstraint:
 
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
+
