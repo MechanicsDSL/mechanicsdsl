@@ -140,6 +140,13 @@ class UnitSystem:
                 op_func = ops.get(type(node.op))
                 if op_func is None:
                     raise ValueError(f"Unsupported operator: {type(node.op).__name__}")
+                
+                # Special handling for power operation: if right is dimensionless Unit (numeric constant),
+                # extract its scale to use as float exponent
+                if isinstance(node.op, ast.Pow) and isinstance(right, Unit):
+                    if not right.dimensions:  # Dimensionless = numeric constant
+                        return left ** right.scale
+                
                 return op_func(left, right)
             
             elif isinstance(node, ast.Constant):
