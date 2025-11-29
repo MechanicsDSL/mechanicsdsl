@@ -24,7 +24,7 @@ pip install mechanics-dsl
 Or install from source:
 
 ```bash
-git clone https://github.com/yourusername/mechanics_dsl.git
+git clone https://github.com/MechanicsDSL/mechanicsdsl
 cd mechanics_dsl
 pip install -e .
 ```
