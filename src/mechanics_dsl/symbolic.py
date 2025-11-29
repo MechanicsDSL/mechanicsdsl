@@ -95,10 +95,16 @@ class SymbolicEngine:
             return sp.Float(expr.value)
             
         elif isinstance(expr, IdentExpr):
+            # --- FIX: Map 't' to the canonical time symbol ---
+            if expr.name == 't':
+                return self.time_symbol
             return self.get_symbol(expr.name)
+            # -------------------------------------------------
             
         elif isinstance(expr, GreekLetterExpr):
             return self.get_symbol(expr.letter)
+        
+        # ... rest of the method ...
             
         elif isinstance(expr, BinaryOpExpr):
             left = self._ast_to_sympy_impl(expr.left)
