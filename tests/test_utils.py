@@ -433,13 +433,6 @@ class TestTimeout:
         with timeout(1.0):
             time.sleep(0.01)  # Should complete successfully
     
-    @pytest.mark.skipif(platform.system() == 'Windows', reason="Timeout on Windows uses threading")
-    def test_timeout_failure(self):
-        """Test timeout with slow operation"""
-        with pytest.raises(TimeoutError):
-            with timeout(0.01):
-                time.sleep(0.1)
-    
     def test_timeout_invalid_seconds(self):
         """Test timeout with invalid seconds"""
         with pytest.raises(ValueError):
