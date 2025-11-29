@@ -98,49 +98,41 @@ class NumericalSimulator:
                         func = sp.lambdify(ordered_symbols, eq, modules=['numpy', 'math'])
                         
                         def make_wrapper(func, indices, has_time_flag):
-                            # Force capture by value using default arguments
-                            # Wrapper accepts (t, *state_vector) but only uses t if needed
+                            # Force capture by value
                             def wrapper(*args_with_time, _func=func, _indices=indices, _has_time=has_time_flag):
                                 try:
-                                    # CRITICAL FIX: Solver always passes (t, *y), so we must always skip first arg
-                                    # even if the equation doesn't use time explicitly
+                                    # FIX: Always split time from state vector
+                                    # args_with_time comes from solve_ivp, so it is ALWAYS (t, y0, y1, ...)
                                     if len(args_with_time) < 1:
                                         return 0.0
                                     
-                                    if _has_time:
-                                        # First arg is time, rest are state vector
-                                        t_val = float(args_with_time[0])
-                                        state_vector = args_with_time[1:] if len(args_with_time) > 1 else []
-                                    else:
-                                        # Equation doesn't use time, but solver still passes it as first arg
-                                        # Skip the time argument and use the rest as state vector
-                                        t_val = 0.0  # Not used, but set for consistency
-                                        state_vector = args_with_time[1:] if len(args_with_time) > 1 else []
+                                    t_val = float(args_with_time[0])
+                                    state_vector = args_with_time[1:]
                                     
                                     func_args = []
                                     for idx in _indices:
                                         if idx == -1:  # Time index
                                             func_args.append(t_val)
                                         elif idx >= 0:  # State variable index
+                                            # Safe access to state vector
                                             if idx < len(state_vector):
                                                 func_args.append(state_vector[idx])
                                             else:
                                                 func_args.append(0.0)
                                     
+                                    # Execute the lambda function
                                     if len(func_args) == len(_indices):
                                         result = _func(*func_args)
+                                        # Ensure we return a float
                                         if isinstance(result, np.ndarray):
-                                            if result.size == 1:
-                                                result = float(result.item())
-                                            else:
-                                                result = float(result.flat[0])
-                                        result = float(result)
-                                        return result if np.isfinite(result) else 0.0
+                                            result = float(result.item()) if result.size == 1 else float(result.flat[0])
+                                        return float(result) if np.isfinite(result) else 0.0
                                     return 0.0
                                 except (ValueError, TypeError, ZeroDivisionError, OverflowError) as e:
                                     logger.debug(f"Evaluation error: {e}")
                                     return 0.0
                             return wrapper
+                        # -------------------------------------
                         
                         compiled_equations[accel_key] = make_wrapper(func, symbol_indices, has_time)
                         logger.debug(f"Compiled {accel_key}")
@@ -729,3 +721,4 @@ class NumericalSimulator:
                 'success': False,
                 'error': str(e)
             }
+
