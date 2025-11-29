@@ -127,7 +127,10 @@ class TestDoublePendulum:
         theta1 = solution['y'][0]
         theta2 = solution['y'][2]
         assert np.max(np.abs(theta1)) > 0.1
-        assert np.max(np.abs(theta2)) > 0.1
+        # theta2 starts at 0.1, so check that it varies (not just stays at initial value)
+        assert np.max(np.abs(theta2)) >= 0.1
+        # Also check that it actually moves (not just the initial condition)
+        assert np.std(theta2) > 0.01, "theta2 should show variation, not just initial condition"
         
         # Energy should be approximately conserved (within 5%)
         from mechanics_dsl.energy import PotentialEnergyCalculator
