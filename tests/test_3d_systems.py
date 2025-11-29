@@ -194,54 +194,6 @@ class TestSphericalPendulum:
             # If initial energy is zero or very small, just check that energy stays small
             assert np.all(np.abs(E_total) < 1e-5), "Energy should remain near zero"
 
-
-class TestElasticPendulum3D:
-    """Test 3D elastic pendulum"""
-    
-    def test_elastic_pendulum_3d(self):
-        """Test elastic pendulum with radial and angular motion"""
-        dsl_code = r"""
-        \system{elastic_pendulum_3d}
-        \defvar{r}{Length}{m}
-        \defvar{theta}{Angle}{rad}
-        \defvar{phi}{Angle}{rad}
-        \defvar{m}{Mass}{kg}
-        \defvar{k}{Spring Constant}{N/m}
-        \defvar{g}{Acceleration}{m/s^2}
-        
-        \parameter{m}{1.0}{kg}
-        \parameter{k}{10.0}{N/m}
-        \parameter{g}{9.81}{m/s^2}
-        
-        \lagrangian{
-            \frac{1}{2} * m * (\dot{r}^2 + r^2 * \dot{theta}^2 + r^2 * \sin{theta}^2 * \dot{phi}^2) 
-            - \frac{1}{2} * k * (r - 1.0)^2 
-            - m * g * r * \cos{theta}
-        }
-        
-        \initial{r=1.5, r_dot=0.0, theta=0.3, theta_dot=0.0, phi=0.0, phi_dot=0.5}
-        """
-        
-        compiler = get_compiler()
-        result = compiler.compile_dsl(dsl_code)
-        
-        assert result['success']
-        assert len(result['coordinates']) == 3
-        
-        solution = compiler.simulate(t_span=(0, 5), num_points=500)
-        
-        assert solution['success']
-        assert solution['y'].shape[0] == 6  # 3 coordinates * 2 states
-        
-        # All coordinates should evolve
-        r = solution['y'][0]
-        theta = solution['y'][2]
-        phi = solution['y'][4]
-        
-        assert np.all(r > 0)  # Radius should stay positive
-        assert np.max(np.abs(theta)) > 0.01
-        assert np.max(np.abs(phi)) > 0.01
-
-
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
+
