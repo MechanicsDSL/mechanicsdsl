@@ -139,19 +139,20 @@ class TestLRUCache:
     
     def test_cache_initialization(self):
         """Test cache initialization"""
-        cache = LRUCache(max_size=5)
-        assert cache.max_size == 5
-        assert len(cache) == 0
+        cache = LRUCache(maxsize=5)
+        assert cache.maxsize == 5
+        stats = cache.get_stats()
+        assert stats['size'] == 0
     
     def test_cache_set_get(self):
         """Test cache set and get"""
-        cache = LRUCache(max_size=3)
+        cache = LRUCache(maxsize=3)
         cache.set('key1', 'value1')
         assert cache.get('key1') == 'value1'
     
     def test_cache_eviction(self):
         """Test LRU eviction"""
-        cache = LRUCache(max_size=2)
+        cache = LRUCache(maxsize=2)
         cache.set('key1', 'value1')
         cache.set('key2', 'value2')
         cache.set('key3', 'value3')  # Should evict key1
@@ -169,7 +170,8 @@ class TestLRUCache:
         cache = LRUCache()
         cache.set('key1', 'value1')
         cache.clear()
-        assert len(cache) == 0
+        stats = cache.get_stats()
+        assert stats['size'] == 0
         assert cache.get('key1') is None
     
     def test_cache_set_none_value(self):
@@ -177,15 +179,18 @@ class TestLRUCache:
         cache = LRUCache()
         cache.set('key1', None)
         # Should handle None gracefully
+        assert cache.get('key1') is None
     
     def test_cache_get_stats(self):
         """Test getting cache statistics"""
-        cache = LRUCache(max_size=5)
+        cache = LRUCache(maxsize=5)
         cache.set('key1', 'value1')
         cache.get('key1')
         stats = cache.get_stats()
         assert isinstance(stats, dict)
-        assert 'hits' in stats or 'size' in stats
+        assert 'hits' in stats
+        assert 'size' in stats
+        assert stats['hits'] >= 1
 
 
 class TestAdvancedErrorHandler:
