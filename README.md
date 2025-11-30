@@ -18,14 +18,14 @@ A Domain-Specific Language for Classical Mechanics - A comprehensive framework f
 ## Installation
  
 ```bash
-pip install mechanics-dsl
+pip install mechanicsdsl-core
 ```
 
 Or install from source:
 
 ```bash
 git clone https://github.com/MechanicsDSL/mechanicsdsl
-cd mechanics_dsl
+cd src
 pip install -e .
 ```
 
