@@ -65,7 +65,7 @@ The software automatically derives the equation of motion and performs the time-
 
 # Validation
 
-The software has been rigorously verified against analytical solutions (Harmonic Oscillator) and strict conservation laws. notably, it successfully simulates the Chenciner & Montgomery "Figure-8" three-body orbit, maintaining a periodicity error of 6.31×10−6 over 100 orbital periods by automatically adapting the solver strategy to handle the system's stiff gradients.
+The software has been rigorously verified against analytical solutions (Harmonic Oscillator) and strict conservation laws. Notably, it successfully simulates the Chenciner & Montgomery "Figure-8" three-body orbit, maintaining a periodicity error of $6.31 \times 10^{-6}$ over 100 orbital periods by automatically adapting the solver strategy to handle the system's stiff gradients.
 
 # Acknowledgements
 
