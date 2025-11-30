@@ -22,7 +22,7 @@ A Domain-Specific Language for Classical Mechanics - A comprehensive framework f
 pip install mechanicsdsl-core
 ```
 
-## Quick Start
+## Quick Start (In GitHub Codespaces)
 
 ```python
 import numpy as np
