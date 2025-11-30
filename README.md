@@ -3,7 +3,7 @@
 [![Python CI](https://github.com/MechanicsDSL/mechanicsdsl/actions/workflows/python-app.yml/badge.svg)](https://github.com/MechanicsDSL/mechanicsdsl/actions/workflows/python-app.yml)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17771040.svg)](https://doi.org/10.5281/zenodo.17771040)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17771040.svg)](hhttps://zenodo.org/badge/DOI/10.5281/zenodo.17771040)
 
 A Domain-Specific Language for Classical Mechanics - A comprehensive framework for symbolic and numerical analysis of classical mechanical systems using LaTeX-inspired notation.
 
