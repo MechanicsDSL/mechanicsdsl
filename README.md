@@ -21,18 +21,10 @@ A Domain-Specific Language for Classical Mechanics - A comprehensive framework f
 pip install mechanicsdsl-core
 ```
 
-Or install from source:
-
-```bash
-git clone https://github.com/MechanicsDSL/mechanicsdsl
-cd src
-pip install -e .
-```
-
 ## Quick Start
 
 ```python
-from mechanics_dsl import PhysicsCompiler
+from mechanicsdsl-core import PhysicsCompiler
 
 # Define a simple pendulum system
 dsl_code = """
