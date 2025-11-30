@@ -26,8 +26,6 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pytest"]
-test = ["pytest-cov"]
-docs = ["sphinx", "sphinx-rtd-theme", "myst-parser"]
 
 [project.urls]
 "Repository" = "https://github.com/MechanicsDSL/mechanicsdsl"
