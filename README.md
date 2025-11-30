@@ -3,7 +3,7 @@
 [![Python CI](https://github.com/MechanicsDSL/mechanicsdsl/actions/workflows/python-app.yml/badge.svg)](https://github.com/MechanicsDSL/mechanicsdsl/actions/workflows/python-app.yml)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17771040.svg)](hhttps://zenodo.org/badge/DOI/10.5281/zenodo.17771040)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17771040.svg)](https://zenodo.org/badge/DOI/10.5281/zenodo.17771040)
 
 A Domain-Specific Language for Classical Mechanics - A comprehensive framework for symbolic and numerical analysis of classical mechanical systems using LaTeX-inspired notation.
 
@@ -20,6 +20,28 @@ A Domain-Specific Language for Classical Mechanics - A comprehensive framework f
  
 ```bash
 pip install mechanicsdsl-core
+```
+
+## Quick Start
+
+```python
+from mechanics_dsl import PhysicsCompiler
+
+# Define a simple pendulum system
+dsl_code = r"""
+\system{pendulum}
+\var{theta}{Angle}{rad}
+\parameter{m}{1.0}{kg}
+\parameter{L}{1.0}{m}
+\parameter{g}{9.81}{m/s^2}
+\lagrangian{0.5 * m * L^2 * \dot{theta}^2 - m * g * L * (1 - \cos{theta})}
+\initial{theta=0.1, theta_dot=0.0}
+"""
+
+compiler = PhysicsCompiler()
+result = compiler.compile_dsl(dsl_code)
+solution = compiler.simulate(t_span=(0, 10))
+compiler.animate(solution)
 ```
 
 ## Documentation
