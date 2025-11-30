@@ -61,7 +61,7 @@ A damped driven harmonic oscillator can be defined and simulated with the follow
 
 \initial{x=1.0, x_dot=0.0}
 ```
-The software automatically derives the equation of motion mx¨+bx˙+kx=0 and performs the time-domain simulation.
+The software automatically derives the equation of motion and performs the time-domain simulation.
 
 # Validation
 
