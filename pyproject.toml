@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mechanics_dsl"
-version = "0.6.0"
+name = "mechanics_dsl_physics"
+version = "0.6.1"
 description = "A Domain-Specific Language for Classical Mechanics with Symbolic and Numerical Analysis"
 authors = [
   { name="Noah Parsons", email="nomapa223@gmail.com" },
