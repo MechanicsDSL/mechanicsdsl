@@ -57,7 +57,7 @@ Or run tests in Google Colab - see `COLAB_TESTING.md` for instructions!
 
 ## Documentation
 
-Full documentation is available at [https://mechanics-dsl.readthedocs.io](https://mechanics-dsl.readthedocs.io)
+Full documentation is available at [https://mechanicsdsl.readthedocs.io/en/latest/index.html](https://mechanicsdsl.readthedocs.io/en/latest/index.html)
 
 ## License
 
