@@ -138,11 +138,22 @@ plt.savefig('figure8_periodicity.png', dpi=150)
 print("Saved plot to 'figure8_periodicity.png'")
 ```
 
-## Validation
+## Validation Gallery
 
-MechanicsDSL is capable of handling complex chaotic systems with high stability. Below is a simulation of the **Three-Body Figure-8 Orbit**, a notoriously sensitive solution to the three-body problem. The engine automatically adapts its solver strategy (switching to LSODA) to maintain a periodicity error of **$6.31 \times 10^{-6}$** over the full period.
+MechanicsDSL has been rigorously tested against analytical solutions, chaotic systems, and conservation laws.
 
-![Figure-8 Orbit Simulation](docs/images/figure8_periodicity.png)
+| **Coupled Modes** | **3D Dynamics** | **Complex Motion** |
+|:---:|:---:|:---:|
+| ![Wilberforce](docs/images/gallery_chaos.png)<br>_Wilberforce Pendulum Beats_ | ![Gyroscope](docs/images/gallery_gyroscope.png)<br>_Gyroscope Precession_ | ![Elastic](docs/images/gallery_constraint.png)<br>_Elastic Pendulum Trajectory_ |
+
+| **Strange Attractors** | **Phase Space** | **Conservation** |
+|:---:|:---:|:---:|
+| ![Duffing](docs/images/gallery_duffing.png)<br>_Duffing Chaotic Attractor_ | ![Phase](docs/images/gallery_phase.png)<br>_Harmonic Portraits_ | ![Energy](docs/images/gallery_energy.png)<br>_Monotonic Energy Dissipation_ |
+
+### High-Precision Validation
+The engine automatically adapts its solver strategy (switching to LSODA) to handle the steep gradients of the three-body problem, maintaining a periodicity error of **$6.31 \times 10^{-6}$** over 100 periods.
+
+![Figure-8 Orbit](docs/images/figure8_periodicity.png)
 
 ## Documentation
 
