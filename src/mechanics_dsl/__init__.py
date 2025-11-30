@@ -7,6 +7,7 @@ mechanical systems using LaTeX-inspired notation.
 
 from .compiler import PhysicsCompiler
 from .utils import setup_logging
+from .energy import PotentialEnergyCalculator
 
 __version__ = "0.6.1"
 __author__ = "Noah Parsons"
