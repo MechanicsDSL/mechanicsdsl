@@ -101,8 +101,6 @@ Found a cool system? Want to share an example? Contributions welcome!
 ## Related Documentation
 
 - [Main README](../README.md) - Package overview
-- [Test Results](../TEST_RESULTS_EXPLANATION.md) - What works and what doesn't
-- [Colab Setup](../COLAB_SETUP_FIXED.md) - Running in Google Colab
-- [Codespaces Setup](../CODESPACES_SETUP.md) - Running in GitHub Codespaces
+
 
 
