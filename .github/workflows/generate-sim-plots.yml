@@ -1,12 +1,12 @@
-name: Generate Simulation Plots
+name: Generate Simulation Plots from Examples
 
 on:
   push:
     branches: [ main ]
-  workflow_dispatch: # Allows running this manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
-  simulate-and-plot:
+  simulate-examples:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,19 +22,30 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         # Install all known dependencies needed for simulations and plotting
-        pip install matplotlib sympy scipy pytest
+        pip install matplotlib sympy scipy
+        # If your project requires its own installation, do that too:
+        # pip install .
 
-    - name: Run standard simulation script and generate plots
-      # Assume you have a script `scripts/run_standard_case.py` 
-      # that runs a simulation and saves files like `output_plot.png`
+    - name: Run all example scripts sequentially
+      # This step finds all .py files in the 'examples' directory and runs them
+      # We use shopt -s globstar to enable recursive globbing if needed
       run: |
-        python scripts/run_standard_case.py
+        shopt -s globstar
+        mkdir -p ./simulation_artifacts
+        for script in examples/*.py; do
+          echo "--- Running $script ---"
+          # Run the script and move its potential output files to a common directory
+          python "$script"
+        done
+      # The user must ensure the scripts themselves output files to the current directory
+      # or a predefined location that can be collected later.
 
-    - name: Upload generated plots as artifacts
+    - name: Collect and Upload generated plots as artifacts
       uses: actions/upload-artifact@v4
       with:
         name: simulation-results-plots
         path: |
-          output_plot_*.png
-          output_data_*.csv
+          *.png
+          *.csv
+          # Add any other generated file extensions here
         retention-days: 7
