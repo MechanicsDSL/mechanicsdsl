@@ -27,6 +27,8 @@ pip install mechanicsdsl-core
 
 ```python
 pip install mechanicsdsl-core
+
+#Save as a .py file
 import numpy as np
 import matplotlib
 matplotlib.use('Agg') # Headless mode for Codespaces
@@ -138,6 +140,8 @@ plt.legend(loc='upper right')
 
 plt.savefig('figure8_periodicity.png', dpi=150)
 print("Saved plot to 'figure8_periodicity.png'")
+
+#Then run python name_of_file.py
 ```
 
 ## Validation Gallery
