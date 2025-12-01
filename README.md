@@ -158,4 +158,4 @@ Full documentation is available at [https://mechanicsdsl.readthedocs.io/en/lates
 
 ## License
 
-MIT License - see LICENSE file for details.
+MIT License - see [![LICENSE](https://github.com/MechanicsDSL/mechanicsdsl/blob/main/LICENSE)](https://github.com/MechanicsDSL/mechanicsdsl/blob/main/LICENSE) file for details.
