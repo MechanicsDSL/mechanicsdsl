@@ -152,11 +152,6 @@ MechanicsDSL has been rigorously tested against analytical solutions, chaotic sy
 |:---:|:---:|:---:|
 | ![Duffing](docs/images/gallery_duffing.png)<br>_Duffing Chaotic Attractor_ | ![Phase](docs/images/gallery_phase.png)<br>_Harmonic Portraits_ | ![Energy](docs/images/gallery_energy.png)<br>_Monotonic Energy Dissipation_ |
 
-### High-Precision Validation
-The engine automatically adapts its solver strategy (switching to LSODA) to handle the steep gradients of the three-body problem, maintaining a periodicity error of **$6.31 \times 10^{-6}$** over 100 periods.
-
-![Figure-8 Orbit](docs/images/figure8_periodicity.png)
-
 ## Documentation
 
 Full documentation is available at [https://mechanicsdsl.readthedocs.io/en/latest/index.html](https://mechanicsdsl.readthedocs.io/en/latest/index.html)
