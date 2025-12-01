@@ -33,7 +33,7 @@ compiler1 = PhysicsCompiler()
 dsl_lagrangian = """
 \\system{harmonic_oscillator_hamiltonian}
 
-\\var{x}{Position}{m}
+\\defvar{x}{Position}{m}
 
 \\parameter{m}{1.0}{kg}
 \\parameter{k}{10.0}{N/m}
@@ -67,7 +67,7 @@ compiler2 = PhysicsCompiler()
 dsl_hamiltonian = """
 \\system{explicit_hamiltonian}
 
-\\var{x}{Position}{m}
+\\defvar{x}{Position}{m}
 
 \\parameter{m}{1.0}{kg}
 \\parameter{k}{10.0}{N/m}
@@ -166,4 +166,3 @@ print("6. Better numerical properties (symplectic)")
 print("="*60)
 
 plt.show()
-
