@@ -25,8 +25,8 @@ compiler = PhysicsCompiler()
 dsl_code = """
 \\system{coupled_oscillators}
 
-\\var{x1}{Position of first mass}{m}
-\\var{x2}{Position of second mass}{m}
+\\defvar{x1}{Position of first mass}{m}
+\\defvar{x2}{Position of second mass}{m}
 
 \\parameter{m1}{1.0}{kg}
 \\parameter{m2}{1.0}{kg}
@@ -248,4 +248,3 @@ print("6. Total energy is conserved")
 print("="*60)
 
 plt.show()
-
