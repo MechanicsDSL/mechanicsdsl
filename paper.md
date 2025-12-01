@@ -70,3 +70,5 @@ The software has been rigorously verified against analytical solutions (Harmonic
 # Acknowledgements
 
 This project was developed as an independent research initiative. The author thanks the open-source community for maintaining the foundational libraries SymPy, NumPy, and SciPy that make this work possible.
+
+# References
