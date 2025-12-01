@@ -12,27 +12,6 @@ The easiest way to install MechanicsDSL is via pip:
 
     pip install mechanics-dsl
 
-Installing from Source
-----------------------
-
-For developers or those wanting the latest features, you can install directly from the repository:
-
-.. code-block:: bash
-
-    git clone https://github.com/MechanicsDSL/mechanicsdsl.git
-    cd mechanicsdsl
-    pip install -e .
-
-Verifying Installation
-----------------------
-
-You can verify that the installation was successful by running the built-in tests:
-
-.. code-block:: bash
-
-    pip install pytest
-    pytest tests/
-
 Dependencies
 ------------
 
