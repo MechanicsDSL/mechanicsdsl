@@ -30,7 +30,7 @@ compiler1 = PhysicsCompiler()
 dsl_code = """
 \\system{harmonic_oscillator}
 
-\\var{x}{Position}{m}
+\\defvar{x}{Position}{m}
 
 \\parameter{m}{1.0}{kg}
 \\parameter{k}{10.0}{N/m}
@@ -169,4 +169,3 @@ print("6. Can save/load entire compiler state")
 print("="*60)
 
 plt.show()
-
