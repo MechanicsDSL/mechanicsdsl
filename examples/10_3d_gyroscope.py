@@ -26,9 +26,9 @@ compiler = PhysicsCompiler()
 dsl_code = """
 \\system{gyroscope}
 
-\\var{theta}{Nutation angle}{rad}
-\\var{phi}{Precession angle}{rad}
-\\var{psi}{Spin angle}{rad}
+\\defvar{theta}{Nutation angle}{rad}
+\\defvar{phi}{Precession angle}{rad}
+\\defvar{psi}{Spin angle}{rad}
 
 \\parameter{I1}{1.0}{kg·m^2}
 \\parameter{I3}{0.5}{kg·m^2}
@@ -185,4 +185,3 @@ print("6. Energy and angular momentum are conserved")
 print("="*60)
 
 plt.show()
-
