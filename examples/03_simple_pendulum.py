@@ -28,18 +28,18 @@ print("="*60)
 
 compiler1 = PhysicsCompiler()
 
-dsl_small = """
-\\system{small_angle_pendulum}
+dsl_small = r"""
+\system{small_angle_pendulum}
 
-\\var{theta}{Angle}{rad}
+\defvar{theta}{Angle}{rad}
 
-\\parameter{m}{1.0}{kg}
-\\parameter{L}{1.0}{m}
-\\parameter{g}{9.81}{m/s^2}
+\parameter{m}{1.0}{kg}
+\parameter{L}{1.0}{m}
+\parameter{g}{9.81}{m/s^2}
 
-\\lagrangian{\\frac{1}{2} * m * L^2 * \\dot{theta}^2 - m * g * L * (1 - \\cos{theta})}
+\lagrangian{\frac{1}{2} * m * L^2 * \dot{theta}^2 - m * g * L * (1 - \cos{theta})}
 
-\\initial{theta=0.1, theta_dot=0.0}
+\initial{theta=0.1, theta_dot=0.0}
 """
 
 result1 = compiler1.compile_dsl(dsl_small)
@@ -65,18 +65,18 @@ print("="*60)
 
 compiler2 = PhysicsCompiler()
 
-dsl_large = """
-\\system{large_angle_pendulum}
+dsl_large = r"""
+\system{large_angle_pendulum}
 
-\\var{theta}{Angle}{rad}
+\defvar{theta}{Angle}{rad}
 
-\\parameter{m}{1.0}{kg}
-\\parameter{L}{1.0}{m}
-\\parameter{g}{9.81}{m/s^2}
+\parameter{m}{1.0}{kg}
+\parameter{L}{1.0}{m}
+\parameter{g}{9.81}{m/s^2}
 
-\\lagrangian{\\frac{1}{2} * m * L^2 * \\dot{theta}^2 - m * g * L * (1 - \\cos{theta})}
+\lagrangian{\frac{1}{2} * m * L^2 * \dot{theta}^2 - m * g * L * (1 - \cos{theta})}
 
-\\initial{theta=1.5, theta_dot=0.0}
+\initial{theta=1.5, theta_dot=0.0}
 """
 
 result2 = compiler2.compile_dsl(dsl_large)
@@ -147,7 +147,6 @@ ax4.grid(True, alpha=0.3)
 
 # Trajectory visualization
 ax5 = plt.subplot(3, 2, 5)
-# Plot pendulum rod
 for i in range(0, len(x1), 10):
     ax5.plot([0, x1[i]], [0, y1[i]], 'b-', alpha=0.1, linewidth=0.5)
 ax5.plot(x1, y1, 'b-', linewidth=2, label='Trajectory')
@@ -179,28 +178,39 @@ print("\n✅ Plot saved as '03_pendulum_comparison.png'")
 # Period analysis
 # ============================================================================
 
-# Find periods by detecting zero crossings
+# Find periods by detecting successive peaks
 def find_period(t, theta):
-    """Find period by detecting when theta returns to initial value"""
-    # Find first zero crossing after initial
-    initial = theta[0]
-    crossings = []
-    for i in range(1, len(theta)):
-        if (theta[i-1] >= initial and theta[i] < initial) or \
-           (theta[i-1] <= initial and theta[i] > initial):
-            crossings.append(t[i])
-    if len(crossings) >= 2:
-        return crossings[1] - crossings[0]
+    """Find period by detecting times between successive peaks."""
+    peak_times = []
+    # Check if the first point is a peak (assuming theta_dot=0 initially)
+    if len(theta) > 1 and theta[0] >= theta[1]:
+        peak_times.append(t[0])
+
+    # Find other local maxima
+    for i in range(1, len(theta) - 1):
+        if theta[i] >= theta[i-1] and theta[i] >= theta[i+1]:
+            peak_times.append(t[i])
+            
+    if len(peak_times) >= 2:
+        # The period is the time difference between the first two detected peaks.
+        # If initial point is a peak, it's the time from t[0] to the next peak.
+        return peak_times[1] - peak_times[0]
     return None
 
 period1 = find_period(t1, theta1)
 period2 = find_period(t2, theta2)
 
 print("\nPeriod Analysis:")
-print(f"   Small angle period: {period1:.3f} s (expected: {T_small:.3f} s)")
+# Ensure period1 is not None before formatting
+if period1 is not None:
+    print(f"   Small angle period: {period1:.3f} s (expected: {T_small:.3f} s)")
+else:
+    print(f"   Small angle period: Could not determine (expected: {T_small:.3f} s)")
+
 if period2:
     print(f"   Large angle period: {period2:.3f} s")
-    print(f"   Period increase: {(period2/period1 - 1)*100:.1f}%")
+    if period1 is not None:
+        print(f"   Period increase: {(period2/period1 - 1)*100:.1f}%")
     print("\n   💡 Large angles have LONGER periods!")
 
 # ============================================================================
@@ -219,4 +229,3 @@ print("6. Energy is conserved in both cases")
 print("="*60)
 
 plt.show()
-
