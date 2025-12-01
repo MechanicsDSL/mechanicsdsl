@@ -2,9 +2,9 @@
 
 This directory contains comprehensive tutorials and examples for using MechanicsDSL, organized by difficulty level and topic.
 
-## 📚 Tutorial Structure
+## Tutorial Structure
 
-### 🟢 Beginner Level
+### Beginner Level
 Start here if you're new to MechanicsDSL or classical mechanics simulations.
 
 1. **[01_getting_started.py](01_getting_started.py)** - Your first simulation
@@ -12,7 +12,7 @@ Start here if you're new to MechanicsDSL or classical mechanics simulations.
 3. **[03_simple_pendulum.py](03_simple_pendulum.py)** - Basic pendulum dynamics
 4. **[04_plotting_basics.py](04_plotting_basics.py)** - Visualization fundamentals
 
-### 🟡 Intermediate Level
+### Intermediate Level
 For users comfortable with basic systems.
 
 5. **[05_double_pendulum.py](05_double_pendulum.py)** - Chaotic double pendulum
@@ -21,7 +21,7 @@ For users comfortable with basic systems.
 8. **[08_damped_systems.py](08_damped_systems.py)** - Damping and energy dissipation
 9. **[09_forced_oscillators.py](09_forced_oscillators.py)** - Driven systems
 
-### 🔴 Advanced Level
+### Advanced Level
 Complex systems requiring deeper understanding.
 
 10. **[10_3d_gyroscope.py](10_3d_gyroscope.py)** - 3D rigid body rotation
@@ -30,7 +30,7 @@ Complex systems requiring deeper understanding.
 13. **[13_hamiltonian_formulation.py](13_hamiltonian_formulation.py)** - Hamiltonian mechanics
 14. **[14_chaotic_systems.py](14_chaotic_systems.py)** - Lorenz and Rössler attractors
 
-### 🎓 Specialized Topics
+### Specialized Topics
 Advanced features and techniques.
 
 15. **[15_energy_analysis.py](15_energy_analysis.py)** - Energy conservation analysis
@@ -40,7 +40,7 @@ Advanced features and techniques.
 19. **[19_performance_tuning.py](19_performance_tuning.py)** - Optimization tips
 20. **[20_units_and_dimensions.py](20_units_and_dimensions.py)** - Unit system usage
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Running Examples
 
@@ -56,7 +56,7 @@ pytest examples/ -v
 
 Each example can be run in a Jupyter notebook. Simply copy the code into a cell and execute.
 
-## 📖 Learning Path
+## Learning Path
 
 ### Week 1: Basics
 - Day 1-2: Examples 1-4 (Getting started, basic systems)
@@ -73,7 +73,7 @@ Each example can be run in a Jupyter notebook. Simply copy the code into a cell 
 - Day 3-4: Examples 14-16 (Chaos, energy, phase space)
 - Day 5: Examples 17-20 (Specialized topics)
 
-## 💡 Tips
+## Tips
 
 1. **Start Simple**: Begin with example 01 and work your way up
 2. **Modify Examples**: Change parameters and see what happens
@@ -81,7 +81,7 @@ Each example can be run in a Jupyter notebook. Simply copy the code into a cell 
 4. **Experiment**: Try combining features from different examples
 5. **Check Documentation**: See the main README.md for API details
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 If an example doesn't run:
 1. Make sure MechanicsDSL is installed: `pip install -e .`
@@ -89,7 +89,7 @@ If an example doesn't run:
 3. Verify the DSL syntax matches the examples exactly
 4. Check the error messages - they're usually helpful!
 
-## 📝 Contributing Examples
+## Contributing Examples
 
 Found a cool system? Want to share an example? Contributions welcome!
 
@@ -98,10 +98,11 @@ Found a cool system? Want to share an example? Contributions welcome!
 3. Add a docstring explaining what the system does
 4. Test that it runs successfully
 
-## 🔗 Related Documentation
+## Related Documentation
 
 - [Main README](../README.md) - Package overview
 - [Test Results](../TEST_RESULTS_EXPLANATION.md) - What works and what doesn't
 - [Colab Setup](../COLAB_SETUP_FIXED.md) - Running in Google Colab
 - [Codespaces Setup](../CODESPACES_SETUP.md) - Running in GitHub Codespaces
+
 
