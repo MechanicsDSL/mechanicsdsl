@@ -27,17 +27,17 @@ compiler = PhysicsCompiler()
 # Define the harmonic oscillator system
 # ============================================================================
 
-dsl_code = """
-\\system{harmonic_oscillator}
+dsl_code = r"""
+\system{harmonic_oscillator}
 
-\\var{x}{Position}{m}
+\defvar{x}{Position}{m}
 
-\\parameter{m}{1.0}{kg}
-\\parameter{k}{10.0}{N/m}
+\parameter{m}{1.0}{kg}
+\parameter{k}{10.0}{N/m}
 
-\\lagrangian{\\frac{1}{2} * m * \\dot{x}^2 - \\frac{1}{2} * k * x^2}
+\lagrangian{\frac{1}{2} * m * \dot{x}^2 - \frac{1}{2} * k * x^2}
 
-\\initial{x=1.0, x_dot=0.0}
+\initial{x=1.0, x_dot=0.0}
 """
 
 # ============================================================================
@@ -166,4 +166,3 @@ print("5. Period depends only on m and k: T = 2π√(m/k)")
 print("="*60)
 
 plt.show()
-
