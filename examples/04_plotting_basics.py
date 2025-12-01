@@ -21,17 +21,17 @@ from mechanics_dsl import PhysicsCompiler
 
 compiler = PhysicsCompiler()
 
-dsl_code = """
-\\system{harmonic_oscillator}
+dsl_code = r"""
+\system{harmonic_oscillator}
 
-\\var{x}{Position}{m}
+\defvar{x}{Position}{m}
 
-\\parameter{m}{1.0}{kg}
-\\parameter{k}{10.0}{N/m}
+\parameter{m}{1.0}{kg}
+\parameter{k}{10.0}{N/m}
 
-\\lagrangian{\\frac{1}{2} * m * \\dot{x}^2 - \\frac{1}{2} * k * x^2}
+\lagrangian{\frac{1}{2} * m * \dot{x}^2 - \frac{1}{2} * k * x^2}
 
-\\initial{x=1.0, x_dot=0.0}
+\initial{x=1.0, x_dot=0.0}
 """
 
 result = compiler.compile_dsl(dsl_code)
@@ -241,8 +241,6 @@ print("2. Built-in animate(): Quick animations")
 print("3. Energy plots: Check conservation")
 print("4. Phase space: See system dynamics")
 print("5. Custom layouts: Combine multiple views")
-print("\n💡 Tip: Use what works best for your needs!")
 print("="*60)
 
 plt.show()
-
