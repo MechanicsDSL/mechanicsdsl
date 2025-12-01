@@ -1,8 +1,7 @@
 """
 Tutorial 05: Double Pendulum (Chaotic System)
 
-The double pendulum is a classic example of chaos! Two pendulums connected
-together create unpredictable, beautiful motion.
+Two pendulums connected together create unpredictable motion.
 
 Physics:
 - Two masses m₁, m₂ connected by rods of length L₁, L₂
@@ -26,8 +25,8 @@ compiler = PhysicsCompiler()
 dsl_code = """
 \\system{double_pendulum}
 
-\\var{theta1}{Angle of first pendulum}{rad}
-\\var{theta2}{Angle of second pendulum}{rad}
+\\defvar{theta1}{Angle of first pendulum}{rad}
+\\defvar{theta2}{Angle of second pendulum}{rad}
 
 \\parameter{m1}{1.0}{kg}
 \\parameter{m2}{1.0}{kg}
@@ -214,9 +213,6 @@ plt.tight_layout()
 plt.savefig('05_chaos_demonstration.png', dpi=150)
 print("✅ Saved: 05_chaos_demonstration.png")
 
-print(f"\n💡 After ~{t[divergence_point] if divergence_point else '20'} seconds,")
-print("   trajectories diverge completely despite tiny initial difference!")
-
 # ============================================================================
 # Key insights
 # ============================================================================
@@ -233,4 +229,3 @@ print("6. Small numerical errors can cause large differences")
 print("="*60)
 
 plt.show()
-
