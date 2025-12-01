@@ -1,0 +1,42 @@
+name: CI Build and Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    # Use a matrix strategy to test across different Python versions
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11"]
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        # Optional: cache pip dependencies for faster subsequent runs
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        # Install your project's main dependencies and testing tools
+        pip install pytest pytest-cov matplotlib
+        # If your project uses requirements.txt, you can use this instead:
+        # pip install -r requirements.txt
+        # If your project is a package, install it
+        # pip install .
+
+    - name: Run tests with pytest
+      run: |
+        # Run tests located in the 'tests' directory
+        pytest tests/
