@@ -28,7 +28,7 @@ compiler1 = PhysicsCompiler()
 dsl1 = """
 \\system{harmonic_oscillator_phase}
 
-\\var{x}{Position}{m}
+\\defvar{x}{Position}{m}
 
 \\parameter{m}{1.0}{kg}
 \\parameter{k}{10.0}{N/m}
@@ -57,7 +57,7 @@ compiler2 = PhysicsCompiler()
 dsl2 = """
 \\system{pendulum_phase}
 
-\\var{theta}{Angle}{rad}
+\\defvar{theta}{Angle}{rad}
 
 \\parameter{m}{1.0}{kg}
 \\parameter{L}{1.0}{m}
@@ -95,9 +95,9 @@ initial_conditions = [
 for x0, x_dot0 in initial_conditions:
     compiler = PhysicsCompiler()
     dsl = f"""
-\\system{harmonic_phase_portrait}
+\\system{{harmonic_phase_portrait}}
 
-\\var{{x}}{{Position}}{{m}}
+\\defvar{{x}}{{Position}}{{m}}
 
 \\parameter{{m}}{{1.0}}{{kg}}
 \\parameter{{k}}{{10.0}}{{N/m}}
@@ -180,8 +180,8 @@ compiler3 = PhysicsCompiler()
 dsl3 = """
 \\system{coupled_phase}
 
-\\var{x1}{Position 1}{m}
-\\var{x2}{Position 2}{m}
+\\defvar{x1}{Position 1}{m}
+\\defvar{x2}{Position 2}{m}
 
 \\parameter{m}{1.0}{kg}
 \\parameter{k}{10.0}{N/m}
@@ -232,4 +232,3 @@ print("7. Fixed points = equilibria (where velocity = 0)")
 print("="*60)
 
 plt.show()
-
