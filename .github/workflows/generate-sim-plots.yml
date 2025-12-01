@@ -1,0 +1,40 @@
+name: Generate Simulation Plots
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Allows running this manually from the Actions tab
+
+jobs:
+  simulate-and-plot:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        # Install all known dependencies needed for simulations and plotting
+        pip install matplotlib sympy scipy pytest
+
+    - name: Run standard simulation script and generate plots
+      # Assume you have a script `scripts/run_standard_case.py` 
+      # that runs a simulation and saves files like `output_plot.png`
+      run: |
+        python scripts/run_standard_case.py
+
+    - name: Upload generated plots as artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: simulation-results-plots
+        path: |
+          output_plot_*.png
+          output_data_*.csv
+        retention-days: 7
