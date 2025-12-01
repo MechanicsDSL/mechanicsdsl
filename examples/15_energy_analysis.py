@@ -24,7 +24,7 @@ compiler = PhysicsCompiler()
 dsl_code = """
 \\system{pendulum_energy}
 
-\\var{theta}{Angle}{rad}
+\\defvar{theta}{Angle}{rad}
 
 \\parameter{m}{1.0}{kg}
 \\parameter{L}{1.0}{m}
@@ -195,4 +195,3 @@ print("6. Energy analysis helps validate simulations")
 print("="*60)
 
 plt.show()
-
