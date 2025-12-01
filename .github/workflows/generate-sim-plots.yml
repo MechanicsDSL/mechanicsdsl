@@ -26,14 +26,28 @@ jobs:
 
     - name: Run all example scripts sequentially
       # Set the PYTHONPATH to include the 'src' directory so Python can find your package
-      # The user must ensure the scripts themselves output files that can be collected later.
       run: |
         shopt -s globstar
         export PYTHONPATH=$PYTHONPATH:$(pwd)/src
         
+        # Define the names of scripts to skip (07_2d_motion.py and 08_damped_systems.py added)
+        EXCLUDE_SCRIPTS="examples/07_2d_motion.py examples/08_damped_systems.py"
+
         for script in examples/*.py; do
-          echo "--- Running $script ---"
-          python "$script"
+          SKIP=false
+          # Check if the current script path is in the exclusion list
+          for excluded in $EXCLUDE_SCRIPTS; do
+            if [ "$script" == "$excluded" ]; then
+              echo "--- Skipping excluded script: $script ---"
+              SKIP=true
+              break
+            fi
+          done
+
+          if [ "$SKIP" == false ]; then
+            echo "--- Running $script ---"
+            python "$script"
+          fi
         done
 
     - name: Collect and Upload generated plots as artifacts
