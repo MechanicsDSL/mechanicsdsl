@@ -26,6 +26,7 @@ pip install mechanicsdsl-core
 ## Quick Start (In GitHub Codespaces)
 
 ```python
+pip install mechanicsdsl-core
 import numpy as np
 import matplotlib
 matplotlib.use('Agg') # Headless mode for Codespaces
