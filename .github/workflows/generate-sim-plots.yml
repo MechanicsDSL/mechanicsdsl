@@ -21,24 +21,20 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        # Install all known dependencies needed for simulations and plotting
-        pip install matplotlib sympy scipy
-        # If your project requires its own installation, do that too:
-        # pip install .
+        # Install all known third-party dependencies needed for simulations and plotting
+        pip install matplotlib sympy scipy pytest
 
     - name: Run all example scripts sequentially
-      # This step finds all .py files in the 'examples' directory and runs them
-      # We use shopt -s globstar to enable recursive globbing if needed
+      # Set the PYTHONPATH to include the 'src' directory so Python can find your package
+      # The user must ensure the scripts themselves output files that can be collected later.
       run: |
         shopt -s globstar
-        mkdir -p ./simulation_artifacts
+        export PYTHONPATH=$PYTHONPATH:$(pwd)/src
+        
         for script in examples/*.py; do
           echo "--- Running $script ---"
-          # Run the script and move its potential output files to a common directory
           python "$script"
         done
-      # The user must ensure the scripts themselves output files to the current directory
-      # or a predefined location that can be collected later.
 
     - name: Collect and Upload generated plots as artifacts
       uses: actions/upload-artifact@v4
