@@ -56,23 +56,6 @@ pytest examples/ -v
 
 Each example can be run in a Jupyter notebook. Simply copy the code into a cell and execute.
 
-## Learning Path
-
-### Week 1: Basics
-- Day 1-2: Examples 1-4 (Getting started, basic systems)
-- Day 3-4: Examples 5-6 (Intermediate systems)
-- Day 5: Practice with your own simple systems
-
-### Week 2: Intermediate
-- Day 1-2: Examples 7-9 (2D motion, damping, forcing)
-- Day 3-4: Examples 10-11 (3D systems)
-- Day 5: Build a complex system of your choice
-
-### Week 3: Advanced
-- Day 1-2: Examples 12-13 (Constraints, Hamiltonian)
-- Day 3-4: Examples 14-16 (Chaos, energy, phase space)
-- Day 5: Examples 17-20 (Specialized topics)
-
 ## Tips
 
 1. **Start Simple**: Begin with example 01 and work your way up
@@ -101,6 +84,3 @@ Found a cool system? Want to share an example? Contributions welcome!
 ## Related Documentation
 
 - [Main README](../README.md) - Package overview
-
-
-
