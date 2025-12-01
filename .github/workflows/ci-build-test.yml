@@ -8,7 +8,6 @@ on:
 
 jobs:
   build:
-    # Use a matrix strategy to test across different Python versions
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11"]
@@ -28,10 +27,18 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        # Install all required dependencies for testing AND running the code
-        pip install pytest pytest-cov matplotlib sympy
-        # Note: If you have many dependencies, it's better to list them 
-        # in a requirements.txt file and use: pip install -r requirements.txt
+        
+        # Install testing tools
+        pip install pytest pytest-cov
+        
+        # Install ALL project dependencies manually (matplotlib, sympy, scipy)
+        pip install matplotlib sympy scipy
+        
+        # Recommended alternative: use a requirements file in your repo root
+        pip install -r requirements.txt
+        
+        # If your project is a package, install it
+        # pip install .
 
     - name: Run tests with pytest
       run: |
