@@ -1,4 +1,6 @@
 name: Generate Simulation Plots from Examples
+permissions:
+  contents: read
 
 on:
   push:
