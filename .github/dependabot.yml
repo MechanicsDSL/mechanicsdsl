@@ -1,0 +1,9 @@
+version: 2
+updates:
+  - package-ecosystem: "pip" # Use "pip" for Python dependencies
+    directory: "/" # Look for requirements.txt in the root directory
+    schedule:
+      # Use a cron expression to run every hour at the start of the hour
+      interval: "cron"
+      # The cron string "0 * * * *" means "at minute 0 of every hour"
+      cron: "0 * * * *"
