@@ -9,7 +9,7 @@ from .compiler import PhysicsCompiler
 from .utils import setup_logging
 from .energy import PotentialEnergyCalculator
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __author__ = "Noah Parsons"
 __license__ = "MIT"
 
