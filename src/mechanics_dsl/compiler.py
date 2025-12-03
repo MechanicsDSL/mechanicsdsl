@@ -120,6 +120,41 @@ class SystemSerializer:
             logger.error(f"Import failed: {e}")
             return None
 
+class ParticleGenerator:
+    """Generates discrete particle positions from geometric regions"""
+    
+    @staticmethod
+    def generate(region: RegionDef, spacing: float) -> List[Tuple[float, float]]:
+        """
+        Generate grid of particles within a region.
+        """
+        if region.shape == "rectangle":
+            x_range = region.constraints.get('x', (0, 0))
+            y_range = region.constraints.get('y', (0, 0))
+            
+            # Create grid
+            x_points = np.arange(x_range[0], x_range[1], spacing)
+            y_points = np.arange(y_range[0], y_range[1], spacing)
+            
+            # Meshgrid
+            xx, yy = np.meshgrid(x_points, y_points)
+            
+            # Flatten to list of (x, y) tuples
+            return list(zip(xx.flatten(), yy.flatten()))
+            
+        elif region.shape == "line":
+            # Useful for boundaries
+            x_range = region.constraints.get('x', (0, 0))
+            y_range = region.constraints.get('y', (0, 0))
+            
+            if x_range[0] == x_range[1]: # Vertical line
+                y_points = np.arange(y_range[0], y_range[1], spacing/2.0) # Denser walls
+                return [(x_range[0], y) for y in y_points]
+            else: # Horizontal line
+                x_points = np.arange(x_range[0], x_range[1], spacing/2.0)
+                return [(x, y_range[0]) for x in x_points]
+        
+        return []
 
 class PhysicsCompiler:
     """
@@ -158,6 +193,9 @@ class PhysicsCompiler:
         self.forces: List[Expression] = []
         self.damping_forces: List[Expression] = []
         self.initial_conditions: Dict[str, float] = {}
+        self.fluid_particles: List[Dict[str, float]] = [] # [{'x': 1.0, 'y': 2.0, 'm': 0.01}, ...]
+        self.boundary_particles: List[Dict[str, float]] = []
+        self.smoothing_length: float = 0.1 # Default 'h'
         
         self.symbolic = SymbolicEngine()
         self.simulator = NumericalSimulator(self.symbolic)
