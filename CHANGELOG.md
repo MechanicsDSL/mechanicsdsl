@@ -1,44 +1,38 @@
-# Changelog
+Changelog
 
 All notable changes to MechanicsDSL will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on Keep a Changelog,
+and this project adheres to Semantic Versioning.
 
-## [0.6.0] - 2025-11-28
+[1.1.0] - 2025-12-02
 
-### Added
-- Comprehensive examples directory with 14+ tutorials
-- Support for time-dependent forces in simulations
-- Enhanced energy analysis capabilities
-- Phase space visualization tools
-- System export/import functionality
-- 3D system support (gyroscopes, spherical pendulums)
-- Hamiltonian formulation support
-- Constrained system handling (holonomic constraints)
-- Non-conservative forces (damping, external forces)
-- Performance monitoring and optimization
-- Unit system with dimensional analysis
-- Comprehensive test suite (54 tests)
+Added
 
-### Changed
-- Refactored from monolithic `core.py` to modular package structure
-- Improved error handling and validation
-- Enhanced documentation and tutorials
-- Better numerical stability for complex systems
+C++ Transpiler: Added compile_to_cpp() method to generate standalone C++ simulations.
 
-### Fixed
-- Time-dependent force compilation in solver
-- Empty DSL input handling
-- Energy conservation in simple systems
-- Import/export functionality
+Multi-Target Support:
 
-## [Unreleased]
+standard: Optimized C++ for benchmarking.
 
-### Planned
-- Non-holonomic constraint support improvements
-- Better Lagrange multiplier handling
-- Additional visualization options
-- Performance optimizations for large systems
-- Extended unit system support
+openmp: Parallel parameter sweeps for chaotic analysis.
 
+raylib: Interactive real-time visualization executables.
+
+arduino: Embedded C++ code for microcontrollers.
+
+wasm: WebAssembly export for browser-based simulations.
+
+python: C++ extensions via pybind11.
+
+Codegen Module: New mechanics_dsl.codegen package for handling source-to-source translation.
+
+Advanced Templates: Included C++ templates for all supported targets.
+
+Changed
+
+Compiler Architecture: Upgraded from pure Python execution to a dual-mode engine (Python/C++).
+
+Performance: Large system simulations ($N > 100$ DOF) are now feasible via C++ export.
+
+Documentation: Added tutorials for C++ export (examples/21_cpp_export.py) and advanced targets (examples/22_advanced_targets.py).
