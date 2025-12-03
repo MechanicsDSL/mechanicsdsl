@@ -340,6 +340,7 @@ class PhysicsCompiler:
             # Semantic analysis with error handling
             try:
                 self.analyze_semantics()
+                self.process_fluids()
             except Exception as e:
                 logger.error(f"Semantic analysis failed: {e}", exc_info=True)
                 raise ValueError(f"Semantic analysis failed: {e}") from e
@@ -513,6 +514,51 @@ class PhysicsCompiler:
         logger.debug(f"Coordinates: {coordinates}")
         return coordinates
 
+    def process_fluids(self):
+        """Generate particles for all fluid and boundary definitions"""
+        
+        # 1. Try to find smoothing length 'h' in parameters
+        # This determines particle spacing
+        for param_name, param_info in self.parameters_def.items():
+            if param_name in ['h', 'spacing', 'dx']:
+                self.smoothing_length = param_info['value']
+                logger.info(f"Using particle spacing h={self.smoothing_length}")
+                break
+        
+        for node in self.ast:
+            if isinstance(node, FluidDef):
+                logger.info(f"Generating fluid '{node.name}' in {node.region.shape}")
+                
+                # Use ParticleGenerator
+                coords = ParticleGenerator.generate(node.region, self.smoothing_length)
+                
+                for x, y in coords:
+                    self.fluid_particles.append({
+                        'x': x,
+                        'y': y,
+                        'vx': 0.0,
+                        'vy': 0.0,
+                        'mass': node.mass,
+                        'type': 'fluid'
+                    })
+                logger.info(f"Generated {len(coords)} fluid particles")
+
+            elif isinstance(node, BoundaryDef):
+                logger.info(f"Generating boundary '{node.name}'")
+                
+                # Boundaries are often denser (0.5 * h) to prevent leakage
+                coords = ParticleGenerator.generate(node.region, self.smoothing_length)
+                
+                for x, y in coords:
+                    self.boundary_particles.append({
+                        'x': x,
+                        'y': y,
+                        'vx': 0.0,
+                        'vy': 0.0,
+                        'mass': 1000.0, # Infinite mass essentially
+                        'type': 'boundary'
+                    })
+                    
     def derive_equations(self) -> Dict[str, sp.Expr]:
         """Derive equations using Lagrangian formulation (Patched for Forces)"""
         if self.lagrangian is None:
