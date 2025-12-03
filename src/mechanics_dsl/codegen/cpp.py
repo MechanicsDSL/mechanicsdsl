@@ -59,7 +59,6 @@ class CppGenerator:
         idx = 0
         
         # Custom printer settings for C++
-        settings = {'standard': 'c++17'}
         
         for coord in self.coordinates:
             accel_key = f"{coord}_ddot"
