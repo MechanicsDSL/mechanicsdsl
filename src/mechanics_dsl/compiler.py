@@ -9,6 +9,9 @@ import traceback
 import matplotlib.pyplot as plt
 from typing import List, Dict, Optional, Tuple, Any
 import sympy as sp
+import subprocess
+import sys
+from .codegen.cpp import CppGenerator
 
 from .utils import (
     logger, config, profile_function, validate_file_path,
@@ -26,7 +29,7 @@ from .solver import NumericalSimulator
 from .visualization import MechanicsVisualizer
 from .units import UnitSystem
 
-__version__ = "0.6.0"
+__version__ = "1.0.0"
 
 class SystemSerializer:
     """Serialize and deserialize compiled physics systems"""
@@ -690,3 +693,86 @@ class PhysicsCompiler:
         logger.warning("Note: Equations not reconstructed. Re-compile DSL source for full functionality.")
         
         return compiler
+
+    def compile_to_cpp(self, filename: str = "simulation.cpp", 
+                      target: str = "standard", 
+                      compile_binary: bool = True) -> bool:
+        """
+        Generate C++ code for multiple targets.
+        
+        Args:
+            filename: Output filename
+            target: 'standard', 'raylib', 'arduino', 'wasm', 'openmp', 'python'
+            compile_binary: Whether to run the compiler (g++, emcc, etc.)
+        """
+        if self.equations is None:
+            logger.error("No equations derived. Compile DSL first.")
+            return False
+            
+        try:
+            generator = CppGenerator(
+                system_name=self.system_name,
+                coordinates=self.get_coordinates(),
+                parameters=self.simulator.parameters,
+                initial_conditions=self.initial_conditions,
+                equations=self.equations
+            )
+            
+            # For Arduino, ensure extension is .ino
+            if target == 'arduino' and not filename.endswith('.ino'):
+                filename = os.path.splitext(filename)[0] + ".ino"
+                
+            source_file = generator.generate(filename, target)
+            
+            if compile_binary and target != 'arduino': # Arduino compilation typically requires IDE
+                binary_name = os.path.splitext(source_file)[0]
+                if os.name == 'nt' and target != 'wasm':
+                    binary_name += ".exe"
+                elif target == 'wasm':
+                    binary_name += ".js" # Emscripten outputs JS+Wasm
+                elif target == 'python':
+                    # Python extensions need specific suffixes like .cpython-38-x86_64-linux-gnu.so
+                    # We let setup.py handle this usually, but here is a simple attempt:
+                    binary_name += subprocess.check_output(
+                        [sys.executable, "-c", "import sysconfig; print(sysconfig.get_config_var('EXT_SUFFIX'))"]
+                    ).decode().strip()
+
+                cmd = []
+                
+                if target == 'standard':
+                    cmd = ["g++", "-O3", source_file, "-o", binary_name]
+                    
+                elif target == 'raylib':
+                    # Assumes raylib is installed in standard paths
+                    cmd = ["g++", "-O3", source_file, "-o", binary_name, "-lraylib", "-lm", "-lpthread", "-ldl", "-lrt", "-lX11"]
+                    
+                elif target == 'openmp':
+                    cmd = ["g++", "-O3", "-fopenmp", source_file, "-o", binary_name]
+                    
+                elif target == 'wasm':
+                    # Needs emcc in PATH
+                    cmd = ["emcc", source_file, "-o", binary_name, 
+                           "-s", "EXPORTED_FUNCTIONS=['_init','_step','_get_state','_get_time']",
+                           "-s", "EXPORTED_RUNTIME_METHODS=['ccall','cwrap']",
+                           "-O3"]
+                           
+                elif target == 'python':
+                    # Needs pybind11 headers
+                    includes = subprocess.check_output([sys.executable, "-m", "pybind11", "--includes"]).decode().strip().split()
+                    cmd = ["g++", "-O3", "-shared", "-fPIC"] + includes + [source_file, "-o", binary_name]
+
+                logger.info(f"Compiling: {' '.join(cmd)}")
+                subprocess.check_call(cmd)
+                logger.info(f"Successfully compiled: {binary_name}")
+                
+            elif target == 'arduino':
+                logger.info(f"Arduino sketch generated: {source_file}. Open in Arduino IDE to compile.")
+                
+            return True
+            
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Compilation failed: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Generation failed: {e}")
+            return False
