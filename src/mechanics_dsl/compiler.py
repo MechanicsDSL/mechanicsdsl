@@ -2,6 +2,7 @@
 Main compiler and system serialization for MechanicsDSL
 """
 import json
+import numpy as np
 import pickle
 import time
 import gc
@@ -22,7 +23,7 @@ from .parser import (
     SystemDef, VarDef, ParameterDef, DefineDef,
     LagrangianDef, HamiltonianDef, TransformDef,
     ConstraintDef, NonHolonomicConstraintDef, ForceDef,
-    DampingDef, InitialCondition
+    DampingDef, InitialCondition, FluidDef, BoundaryDef, RegionDef
 )
 from .symbolic import SymbolicEngine
 from .solver import NumericalSimulator
