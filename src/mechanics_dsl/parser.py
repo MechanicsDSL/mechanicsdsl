@@ -375,6 +375,29 @@ class ImportDef(ASTNode):
     filename: str
     def __repr__(self) -> str:
         return f"Import({self.filename})"
+        
+@dataclass
+class RegionDef(ASTNode):
+    shape: str  # "rectangle", "circle", "line"
+    constraints: Dict[str, Tuple[float, float]] # {'x': (0.0, 1.0), 'y': ...}
+    def __repr__(self) -> str:
+        return f"Region({self.shape}, {self.constraints})"
+
+@dataclass
+class FluidDef(ASTNode):
+    name: str
+    region: RegionDef
+    mass: float
+    eos: str
+    def __repr__(self) -> str:
+        return f"Fluid({self.name}, {self.eos}, mass={self.mass})"
+
+@dataclass
+class BoundaryDef(ASTNode):
+    name: str
+    region: RegionDef
+    def __repr__(self) -> str:
+        return f"Boundary({self.name})"
 
 # ============================================================================
 # PARSER
