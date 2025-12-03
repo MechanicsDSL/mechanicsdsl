@@ -7,7 +7,7 @@ into optimized C++ code using a template-based approach.
 import os
 import sympy as sp
 from sympy.printing.cxx import cxxcode
-from typing import Dict, List, Optional
+from typing import Dict, List
 from ..utils import logger
 
 class CppGenerator:
