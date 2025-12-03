@@ -722,7 +722,7 @@ class PhysicsCompiler:
             if target == 'arduino' and not filename.endswith('.ino'):
                 filename = os.path.splitext(filename)[0] + ".ino"
                 
-            source_file = generator.generate(filename, target)
+            source_file = generator.generate(filename)
             
             if compile_binary and target != 'arduino': # Arduino compilation typically requires IDE
                 binary_name = os.path.splitext(source_file)[0]
