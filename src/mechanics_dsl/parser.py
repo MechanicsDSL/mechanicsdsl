@@ -69,6 +69,14 @@ TOKEN_TYPES = [
     ("RPAREN", r"\)"),
     ("LBRACKET", r"\["),
     ("RBRACKET", r"\]"),
+
+    # --- NEW FLUID DYNAMICS TOKENS ---
+    ("FLUID", r"\\fluid"),
+    ("BOUNDARY", r"\\boundary"),
+    ("REGION", r"\\region"),
+    ("PARTICLE_MASS", r"\\particle_mass"),
+    ("EOS", r"\\equation_of_state"),
+    ("RANGE_OP", r"\.\."),  # For ranges like 0..1
     
     # Mathematical operators
     ("PLUS", r"\+"),
