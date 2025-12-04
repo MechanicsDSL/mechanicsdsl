@@ -800,7 +800,7 @@ class PhysicsCompiler:
                 coordinates=self.get_coordinates(),
                 parameters=self.simulator.parameters,
                 initial_conditions=self.initial_conditions,
-                equations=self.equations
+                equations=self.equations,
                 fluid_particles=self.fluid_particles,
                 boundary_particles=self.boundary_particles
             )
