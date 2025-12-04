@@ -362,7 +362,7 @@ class PhysicsCompiler:
                     equations = {} # No symbolic equations needed for SPH
                     self.use_hamiltonian_formulation = False
                     
-                if use_hamiltonian:
+                elif use_hamiltonian:
                     equations = self.derive_hamiltonian_equations()
                     self.use_hamiltonian_formulation = True
                     logger.info("Using Hamiltonian formulation")
