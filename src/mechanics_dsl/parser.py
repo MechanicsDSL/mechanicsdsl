@@ -58,6 +58,13 @@ TOKEN_TYPES = [
     
     # Greek letters (comprehensive)
     ("GREEK_LETTER", r"\\alpha|\\beta|\\gamma|\\delta|\\epsilon|\\varepsilon|\\zeta|\\eta|\\theta|\\vartheta|\\iota|\\kappa|\\lambda|\\mu|\\nu|\\xi|\\omicron|\\pi|\\varpi|\\rho|\\varrho|\\sigma|\\varsigma|\\tau|\\upsilon|\\phi|\\varphi|\\chi|\\psi|\\omega"),
+
+    ("FLUID", r"\\fluid"),
+    ("BOUNDARY", r"\\boundary"),
+    ("REGION", r"\\region"),
+    ("PARTICLE_MASS", r"\\particle_mass"),
+    ("EOS", r"\\equation_of_state"),
+    ("RANGE_OP", r"\.\."),
     
     # General commands
     ("COMMAND", r"\\[a-zA-Z_][a-zA-Z0-9_]*"),
@@ -69,14 +76,6 @@ TOKEN_TYPES = [
     ("RPAREN", r"\)"),
     ("LBRACKET", r"\["),
     ("RBRACKET", r"\]"),
-
-    # --- NEW FLUID DYNAMICS TOKENS ---
-    ("FLUID", r"\\fluid"),
-    ("BOUNDARY", r"\\boundary"),
-    ("REGION", r"\\region"),
-    ("PARTICLE_MASS", r"\\particle_mass"),
-    ("EOS", r"\\equation_of_state"),
-    ("RANGE_OP", r"\.\."),  # For ranges like 0..1
     
     # Mathematical operators
     ("PLUS", r"\+"),
