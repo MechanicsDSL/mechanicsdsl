@@ -356,6 +356,12 @@ class PhysicsCompiler:
             
             # Derive equations with error handling
             try:
+                
+                if self.fluid_particles and self.lagrangian is None:
+                    logger.info("Fluid system detected: Skipping symbolic derivation")
+                    equations = {} # No symbolic equations needed for SPH
+                    self.use_hamiltonian_formulation = False
+                    
                 if use_hamiltonian:
                     equations = self.derive_hamiltonian_equations()
                     self.use_hamiltonian_formulation = True
