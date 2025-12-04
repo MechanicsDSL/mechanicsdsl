@@ -801,6 +801,8 @@ class PhysicsCompiler:
                 parameters=self.simulator.parameters,
                 initial_conditions=self.initial_conditions,
                 equations=self.equations
+                fluid_particles=self.fluid_particles,
+                boundary_particles=self.boundary_particles
             )
             
             # For Arduino, ensure extension is .ino
