@@ -366,7 +366,8 @@ class PhysicsCompiler:
                     equations = self.derive_hamiltonian_equations()
                     self.use_hamiltonian_formulation = True
                     logger.info("Using Hamiltonian formulation")
-                else:
+                # Only try this if have a Lagrangian
+                elif self.lagrangian is not None:
                     # Check for constraints
                     if use_constraints and len(self.constraints) > 0:
                         equations = self.derive_constrained_equations()
