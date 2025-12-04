@@ -541,12 +541,18 @@ class MechanicsParser:
             
             # Parse '0'
             start = float(self.expect("NUMBER").value)
+
+            start_sign = -1.0 if self.match("MINUS") else 1.0
+            start = start_sign * float(self.expect("NUMBER").value)
             
             # Parse '..'
             self.expect("RANGE_OP")
             
             # Parse '1'
             end = float(self.expect("NUMBER").value)
+
+            end_sign = -1.0 if self.match("MINUS") else 1.0
+            end = end_sign * float(self.expect("NUMBER").value)
             
             constraints[var] = (start, end)
             
