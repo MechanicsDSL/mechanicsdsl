@@ -15,7 +15,12 @@ class CppGenerator:
     
     def __init__(self, system_name: str, coordinates: List[str], 
                  parameters: Dict[str, float], initial_conditions: Dict[str, float],
-                 equations: Dict[str, sp.Expr]):
+                 equations: Dict[str, sp.Expr]),
+                 fluid_particles: List[dict] = None,
+                 boundary_particles: List[dict] = None):
+
+        self.fluid_particles = fluid_particles or []
+        self.boundary_particles = boundary_particles or []
         self.system_name = system_name
         self.coordinates = coordinates
         self.parameters = parameters
@@ -31,6 +36,11 @@ class CppGenerator:
             with open(self.template_path, 'r') as f:
                 self.template_content = f.read()
 
+        if self.fluid_particles:
+            self.template_path = os.path.join(os.path.dirname(__file__), 'templates', 'sph_template.cpp')
+        else:
+            self.template_path = os.path.join(os.path.dirname(__file__), 'templates', 'solver_template.cpp')
+
     def generate(self, output_file: str = "simulation.cpp"):
         """
         Generate C++ source file
@@ -39,6 +49,16 @@ class CppGenerator:
             output_file: Path to write the .cpp file
         """
         logger.info(f"Generating C++ code for {self.system_name}")
+        
+        particle_init_str = ""
+        if self.fluid_particles:
+            # Add Fluids
+            for p in self.fluid_particles:
+                particle_init_str += f"    particles.push_back({{ {p['x']}, {p['y']}, 0, 0, 0, 0, 0, 0, 0 }});\n"
+            
+            # Add Boundaries
+            for p in self.boundary_particles:
+                particle_init_str += f"    particles.push_back({{ {p['x']}, {p['y']}, 0, 0, 0, 0, 0, 0, 1 }});\n"
         
         # 1. Generate Parameters
         param_str = "// Physical Parameters\n"
@@ -103,6 +123,7 @@ class CppGenerator:
         code = code.replace("{{EQUATIONS}}", eq_str)
         code = code.replace("{{INITIAL_CONDITIONS}}", init_str)
         code = code.replace("{{CSV_HEADER}}", header_str)
+        code = code.replace("{{PARTICLE_INIT}}", particle_init_str)
         
         with open(output_file, 'w') as f:
             f.write(code)
