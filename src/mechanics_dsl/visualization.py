@@ -266,6 +266,61 @@ class MechanicsVisualizer:
         logger.info("Double pendulum animation created")
         return self.animation
 
+    def animate_fluid_from_csv(self, csv_filename: str, title: str = "Fluid Simulation"):
+        """
+        Animate SPH particle data from CSV.
+        Expected CSV Format: t, id, x, y, rho
+        """
+        import pandas as pd
+        
+        if not validate_file_path(csv_filename, must_exist=True):
+            return None
+            
+        logger.info(f"Loading fluid data from {csv_filename}...")
+        try:
+            df = pd.read_csv(csv_filename)
+        except Exception as e:
+            logger.error(f"Failed to read CSV: {e}")
+            return None
+
+        # Get unique time steps
+        times = df['t'].unique()
+        logger.info(f"Found {len(times)} frames for {len(df[df['t']==times[0]])} particles")
+        
+        # Setup Plot
+        fig, ax = plt.subplots(figsize=(10, 8))
+        ax.set_title(title, fontsize=16)
+        ax.set_xlim(df['x'].min()-0.1, df['x'].max()+0.1)
+        ax.set_ylim(df['y'].min()-0.1, df['y'].max()+0.1)
+        ax.set_xlabel("X (m)")
+        ax.set_ylabel("Y (m)")
+        ax.grid(True, alpha=0.3)
+        
+        # Scatter plot for particles
+        # We use a colormap 'coolwarm' mapped to density (rho)
+        scatter = ax.scatter([], [], c=[], cmap='coolwarm', s=10, vmin=900, vmax=1100)
+        colorbar = fig.colorbar(scatter, ax=ax)
+        colorbar.set_label('Density (kg/m^3)')
+        
+        time_text = ax.text(0.05, 0.95, '', transform=ax.transAxes, fontsize=12)
+        
+        def animate(frame_idx):
+            t_val = times[frame_idx]
+            frame_data = df[df['t'] == t_val]
+            
+            # Update positions and colors
+            scatter.set_offsets(frame_data[['x', 'y']].values)
+            scatter.set_array(frame_data['rho'].values)
+            
+            time_text.set_text(f"Time: {t_val:.3f}s")
+            return scatter, time_text
+
+        self.animation = animation.FuncAnimation(
+            fig, animate, frames=len(times), interval=30, blit=False
+        )
+        
+        return self.animation
+
     def animate_oscillator(self, solution: dict, parameters: dict, system_name: str = "oscillator"):
         """Animate harmonic oscillator"""
         

@@ -58,6 +58,13 @@ TOKEN_TYPES = [
     
     # Greek letters (comprehensive)
     ("GREEK_LETTER", r"\\alpha|\\beta|\\gamma|\\delta|\\epsilon|\\varepsilon|\\zeta|\\eta|\\theta|\\vartheta|\\iota|\\kappa|\\lambda|\\mu|\\nu|\\xi|\\omicron|\\pi|\\varpi|\\rho|\\varrho|\\sigma|\\varsigma|\\tau|\\upsilon|\\phi|\\varphi|\\chi|\\psi|\\omega"),
+
+    ("FLUID", r"\\fluid"),
+    ("BOUNDARY", r"\\boundary"),
+    ("REGION", r"\\region"),
+    ("PARTICLE_MASS", r"\\particle_mass"),
+    ("EOS", r"\\equation_of_state"),
+    ("RANGE_OP", r"\.\."),
     
     # General commands
     ("COMMAND", r"\\[a-zA-Z_][a-zA-Z0-9_]*"),
@@ -367,6 +374,29 @@ class ImportDef(ASTNode):
     filename: str
     def __repr__(self) -> str:
         return f"Import({self.filename})"
+        
+@dataclass
+class RegionDef(ASTNode):
+    shape: str  # "rectangle", "circle", "line"
+    constraints: Dict[str, Tuple[float, float]] # {'x': (0.0, 1.0), 'y': ...}
+    def __repr__(self) -> str:
+        return f"Region({self.shape}, {self.constraints})"
+
+@dataclass
+class FluidDef(ASTNode):
+    name: str
+    region: RegionDef
+    mass: float
+    eos: str
+    def __repr__(self) -> str:
+        return f"Fluid({self.name}, {self.eos}, mass={self.mass})"
+
+@dataclass
+class BoundaryDef(ASTNode):
+    name: str
+    region: RegionDef
+    def __repr__(self) -> str:
+        return f"Boundary({self.name})"
 
 # ============================================================================
 # PARSER
@@ -479,6 +509,8 @@ class MechanicsParser:
             "ANIMATE": self.parse_animate,
             "EXPORT": self.parse_export,
             "IMPORT": self.parse_import,
+            "FLUID": self.parse_fluid,
+            "BOUNDARY": self.parse_boundary,
         }
         
         handler = handlers.get(token.type)
@@ -488,6 +520,84 @@ class MechanicsParser:
             logger.debug(f"Skipping unknown token: {token}")
             self.pos += 1
             return None
+
+    def parse_region(self) -> RegionDef:
+        self.expect("REGION")
+        self.expect("LBRACE")
+        shape = self.expect("IDENT").value
+        self.expect("RBRACE")
+        self.expect("LBRACE")
+        
+        constraints = {}
+        
+        while True:
+            var = self.expect("IDENT").value
+            self.expect("EQUALS")
+            
+            # Parse Start
+            start_sign = -1.0 if self.match("MINUS") else 1.0
+            start_token = self.expect("NUMBER")
+            start = start_sign * float(start_token.value)
+            
+            # Check for Range ".."
+            if self.match("RANGE_OP"):
+                # Parse End
+                end_sign = -1.0 if self.match("MINUS") else 1.0
+                end_token = self.expect("NUMBER")
+                end = end_sign * float(end_token.value)
+            else:
+                # Single value (e.g. x=0.5) -> range is [0.5, 0.5]
+                end = start
+            
+            constraints[var] = (start, end)
+            
+            if not self.match("COMMA"):
+                break
+                
+        self.expect("RBRACE")
+        return RegionDef(shape, constraints)
+
+    def parse_fluid(self) -> FluidDef:
+        """Parse \fluid{name} ... properties ..."""
+        self.expect("FLUID")
+        self.expect("LBRACE")
+        name = self.expect("IDENT").value
+        self.expect("RBRACE")
+        
+        # Defaults
+        region = None
+        mass = 1.0
+        eos = "tait"
+        
+        # Parse fluid properties line by line until hit new command
+        while self.peek() and self.peek().type in ["REGION", "PARTICLE_MASS", "EOS"]:
+            if self.peek().type == "REGION":
+                region = self.parse_region()
+            
+            elif self.match("PARTICLE_MASS"):
+                self.expect("LBRACE")
+                mass = float(self.expect("NUMBER").value)
+                self.expect("RBRACE")
+                
+            elif self.match("EOS"):
+                self.expect("LBRACE")
+                eos = self.expect("IDENT").value
+                self.expect("RBRACE")
+        
+        if not region:
+            raise ParserError("Fluid must have a region definition")
+            
+        return FluidDef(name, region, mass, eos)
+
+    def parse_boundary(self) -> BoundaryDef:
+        """Parse \boundary{name} \region{...}"""
+        self.expect("BOUNDARY")
+        self.expect("LBRACE")
+        name = self.expect("IDENT").value
+        self.expect("RBRACE")
+        
+        region = self.parse_region()
+        return BoundaryDef(name, region)
 
     def parse_system(self) -> SystemDef:
         """Parse \\system{name}"""

@@ -2,9 +2,11 @@
 Main compiler and system serialization for MechanicsDSL
 """
 import json
+import numpy as np
 import pickle
 import time
 import gc
+import os
 import traceback
 import matplotlib.pyplot as plt
 from typing import List, Dict, Optional, Tuple, Any
@@ -22,7 +24,7 @@ from .parser import (
     SystemDef, VarDef, ParameterDef, DefineDef,
     LagrangianDef, HamiltonianDef, TransformDef,
     ConstraintDef, NonHolonomicConstraintDef, ForceDef,
-    DampingDef, InitialCondition
+    DampingDef, InitialCondition, FluidDef, BoundaryDef, RegionDef
 )
 from .symbolic import SymbolicEngine
 from .solver import NumericalSimulator
@@ -119,6 +121,41 @@ class SystemSerializer:
             logger.error(f"Import failed: {e}")
             return None
 
+class ParticleGenerator:
+    """Generates discrete particle positions from geometric regions"""
+    
+    @staticmethod
+    def generate(region: RegionDef, spacing: float) -> List[Tuple[float, float]]:
+        """
+        Generate grid of particles within a region.
+        """
+        if region.shape == "rectangle":
+            x_range = region.constraints.get('x', (0, 0))
+            y_range = region.constraints.get('y', (0, 0))
+            
+            # Create grid
+            x_points = np.arange(x_range[0], x_range[1], spacing)
+            y_points = np.arange(y_range[0], y_range[1], spacing)
+            
+            # Meshgrid
+            xx, yy = np.meshgrid(x_points, y_points)
+            
+            # Flatten to list of (x, y) tuples
+            return list(zip(xx.flatten(), yy.flatten()))
+            
+        elif region.shape == "line":
+            # Useful for boundaries
+            x_range = region.constraints.get('x', (0, 0))
+            y_range = region.constraints.get('y', (0, 0))
+            
+            if x_range[0] == x_range[1]: # Vertical line
+                y_points = np.arange(y_range[0], y_range[1], spacing/2.0) # Denser walls
+                return [(x_range[0], y) for y in y_points]
+            else: # Horizontal line
+                x_points = np.arange(x_range[0], x_range[1], spacing/2.0)
+                return [(x, y_range[0]) for x in x_points]
+        
+        return []
 
 class PhysicsCompiler:
     """
@@ -157,6 +194,9 @@ class PhysicsCompiler:
         self.forces: List[Expression] = []
         self.damping_forces: List[Expression] = []
         self.initial_conditions: Dict[str, float] = {}
+        self.fluid_particles: List[Dict[str, float]] = [] # [{'x': 1.0, 'y': 2.0, 'm': 0.01}, ...]
+        self.boundary_particles: List[Dict[str, float]] = []
+        self.smoothing_length: float = 0.1 # Default 'h'
         
         self.symbolic = SymbolicEngine()
         self.simulator = NumericalSimulator(self.symbolic)
@@ -301,6 +341,7 @@ class PhysicsCompiler:
             # Semantic analysis with error handling
             try:
                 self.analyze_semantics()
+                self.process_fluids()
             except Exception as e:
                 logger.error(f"Semantic analysis failed: {e}", exc_info=True)
                 raise ValueError(f"Semantic analysis failed: {e}") from e
@@ -316,11 +357,18 @@ class PhysicsCompiler:
             
             # Derive equations with error handling
             try:
-                if use_hamiltonian:
+                
+                if self.fluid_particles and self.lagrangian is None:
+                    logger.info("Fluid system detected: Skipping symbolic derivation")
+                    equations = {} # No symbolic equations needed for SPH
+                    self.use_hamiltonian_formulation = False
+                    
+                elif use_hamiltonian:
                     equations = self.derive_hamiltonian_equations()
                     self.use_hamiltonian_formulation = True
                     logger.info("Using Hamiltonian formulation")
-                else:
+                # Only try this if have a Lagrangian
+                elif self.lagrangian is not None:
                     # Check for constraints
                     if use_constraints and len(self.constraints) > 0:
                         equations = self.derive_constrained_equations()
@@ -474,6 +522,51 @@ class PhysicsCompiler:
         logger.debug(f"Coordinates: {coordinates}")
         return coordinates
 
+    def process_fluids(self):
+        """Generate particles for all fluid and boundary definitions"""
+        
+        # 1. Try to find smoothing length 'h' in parameters
+        # This determines particle spacing
+        for param_name, param_info in self.parameters_def.items():
+            if param_name in ['h', 'spacing', 'dx']:
+                self.smoothing_length = param_info['value']
+                logger.info(f"Using particle spacing h={self.smoothing_length}")
+                break
+        
+        for node in self.ast:
+            if isinstance(node, FluidDef):
+                logger.info(f"Generating fluid '{node.name}' in {node.region.shape}")
+                
+                # Use ParticleGenerator
+                coords = ParticleGenerator.generate(node.region, self.smoothing_length)
+                
+                for x, y in coords:
+                    self.fluid_particles.append({
+                        'x': x,
+                        'y': y,
+                        'vx': 0.0,
+                        'vy': 0.0,
+                        'mass': node.mass,
+                        'type': 'fluid'
+                    })
+                logger.info(f"Generated {len(coords)} fluid particles")
+
+            elif isinstance(node, BoundaryDef):
+                logger.info(f"Generating boundary '{node.name}'")
+                
+                # Boundaries are often denser (0.5 * h) to prevent leakage
+                coords = ParticleGenerator.generate(node.region, self.smoothing_length)
+                
+                for x, y in coords:
+                    self.boundary_particles.append({
+                        'x': x,
+                        'y': y,
+                        'vx': 0.0,
+                        'vy': 0.0,
+                        'mass': 1000.0, # Infinite mass essentially
+                        'type': 'boundary'
+                    })
+                    
     def derive_equations(self) -> Dict[str, sp.Expr]:
         """Derive equations using Lagrangian formulation (Patched for Forces)"""
         if self.lagrangian is None:
@@ -715,7 +808,9 @@ class PhysicsCompiler:
                 coordinates=self.get_coordinates(),
                 parameters=self.simulator.parameters,
                 initial_conditions=self.initial_conditions,
-                equations=self.equations
+                equations=self.equations,
+                fluid_particles=self.fluid_particles,
+                boundary_particles=self.boundary_particles
             )
             
             # For Arduino, ensure extension is .ino
