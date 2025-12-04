@@ -198,10 +198,10 @@ const double MASS = 0.02;
 const double DT = 0.002;
 
 // SPH Constants
-const double M_PI = 3.14159265358979323846;
-const double POLY6 = 315.0 / (64.0 * M_PI * pow(H, 9));
-const double SPIKY_GRAD = -45.0 / (M_PI * pow(H, 6));
-const double VISC_LAP = 45.0 / (M_PI * pow(H, 6));
+const double PI = 3.14159265358979323846;
+const double POLY6 = 315.0 / (64.0 * PI * pow(H, 9));
+const double SPIKY_GRAD = -45.0 / (PI * pow(H, 6));
+const double VISC_LAP = 45.0 / (PI * pow(H, 6));
 const double GAS_CONST = 2000.0; 
 const double REST_DENS = 1000.0;
 const double VISCOSITY = 2.5;
