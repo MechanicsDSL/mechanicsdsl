@@ -15,7 +15,7 @@ class CppGenerator:
     
     def __init__(self, system_name: str, coordinates: List[str], 
                  parameters: Dict[str, float], initial_conditions: Dict[str, float],
-                 equations: Dict[str, sp.Expr]),
+                 equations: Dict[str, sp.Expr],
                  fluid_particles: List[dict] = None,
                  boundary_particles: List[dict] = None):
 
