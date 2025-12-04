@@ -522,37 +522,32 @@ class MechanicsParser:
             return None
 
     def parse_region(self) -> RegionDef:
-        """Parse \region{shape}{x=0..1, y=0..2}"""
         self.expect("REGION")
-        
-        # 1. Parse Shape
         self.expect("LBRACE")
         shape = self.expect("IDENT").value
         self.expect("RBRACE")
-        
-        # 2. Parse Dimensions
         self.expect("LBRACE")
+        
         constraints = {}
         
         while True:
-            # Parse 'x'
             var = self.expect("IDENT").value
             self.expect("EQUALS")
             
-            # Parse '0'
-            start = float(self.expect("NUMBER").value)
-
+            # Parse Start
             start_sign = -1.0 if self.match("MINUS") else 1.0
-            start = start_sign * float(self.expect("NUMBER").value)
+            start_token = self.expect("NUMBER")
+            start = start_sign * float(start_token.value)
             
-            # Parse '..'
-            self.expect("RANGE_OP")
-            
-            # Parse '1'
-            end = float(self.expect("NUMBER").value)
-
-            end_sign = -1.0 if self.match("MINUS") else 1.0
-            end = end_sign * float(self.expect("NUMBER").value)
+            # Check for Range ".."
+            if self.match("RANGE_OP"):
+                # Parse End
+                end_sign = -1.0 if self.match("MINUS") else 1.0
+                end_token = self.expect("NUMBER")
+                end = end_sign * float(end_token.value)
+            else:
+                # Single value (e.g. x=0.5) -> range is [0.5, 0.5]
+                end = start
             
             constraints[var] = (start, end)
             
