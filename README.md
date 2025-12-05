@@ -5,6 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17771040.svg)](https://doi.org/10.5281/zenodo.17771040)
 [![Documentation Status](https://readthedocs.org/projects/mechanicsdsl/badge/?version=latest)](https://mechanicsdsl.readthedocs.io/en/latest/?badge=latest)
+[![Read the Docs Build Status](readthedocs.org)](mechanicsdsl-core.readthedocs.io)
 
 **MechanicsDSL** is a comprehensive computational framework for physics, unifying symbolic derivation and numerical simulation. It bridges the gap between algebraic formalism and high-performance computing using a LaTeX-inspired Domain-Specific Language.
 
