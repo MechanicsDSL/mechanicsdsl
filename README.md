@@ -131,7 +131,7 @@ plt.plot(x3, y3, label='Body 3', color='#1D3557', linewidth=2, linestyle=':')
 
 # Annotate the error on the plot
 plt.title(f'Three-Body Figure-8 Orbit (Error: {periodicity_error:.2e})')
-plt.xlabel('x (m)')
+plt.xlabel('x (m)') 
 plt.ylabel('y (m)')
 plt.axis('equal')
 plt.grid(True, alpha=0.3)
