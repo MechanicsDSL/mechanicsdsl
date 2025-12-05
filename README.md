@@ -6,16 +6,15 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17771040.svg)](https://doi.org/10.5281/zenodo.17771040)
 [![Documentation Status](https://readthedocs.org/projects/mechanicsdsl/badge/?version=latest)](https://mechanicsdsl.readthedocs.io/en/latest/?badge=latest)
 
-A Domain-Specific Language for Classical Mechanics - A comprehensive framework for symbolic and numerical analysis of classical mechanical systems using LaTeX-inspired notation.
+**MechanicsDSL** is a comprehensive computational framework for physics, unifying symbolic derivation and numerical simulation. It bridges the gap between algebraic formalism and high-performance computing using a LaTeX-inspired Domain-Specific Language.
 
 ## Features
 
-- **Symbolic Computation**: Automatic derivation of equations of motion from Lagrangians and Hamiltonians
-- **Numerical Simulation**: Advanced ODE solvers with adaptive step sizing
-- **Visualization**: Interactive animations and phase space plots
-- **Unit System**: Comprehensive dimensional analysis and unit checking
-- **Constraint Handling**: Support for holonomic and non-holonomic constraints
-- **Performance Monitoring**: Built-in profiling and optimization tools
+- **Symbolic Mechanics**: Automatic derivation of equations of motion (Euler-Lagrange & Hamiltonian).
+- **Computational Fluid Dynamics (CFD)**: Lagrangian fluid simulation using Smoothed Particle Hydrodynamics (SPH).
+- **High-Performance Backends**: Generates optimized C++, OpenMP, and WebAssembly (WASM) solvers.
+- **Multiphysics Support**: Handles rigid bodies, N-body gravity, and compressible fluids in a single framework.
+- **Visualization**: Built-in tools for phase space plots, energy analysis, and particle animations.
 
 ## Installation
  
@@ -142,6 +141,52 @@ plt.savefig('figure8_periodicity.png', dpi=150)
 print("Saved plot to 'figure8_periodicity.png'")
 
 # Then run python name_of_file.py (e.g., python demo.py)
+```
+
+## Quick Start 2: Fluid Dynamics (The Dam Break)
+
+MechanicsDSL includes a Spatial Hash SPH Solver for simulating fluids.
+
+```
+import matplotlib.pyplot as plt
+from mechanics_dsl import PhysicsCompiler
+
+# Define fluid regions and boundaries using the DSL
+fluid_code = r"""
+\system{dam_break}
+
+% Simulation Resolution
+\parameter{h}{0.04}{m}
+\parameter{g}{9.81}{m/s^2}
+
+% Fluid Column (Water)
+\fluid{water}
+\region{rectangle}{x=0.0 .. 0.4, y=0.0 .. 0.8}
+\particle_mass{0.02}
+\equation_of_state{tait}
+
+% Container (Bucket)
+\boundary{walls}
+\region{line}{x=-0.05, y=0.0 .. 1.5}   % Left Wall
+\region{line}{x=1.5,   y=0.0 .. 1.5}   % Right Wall
+\region{line}{x=-0.05 .. 1.5, y=-0.05} % Floor
+"""
+
+compiler = PhysicsCompiler()
+# 1. Generate Particles
+compiler.compile_dsl(fluid_code)
+
+# 2. Compile C++ SPH Engine
+compiler.compile_to_cpp("dam_break.cpp", target="standard", compile_binary=True)
+
+# 3. Run Simulation (Auto-executes binary)
+import subprocess
+subprocess.call(["./dam_break"])
+
+# 4. Visualize
+compiler.visualizer.animate_fluid_from_csv("dam_break_sph.csv")
+plt.show()
+
 ```
 
 ## Validation Gallery
