@@ -11,7 +11,8 @@ MechanicsDSL: A Language for Computational Mechanics
    :target: https://github.com/MechanicsDSL/mechanicsdsl/actions/workflows/python-app.yml
    :alt: CI Status
 
-**MechanicsDSL** is a domain-specific language and compiler designed to bridge the gap between symbolic derivation and numerical simulation in classical mechanics. 
+
+**MechanicsDSL** is a domain-specific language and compiler for modeling physical systems. It unifies symbolic derivation (Lagrangian/Hamiltonian mechanics) with high-performance numerical simulation (C++, SPH, Symplectic Integrators).
 
 Instead of manually deriving equations of motion and hard-coding them into ODE solvers, users describe physical systems using a LaTeX-inspired syntax. The compiler automatically:
 
@@ -21,41 +22,45 @@ Instead of manually deriving equations of motion and hard-coding them into ODE s
 4.  **Simulates** the dynamics with adaptive stiffness detection.
 
 Designed for physics education, research prototyping, and the study of chaotic or constrained systems.
+MechanicsDSL Documentation
+==========================
 
 .. toctree::
    :maxdepth: 2
-   :caption: User Guide
+   :caption: Getting Started
 
-   guide/getting_started
-   guide/syntax
-   guide/best_practices
+   installation
+   tutorials
+   user_guide
+   contributing
 
 .. toctree::
    :maxdepth: 2
    :caption: Physics Theory
 
-   physics/lagrangian
-   physics/hamiltonian
-   physics/fluid_dynamics
-   physics/constraints
+   lagrangian
+   hamiltonian
+   fluid_dynamics
+   constraints
+   physics_background
 
 .. toctree::
    :maxdepth: 2
    :caption: Compiler Internals
 
-   internals/architecture
-   internals/parser_logic
-   internals/symbolic_math
-   internals/transpiler
+   architecture
+   parser_logic
+   symbolic_math
+   transpiler
 
 .. toctree::
    :maxdepth: 2
    :caption: Backend Targets
 
-   backends/standard_cpp
-   backends/openmp
-   backends/wasm
-   backends/arduino
+   standard_cpp
+   openmp
+   wasm
+   arduino
 
 .. toctree::
    :maxdepth: 2
