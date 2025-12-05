@@ -20,29 +20,48 @@ Instead of manually deriving equations of motion and hard-coding them into ODE s
 3.  **Compiles** optimized numerical functions.
 4.  **Simulates** the dynamics with adaptive stiffness detection.
 
-It is designed for physics education, research prototyping, and the study of chaotic or constrained systems.
+Designed for physics education, research prototyping, and the study of chaotic or constrained systems.
 
 .. toctree::
    :maxdepth: 2
-   :caption: User Documentation
+   :caption: User Guide
 
-   installation
-   tutorials
-   user_guide
-   physics_background
+   guide/getting_started
+   guide/syntax
+   guide/best_practices
 
 .. toctree::
    :maxdepth: 2
-   :caption: Advanced Topics
+   :caption: Physics Theory
 
-   advanced
-   contributing
+   physics/lagrangian
+   physics/hamiltonian
+   physics/fluid_dynamics
+   physics/constraints
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Compiler Internals
+
+   internals/architecture
+   internals/parser_logic
+   internals/symbolic_math
+   internals/transpiler
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Backend Targets
+
+   backends/standard_cpp
+   backends/openmp
+   backends/wasm
+   backends/arduino
 
 .. toctree::
    :maxdepth: 2
    :caption: API Reference
 
-   modules
+   mechanics_dsl
 
 Indices and tables
 ==================
