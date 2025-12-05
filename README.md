@@ -147,7 +147,7 @@ print("Saved plot to 'figure8_periodicity.png'")
 
 MechanicsDSL includes a Spatial Hash SPH Solver for simulating fluids.
 
-```
+```python
 import matplotlib.pyplot as plt
 from mechanics_dsl import PhysicsCompiler
 
