@@ -12,18 +12,25 @@ MechanicsDSL: A Language for Computational Mechanics
    :alt: CI Status
 
 
-**MechanicsDSL** is a domain-specific language and compiler for modeling physical systems. It unifies symbolic derivation (Lagrangian/Hamiltonian mechanics) with high-performance numerical simulation (C++, SPH, Symplectic Integrators).
+**MechanicsDSL** is a domain-specific language and multi-target compiler for computational mechanics. Write physics in a LaTeX-inspired syntax, and automatically generate optimized simulation code for multiple platforms.
 
-Instead of manually deriving equations of motion and hard-coding them into ODE solvers, users describe physical systems using a LaTeX-inspired syntax. The compiler automatically:
+The compiler implements a complete pipeline from symbolic mathematics to executable code:
 
-1.  **Parses** the physical description (Lagrangian, constraints, forces).
-2.  **Derives** the equations of motion symbolically (Euler-Lagrange or Hamilton's equations).
-3.  **Compiles** optimized numerical functions.
-4.  **Simulates** the dynamics with adaptive stiffness detection.
+1.  **Frontend**: A recursive descent parser converts LaTeX-style DSL into an Abstract Syntax Tree (no ``eval()`` - completely safe).
+2.  **Symbolic Engine**: Automatically derives equations of motion using SymPy (Euler-Lagrange or Hamilton's equations with constraint handling via Lagrange multipliers).
+3.  **Adaptive Solver**: Intelligently selects between RK45 and LSODA based on system stiffness detection.
+4.  **Multi-Target Codegen**: Transpiles to multiple backends using strategy patterns:
+    - **Standard C++**: RK4 integration with double precision
+    - **WebAssembly**: Zero-copy browser simulations via Emscripten
+    - **Arduino/Embedded**: Float precision with Euler integration for microcontrollers
+    - **SPH Fluids**: Mesh-free Lagrangian fluid solver with spatial hashing
 
-Designed for physics education, research prototyping, and the study of chaotic or constrained systems.
-MechanicsDSL Documentation
-==========================
+The system supports both rigid body dynamics (ODEs) and particle-based fluid dynamics (SPH), holonomic constraints, Hamiltonian formulations with symplectic integrators, and chaotic systems requiring long-term energy conservation.
+
+Designed for physics education, research prototyping, robotics simulation, and computational mechanics where rapid iteration between mathematical formulation and high-performance simulation is critical.
+
+Documentation Contents
+======================
 
 .. toctree::
    :maxdepth: 2
@@ -32,35 +39,32 @@ MechanicsDSL Documentation
    installation
    tutorials
    user_guide
-   contributing
 
 .. toctree::
    :maxdepth: 2
    :caption: Physics Theory
 
-   lagrangian
-   hamiltonian
-   fluid_dynamics
-   constraints
    physics_background
+   lagrangian_mechanics
+   hamiltonian_mechanics
+   constraint_physics
+   fluid_dynamics
 
 .. toctree::
    :maxdepth: 2
    :caption: Compiler Internals
 
-   architecture
-   parser_logic
-   symbolic_math
-   transpiler
+   compiler_architecture
+   advanced
+   code_generator
 
 .. toctree::
    :maxdepth: 2
    :caption: Backend Targets
 
-   standard_cpp
-   openmp
-   wasm
-   arduino
+   standard_c++
+   web_assembly
+   embedded_(arduino)
 
 .. toctree::
    :maxdepth: 2
@@ -73,3 +77,4 @@ Indices and tables
 
 * :ref:`genindex`
 * :ref:`modindex`
+* :ref:`search`
