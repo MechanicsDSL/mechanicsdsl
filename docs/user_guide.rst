@@ -16,8 +16,8 @@ Variables represent the generalized coordinates of your system (degrees of freed
 
 .. code-block:: latex
 
-    \var{theta}{Angle}{rad}
-    \var{x}{Position}{m}
+    \defvar{theta}{Angle}{rad}
+    \defvar{x}{Position}{m}
 
 Defining Parameters
 -------------------
