@@ -112,6 +112,31 @@ class Animator:
         
         return self.animation
     
+    def animate(self, solution: dict, parameters: dict = None, system_name: str = "system"):
+        """
+        Generic animation dispatcher (backward compatibility with MechanicsVisualizer).
+        
+        Args:
+            solution: Simulation result dictionary
+            parameters: Physical parameters (optional)
+            system_name: Name of the system
+            
+        Returns:
+            matplotlib FuncAnimation object
+        """
+        if not solution or not solution.get('success'):
+            return None
+        
+        coords = solution.get('coordinates', [])
+        name = (system_name or '').lower()
+        length = parameters.get('l', 1.0) if parameters else 1.0
+        
+        # Dispatch to appropriate animation
+        if 'pendulum' in name or any('theta' in str(c) for c in coords):
+            return self.animate_pendulum(solution, length=length, title=system_name)
+        else:
+            return self.animate_pendulum(solution, length=length, title=system_name)
+    
     def animate_particles(self, positions: List[Tuple[np.ndarray, np.ndarray]],
                          title: str = "Particles") -> animation.FuncAnimation:
         """
