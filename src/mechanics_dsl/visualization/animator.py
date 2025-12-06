@@ -31,8 +31,8 @@ class Animator:
         if not HAS_MATPLOTLIB:
             raise ImportError("matplotlib required for animations")
         
-        self.trail_length = trail_length or config.default_trail_length
-        self.fps = fps or config.default_fps
+        self.trail_length = trail_length or config.trail_length
+        self.fps = fps or config.animation_fps
         self.fig: Optional[plt.Figure] = None
         self.ax: Optional[plt.Axes] = None
         self.animation: Optional[animation.FuncAnimation] = None
