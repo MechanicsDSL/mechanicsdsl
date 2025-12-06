@@ -105,49 +105,6 @@ compiler.compile_dsl(fluid_code)
 compiler.compile_to_cpp("dam_break.cpp", target="standard", compile_binary=True)
 ```
 
----
-
-## What Can You Build?
-
-<table>
-<tr>
-<td align="center" width="33%">
-<img src="docs/images/gallery_chaos.png" width="200"><br>
-<strong>Coupled Oscillators</strong><br>
-<em>Wilberforce pendulum energy beats</em>
-</td>
-<td align="center" width="33%">
-<img src="docs/images/gallery_gyroscope.png" width="200"><br>
-<strong>3D Rigid Bodies</strong><br>
-<em>Gyroscopic precession & nutation</em>
-</td>
-<td align="center" width="33%">
-<img src="docs/images/gallery_constraint.png" width="200"><br>
-<strong>Constrained Motion</strong><br>
-<em>Elastic pendulum trajectories</em>
-</td>
-</tr>
-<tr>
-<td align="center">
-<img src="docs/images/gallery_duffing.png" width="200"><br>
-<strong>Chaotic Systems</strong><br>
-<em>Duffing strange attractors</em>
-</td>
-<td align="center">
-<img src="docs/images/gallery_phase.png" width="200"><br>
-<strong>Phase Portraits</strong><br>
-<em>Harmonic oscillator analysis</em>
-</td>
-<td align="center">
-<img src="docs/images/gallery_energy.png" width="200"><br>
-<strong>Conservation Laws</strong><br>
-<em>Energy dissipation tracking</em>
-</td>
-</tr>
-</table>
-
----
-
 ## Core Capabilities
 
 ### Symbolic Mechanics
