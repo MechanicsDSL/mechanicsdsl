@@ -126,7 +126,7 @@ compiler.compile_to_cpp("dam_break.cpp", target="standard", compile_binary=True)
 
 ## Examples
 
-The [`examples/`](examples/) directory contains 17 progressive tutorials:
+The [`examples/`](examples/) directory contains 30 progressive tutorials:
 
 | Level | Examples |
 |-------|----------|
