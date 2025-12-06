@@ -5,10 +5,6 @@
 <h1 align="center">MechanicsDSL</h1>
 
 <p align="center">
-  <strong>Write Physics Like Equations. Simulate Like a Supercomputer.</strong>
-</p>
-
-<p align="center">
   <a href="https://github.com/MechanicsDSL/mechanicsdsl/actions/workflows/python-app.yml"><img src="https://github.com/MechanicsDSL/mechanicsdsl/actions/workflows/python-app.yml/badge.svg" alt="Python CI"></a>
   <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python 3.8+"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
@@ -20,19 +16,19 @@
 
 **MechanicsDSL** is a computational physics framework that lets you define physical systems in a natural, LaTeX-inspired syntax and automatically generates high-performance simulations. From pendulums to planetary orbits, from Lagrangian mechanics to fluid dynamics—describe it once, simulate it anywhere.
 
-## ✨ Why MechanicsDSL?
+## Why MechanicsDSL?
 
 | Feature | Description |
 |---------|-------------|
-| 🧮 **Symbolic Engine** | Automatically derives equations of motion from Lagrangians or Hamiltonians |
-| 🌊 **Fluid Dynamics** | Built-in SPH solver for dam breaks, waves, and liquid physics |
-| ⚡ **High Performance** | Generates optimized C++, OpenMP, and WebAssembly code |
-| 📊 **Rich Visualization** | Phase space plots, energy analysis, and smooth animations |
-| 🔬 **Research Ready** | Validated against analytical solutions and conservation laws |
+| **Symbolic Engine** | Automatically derives equations of motion from Lagrangians or Hamiltonians |
+| **Fluid Dynamics** | Built-in SPH solver for dam breaks, waves, and liquid physics |
+| **High Performance** | Generates optimized C++, OpenMP, and WebAssembly code |
+| **Rich Visualization** | Phase space plots, energy analysis, and smooth animations |
+| **Research Ready** | Validated against analytical solutions and conservation laws |
 
 ---
 
-## 🚀 Installation
+## Installation
 
 ```bash
 pip install mechanicsdsl-core
@@ -109,50 +105,7 @@ compiler.compile_dsl(fluid_code)
 compiler.compile_to_cpp("dam_break.cpp", target="standard", compile_binary=True)
 ```
 
----
-
-## 🎯 What Can You Build?
-
-<table>
-<tr>
-<td align="center" width="33%">
-<img src="docs/images/gallery_chaos.png" width="200"><br>
-<strong>Coupled Oscillators</strong><br>
-<em>Wilberforce pendulum energy beats</em>
-</td>
-<td align="center" width="33%">
-<img src="docs/images/gallery_gyroscope.png" width="200"><br>
-<strong>3D Rigid Bodies</strong><br>
-<em>Gyroscopic precession & nutation</em>
-</td>
-<td align="center" width="33%">
-<img src="docs/images/gallery_constraint.png" width="200"><br>
-<strong>Constrained Motion</strong><br>
-<em>Elastic pendulum trajectories</em>
-</td>
-</tr>
-<tr>
-<td align="center">
-<img src="docs/images/gallery_duffing.png" width="200"><br>
-<strong>Chaotic Systems</strong><br>
-<em>Duffing strange attractors</em>
-</td>
-<td align="center">
-<img src="docs/images/gallery_phase.png" width="200"><br>
-<strong>Phase Portraits</strong><br>
-<em>Harmonic oscillator analysis</em>
-</td>
-<td align="center">
-<img src="docs/images/gallery_energy.png" width="200"><br>
-<strong>Conservation Laws</strong><br>
-<em>Energy dissipation tracking</em>
-</td>
-</tr>
-</table>
-
----
-
-## 🛠️ Core Capabilities
+## Core Capabilities
 
 ### Symbolic Mechanics
 - **Lagrangian & Hamiltonian** formulations
@@ -171,9 +124,9 @@ compiler.compile_to_cpp("dam_break.cpp", target="standard", compile_binary=True)
 
 ---
 
-## 📚 Examples
+## Examples
 
-The [`examples/`](examples/) directory contains 17 progressive tutorials:
+The [`examples/`](examples/) directory contains 30 progressive tutorials:
 
 | Level | Examples |
 |-------|----------|
@@ -184,21 +137,21 @@ The [`examples/`](examples/) directory contains 17 progressive tutorials:
 
 ---
 
-## 📖 Documentation
+## Documentation
 
 Full documentation with tutorials, API reference, and DSL syntax guide:
 
-**[📘 Read the Docs](https://mechanicsdsl.readthedocs.io/en/latest/index.html)**
+**[Read the Docs](https://mechanicsdsl.readthedocs.io/en/latest/index.html)**
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ---
 
-## 📄 License
+## License
 
 MIT License — see [LICENSE](LICENSE) for details.
 
