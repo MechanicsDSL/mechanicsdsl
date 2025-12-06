@@ -64,27 +64,27 @@ Documentation Contents
    :maxdepth: 2
    :caption: Getting Started
 
-   installation
-   quickstart
-   tutorials
+   getting_started/installation
+   getting_started/quickstart
+   getting_started/tutorials
 
 .. toctree::
    :maxdepth: 2
    :caption: User Guide
 
-   user_guide
-   dsl_syntax
-   physics_background
+   user_guide/guide
+   user_guide/dsl_syntax
+   user_guide/physics_background
 
 .. toctree::
    :maxdepth: 2
    :caption: Physics Domains
 
-   lagrangian_mechanics
-   hamiltonian_mechanics
-   constraint_physics
-   fluid_dynamics
-   multiphysics
+   physics/lagrangian_mechanics
+   physics/hamiltonian_mechanics
+   physics/constraint_physics
+   physics/fluid_dynamics
+   physics/multiphysics
 
 .. toctree::
    :maxdepth: 2
@@ -112,18 +112,18 @@ Documentation Contents
    :maxdepth: 2
    :caption: Advanced Topics
 
-   advanced
-   performance
-   extending
-   architecture
+   advanced_topics/advanced
+   advanced_topics/performance
+   advanced_topics/extending
+   advanced_topics/architecture
 
 .. toctree::
    :maxdepth: 1
    :caption: Project
 
-   changelog
-   contributing
-   license
+   project/changelog
+   project/contributing
+   project/license
 
 Indices and Tables
 ------------------
@@ -142,7 +142,7 @@ Version Information
 License
 -------
 
-MechanicsDSL is released under the MIT License. See :doc:`license` for details.
+MechanicsDSL is released under the MIT License. See :doc:`project/license` for details.
 
 Citation
 --------
