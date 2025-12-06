@@ -1,11 +1,11 @@
-"""
+﻿"""
 Tutorial 05: Double Pendulum (Chaotic System)
 
 Two pendulums connected together create unpredictable motion.
 
 Physics:
-- Two masses m₁, m₂ connected by rods of length L₁, L₂
-- Angles θ₁, θ₂ from vertical
+- Two masses m_1, m_2 connected by rods of length L_1, L_2
+- Angles theta_1, theta_2 from vertical
 - Lagrangian is complex but MechanicsDSL handles it automatically!
 - Small differences in initial conditions lead to completely different trajectories
 
@@ -53,10 +53,10 @@ print("Compiling double pendulum...")
 result = compiler.compile_dsl(dsl_code)
 
 if not result['success']:
-    print(f"❌ Compilation failed: {result.get('error')}")
+    print(f"[FAIL] Compilation failed: {result.get('error')}")
     exit(1)
 
-print("✅ Compilation successful!")
+print("[OK] Compilation successful!")
 print(f"   Compilation time: {result.get('compilation_time', 0):.4f} s")
 
 # Simulate for a longer time to see chaos
@@ -64,10 +64,10 @@ print("\nSimulating...")
 solution = compiler.simulate(t_span=(0, 20), num_points=2000)
 
 if not solution['success']:
-    print(f"❌ Simulation failed!")
+    print(f"[FAIL] Simulation failed!")
     exit(1)
 
-print("✅ Simulation successful!")
+print("[OK] Simulation successful!")
 
 # ============================================================================
 # Extract results
@@ -94,8 +94,8 @@ y2 = y1 - L2 * np.cos(theta2)
 
 fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 
-axes[0, 0].plot(t, theta1, 'b-', linewidth=1.5, label='θ₁')
-axes[0, 0].plot(t, theta2, 'r-', linewidth=1.5, label='θ₂')
+axes[0, 0].plot(t, theta1, 'b-', linewidth=1.5, label='theta_1')
+axes[0, 0].plot(t, theta2, 'r-', linewidth=1.5, label='theta_2')
 axes[0, 0].set_xlabel('Time (s)')
 axes[0, 0].set_ylabel('Angle (rad)')
 axes[0, 0].set_title('Angles vs Time')
@@ -104,15 +104,15 @@ axes[0, 0].grid(True, alpha=0.3)
 
 # Phase space for first pendulum
 axes[0, 1].plot(theta1, theta1_dot, 'b-', linewidth=1, alpha=0.7)
-axes[0, 1].set_xlabel('θ₁ (rad)')
-axes[0, 1].set_ylabel('θ̇₁ (rad/s)')
+axes[0, 1].set_xlabel('theta_1 (rad)')
+axes[0, 1].set_ylabel('thetȧ_1 (rad/s)')
 axes[0, 1].set_title('Phase Space: First Pendulum')
 axes[0, 1].grid(True, alpha=0.3)
 
 # Phase space for second pendulum
 axes[1, 0].plot(theta2, theta2_dot, 'r-', linewidth=1, alpha=0.7)
-axes[1, 0].set_xlabel('θ₂ (rad)')
-axes[1, 0].set_ylabel('θ̇₂ (rad/s)')
+axes[1, 0].set_xlabel('theta_2 (rad)')
+axes[1, 0].set_ylabel('thetȧ_2 (rad/s)')
 axes[1, 0].set_title('Phase Space: Second Pendulum')
 axes[1, 0].grid(True, alpha=0.3)
 
@@ -126,7 +126,7 @@ axes[1, 1].grid(True, alpha=0.3)
 
 plt.tight_layout()
 plt.savefig('05_double_pendulum.png', dpi=150)
-print("\n✅ Saved: 05_double_pendulum.png")
+print("\n[OK] Saved: 05_double_pendulum.png")
 
 # ============================================================================
 # Plot 2: Animation-style visualization
@@ -162,7 +162,7 @@ ax.legend()
 
 plt.tight_layout()
 plt.savefig('05_double_pendulum_trajectory.png', dpi=150)
-print("✅ Saved: 05_double_pendulum_trajectory.png")
+print("[OK] Saved: 05_double_pendulum_trajectory.png")
 
 # ============================================================================
 # Demonstrate chaos: Small change in initial conditions
@@ -189,8 +189,8 @@ theta2_2 = solution2['y'][2]
 # Plot comparison
 fig, ax = plt.subplots(figsize=(12, 6))
 
-ax.plot(t, theta2, 'b-', linewidth=1.5, label='θ₂ (original)', alpha=0.7)
-ax.plot(t, theta2_2, 'r-', linewidth=1.5, label='θ₂ (θ₁₀ = 0.1001)', alpha=0.7)
+ax.plot(t, theta2, 'b-', linewidth=1.5, label='theta_2 (original)', alpha=0.7)
+ax.plot(t, theta2_2, 'r-', linewidth=1.5, label='theta_2 (theta_1_0 = 0.1001)', alpha=0.7)
 ax.set_xlabel('Time (s)', fontsize=12)
 ax.set_ylabel('Angle (rad)', fontsize=12)
 ax.set_title('Chaos: Small Change in Initial Conditions (0.1 → 0.1001)', fontsize=14)
@@ -211,7 +211,7 @@ if divergence_point:
 
 plt.tight_layout()
 plt.savefig('05_chaos_demonstration.png', dpi=150)
-print("✅ Saved: 05_chaos_demonstration.png")
+print("[OK] Saved: 05_chaos_demonstration.png")
 
 # ============================================================================
 # Key insights
@@ -229,3 +229,5 @@ print("6. Small numerical errors can cause large differences")
 print("="*60)
 
 plt.show()
+
+

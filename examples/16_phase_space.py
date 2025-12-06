@@ -1,4 +1,4 @@
-"""
+﻿"""
 Tutorial 16: Phase Space Visualization
 
 Phase space is a powerful tool for understanding dynamics:
@@ -168,7 +168,7 @@ axes[1, 1].grid(True, alpha=0.3)
 
 plt.tight_layout()
 plt.savefig('16_phase_space.png', dpi=150)
-print("\n✅ Saved: 16_phase_space.png")
+print("\n[OK] Saved: 16_phase_space.png")
 
 # ============================================================================
 # Plot 2: 3D phase space (for 2D systems)
@@ -207,13 +207,13 @@ fig = plt.figure(figsize=(12, 10))
 ax = fig.add_subplot(111, projection='3d')
 
 ax.plot(x1_3, x2_3, x1_dot3, 'b-', linewidth=2, alpha=0.7)
-ax.set_xlabel('x₁ (m)', fontsize=12)
-ax.set_ylabel('x₂ (m)', fontsize=12)
-ax.set_zlabel('ẋ₁ (m/s)', fontsize=12)
+ax.set_xlabel('x_1 (m)', fontsize=12)
+ax.set_ylabel('x_2 (m)', fontsize=12)
+ax.set_zlabel('ẋ_1 (m/s)', fontsize=12)
 ax.set_title('3D Phase Space: Coupled Oscillators', fontsize=14)
 
 plt.savefig('16_phase_space_3d.png', dpi=150)
-print("✅ Saved: 16_phase_space_3d.png")
+print("[OK] Saved: 16_phase_space_3d.png")
 
 # ============================================================================
 # Key insights
@@ -232,3 +232,5 @@ print("7. Fixed points = equilibria (where velocity = 0)")
 print("="*60)
 
 plt.show()
+
+

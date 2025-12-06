@@ -1,4 +1,4 @@
-"""
+﻿"""
 Tutorial 02: Harmonic Oscillator
 
 The harmonic oscillator is one of the most important systems in physics.
@@ -8,7 +8,7 @@ Physics:
 - A mass m attached to a spring with spring constant k
 - Restoring force: F = -kx
 - Lagrangian: L = (1/2)m·ẋ² - (1/2)kx²
-- Natural frequency: ω = √(k/m)
+- Natural frequency: omega = sqrt(k/m)
 
 We'll simulate this and see the characteristic sinusoidal motion.
 """
@@ -48,10 +48,10 @@ print("Compiling harmonic oscillator...")
 result = compiler.compile_dsl(dsl_code)
 
 if not result['success']:
-    print(f"❌ Compilation failed: {result.get('error')}")
+    print(f"[FAIL] Compilation failed: {result.get('error')}")
     exit(1)
 
-print("✅ Compilation successful!")
+print("[OK] Compilation successful!")
 
 # Calculate natural frequency for reference
 m = 1.0
@@ -62,7 +62,7 @@ period = 2 * np.pi / omega
 print(f"\nSystem parameters:")
 print(f"   Mass: {m} kg")
 print(f"   Spring constant: {k} N/m")
-print(f"   Natural frequency: ω = {omega:.3f} rad/s")
+print(f"   Natural frequency: omega = {omega:.3f} rad/s")
 print(f"   Period: T = {period:.3f} s")
 
 # Simulate for 3 periods
@@ -72,10 +72,10 @@ print(f"\nSimulating for {t_span[1]:.2f} seconds ({3} periods)...")
 solution = compiler.simulate(t_span=t_span, num_points=500)
 
 if not solution['success']:
-    print(f"❌ Simulation failed!")
+    print(f"[FAIL] Simulation failed!")
     exit(1)
 
-print("✅ Simulation successful!")
+print("[OK] Simulation successful!")
 
 # ============================================================================
 # Extract results
@@ -86,7 +86,7 @@ x = solution['y'][0]
 x_dot = solution['y'][1]
 
 # Analytical solution for comparison
-# x(t) = A·cos(ωt + φ) where A = initial position, φ = 0
+# x(t) = A·cos(omegat + φ) where A = initial position, φ = 0
 A = 1.0  # Initial amplitude
 x_analytical = A * np.cos(omega * t)
 
@@ -122,7 +122,7 @@ axes[2].axis('equal')
 
 plt.tight_layout()
 plt.savefig('02_harmonic_oscillator.png', dpi=150)
-print("\n✅ Plot saved as '02_harmonic_oscillator.png'")
+print("\n[OK] Plot saved as '02_harmonic_oscillator.png'")
 
 # ============================================================================
 # Energy analysis
@@ -149,7 +149,7 @@ plt.title('Energy Conservation in Harmonic Oscillator')
 plt.legend()
 plt.grid(True, alpha=0.3)
 plt.savefig('02_harmonic_oscillator_energy.png', dpi=150)
-print("✅ Energy plot saved as '02_harmonic_oscillator_energy.png'")
+print("[OK] Energy plot saved as '02_harmonic_oscillator_energy.png'")
 
 # ============================================================================
 # Key insights
@@ -158,11 +158,13 @@ print("✅ Energy plot saved as '02_harmonic_oscillator_energy.png'")
 print("\n" + "="*60)
 print("KEY INSIGHTS:")
 print("="*60)
-print("1. Motion is sinusoidal: x(t) = A·cos(ωt)")
+print("1. Motion is sinusoidal: x(t) = A·cos(omegat)")
 print("2. Energy oscillates between kinetic and potential")
 print("3. Total energy is conserved (constant)")
 print("4. Phase space trajectory is an ellipse")
-print("5. Period depends only on m and k: T = 2π√(m/k)")
+print("5. Period depends only on m and k: T = 2pisqrt(m/k)")
 print("="*60)
 
 plt.show()
+
+

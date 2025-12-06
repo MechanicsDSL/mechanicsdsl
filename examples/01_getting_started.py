@@ -1,4 +1,4 @@
-import numpy as np
+﻿import numpy as np
 import matplotlib.pyplot as plt
 from mechanics_dsl import PhysicsCompiler
 
@@ -35,10 +35,10 @@ print("Compiling DSL code...")
 result = compiler.compile_dsl(dsl_code)
 
 if result['success']:
-    print("✅ Compilation successful!")
+    print("[OK] Compilation successful!")
     print(f"   Compilation time: {result.get('compilation_time', 0):.4f} seconds")
 else:
-    print("❌ Compilation failed!")
+    print("[FAIL] Compilation failed!")
     print(f"   Error: {result.get('error', 'Unknown error')}")
     # Removed exit(1)
 
@@ -50,11 +50,11 @@ print("\nRunning simulation...")
 solution = compiler.simulate(t_span=(0, 10), num_points=100)
 
 if solution['success']:
-    print("✅ Simulation successful!")
+    print("[OK] Simulation successful!")
     print(f"   Time points: {len(solution['t'])}")
     print(f"   Function evaluations: {solution.get('nfev', 'N/A')}")
 else:
-    print("❌ Simulation failed!")
+    print("[FAIL] Simulation failed!")
     # Removed exit(1)
 
 # ============================================================================
@@ -86,7 +86,7 @@ if solution['success'] and len(solution['y']) > 0:
 
     plt.tight_layout()
     plt.savefig('01_free_particle.png', dpi=150)
-    print("\n✅ Plot saved as '01_free_particle.png'")
+    print("\n[OK] Plot saved as '01_free_particle.png'")
     print("\nSince this is a free particle (no forces), velocity is constant!")
     print(f"   Initial velocity: {x_dot[0]:.2f} m/s")
     print(f"   Final velocity: {x_dot[-1]:.2f} m/s")
@@ -111,3 +111,5 @@ print("8. Results are in solution['t'] (time) and solution['y'] (state)")
 print("="*60)
 
 plt.show()
+
+

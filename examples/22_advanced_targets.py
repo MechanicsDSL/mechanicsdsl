@@ -1,4 +1,4 @@
-"""
+﻿"""
 Tutorial 22: Advanced C++ Compilation Targets
 
 This tutorial demonstrates the "Physics Compiler" capabilities:
@@ -52,3 +52,5 @@ print("1. ./sim_standard (Executable)")
 print("2. ./sim_openmp   (Executable - Run with './sim_openmp')")
 print("3. ./sim_game     (Executable - Realtime visualization)")
 print("4. ./sim_arduino.ino (Upload to ESP32/Uno)")
+
+

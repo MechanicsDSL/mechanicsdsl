@@ -1,4 +1,4 @@
-"""
+﻿"""
 Tutorial 21: C++ Code Export
 
 This tutorial demonstrates how to generate high-performance C++ code
@@ -59,7 +59,7 @@ print("\nGenerating C++ simulation code...")
 success = compiler.compile_to_cpp("cpp_double_pendulum.cpp", compile_binary=True)
 
 if success:
-    print("✅ C++ code generated and compiled successfully!")
+    print("[OK] C++ code generated and compiled successfully!")
     print("   Source file: cpp_double_pendulum.cpp")
     
     # Check for binary
@@ -73,6 +73,8 @@ if success:
         print(f"   {binary_name}")
         print("   (This will generate 'cpp_double_pendulum_results.csv')")
     else:
-        print("   ⚠️ Binary not found. Compilation might have failed silently or g++ is missing.")
+        print("   [WARN] Binary not found. Compilation might have failed silently or g++ is missing.")
 else:
-    print("❌ C++ generation failed.")
+    print("[FAIL] C++ generation failed.")
+
+

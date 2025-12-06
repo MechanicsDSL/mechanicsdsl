@@ -1,4 +1,4 @@
-"""
+﻿"""
 Tutorial 08: Damped Systems
 
 Real systems lose energy! This tutorial covers:
@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 from mechanics_dsl import PhysicsCompiler
 
 # ============================================================================
-# Underdamped System (b < 2√(mk))
+# Underdamped System (b < 2sqrt(mk))
 # ============================================================================
 
 print("="*60)
@@ -44,13 +44,13 @@ dsl_underdamped = """
 
 result1 = compiler1.compile_dsl(dsl_underdamped)
 if not result1['success']:
-    print(f"❌ Compilation failed: {result1.get('error')}")
+    print(f"[FAIL] Compilation failed: {result1.get('error')}")
     exit(1)
 
 solution1 = compiler1.simulate(t_span=(0, 10), num_points=1000)
 
 # ============================================================================
-# Critically Damped System (b = 2√(mk))
+# Critically Damped System (b = 2sqrt(mk))
 # ============================================================================
 
 print("\n" + "="*60)
@@ -80,7 +80,7 @@ dsl_critical = f"""
 
 result2 = compiler2.compile_dsl(dsl_critical)
 if not result2['success']:
-    print(f"❌ Compilation failed: {result2.get('error')}")
+    print(f"[FAIL] Compilation failed: {result2.get('error')}")
     exit(1)
 
 print(f"Critical damping coefficient: b = {b_critical:.3f} N·s/m")
@@ -88,7 +88,7 @@ print(f"Critical damping coefficient: b = {b_critical:.3f} N·s/m")
 solution2 = compiler2.simulate(t_span=(0, 10), num_points=1000)
 
 # ============================================================================
-# Overdamped System (b > 2√(mk))
+# Overdamped System (b > 2sqrt(mk))
 # ============================================================================
 
 print("\n" + "="*60)
@@ -117,7 +117,7 @@ dsl_overdamped = f"""
 
 result3 = compiler3.compile_dsl(dsl_overdamped)
 if not result3['success']:
-    print(f"❌ Compilation failed: {result3.get('error')}")
+    print(f"[FAIL] Compilation failed: {result3.get('error')}")
     exit(1)
 
 print(f"Overdamping coefficient: b = {b_over:.3f} N·s/m")
@@ -187,7 +187,7 @@ axes[2, 1].grid(True, alpha=0.3)
 
 plt.tight_layout()
 plt.savefig('08_damping_comparison.png', dpi=150)
-print("\n✅ Saved: 08_damping_comparison.png")
+print("\n[OK] Saved: 08_damping_comparison.png")
 
 # ============================================================================
 # Energy dissipation
@@ -223,7 +223,7 @@ ax.set_yscale('log')  # Log scale to see decay better
 
 plt.tight_layout()
 plt.savefig('08_energy_dissipation.png', dpi=150)
-print("✅ Saved: 08_energy_dissipation.png")
+print("[OK] Saved: 08_energy_dissipation.png")
 
 # ============================================================================
 # Key insights
@@ -232,13 +232,15 @@ print("✅ Saved: 08_energy_dissipation.png")
 print("\n" + "="*60)
 print("KEY INSIGHTS:")
 print("="*60)
-print("1. UNDERDAMPED: Oscillates while decaying (b < 2√(mk))")
-print("2. CRITICALLY DAMPED: Fastest return to equilibrium (b = 2√(mk))")
-print("3. OVERDAMPED: Slow decay, no oscillation (b > 2√(mk))")
+print("1. UNDERDAMPED: Oscillates while decaying (b < 2sqrt(mk))")
+print("2. CRITICALLY DAMPED: Fastest return to equilibrium (b = 2sqrt(mk))")
+print("3. OVERDAMPED: Slow decay, no oscillation (b > 2sqrt(mk))")
 print("4. Energy always decreases (dissipated by damping)")
 print("5. Phase space spirals toward origin")
 print("6. Use \\damping{} command to add damping forces")
 print("="*60)
 
 plt.show()
+
+
 

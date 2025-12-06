@@ -1,4 +1,4 @@
-"""
+﻿"""
 Tutorial 23: The Dam Break (SPH Fluid Dynamics)
 """
 import os
@@ -58,3 +58,5 @@ else:
 print("5. Rendering Animation...")
 compiler.visualizer.animate_fluid_from_csv("dam_break_sph.csv")
 plt.show()
+
+

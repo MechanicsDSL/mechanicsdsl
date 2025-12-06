@@ -1,4 +1,4 @@
-"""
+﻿"""
 Tutorial 09: Forced Oscillators
 
 When you drive an oscillator with an external force, interesting things happen:
@@ -7,9 +7,9 @@ When you drive an oscillator with an external force, interesting things happen:
 - Beats: When frequencies are close
 
 Physics:
-- Driving force: F(t) = F₀·cos(ω_d·t)
-- Natural frequency: ω₀ = √(k/m)
-- Resonance when ω_d = ω₀
+- Driving force: F(t) = F_0·cos(omega_d·t)
+- Natural frequency: omega_0 = sqrt(k/m)
+- Resonance when omega_d = omega_0
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -26,15 +26,15 @@ omega0 = np.sqrt(k / m)  # Natural frequency
 print("System parameters:")
 print(f"   Mass: {m} kg")
 print(f"   Spring constant: {k} N/m")
-print(f"   Natural frequency: ω₀ = {omega0:.3f} rad/s")
-print(f"   Natural period: T₀ = {2*np.pi/omega0:.3f} s")
+print(f"   Natural frequency: omega_0 = {omega0:.3f} rad/s")
+print(f"   Natural period: T_0 = {2*np.pi/omega0:.3f} s")
 
 # ============================================================================
-# Below Resonance (ω_d < ω₀)
+# Below Resonance (omega_d < omega_0)
 # ============================================================================
 
 print("\n" + "="*60)
-print("BELOW RESONANCE (ω_d = 0.5·ω₀)")
+print("BELOW RESONANCE (omega_d = 0.5·omega_0)")
 print("="*60)
 
 compiler1 = PhysicsCompiler()
@@ -63,17 +63,17 @@ dsl_below = r"""
 
 result1 = compiler1.compile_dsl(dsl_below)
 if not result1['success']:
-    print(f"❌ Compilation failed: {result1.get('error')}")
+    print(f"[FAIL] Compilation failed: {result1.get('error')}")
     exit(1)
 
 solution1 = compiler1.simulate(t_span=(0, 20), num_points=2000)
 
 # ============================================================================
-# At Resonance (ω_d = ω₀)
+# At Resonance (omega_d = omega_0)
 # ============================================================================
 
 print("\n" + "="*60)
-print("AT RESONANCE (ω_d = ω₀)")
+print("AT RESONANCE (omega_d = omega_0)")
 print("="*60)
 
 compiler2 = PhysicsCompiler()
@@ -101,17 +101,17 @@ dsl_resonance = r"""
 
 result2 = compiler2.compile_dsl(dsl_resonance)
 if not result2['success']:
-    print(f"❌ Compilation failed: {result2.get('error')}")
+    print(f"[FAIL] Compilation failed: {result2.get('error')}")
     exit(1)
 
 solution2 = compiler2.simulate(t_span=(0, 20), num_points=2000)
 
 # ============================================================================
-# Above Resonance (ω_d > ω₀)
+# Above Resonance (omega_d > omega_0)
 # ============================================================================
 
 print("\n" + "="*60)
-print("ABOVE RESONANCE (ω_d = 2·ω₀)")
+print("ABOVE RESONANCE (omega_d = 2·omega_0)")
 print("="*60)
 
 compiler3 = PhysicsCompiler()
@@ -139,7 +139,7 @@ dsl_above = r"""
 
 result3 = compiler3.compile_dsl(dsl_above)
 if not result3['success']:
-    print(f"❌ Compilation failed: {result3.get('error')}")
+    print(f"[FAIL] Compilation failed: {result3.get('error')}")
     exit(1)
 
 solution3 = compiler3.simulate(t_span=(0, 20), num_points=2000)
@@ -173,7 +173,7 @@ axes[0, 0].plot(t1, x1, 'b-', linewidth=2, label='Response')
 axes[0, 0].plot(t1, F1, 'r--', linewidth=1, alpha=0.5, label='Driving force (scaled)')
 axes[0, 0].set_xlabel('Time (s)')
 axes[0, 0].set_ylabel('Position (m)')
-axes[0, 0].set_title(f'Below Resonance (ω_d = {omega_d1:.2f} rad/s)')
+axes[0, 0].set_title(f'Below Resonance (omega_d = {omega_d1:.2f} rad/s)')
 axes[0, 0].legend()
 axes[0, 0].grid(True, alpha=0.3)
 
@@ -189,7 +189,7 @@ axes[1, 0].plot(t2, x2, 'b-', linewidth=2, label='Response')
 axes[1, 0].plot(t2, F2, 'r--', linewidth=1, alpha=0.5, label='Driving force (scaled)')
 axes[1, 0].set_xlabel('Time (s)')
 axes[1, 0].set_ylabel('Position (m)')
-axes[1, 0].set_title(f'At Resonance (ω_d = {omega_d2:.2f} rad/s)')
+axes[1, 0].set_title(f'At Resonance (omega_d = {omega_d2:.2f} rad/s)')
 axes[1, 0].legend()
 axes[1, 0].grid(True, alpha=0.3)
 
@@ -205,7 +205,7 @@ axes[2, 0].plot(t3, x3, 'b-', linewidth=2, label='Response')
 axes[2, 0].plot(t3, F3, 'r--', linewidth=1, alpha=0.5, label='Driving force (scaled)')
 axes[2, 0].set_xlabel('Time (s)')
 axes[2, 0].set_ylabel('Position (m)')
-axes[2, 0].set_title(f'Above Resonance (ω_d = {omega_d3:.2f} rad/s)')
+axes[2, 0].set_title(f'Above Resonance (omega_d = {omega_d3:.2f} rad/s)')
 axes[2, 0].legend()
 axes[2, 0].grid(True, alpha=0.3)
 
@@ -218,7 +218,7 @@ axes[2, 1].grid(True, alpha=0.3)
 
 plt.tight_layout()
 plt.savefig('09_forced_oscillators.png', dpi=150)
-print("\n✅ Saved: 09_forced_oscillators.png")
+print("\n[OK] Saved: 09_forced_oscillators.png")
 
 # ============================================================================
 # Amplitude comparison
@@ -240,7 +240,7 @@ amplitudes = [amp1, amp2, amp3]
 
 fig, ax = plt.subplots(figsize=(10, 6))
 ax.plot(omega_d_values, amplitudes, 'bo-', linewidth=2, markersize=10)
-ax.axvline(omega0, color='r', linestyle='--', label=f'Natural frequency ω₀ = {omega0:.2f}')
+ax.axvline(omega0, color='r', linestyle='--', label=f'Natural frequency omega_0 = {omega0:.2f}')
 ax.set_xlabel('Driving Frequency (rad/s)', fontsize=12)
 ax.set_ylabel('Steady-State Amplitude (m)', fontsize=12)
 ax.set_title('Resonance Curve', fontsize=14)
@@ -249,7 +249,7 @@ ax.grid(True, alpha=0.3)
 
 plt.tight_layout()
 plt.savefig('09_resonance_curve.png', dpi=150)
-print("✅ Saved: 09_resonance_curve.png")
+print("[OK] Saved: 09_resonance_curve.png")
 
 # ============================================================================
 # Key insights
@@ -258,12 +258,14 @@ print("✅ Saved: 09_resonance_curve.png")
 print("\n" + "="*60)
 print("KEY INSIGHTS:")
 print("="*60)
-print("1. RESONANCE: Maximum amplitude when ω_d = ω₀")
+print("1. RESONANCE: Maximum amplitude when omega_d = omega_0")
 print("2. Below resonance: Response in phase with driving force")
-print("3. Above resonance: Response out of phase (180° shift)")
+print("3. Above resonance: Response out of phase (180 deg shift)")
 print("4. At resonance: Amplitude grows linearly with time (no damping)")
 print("5. Use \force{} command for time-dependent forces")
 print("6. Time-dependent forces use 't' as the time variable")
 print("="*60)
 
 plt.show()
+
+

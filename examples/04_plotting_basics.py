@@ -1,4 +1,4 @@
-"""
+﻿"""
 Tutorial 04: Plotting and Visualization Basics
 
 MechanicsDSL has built-in visualization tools! This tutorial shows:
@@ -36,7 +36,7 @@ dsl_code = r"""
 
 result = compiler.compile_dsl(dsl_code)
 if not result['success']:
-    print(f"❌ Compilation failed: {result.get('error')}")
+    print(f"[FAIL] Compilation failed: {result.get('error')}")
     exit(1)
 
 solution = compiler.simulate(t_span=(0, 10), num_points=500)
@@ -91,7 +91,7 @@ axes[1, 1].grid(True, alpha=0.3)
 
 plt.tight_layout()
 plt.savefig('04_manual_plotting.png', dpi=150)
-print("✅ Saved: 04_manual_plotting.png")
+print("[OK] Saved: 04_manual_plotting.png")
 
 # ============================================================================
 # Method 2: Using built-in visualization functions
@@ -106,7 +106,7 @@ print("\nMethod 2: Built-in visualization functions")
 try:
     # Create animation (this may not display in all environments)
     anim = compiler.animate(solution, save_path='04_animation.gif', fps=30)
-    print("✅ Animation created (may need to be saved manually)")
+    print("[OK] Animation created (may need to be saved manually)")
 except Exception as e:
     print(f"⚠ Animation creation: {e}")
     print("   (This is normal in some environments)")
@@ -143,7 +143,7 @@ ax.text(0.02, 0.98, f'Energy conservation error: {energy_error:.2e} J',
 
 plt.tight_layout()
 plt.savefig('04_energy_plot.png', dpi=150)
-print("✅ Saved: 04_energy_plot.png")
+print("[OK] Saved: 04_energy_plot.png")
 
 # ============================================================================
 # Method 4: Phase space with trajectory
@@ -179,7 +179,7 @@ ax.axis('equal')
 
 plt.tight_layout()
 plt.savefig('04_phase_space.png', dpi=150)
-print("✅ Saved: 04_phase_space.png")
+print("[OK] Saved: 04_phase_space.png")
 
 # ============================================================================
 # Method 5: Custom multi-panel visualization
@@ -227,7 +227,7 @@ ax_energy.legend()
 ax_energy.grid(True, alpha=0.3)
 
 plt.savefig('04_custom_layout.png', dpi=150)
-print("✅ Saved: 04_custom_layout.png")
+print("[OK] Saved: 04_custom_layout.png")
 
 # ============================================================================
 # Summary
@@ -244,3 +244,5 @@ print("5. Custom layouts: Combine multiple views")
 print("="*60)
 
 plt.show()
+
+

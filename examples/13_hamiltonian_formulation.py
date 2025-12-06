@@ -1,4 +1,4 @@
-"""
+﻿"""
 Tutorial 13: Hamiltonian Formulation
 
 The Hamiltonian approach is an alternative to Lagrangian mechanics.
@@ -47,10 +47,10 @@ dsl_lagrangian = """
 result1 = compiler1.compile_dsl(dsl_lagrangian, use_hamiltonian=True)
 
 if not result1['success']:
-    print(f"❌ Compilation failed: {result1.get('error')}")
+    print(f"[FAIL] Compilation failed: {result1.get('error')}")
     exit(1)
 
-print("✅ Compilation successful (Hamiltonian formulation)!")
+print("[OK] Compilation successful (Hamiltonian formulation)!")
 
 solution1 = compiler1.simulate(t_span=(0, 10), num_points=500)
 
@@ -80,10 +80,10 @@ dsl_hamiltonian = """
 result2 = compiler2.compile_dsl(dsl_hamiltonian)
 
 if not result2['success']:
-    print(f"❌ Compilation failed: {result2.get('error')}")
+    print(f"[FAIL] Compilation failed: {result2.get('error')}")
     exit(1)
 
-print("✅ Compilation successful (explicit Hamiltonian)!")
+print("[OK] Compilation successful (explicit Hamiltonian)!")
 
 solution2 = compiler2.simulate(t_span=(0, 10), num_points=500)
 
@@ -148,7 +148,7 @@ axes[1, 1].grid(True, alpha=0.3)
 
 plt.tight_layout()
 plt.savefig('13_hamiltonian_comparison.png', dpi=150)
-print("\n✅ Saved: 13_hamiltonian_comparison.png")
+print("\n[OK] Saved: 13_hamiltonian_comparison.png")
 
 # ============================================================================
 # Key insights
@@ -166,3 +166,5 @@ print("6. Better numerical properties (symplectic)")
 print("="*60)
 
 plt.show()
+
+

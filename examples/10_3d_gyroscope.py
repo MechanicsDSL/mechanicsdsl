@@ -1,4 +1,4 @@
-"""
+﻿"""
 Tutorial 10: 3D Gyroscope
 
 A gyroscope is a spinning top that exhibits fascinating precession and nutation.
@@ -6,7 +6,7 @@ This is a 3D system requiring Euler angles.
 
 Physics:
 - Rigid body rotation in 3D
-- Euler angles: θ (nutation), φ (precession), ψ (spin)
+- Euler angles: theta (nutation), φ (precession), ψ (spin)
 - Conservation of angular momentum
 - Precession: slow rotation of spin axis
 - Nutation: wobbling motion
@@ -53,18 +53,18 @@ print("Compiling gyroscope system...")
 result = compiler.compile_dsl(dsl_code)
 
 if not result['success']:
-    print(f"❌ Compilation failed: {result.get('error')}")
+    print(f"[FAIL] Compilation failed: {result.get('error')}")
     exit(1)
 
-print("✅ Compilation successful!")
+print("[OK] Compilation successful!")
 
 solution = compiler.simulate(t_span=(0, 5), num_points=1000)
 
 if not solution['success']:
-    print(f"❌ Simulation failed!")
+    print(f"[FAIL] Simulation failed!")
     exit(1)
 
-print("✅ Simulation successful!")
+print("[OK] Simulation successful!")
 
 # ============================================================================
 # Extract results
@@ -94,7 +94,7 @@ fig, axes = plt.subplots(3, 1, figsize=(12, 10))
 
 axes[0].plot(t, theta, 'b-', linewidth=2)
 axes[0].set_xlabel('Time (s)')
-axes[0].set_ylabel('θ (rad)')
+axes[0].set_ylabel('theta (rad)')
 axes[0].set_title('Nutation Angle vs Time')
 axes[0].grid(True, alpha=0.3)
 
@@ -112,7 +112,7 @@ axes[2].grid(True, alpha=0.3)
 
 plt.tight_layout()
 plt.savefig('10_gyroscope_angles.png', dpi=150)
-print("\n✅ Saved: 10_gyroscope_angles.png")
+print("\n[OK] Saved: 10_gyroscope_angles.png")
 
 # ============================================================================
 # Plot 2: 3D trajectory
@@ -142,7 +142,7 @@ ax.set_title('Gyroscope: 3D Trajectory', fontsize=14)
 ax.legend()
 
 plt.savefig('10_gyroscope_3d.png', dpi=150)
-print("✅ Saved: 10_gyroscope_3d.png")
+print("[OK] Saved: 10_gyroscope_3d.png")
 
 # ============================================================================
 # Plot 3: Precession and nutation
@@ -167,7 +167,7 @@ ax.grid(True, alpha=0.3)
 
 plt.tight_layout()
 plt.savefig('10_gyroscope_precession.png', dpi=150)
-print("✅ Saved: 10_gyroscope_precession.png")
+print("[OK] Saved: 10_gyroscope_precession.png")
 
 # ============================================================================
 # Key insights
@@ -185,3 +185,5 @@ print("6. Energy and angular momentum are conserved")
 print("="*60)
 
 plt.show()
+
+

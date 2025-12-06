@@ -1,4 +1,4 @@
-"""
+﻿"""
 Tutorial 03: Simple Pendulum
 
 A pendulum is a mass suspended from a pivot point, swinging under gravity.
@@ -6,9 +6,9 @@ For small angles, it's a harmonic oscillator. For large angles, it's nonlinear!
 
 Physics:
 - Mass m on a string of length L
-- Angle θ from vertical
-- Lagrangian: L = (1/2)mL²θ̇² - mgL(1 - cos θ)
-- Small angle approximation: sin θ ≈ θ (harmonic oscillator)
+- Angle theta from vertical
+- Lagrangian: L = (1/2)mL²thetȧ² - mgL(1 - cos theta)
+- Small angle approximation: sin theta ≈ theta (harmonic oscillator)
 - Large angles: nonlinear, period depends on amplitude
 
 We'll compare small and large angle behavior.
@@ -23,7 +23,7 @@ from mechanics_dsl import PhysicsCompiler
 # ============================================================================
 
 print("="*60)
-print("SMALL ANGLE PENDULUM (θ₀ = 0.1 rad ≈ 5.7°)")
+print("SMALL ANGLE PENDULUM (theta_0 = 0.1 rad ≈ 5.7 deg)")
 print("="*60)
 
 compiler1 = PhysicsCompiler()
@@ -44,10 +44,10 @@ dsl_small = r"""
 
 result1 = compiler1.compile_dsl(dsl_small)
 if not result1['success']:
-    print(f"❌ Compilation failed: {result1.get('error')}")
+    print(f"[FAIL] Compilation failed: {result1.get('error')}")
     exit(1)
 
-# Calculate period for small angles: T = 2π√(L/g)
+# Calculate period for small angles: T = 2pisqrt(L/g)
 L = 1.0
 g = 9.81
 T_small = 2 * np.pi * np.sqrt(L / g)
@@ -60,7 +60,7 @@ solution1 = compiler1.simulate(t_span=(0, 3 * T_small), num_points=500)
 # ============================================================================
 
 print("\n" + "="*60)
-print("LARGE ANGLE PENDULUM (θ₀ = 1.5 rad ≈ 86°)")
+print("LARGE ANGLE PENDULUM (theta_0 = 1.5 rad ≈ 86 deg)")
 print("="*60)
 
 compiler2 = PhysicsCompiler()
@@ -81,7 +81,7 @@ dsl_large = r"""
 
 result2 = compiler2.compile_dsl(dsl_large)
 if not result2['success']:
-    print(f"❌ Compilation failed: {result2.get('error')}")
+    print(f"[FAIL] Compilation failed: {result2.get('error')}")
     exit(1)
 
 solution2 = compiler2.simulate(t_span=(0, 3 * T_small), num_points=500)
@@ -118,7 +118,7 @@ ax1 = plt.subplot(3, 2, 1)
 ax1.plot(t1, theta1, 'b-', linewidth=2, label='Small angle (0.1 rad)')
 ax1.set_xlabel('Time (s)')
 ax1.set_ylabel('Angle (rad)')
-ax1.set_title('Small Angle: θ vs Time')
+ax1.set_title('Small Angle: theta vs Time')
 ax1.grid(True, alpha=0.3)
 ax1.legend()
 
@@ -126,7 +126,7 @@ ax2 = plt.subplot(3, 2, 2)
 ax2.plot(t2, theta2, 'r-', linewidth=2, label='Large angle (1.5 rad)')
 ax2.set_xlabel('Time (s)')
 ax2.set_ylabel('Angle (rad)')
-ax2.set_title('Large Angle: θ vs Time')
+ax2.set_title('Large Angle: theta vs Time')
 ax2.grid(True, alpha=0.3)
 ax2.legend()
 
@@ -172,7 +172,7 @@ ax6.legend()
 
 plt.tight_layout()
 plt.savefig('03_pendulum_comparison.png', dpi=150)
-print("\n✅ Plot saved as '03_pendulum_comparison.png'")
+print("\n[OK] Plot saved as '03_pendulum_comparison.png'")
 
 # ============================================================================
 # Period analysis
@@ -229,3 +229,5 @@ print("6. Energy is conserved in both cases")
 print("="*60)
 
 plt.show()
+
+

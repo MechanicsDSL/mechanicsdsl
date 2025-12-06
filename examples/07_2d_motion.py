@@ -1,4 +1,4 @@
-"""
+﻿"""
 Tutorial 07: 2D Motion (Projectile and Orbits)
 
 This tutorial covers motion in 2D:
@@ -43,7 +43,7 @@ dsl_projectile = """
 
 result1 = compiler1.compile_dsl(dsl_projectile)
 if not result1['success']:
-    print(f"❌ Compilation failed: {result1.get('error')}")
+    print(f"[FAIL] Compilation failed: {result1.get('error')}")
     exit(1)
 
 # Calculate flight time analytically
@@ -99,10 +99,10 @@ dsl_orbit = """
 
 result2 = compiler2.compile_dsl(dsl_orbit)
 if not result2['success']:
-    print(f"❌ Compilation failed: {result2.get('error')}")
+    print(f"[FAIL] Compilation failed: {result2.get('error')}")
     exit(1)
 
-# For circular orbit: v = √(GM/r)
+# For circular orbit: v = sqrt(GM/r)
 G, M, r0 = 6.674e-11, 1000.0, 1.0
 v_circular = np.sqrt(G * M / r0)
 period = 2 * np.pi * r0 / v_circular
@@ -173,7 +173,7 @@ axes[1, 1].grid(True, alpha=0.3)
 
 plt.tight_layout()
 plt.savefig('07_projectile.png', dpi=150)
-print("\n✅ Saved: 07_projectile.png")
+print("\n[OK] Saved: 07_projectile.png")
 
 # ============================================================================
 # Plot 2: Orbital Motion
@@ -225,7 +225,7 @@ axes[1, 1].grid(True, alpha=0.3)
 
 plt.tight_layout()
 plt.savefig('07_orbit.png', dpi=150)
-print("✅ Saved: 07_orbit.png")
+print("[OK] Saved: 07_orbit.png")
 
 # ============================================================================
 # Key insights
@@ -238,7 +238,7 @@ print("PROJECTILE:")
 print("1. Horizontal motion is uniform (constant velocity)")
 print("2. Vertical motion is accelerated (gravity)")
 print("3. Trajectory is a parabola")
-print("4. Maximum range at 45° launch angle")
+print("4. Maximum range at 45 deg launch angle")
 print("\nORBITS:")
 print("1. Circular orbits have constant radius")
 print("2. Angular velocity is constant")
@@ -247,4 +247,6 @@ print("4. Period depends on orbital radius")
 print("="*60)
 
 plt.show()
+
+
 

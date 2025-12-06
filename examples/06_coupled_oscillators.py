@@ -1,4 +1,4 @@
-"""
+﻿"""
 Tutorial 06: Coupled Oscillators
 
 Two masses connected by springs create interesting dynamics:
@@ -7,8 +7,8 @@ Two masses connected by springs create interesting dynamics:
 - Beat frequencies: When frequencies are close, you see "beats"
 
 Physics:
-- Two masses m₁, m₂ connected by spring k₁₂
-- Each mass also connected to wall by springs k₁, k₂
+- Two masses m_1, m_2 connected by spring k_1_2
+- Each mass also connected to wall by springs k_1, k_2
 - Lagrangian includes coupling terms
 """
 
@@ -53,32 +53,32 @@ print("Compiling coupled oscillators...")
 result = compiler.compile_dsl(dsl_code)
 
 if not result['success']:
-    print(f"❌ Compilation failed: {result.get('error')}")
+    print(f"[FAIL] Compilation failed: {result.get('error')}")
     exit(1)
 
-print("✅ Compilation successful!")
+print("[OK] Compilation successful!")
 
 # Calculate normal mode frequencies (analytical)
 m1, m2 = 1.0, 1.0
 k1, k2, k12 = 10.0, 10.0, 5.0
 
 # For symmetric case (m1=m2, k1=k2), normal modes are:
-# ω₁² = (k1 + k12)/m (symmetric mode)
-# ω₂² = k1/m (antisymmetric mode)
+# omega_1² = (k1 + k12)/m (symmetric mode)
+# omega_2² = k1/m (antisymmetric mode)
 omega1 = np.sqrt((k1 + k12) / m1)
 omega2 = np.sqrt(k1 / m1)
 
 print(f"\nNormal mode frequencies:")
-print(f"   ω₁ (symmetric): {omega1:.3f} rad/s")
-print(f"   ω₂ (antisymmetric): {omega2:.3f} rad/s")
+print(f"   omega_1 (symmetric): {omega1:.3f} rad/s")
+print(f"   omega_2 (antisymmetric): {omega2:.3f} rad/s")
 
 solution = compiler.simulate(t_span=(0, 20), num_points=1000)
 
 if not solution['success']:
-    print(f"❌ Simulation failed!")
+    print(f"[FAIL] Simulation failed!")
     exit(1)
 
-print("✅ Simulation successful!")
+print("[OK] Simulation successful!")
 
 # ============================================================================
 # Extract results
@@ -97,8 +97,8 @@ x2_dot = solution['y'][3]
 fig, axes = plt.subplots(3, 1, figsize=(12, 10))
 
 # Positions
-axes[0].plot(t, x1, 'b-', linewidth=2, label='x₁ (mass 1)')
-axes[0].plot(t, x2, 'r-', linewidth=2, label='x₂ (mass 2)')
+axes[0].plot(t, x1, 'b-', linewidth=2, label='x_1 (mass 1)')
+axes[0].plot(t, x2, 'r-', linewidth=2, label='x_2 (mass 2)')
 axes[0].set_xlabel('Time (s)')
 axes[0].set_ylabel('Position (m)')
 axes[0].set_title('Coupled Oscillators: Positions vs Time')
@@ -106,8 +106,8 @@ axes[0].legend()
 axes[0].grid(True, alpha=0.3)
 
 # Velocities
-axes[1].plot(t, x1_dot, 'b-', linewidth=2, label='ẋ₁')
-axes[1].plot(t, x2_dot, 'r-', linewidth=2, label='ẋ₂')
+axes[1].plot(t, x1_dot, 'b-', linewidth=2, label='ẋ_1')
+axes[1].plot(t, x2_dot, 'r-', linewidth=2, label='ẋ_2')
 axes[1].set_xlabel('Time (s)')
 axes[1].set_ylabel('Velocity (m/s)')
 axes[1].set_title('Velocities vs Time')
@@ -136,15 +136,15 @@ axes[2].grid(True, alpha=0.3)
 
 plt.tight_layout()
 plt.savefig('06_coupled_oscillators.png', dpi=150)
-print("\n✅ Saved: 06_coupled_oscillators.png")
+print("\n[OK] Saved: 06_coupled_oscillators.png")
 
 # ============================================================================
 # Plot 2: Normal mode analysis
 # ============================================================================
 
 # Normal mode coordinates
-# Q₁ = (x₁ + x₂)/√2 (symmetric mode)
-# Q₂ = (x₁ - x₂)/√2 (antisymmetric mode)
+# Q_1 = (x_1 + x_2)/sqrt2 (symmetric mode)
+# Q_2 = (x_1 - x_2)/sqrt2 (antisymmetric mode)
 Q1 = (x1 + x2) / np.sqrt(2)
 Q2 = (x1 - x2) / np.sqrt(2)
 
@@ -153,22 +153,22 @@ fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 # Normal mode 1 (symmetric)
 axes[0, 0].plot(t, Q1, 'purple', linewidth=2)
 axes[0, 0].set_xlabel('Time (s)')
-axes[0, 0].set_ylabel('Q₁ = (x₁ + x₂)/√2')
+axes[0, 0].set_ylabel('Q_1 = (x_1 + x_2)/sqrt2')
 axes[0, 0].set_title('Normal Mode 1: Symmetric (in-phase)')
 axes[0, 0].grid(True, alpha=0.3)
 
 # Normal mode 2 (antisymmetric)
 axes[0, 1].plot(t, Q2, 'orange', linewidth=2)
 axes[0, 1].set_xlabel('Time (s)')
-axes[0, 1].set_ylabel('Q₂ = (x₁ - x₂)/√2')
+axes[0, 1].set_ylabel('Q_2 = (x_1 - x_2)/sqrt2')
 axes[0, 1].set_title('Normal Mode 2: Antisymmetric (out-of-phase)')
 axes[0, 1].grid(True, alpha=0.3)
 
 # Phase space for mode 1
 Q1_dot = (x1_dot + x2_dot) / np.sqrt(2)
 axes[1, 0].plot(Q1, Q1_dot, 'purple', linewidth=1.5)
-axes[1, 0].set_xlabel('Q₁')
-axes[1, 0].set_ylabel('Q̇₁')
+axes[1, 0].set_xlabel('Q_1')
+axes[1, 0].set_ylabel('Q̇_1')
 axes[1, 0].set_title('Phase Space: Mode 1')
 axes[1, 0].grid(True, alpha=0.3)
 axes[1, 0].axis('equal')
@@ -176,15 +176,15 @@ axes[1, 0].axis('equal')
 # Phase space for mode 2
 Q2_dot = (x1_dot - x2_dot) / np.sqrt(2)
 axes[1, 1].plot(Q2, Q2_dot, 'orange', linewidth=1.5)
-axes[1, 1].set_xlabel('Q₂')
-axes[1, 1].set_ylabel('Q̇₂')
+axes[1, 1].set_xlabel('Q_2')
+axes[1, 1].set_ylabel('Q̇_2')
 axes[1, 1].set_title('Phase Space: Mode 2')
 axes[1, 1].grid(True, alpha=0.3)
 axes[1, 1].axis('equal')
 
 plt.tight_layout()
 plt.savefig('06_normal_modes.png', dpi=150)
-print("✅ Saved: 06_normal_modes.png")
+print("[OK] Saved: 06_normal_modes.png")
 
 # ============================================================================
 # Plot 3: Visualization of masses
@@ -230,7 +230,7 @@ ax.grid(True, alpha=0.3)
 
 plt.tight_layout()
 plt.savefig('06_system_visualization.png', dpi=150)
-print("✅ Saved: 06_system_visualization.png")
+print("[OK] Saved: 06_system_visualization.png")
 
 # ============================================================================
 # Key insights
@@ -248,3 +248,5 @@ print("6. Total energy is conserved")
 print("="*60)
 
 plt.show()
+
+

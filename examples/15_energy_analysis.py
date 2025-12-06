@@ -1,4 +1,4 @@
-"""
+﻿"""
 Tutorial 15: Energy Analysis
 
 Energy conservation is a fundamental principle in physics.
@@ -39,7 +39,7 @@ dsl_code = """
 
 result = compiler.compile_dsl(dsl_code)
 if not result['success']:
-    print(f"❌ Compilation failed: {result.get('error')}")
+    print(f"[FAIL] Compilation failed: {result.get('error')}")
     exit(1)
 
 solution = compiler.simulate(t_span=(0, 10), num_points=1000)
@@ -63,11 +63,11 @@ y = -L * np.cos(theta)
 
 m, g = 1.0, 9.81
 
-# Kinetic energy: T = (1/2)mL²θ̇²
+# Kinetic energy: T = (1/2)mL²thetȧ²
 T = 0.5 * m * L**2 * theta_dot**2
 
-# Potential energy: V = mgL(1 - cos θ)
-# (Reference at bottom: V = 0 when θ = 0)
+# Potential energy: V = mgL(1 - cos theta)
+# (Reference at bottom: V = 0 when theta = 0)
 V = m * g * L * (1 - np.cos(theta))
 
 # Total energy
@@ -102,7 +102,7 @@ axes[1].grid(True, alpha=0.3)
 axes[2].plot(theta, T, 'b-', linewidth=2, label='Kinetic', alpha=0.8)
 axes[2].plot(theta, V, 'r-', linewidth=2, label='Potential', alpha=0.8)
 axes[2].plot(theta, E_total, 'g--', linewidth=2, label='Total', alpha=0.9)
-axes[2].set_xlabel('Angle θ (rad)', fontsize=12)
+axes[2].set_xlabel('Angle theta (rad)', fontsize=12)
 axes[2].set_ylabel('Energy (J)', fontsize=12)
 axes[2].set_title('Energy vs Position', fontsize=14)
 axes[2].legend(fontsize=11)
@@ -110,7 +110,7 @@ axes[2].grid(True, alpha=0.3)
 
 plt.tight_layout()
 plt.savefig('15_energy_analysis.png', dpi=150)
-print("✅ Saved: 15_energy_analysis.png")
+print("[OK] Saved: 15_energy_analysis.png")
 
 # ============================================================================
 # Energy statistics
@@ -146,7 +146,7 @@ ax.grid(True, alpha=0.3)
 
 plt.tight_layout()
 plt.savefig('15_energy_flow.png', dpi=150)
-print("✅ Saved: 15_energy_flow.png")
+print("[OK] Saved: 15_energy_flow.png")
 
 # ============================================================================
 # Phase space with energy contours
@@ -169,15 +169,15 @@ ax.clabel(contour, inline=True, fontsize=8)
 # Plot trajectory
 ax.plot(theta, theta_dot, 'b-', linewidth=2, label='Trajectory')
 
-ax.set_xlabel('Angle θ (rad)', fontsize=12)
-ax.set_ylabel('Angular Velocity θ̇ (rad/s)', fontsize=12)
+ax.set_xlabel('Angle theta (rad)', fontsize=12)
+ax.set_ylabel('Angular Velocity thetȧ (rad/s)', fontsize=12)
 ax.set_title('Phase Space with Energy Contours', fontsize=14)
 ax.legend()
 ax.grid(True, alpha=0.3)
 
 plt.tight_layout()
 plt.savefig('15_phase_space_energy.png', dpi=150)
-print("✅ Saved: 15_phase_space_energy.png")
+print("[OK] Saved: 15_phase_space_energy.png")
 
 # ============================================================================
 # Key insights
@@ -195,3 +195,5 @@ print("6. Energy analysis helps validate simulations")
 print("="*60)
 
 plt.show()
+
+

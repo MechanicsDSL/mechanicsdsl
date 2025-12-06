@@ -1,4 +1,4 @@
-"""
+﻿"""
 Tutorial 18: Export and Import Systems
 
 MechanicsDSL allows you to save and load system configurations.
@@ -42,10 +42,10 @@ dsl_code = """
 
 result1 = compiler1.compile_dsl(dsl_code)
 if not result1['success']:
-    print(f"❌ Compilation failed: {result1.get('error')}")
+    print(f"[FAIL] Compilation failed: {result1.get('error')}")
     exit(1)
 
-print("✅ System compiled successfully!")
+print("[OK] System compiled successfully!")
 
 # ============================================================================
 # Export system
@@ -58,7 +58,7 @@ print(f"\nExporting system to {export_path}...")
 export_result = serializer.export_system(compiler1, export_path)
 
 if export_result:
-    print("✅ System exported successfully!")
+    print("[OK] System exported successfully!")
     
     # Show what was saved
     with open(export_path, 'r') as f:
@@ -70,7 +70,7 @@ if export_result:
     print(f"   - Parameters: {len(data.get('parameters', {}))}")
     print(f"   - Initial conditions: {len(data.get('initial_conditions', {}))}")
 else:
-    print("❌ Export failed!")
+    print("[FAIL] Export failed!")
 
 # ============================================================================
 # Import system
@@ -84,7 +84,7 @@ print(f"Importing system from {export_path}...")
 imported_data = serializer.import_system(export_path)
 
 if imported_data:
-    print("✅ System imported successfully!")
+    print("[OK] System imported successfully!")
     
     # Create new compiler and load data
     compiler2 = PhysicsCompiler()
@@ -97,7 +97,7 @@ if imported_data:
     print(f"   Parameters: {imported_data.get('parameters', {})}")
     print(f"   Initial conditions: {imported_data.get('initial_conditions', {})}")
 else:
-    print("❌ Import failed!")
+    print("[FAIL] Import failed!")
 
 # ============================================================================
 # Example: Save simulation results
@@ -118,14 +118,14 @@ np.savez(results_path,
          success=solution['success'],
          message=solution.get('message', ''))
 
-print(f"✅ Simulation results saved to {results_path}")
+print(f"[OK] Simulation results saved to {results_path}")
 
 # Load results
 loaded_data = np.load(results_path)
 t_loaded = loaded_data['t']
 y_loaded = loaded_data['y']
 
-print(f"✅ Results loaded: {len(t_loaded)} time points")
+print(f"[OK] Results loaded: {len(t_loaded)} time points")
 
 # ============================================================================
 # Compare original and loaded
@@ -151,7 +151,7 @@ axes[1].grid(True, alpha=0.3)
 
 plt.tight_layout()
 plt.savefig('18_export_import_comparison.png', dpi=150)
-print("\n✅ Saved: 18_export_import_comparison.png")
+print("\n[OK] Saved: 18_export_import_comparison.png")
 
 # ============================================================================
 # Key insights
@@ -169,3 +169,5 @@ print("6. Can save/load entire compiler state")
 print("="*60)
 
 plt.show()
+
+
