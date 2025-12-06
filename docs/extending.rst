@@ -1,0 +1,239 @@
+Extending MechanicsDSL
+======================
+
+Guide to extending MechanicsDSL with custom physics domains, visualizations,
+and code generators.
+
+Architecture Overview
+---------------------
+
+MechanicsDSL follows a plugin-like architecture:
+
+.. code-block:: text
+
+   DSL Source → Parser → AST → Domains → Equations → Solver/CodeGen
+
+Each stage can be extended independently.
+
+Creating Custom Physics Domains
+-------------------------------
+
+Domains define how to interpret physics commands and derive equations.
+
+**Step 1**: Inherit from ``PhysicsDomain``:
+
+.. code-block:: python
+
+   from mechanics_dsl.domains.base import PhysicsDomain
+   
+   class ElectromagneticDomain(PhysicsDomain):
+       """Domain for electromagnetic systems."""
+       
+       name = "electromagnetic"
+       
+       def __init__(self):
+           super().__init__()
+           self.charges = []
+           self.fields = {}
+       
+       def process_node(self, node):
+           """Process AST nodes for this domain."""
+           if node.type == 'charge':
+               self.charges.append({
+                   'name': node.args[0],
+                   'value': float(node.args[1]),
+                   'position': node.args[2:]
+               })
+           elif node.type == 'field':
+               self.process_field(node)
+       
+       def derive_equations(self):
+           """Derive equations of motion from domain data."""
+           # Return sympy expressions for accelerations
+           equations = {}
+           for charge in self.charges:
+               F = self.compute_lorentz_force(charge)
+               a = F / charge['mass']
+               equations[charge['name'] + '_ddot'] = a
+           return equations
+
+**Step 2**: Register the domain:
+
+.. code-block:: python
+
+   from mechanics_dsl.domains import register_domain
+   
+   register_domain(ElectromagneticDomain)
+
+**Step 3**: Use in DSL:
+
+.. code-block:: latex
+
+   \domain{electromagnetic}
+   
+   \charge{electron}{-1.6e-19}{0, 0, 0}
+   \field{E}{uniform}{0, 0, 1e6}
+   \field{B}{uniform}{0, 0.1, 0}
+
+Custom DSL Commands
+-------------------
+
+Add new commands to the parser:
+
+.. code-block:: python
+
+   from mechanics_dsl.core.parser import register_command
+   
+   @register_command('friction')
+   def parse_friction(parser, args):
+       """Parse \friction{coefficient} command."""
+       return {
+           'type': 'friction',
+           'args': [parser.parse_expression(args[0])]
+       }
+
+Custom Visualizations
+---------------------
+
+Add new visualization types:
+
+.. code-block:: python
+
+   from mechanics_dsl.visualization.base import Visualizer
+   
+   class PoincareSectionVisualizer(Visualizer):
+       """Create Poincaré section plots."""
+       
+       name = "poincare"
+       
+       def __init__(self, solution, section_var, section_value):
+           self.solution = solution
+           self.section_var = section_var
+           self.section_value = section_value
+       
+       def find_crossings(self):
+           """Find when solution crosses the section."""
+           crossings = []
+           y = self.solution['y']
+           var_idx = self.get_var_index(self.section_var)
+           
+           for i in range(len(y[0]) - 1):
+               if (y[var_idx, i] < self.section_value and 
+                   y[var_idx, i+1] >= self.section_value):
+                   # Interpolate crossing
+                   t_cross = self.interpolate_crossing(i)
+                   state = self.solution.sol(t_cross)
+                   crossings.append(state)
+           
+           return np.array(crossings)
+       
+       def plot(self, ax=None):
+           crossings = self.find_crossings()
+           if ax is None:
+               fig, ax = plt.subplots()
+           ax.scatter(crossings[:, 0], crossings[:, 1], s=1)
+           ax.set_xlabel(f'{self.coords[0]}')
+           ax.set_ylabel(f'{self.coords[0]}_dot')
+           ax.set_title('Poincaré Section')
+
+Register the visualizer:
+
+.. code-block:: python
+
+   from mechanics_dsl.visualization import register_visualizer
+   register_visualizer(PoincareSectionVisualizer)
+
+Custom Code Generators
+----------------------
+
+Add targets for new languages or platforms:
+
+.. code-block:: python
+
+   from mechanics_dsl.codegen.base import CodeGenerator
+   
+   class RustCodeGenerator(CodeGenerator):
+       """Generate Rust code."""
+       
+       name = "rust"
+       extension = ".rs"
+       
+       def generate(self, system):
+           code = self.generate_header()
+           code += self.generate_parameters(system.parameters)
+           code += self.generate_derivatives(system.equations)
+           code += self.generate_integrator()
+           code += self.generate_main()
+           return code
+       
+       def generate_header(self):
+           return '''
+   use std::f64::consts::PI;
+   
+   fn main() {
+       // Generated by MechanicsDSL
+   '''
+       
+       def translate_expression(self, expr):
+           """Translate SymPy expression to Rust."""
+           # Use SymPy's code printer
+           from sympy.printing.rust import rust_code
+           return rust_code(expr)
+
+Custom Analysis Tools
+---------------------
+
+Add new analysis capabilities:
+
+.. code-block:: python
+
+   from mechanics_dsl.analysis.base import Analyzer
+   
+   class LyapunovAnalyzer(Analyzer):
+       """Compute Lyapunov exponents for chaotic systems."""
+       
+       def compute(self, solution, dt=0.01, n_steps=10000):
+           """Compute largest Lyapunov exponent."""
+           # Implementation using variational equations
+           ...
+           return lyapunov_exponent
+
+Testing Extensions
+------------------
+
+Write tests for your extensions:
+
+.. code-block:: python
+
+   import pytest
+   from mechanics_dsl import PhysicsCompiler
+   
+   def test_electromagnetic_domain():
+       compiler = PhysicsCompiler()
+       source = r'''
+       \domain{electromagnetic}
+       \charge{e}{-1.6e-19}{0, 0, 0}
+       \field{E}{uniform}{0, 0, 1e6}
+       '''
+       result = compiler.compile_dsl(source)
+       assert result['success']
+       
+       solution = compiler.simulate(t_span=(0, 1e-9))
+       assert solution['success']
+       
+       # Verify physics: electron should accelerate in E field
+       final_vz = solution['y'][5, -1]
+       assert final_vz > 0  # Upward acceleration
+
+Contributing Extensions
+-----------------------
+
+To contribute your extension to MechanicsDSL:
+
+1. Fork the repository
+2. Create a branch for your feature
+3. Add implementation with tests
+4. Update documentation
+5. Submit a pull request
+
+See :doc:`contributing` for detailed guidelines.
