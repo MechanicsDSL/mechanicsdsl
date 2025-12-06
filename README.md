@@ -1,42 +1,53 @@
-# MechanicsDSL
+<p align="center">
+  <img src="docs/images/logo.png" alt="MechanicsDSL Logo" width="400">
+</p>
 
-[![Python CI](https://github.com/MechanicsDSL/mechanicsdsl/actions/workflows/python-app.yml/badge.svg)](https://github.com/MechanicsDSL/mechanicsdsl/actions/workflows/python-app.yml)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17771040.svg)](https://doi.org/10.5281/zenodo.17771040)
-[![Documentation Status](https://readthedocs.org/projects/mechanicsdsl/badge/?version=latest)](https://mechanicsdsl.readthedocs.io/en/latest/?badge=latest)
+<h1 align="center">MechanicsDSL</h1>
 
-**MechanicsDSL** is a comprehensive computational framework for physics, unifying symbolic derivation and numerical simulation. It bridges the gap between algebraic formalism and high-performance computing using a LaTeX-inspired Domain-Specific Language.
+<p align="center">
+  <a href="https://github.com/MechanicsDSL/mechanicsdsl/actions/workflows/python-app.yml"><img src="https://github.com/MechanicsDSL/mechanicsdsl/actions/workflows/python-app.yml/badge.svg" alt="Python CI"></a>
+  <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python 3.8+"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <a href="https://doi.org/10.5281/zenodo.17771040"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.17771040.svg" alt="DOI"></a>
+  <a href="https://mechanicsdsl.readthedocs.io/en/latest/?badge=latest"><img src="https://readthedocs.org/projects/mechanicsdsl/badge/?version=latest" alt="Documentation Status"></a>
+</p>
 
-## Features
+---
 
-- **Symbolic Mechanics**: Automatic derivation of equations of motion (Euler-Lagrange & Hamiltonian).
-- **Computational Fluid Dynamics (CFD)**: Lagrangian fluid simulation using Smoothed Particle Hydrodynamics (SPH).
-- **High-Performance Backends**: Generates optimized C++, OpenMP, and WebAssembly (WASM) solvers.
-- **Multiphysics Support**: Handles rigid bodies, N-body gravity, and compressible fluids in a single framework.
-- **Visualization**: Built-in tools for phase space plots, energy analysis, and particle animations.
+**MechanicsDSL** is a computational physics framework that lets you define physical systems in a natural, LaTeX-inspired syntax and automatically generates high-performance simulations. From pendulums to planetary orbits, from Lagrangian mechanics to fluid dynamics—describe it once, simulate it anywhere.
+
+## Why MechanicsDSL?
+
+| Feature | Description |
+|---------|-------------|
+| **Symbolic Engine** | Automatically derives equations of motion from Lagrangians or Hamiltonians |
+| **Fluid Dynamics** | Built-in SPH solver for dam breaks, waves, and liquid physics |
+| **High Performance** | Generates optimized C++, OpenMP, and WebAssembly code |
+| **Rich Visualization** | Phase space plots, energy analysis, and smooth animations |
+| **Research Ready** | Validated against analytical solutions and conservation laws |
+
+---
 
 ## Installation
- 
+
 ```bash
 pip install mechanicsdsl-core
 ```
 
-## Quick Start (In GitHub Codespaces)
+**Requirements:** Python 3.8+ with NumPy, SciPy, SymPy, and Matplotlib (installed automatically).
+
+---
+
+## Quick Start
+
+### The Famous Figure-8 Three-Body Orbit
+
+Define a gravitational three-body system and watch it trace the celebrated Figure-8 periodic orbit:
 
 ```python
-pip install mechanicsdsl-core
-
-# Save as a .py file (e.g., demo.py)
-import numpy as np
-import matplotlib
-matplotlib.use('Agg') # Headless mode for Codespaces
-import matplotlib.pyplot as plt
 from mechanics_dsl import PhysicsCompiler
 
-# ============================================================================
-# 1. Define Figure-8 System
-# ============================================================================
+# Define the system using LaTeX-inspired DSL
 figure8_code = r"""
 \system{figure8_orbit}
 \defvar{x1}{Position}{m} \defvar{y1}{Position}{m}
@@ -52,159 +63,143 @@ figure8_code = r"""
     + G*m^2/\sqrt{(x2-x3)^2 + (y2-y3)^2}
     + G*m^2/\sqrt{(x1-x3)^2 + (y1-y3)^2}
 }
-
-\initial{
-    x1=0, y1=0, x1_dot=0, y1_dot=0,
-    x2=0, y2=0, x2_dot=0, y2_dot=0,
-    x3=0, y3=0, x3_dot=0, y3_dot=0
-}
 """
 
-print("Initializing compiler...")
+# Compile and simulate
 compiler = PhysicsCompiler()
-
-print("Compiling DSL...")
-result = compiler.compile_dsl(figure8_code)
-
-if not result['success']:
-    print(f"Compilation failed: {result.get('error')}")
-    exit(1)
-
-# ============================================================================
-# 2. Initial Conditions
-# ============================================================================
-print("Chenciner & Montgomery initial conditions...")
+compiler.compile_dsl(figure8_code)
 compiler.simulator.set_initial_conditions({
-    'x1': 0.97000436,  'y1': -0.24308753, 'x1_dot': 0.4662036850, 'y1_dot': 0.4323657300,
-    'x2': -0.97000436, 'y2': 0.24308753,  'x2_dot': 0.4662036850, 'y2_dot': 0.4323657300,
-    'x3': 0.0,         'y3': 0.0,         'x3_dot': -0.93240737,  'y3_dot': -0.86473146
+    'x1': 0.97000436,  'y1': -0.24308753, 'x1_dot': 0.466203685, 'y1_dot': 0.43236573,
+    'x2': -0.97000436, 'y2': 0.24308753,  'x2_dot': 0.466203685, 'y2_dot': 0.43236573,
+    'x3': 0.0,         'y3': 0.0,         'x3_dot': -0.93240737, 'y3_dot': -0.86473146
 })
-
-# ============================================================================
-# 3. Simulate and Check Periodicity
-# ============================================================================
-# Exact period T for figure-8
-T_period = 6.32591398
-print(f"Simulating for exactly one period T={T_period:.6f}...")
-
-# Letting the solver adapt (likely selects LSODA)
-solution = compiler.simulate(t_span=(0, T_period), num_points=2000)
-
-if not solution['success']:
-    print("Simulation failed")
-    exit(1)
-
-# --- PERIODICITY CHECK ---
-y = solution['y']
-state_initial = y[:, 0]
-state_final = y[:, -1]
-
-# Calculate Euclidean distance between start and end state
-periodicity_error = np.linalg.norm(state_final - state_initial)
-
-print("\n" + "="*50)
-print("ANALYSIS RESULTS")
-print("="*50)
-print(f"Solver Used:       {solution.get('method_used', 'Adaptive')}")
-print(f"Periodicity Error: {periodicity_error:.6e}")
-print(f"Status:            {'CLOSED ORBIT' if periodicity_error < 1e-2 else 'DRIFT DETECTED'}")
-print("="*50 + "\n")
-
-# ============================================================================
-# 4. Visualization
-# ============================================================================
-print("Plotting trajectories...")
-coords = solution['coordinates']
-
-def get_traj(name):
-    idx = coords.index(name)
-    return y[2*idx]
-
-x1, y1 = get_traj('x1'), get_traj('y1')
-x2, y2 = get_traj('x2'), get_traj('y2')
-x3, y3 = get_traj('x3'), get_traj('y3')
-
-plt.figure(figsize=(10, 6))
-plt.plot(x1, y1, label='Body 1', color='#E63946', linewidth=2)
-plt.plot(x2, y2, label='Body 2', color='#457B9D', linewidth=2, linestyle='--')
-plt.plot(x3, y3, label='Body 3', color='#1D3557', linewidth=2, linestyle=':')
-
-# Annotate the error on the plot
-plt.title(f'Three-Body Figure-8 Orbit (Error: {periodicity_error:.2e})')
-plt.xlabel('x (m)') 
-plt.ylabel('y (m)')
-plt.axis('equal')
-plt.grid(True, alpha=0.3)
-plt.legend(loc='upper right')
-
-plt.savefig('figure8_periodicity.png', dpi=150)
-print("Saved plot to 'figure8_periodicity.png'")
-
-# Then run python name_of_file.py (e.g., python demo.py)
+solution = compiler.simulate(t_span=(0, 6.326), num_points=2000)
 ```
 
-## Quick Start 2: Fluid Dynamics (The Dam Break)
+### Dam Break Fluid Simulation
 
-MechanicsDSL includes a Spatial Hash SPH Solver for simulating fluids.
+Simulate fluid dynamics with the integrated SPH solver:
 
 ```python
-import matplotlib.pyplot as plt
 from mechanics_dsl import PhysicsCompiler
 
-# Define fluid regions and boundaries using the DSL
 fluid_code = r"""
 \system{dam_break}
 
-% Simulation Resolution
 \parameter{h}{0.04}{m}
 \parameter{g}{9.81}{m/s^2}
 
-% Fluid Column (Water)
 \fluid{water}
 \region{rectangle}{x=0.0 .. 0.4, y=0.0 .. 0.8}
 \particle_mass{0.02}
 \equation_of_state{tait}
 
-% Container (Bucket)
 \boundary{walls}
-\region{line}{x=-0.05, y=0.0 .. 1.5}   % Left Wall
-\region{line}{x=1.5,   y=0.0 .. 1.5}   % Right Wall
-\region{line}{x=-0.05 .. 1.5, y=-0.05} % Floor
+\region{line}{x=-0.05, y=0.0 .. 1.5}
+\region{line}{x=1.5, y=0.0 .. 1.5}
+\region{line}{x=-0.05 .. 1.5, y=-0.05}
 """
 
 compiler = PhysicsCompiler()
-# 1. Generate Particles
 compiler.compile_dsl(fluid_code)
-
-# 2. Compile C++ SPH Engine
 compiler.compile_to_cpp("dam_break.cpp", target="standard", compile_binary=True)
-
-# 3. Run Simulation (Auto-executes binary)
-import subprocess
-subprocess.call(["./dam_break"])
-
-# 4. Visualize
-compiler.visualizer.animate_fluid_from_csv("dam_break_sph.csv")
-plt.show()
-
 ```
 
-## Validation Gallery
+---
 
-MechanicsDSL has been rigorously tested against analytical solutions, chaotic systems, and conservation laws.
+## What Can You Build?
 
-| **Coupled Modes** | **3D Dynamics** | **Complex Motion** |
-|:---:|:---:|:---:|
-| ![Wilberforce](docs/images/gallery_chaos.png)<br>_Wilberforce Pendulum Beats_ | ![Gyroscope](docs/images/gallery_gyroscope.png)<br>_Gyroscope Precession_ | ![Elastic](docs/images/gallery_constraint.png)<br>_Elastic Pendulum Trajectory_ |
+<table>
+<tr>
+<td align="center" width="33%">
+<img src="docs/images/gallery_chaos.png" width="200"><br>
+<strong>Coupled Oscillators</strong><br>
+<em>Wilberforce pendulum energy beats</em>
+</td>
+<td align="center" width="33%">
+<img src="docs/images/gallery_gyroscope.png" width="200"><br>
+<strong>3D Rigid Bodies</strong><br>
+<em>Gyroscopic precession & nutation</em>
+</td>
+<td align="center" width="33%">
+<img src="docs/images/gallery_constraint.png" width="200"><br>
+<strong>Constrained Motion</strong><br>
+<em>Elastic pendulum trajectories</em>
+</td>
+</tr>
+<tr>
+<td align="center">
+<img src="docs/images/gallery_duffing.png" width="200"><br>
+<strong>Chaotic Systems</strong><br>
+<em>Duffing strange attractors</em>
+</td>
+<td align="center">
+<img src="docs/images/gallery_phase.png" width="200"><br>
+<strong>Phase Portraits</strong><br>
+<em>Harmonic oscillator analysis</em>
+</td>
+<td align="center">
+<img src="docs/images/gallery_energy.png" width="200"><br>
+<strong>Conservation Laws</strong><br>
+<em>Energy dissipation tracking</em>
+</td>
+</tr>
+</table>
 
-| **Strange Attractors** | **Phase Space** | **Conservation** |
-|:---:|:---:|:---:|
-| ![Duffing](docs/images/gallery_duffing.png)<br>_Duffing Chaotic Attractor_ | ![Phase](docs/images/gallery_phase.png)<br>_Harmonic Portraits_ | ![Energy](docs/images/gallery_energy.png)<br>_Monotonic Energy Dissipation_ |
+---
+
+## Core Capabilities
+
+### Symbolic Mechanics
+- **Lagrangian & Hamiltonian** formulations
+- **Automatic EOM derivation** via Euler-Lagrange equations
+- **Holonomic & non-holonomic** constraint support
+
+### Code Generation
+- **Native C++** with optimized numerics
+- **OpenMP** for parallel simulations
+- **WebAssembly** for browser-based physics
+
+### Analysis Tools
+- **Energy conservation** monitoring
+- **Phase space** visualization & Poincaré sections
+- **Stability analysis** with eigenvalue computation
+
+---
+
+## Examples
+
+The [`examples/`](examples/) directory contains 17 progressive tutorials:
+
+| Level | Examples |
+|-------|----------|
+| **Beginner** | Harmonic oscillator, Simple pendulum, Plotting basics |
+| **Intermediate** | Double pendulum, Coupled oscillators, 2D motion, Damping |
+| **Advanced** | 3D gyroscope, Hamiltonian formulation, Phase space, Energy analysis |
+| **Expert** | C++ export, WebAssembly targets, SPH fluid dynamics |
+
+---
 
 ## Documentation
 
-Full documentation is available at [https://mechanicsdsl.readthedocs.io/en/latest/index.html](https://mechanicsdsl.readthedocs.io/en/latest/index.html)
+Full documentation with tutorials, API reference, and DSL syntax guide:
+
+**[Read the Docs](https://mechanicsdsl.readthedocs.io/en/latest/index.html)**
+
+---
+
+## Contributing
+
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+---
 
 ## License
 
-MIT License - see LICENSE file for details.
+MIT License — see [LICENSE](LICENSE) for details.
+
+---
+
+<p align="center">
+  <em>Built with ❤️ for physicists, engineers, and curious minds.</em>
+</p>
