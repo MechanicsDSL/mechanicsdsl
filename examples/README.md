@@ -4,7 +4,7 @@ This directory contains 30 comprehensive tutorials organized by topic and diffic
 
 ## Tutorial Structure
 
-### 🌱 Beginner Level
+### Beginner Level
 Start here if you're new to MechanicsDSL.
 
 | # | Tutorial | Description |
@@ -14,7 +14,7 @@ Start here if you're new to MechanicsDSL.
 | 03 | [Simple Pendulum](03_simple_pendulum.py) | Basic pendulum dynamics |
 | 04 | [Plotting Basics](04_plotting_basics.py) | Visualization fundamentals |
 
-### 🌿 Intermediate Level
+### Intermediate Level
 For users comfortable with basic systems.
 
 | # | Tutorial | Description |
@@ -25,7 +25,7 @@ For users comfortable with basic systems.
 | 08 | [Damped Systems](08_damped_systems.py) | Damping and energy dissipation |
 | 09 | [Forced Oscillators](09_forced_oscillators.py) | Driven systems and resonance |
 
-### 🌳 Advanced Level
+### Advanced Level
 Complex systems requiring deeper understanding.
 
 | # | Tutorial | Description |
@@ -36,7 +36,7 @@ Complex systems requiring deeper understanding.
 | 13 | [Hamiltonian Formulation](13_hamiltonian_formulation.py) | Hamiltonian mechanics |
 | 14 | [Chaotic Systems](14_chaotic_systems.py) | Duffing oscillator |
 
-### 🔧 Specialized Topics
+### Specialized Topics
 Advanced features and techniques.
 
 | # | Tutorial | Description |
@@ -48,7 +48,7 @@ Advanced features and techniques.
 | 19 | [Performance Tuning](19_performance_tuning.py) | Solver optimization |
 | 20 | [Units and Dimensions](20_units_and_dimensions.py) | Dimensional analysis |
 
-### ⚙️ Code Generation
+### Code Generation
 Generating high-performance code.
 
 | # | Tutorial | Description |
@@ -56,7 +56,7 @@ Generating high-performance code.
 | 21 | [C++ Export](21_c++_code_export.py) | Native C++ code generation |
 | 22 | [Advanced Targets](22_advanced_targets.py) | OpenMP (soon WebAssembly) |
 
-### 🌊 Fluid Dynamics (SPH)
+### Fluid Dynamics (SPH)
 Smoothed Particle Hydrodynamics simulations.
 
 | # | Tutorial | Description |
@@ -66,7 +66,7 @@ Smoothed Particle Hydrodynamics simulations.
 | 25 | [SPH Droplet](25_sph_droplet.py) | Droplet impact and splash |
 | 26 | [SPH Sloshing](26_sph_sloshing.py) | Tank sloshing dynamics |
 
-### 🚀 Celestial Mechanics
+### Celestial Mechanics
 Gravitational dynamics and orbital systems.
 
 | # | Tutorial | Description |
