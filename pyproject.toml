@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mechanicsdsl-core"
+version = "1.2.1"
+description = "A Domain-Specific Language and Transpiler for Classical Mechanics"
+authors = [
+  { name="Noah Parsons", email="nomapa223@gmail.com" },
+]
+readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: C++",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Software Development :: Compilers",
+]
+dependencies = [
+    "numpy>=1.20.0",
+    "scipy>=1.7.0",
+    "sympy>=1.8",
+    "matplotlib>=3.4.0",
+]
+
+[project.optional-dependencies]
+test = ["pytest"]
+codegen = ["pybind11"] # Optional dependency for Python extension generation
+
+[project.urls]
+"Repository" = "https://github.com/MechanicsDSL/mechanicsdsl"

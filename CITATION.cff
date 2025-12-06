@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Parsons
+    given-names: Noah
+title: "MechanicsDSL: A Domain-Specific Language for Classical Mechanics"
+version: 1.0.0
+doi: 10.5281/zenodo.17771040
+date-released: 2025-11-30
+url: "https://github.com/MechanicsDSL/mechanicsdsl"
+repository-code: "https://github.com/MechanicsDSL/mechanicsdsl"
+license: MIT
+keywords:
+  - physics
+  - mechanics
+  - domain-specific language
+  - simulation
+  - symbolic computation
+  - numerical methods
+abstract: "MechanicsDSL is a comprehensive framework for symbolic and numerical analysis of classical mechanical systems using a LaTeX-inspired domain-specific language. It automatically derives equations of motion from Lagrangians or Hamiltonians and provides advanced numerical simulation capabilities."
+
+
+
+
+
+
+
