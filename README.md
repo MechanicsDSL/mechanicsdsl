@@ -5,10 +5,6 @@
 <h1 align="center">MechanicsDSL</h1>
 
 <p align="center">
-  <strong>Write Physics Like Equations. Simulate Like a Supercomputer.</strong>
-</p>
-
-<p align="center">
   <a href="https://github.com/MechanicsDSL/mechanicsdsl/actions/workflows/python-app.yml"><img src="https://github.com/MechanicsDSL/mechanicsdsl/actions/workflows/python-app.yml/badge.svg" alt="Python CI"></a>
   <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python 3.8+"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
