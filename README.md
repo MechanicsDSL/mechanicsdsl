@@ -107,10 +107,21 @@ compiler.compile_to_cpp("dam_break.cpp", target="standard", compile_binary=True)
 
 ## Core Capabilities
 
-### Symbolic Mechanics
-- **Lagrangian & Hamiltonian** formulations
-- **Automatic EOM derivation** via Euler-Lagrange equations
-- **Holonomic & non-holonomic** constraint support
+### Classical Mechanics (17 Modules)
+- **Lagrangian & Hamiltonian** formulations with automatic EOM derivation
+- **Constraints**: Holonomic, non-holonomic, rolling, knife-edge (Baumgarte stabilization)
+- **Dissipation**: Rayleigh function, viscous/Coulomb/Stribeck friction
+- **Stability Analysis**: Equilibrium points, linearization, eigenvalue analysis
+- **Noether's Theorem**: Symmetry detection, conservation laws, cyclic coordinates
+- **Central Forces**: Effective potential, Kepler problem, orbital mechanics
+- **Canonical Transformations**: Generating functions, action-angle, Hamilton-Jacobi
+- **Normal Modes**: Mass/stiffness matrices, coupled oscillators, modal decomposition
+- **Rigid Body**: Euler angles, quaternions, gyroscopes, symmetric top
+- **Perturbation Theory**: Lindstedt-Poincaré, averaging, multi-scale analysis
+- **Collisions**: Elastic/inelastic, impulse, center of mass frame
+- **Scattering**: Rutherford, cross-sections, impact parameter
+- **Variable Mass**: Tsiolkovsky rocket equation, conveyor belts
+- **Continuous Systems**: Vibrating strings, membranes, field equations
 
 ### Code Generation
 - **Native C++** with optimized numerics
@@ -120,7 +131,7 @@ compiler.compile_to_cpp("dam_break.cpp", target="standard", compile_binary=True)
 ### Analysis Tools
 - **Energy conservation** monitoring
 - **Phase space** visualization & Poincaré sections
-- **Stability analysis** with eigenvalue computation
+- **368 passing tests** for reliability
 
 ---
 

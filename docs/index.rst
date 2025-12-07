@@ -83,6 +83,19 @@ Documentation Contents
    physics/lagrangian_mechanics
    physics/hamiltonian_mechanics
    physics/constraint_physics
+   physics/dissipation
+   physics/stability
+   physics/symmetry
+   physics/central_forces
+   physics/canonical
+   physics/oscillations
+   physics/rigid_body
+   physics/perturbation
+   physics/nonholonomic
+   physics/collisions
+   physics/scattering
+   physics/variable_mass
+   physics/continuum
    physics/fluid_dynamics
    physics/multiphysics
 
