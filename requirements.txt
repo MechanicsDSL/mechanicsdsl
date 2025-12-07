@@ -2,6 +2,7 @@ sympy
 numpy
 scipy
 matplotlib
+numba
 pytest
 black
 flake8

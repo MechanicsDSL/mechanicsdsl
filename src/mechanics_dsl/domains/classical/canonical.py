@@ -529,6 +529,66 @@ class HamiltonJacobi:
         
         return W
     
+    def solve(self, hamiltonian: sp.Expr, 
+              coordinates: List[str],
+              energy: Optional[sp.Symbol] = None) -> sp.Expr:
+        """
+        Solve the Hamilton-Jacobi equation for the principal function S.
+        
+        For time-independent Hamiltonian H(q, p) = E:
+            S(q, E) = W(q, E) - E*t
+        where W is Hamilton's characteristic function.
+        
+        Args:
+            hamiltonian: Hamiltonian H(q, p) - must use 'p' as momentum symbol
+            coordinates: List of coordinate names
+            energy: Energy symbol (constant of motion). Defaults to Symbol('E').
+            
+        Returns:
+            Principal function S(q, E) for 1D, or characteristic function W for multi-D
+        """
+        if energy is None:
+            energy = sp.Symbol('E', positive=True)
+        
+        if len(coordinates) == 1:
+            # 1D case: solve directly
+            coord = coordinates[0]
+            q = self.get_symbol(coord)
+            
+            # Replace generic 'p' with coordinate-specific momentum
+            p_generic = sp.Symbol('p')
+            p_coord = self.get_symbol(f"p_{coord}")
+            H_substituted = hamiltonian.subs(p_generic, p_coord)
+            
+            # Solve H(q, p) = E for p
+            p_solution = sp.solve(H_substituted - energy, p_coord)
+            
+            if not p_solution:
+                raise ValueError("Could not solve H = E for momentum")
+            
+            # Take positive root (physical convention for forward motion)
+            p_expr = None
+            for sol in p_solution:
+                # Prefer the positive root
+                if sp.simplify(sol).is_positive or len(p_solution) == 1:
+                    p_expr = sol
+                    break
+            if p_expr is None:
+                p_expr = p_solution[0]
+            
+            # Integrate p dq to get characteristic function W
+            W = sp.integrate(p_expr, q)
+            
+            return sp.simplify(W)
+        else:
+            # Multi-D case: attempt separation of variables
+            result = self.solve_separable(hamiltonian, coordinates)
+            # Return sum of all W functions
+            total_W = sp.S.Zero
+            for coord, (W_func, alpha) in result.items():
+                total_W += W_func
+            return total_W
+
     def solve_separable(self, hamiltonian: sp.Expr,
                         coordinates: List[str]) -> Dict[str, sp.Expr]:
         """

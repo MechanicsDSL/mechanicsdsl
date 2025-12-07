@@ -77,13 +77,57 @@ class Quaternion:
         """Convert to numpy array [q₀, q₁, q₂, q₃]."""
         return np.array([self.q0, self.q1, self.q2, self.q3])
     
+    @staticmethod
+    def from_euler_angles(euler: EulerAngles) -> 'Quaternion':
+        """
+        Create quaternion from Euler angles (ZYZ convention).
+        
+        Args:
+            euler: EulerAngles object with phi, theta, psi
+            
+        Returns:
+            Equivalent unit quaternion
+        """
+        phi, theta, psi = euler.phi, euler.theta, euler.psi
+        
+        # ZYZ convention: R = Rz(phi) * Ry(theta) * Rz(psi)
+        # Build quaternion by composing individual rotations
+        
+        # Rotation about z by phi: q_phi = (cos(phi/2), 0, 0, sin(phi/2))
+        c_phi = np.cos(phi / 2)
+        s_phi = np.sin(phi / 2)
+        
+        # Rotation about y by theta: q_theta = (cos(theta/2), 0, sin(theta/2), 0)
+        c_theta = np.cos(theta / 2)
+        s_theta = np.sin(theta / 2)
+        
+        # Rotation about z by psi: q_psi = (cos(psi/2), 0, 0, sin(psi/2))
+        c_psi = np.cos(psi / 2)
+        s_psi = np.sin(psi / 2)
+        
+        # First: q_temp = q_phi * q_theta
+        # q_phi = (c_phi, 0, 0, s_phi), q_theta = (c_theta, 0, s_theta, 0)
+        t0 = c_phi * c_theta
+        t1 = s_phi * s_theta
+        t2 = c_phi * s_theta
+        t3 = s_phi * c_theta
+        
+        # Then: q = q_temp * q_psi
+        # q_temp = (t0, t1, t2, t3), q_psi = (c_psi, 0, 0, s_psi)
+        q0 = t0 * c_psi - t3 * s_psi
+        q1 = t1 * c_psi + t2 * s_psi
+        q2 = t2 * c_psi - t1 * s_psi
+        q3 = t3 * c_psi + t0 * s_psi
+        
+        return Quaternion(q0, q1, q2, q3).normalize()
+    
     def to_euler_angles(self) -> EulerAngles:
         """Convert to Euler angles (ZYZ convention)."""
         # ZYZ convention conversion
         q0, q1, q2, q3 = self.q0, self.q1, self.q2, self.q3
         
         # θ from q0 and q3
-        theta = np.arccos(2*(q0**2 + q3**2) - 1)
+        theta = np.arccos(np.clip(2*(q0**2 + q3**2) - 1, -1, 1))
         
         if abs(np.sin(theta)) < 1e-10:
             # Gimbal lock
@@ -94,6 +138,36 @@ class Quaternion:
             psi = np.arctan2(q0*q2 - q1*q3, q0*q1 + q2*q3)
         
         return EulerAngles(phi, theta, psi)
+    
+    def to_rotation_matrix(self) -> np.ndarray:
+        """
+        Convert quaternion to 3x3 rotation matrix.
+        
+        Returns:
+            3x3 rotation matrix R such that v' = R @ v
+        """
+        q0, q1, q2, q3 = self.q0, self.q1, self.q2, self.q3
+        
+        # Rotation matrix from unit quaternion
+        R = np.array([
+            [1 - 2*(q2**2 + q3**2), 2*(q1*q2 - q0*q3), 2*(q1*q3 + q0*q2)],
+            [2*(q1*q2 + q0*q3), 1 - 2*(q1**2 + q3**2), 2*(q2*q3 - q0*q1)],
+            [2*(q1*q3 - q0*q2), 2*(q2*q3 + q0*q1), 1 - 2*(q1**2 + q2**2)]
+        ])
+        
+        return R
+    
+    def rotate_vector(self, v: np.ndarray) -> np.ndarray:
+        """
+        Rotate a 3D vector by this quaternion.
+        
+        Args:
+            v: 3D vector to rotate
+            
+        Returns:
+            Rotated vector
+        """
+        return self.to_rotation_matrix() @ v
 
 
 class RigidBodyDynamics(PhysicsDomain):
@@ -210,6 +284,38 @@ class RigidBodyDynamics(PhysicsDomain):
         
         self._potential_energy = M_sym * g_sym * l_sym * sp.cos(theta)
     
+    def set_gravitational_potential_quaternion(self, M: str = 'M', g: str = 'g', 
+                                               l: str = 'l') -> None:
+        """
+        Set gravitational potential for a top using quaternion formulation.
+        
+        The height of the center of mass is given by the z-component of the
+        body-fixed z-axis expressed in the space frame:
+        
+        h = l * (2*(q0² + q3²) - 1) = l * cos(θ)
+        
+        So V = Mgl * (1 - 2*(q1² + q2²))
+        
+        Args:
+            M: Symbol name for mass
+            g: Symbol name for gravitational acceleration
+            l: Symbol name for distance from pivot to center of mass
+        """
+        M_sym = self.get_symbol(M, positive=True)
+        g_sym = self.get_symbol(g, positive=True)
+        l_sym = self.get_symbol(l, positive=True)
+        
+        q0 = self.get_symbol('q0')
+        q1 = self.get_symbol('q1')
+        q2 = self.get_symbol('q2')
+        q3 = self.get_symbol('q3')
+        
+        # cos(θ) = 2*(q0² + q3²) - 1 = 1 - 2*(q1² + q2²)
+        cos_theta = 1 - 2*(q1**2 + q2**2)
+        
+        self._potential_energy = M_sym * g_sym * l_sym * cos_theta
+
+    
     def _angular_velocity_euler(self) -> Tuple[sp.Expr, sp.Expr, sp.Expr]:
         """
         Compute body-frame angular velocity from Euler angles.
@@ -258,24 +364,122 @@ class RigidBodyDynamics(PhysicsDomain):
         
         return sp.expand(T)
     
-    def _kinetic_energy_quaternion(self) -> sp.Expr:
-        """Compute kinetic energy using quaternion formulation."""
-        # This is more complex and requires careful handling
-        # For now, provide a simplified version
-        logger.warning("Quaternion kinetic energy is simplified")
+    def _quaternion_E_matrix(self) -> sp.Matrix:
+        """
+        Compute the E matrix for quaternion-angular velocity relationship.
         
+        The E matrix relates quaternion derivatives to angular velocity:
+        ω = 2 * E(q)^T * q̇
+        
+        For q = [q0, q1, q2, q3]^T:
+        E = [-q1  q0 -q3  q2]
+            [-q2  q3  q0 -q1]
+            [-q3 -q2  q1  q0]
+            
+        Returns:
+            3x4 E matrix
+        """
+        q0 = self.get_symbol('q0')
+        q1 = self.get_symbol('q1')
+        q2 = self.get_symbol('q2')
+        q3 = self.get_symbol('q3')
+        
+        E = sp.Matrix([
+            [-q1,  q0, -q3,  q2],
+            [-q2,  q3,  q0, -q1],
+            [-q3, -q2,  q1,  q0]
+        ])
+        
+        return E
+    
+    def _angular_velocity_quaternion(self) -> Tuple[sp.Expr, sp.Expr, sp.Expr]:
+        """
+        Compute body-frame angular velocity from quaternion and its derivative.
+        
+        The relationship is: ω = 2 * E(q)^T * q̇
+        
+        For unit quaternions, this is equivalent to: ω = 2 * q* ⊗ q̇
+        where q* is the quaternion conjugate.
+        
+        Returns:
+            Tuple of (ω₁, ω₂, ω₃) in body frame
+        """
         q0_dot = self.get_symbol('q0_dot')
         q1_dot = self.get_symbol('q1_dot')
         q2_dot = self.get_symbol('q2_dot')
         q3_dot = self.get_symbol('q3_dot')
         
-        # Simplified: assume I1 = I2 = I3 = I (spherical case)
-        I = self._I1 if self._I1 == self._I2 == self._I3 else self._I1
+        q_dot = sp.Matrix([q0_dot, q1_dot, q2_dot, q3_dot])
+        E = self._quaternion_E_matrix()
         
-        # For unit quaternion, |q̇|² relates to ω²
-        T = 2 * I * (q0_dot**2 + q1_dot**2 + q2_dot**2 + q3_dot**2)
+        # ω = 2 * E * q̇
+        omega = 2 * E * q_dot
         
-        return T
+        return omega[0], omega[1], omega[2]
+    
+    def _kinetic_energy_quaternion(self) -> sp.Expr:
+        """
+        Compute kinetic energy using full quaternion formulation.
+        
+        T = (1/2) * ω^T * I * ω
+        
+        where ω = 2 * E(q) * q̇ is the body-frame angular velocity
+        computed from quaternion derivatives.
+        
+        This formulation is singularity-free and works for all
+        inertia tensors, not just spherical bodies.
+        
+        Returns:
+            Kinetic energy expression in terms of quaternion derivatives
+        """
+        omega1, omega2, omega3 = self._angular_velocity_quaternion()
+        
+        T = (sp.Rational(1, 2) * self._I1 * omega1**2 +
+             sp.Rational(1, 2) * self._I2 * omega2**2 +
+             sp.Rational(1, 2) * self._I3 * omega3**2)
+        
+        return sp.expand(T)
+    
+    def quaternion_constraint(self) -> sp.Expr:
+        """
+        Get the quaternion unit norm constraint.
+        
+        For DAE solvers: q0² + q1² + q2² + q3² - 1 = 0
+        
+        This constraint must be maintained during simulation to ensure
+        the quaternion remains normalized.
+        
+        Returns:
+            Constraint equation (equals zero when satisfied)
+        """
+        q0 = self.get_symbol('q0')
+        q1 = self.get_symbol('q1')
+        q2 = self.get_symbol('q2')
+        q3 = self.get_symbol('q3')
+        
+        return q0**2 + q1**2 + q2**2 + q3**2 - 1
+    
+    def quaternion_constraint_derivative(self) -> sp.Expr:
+        """
+        Get the time derivative of the quaternion constraint.
+        
+        d/dt(|q|² - 1) = 2*(q0*q0_dot + q1*q1_dot + q2*q2_dot + q3*q3_dot) = 0
+        
+        This is useful for velocity-level constraint stabilization.
+        
+        Returns:
+            Derivative of constraint equation
+        """
+        q0 = self.get_symbol('q0')
+        q1 = self.get_symbol('q1')
+        q2 = self.get_symbol('q2')
+        q3 = self.get_symbol('q3')
+        q0_dot = self.get_symbol('q0_dot')
+        q1_dot = self.get_symbol('q1_dot')
+        q2_dot = self.get_symbol('q2_dot')
+        q3_dot = self.get_symbol('q3_dot')
+        
+        return 2 * (q0*q0_dot + q1*q1_dot + q2*q2_dot + q3*q3_dot)
     
     def define_lagrangian(self) -> sp.Expr:
         """

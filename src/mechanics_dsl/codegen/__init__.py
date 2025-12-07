@@ -12,6 +12,10 @@ from .rust import RustGenerator
 from .matlab import MatlabGenerator
 from .fortran import FortranGenerator
 from .javascript import JavaScriptGenerator
+from .cuda import CudaGenerator
+from .openmp import OpenMPGenerator
+from .wasm import WasmGenerator
+from .arduino import ArduinoGenerator
 
 __all__ = [
     'CodeGenerator', 
@@ -21,6 +25,13 @@ __all__ = [
     'RustGenerator',
     'MatlabGenerator',
     'FortranGenerator',
-    'JavaScriptGenerator'
+    'JavaScriptGenerator',
+    'CudaGenerator',
+    'OpenMPGenerator',
+    'WasmGenerator',
+    'ArduinoGenerator'
 ]
+
+
+
 

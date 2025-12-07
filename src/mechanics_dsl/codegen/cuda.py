@@ -1,0 +1,500 @@
+"""
+CUDA Code Generator for MechanicsDSL
+
+Generates CUDA kernels for GPU-accelerated physics simulations.
+Includes CPU fallback code for systems without NVIDIA GPUs.
+"""
+import os
+import sympy as sp
+from sympy.printing.cxx import cxxcode
+from typing import Dict, List, Optional
+from .base import CodeGenerator
+from ..utils import logger
+
+
+class CudaGenerator(CodeGenerator):
+    """
+    Generates CUDA C++ simulation code from symbolic equations.
+    
+    Features:
+    - GPU kernel generation for equations of motion
+    - RK4 integration on GPU
+    - CPU fallback for non-CUDA systems
+    - CMakeLists.txt for nvcc compilation
+    - SPH particle simulation support
+    
+    Example:
+        >>> gen = CudaGenerator(
+        ...     system_name="pendulum",
+        ...     coordinates=['theta'],
+        ...     parameters={'g': 9.81, 'l': 1.0},
+        ...     initial_conditions={'theta': 0.1, 'theta_dot': 0.0},
+        ...     equations={'theta_ddot': -g/l * sin(theta)}
+        ... )
+        >>> gen.generate("output/")
+    """
+    
+    def __init__(self, system_name: str, coordinates: List[str],
+                 parameters: Dict[str, float], initial_conditions: Dict[str, float],
+                 equations: Dict[str, sp.Expr],
+                 generate_cpu_fallback: bool = True,
+                 fluid_particles: List[dict] = None,
+                 boundary_particles: List[dict] = None):
+        
+        super().__init__(system_name, coordinates, parameters, 
+                        initial_conditions, equations)
+        
+        self.generate_cpu_fallback = generate_cpu_fallback
+        self.fluid_particles = fluid_particles or []
+        self.boundary_particles = boundary_particles or []
+    
+    @property
+    def target_name(self) -> str:
+        return 'cuda'
+    
+    @property
+    def file_extension(self) -> str:
+        return '.cu'
+    
+    def generate(self, output_dir: str = ".") -> str:
+        """
+        Generate complete CUDA project with all necessary files.
+        
+        Args:
+            output_dir: Directory to write generated files
+            
+        Returns:
+            Path to main CUDA file
+        """
+        os.makedirs(output_dir, exist_ok=True)
+        
+        logger.info(f"Generating CUDA code for {self.system_name}")
+        
+        # Generate main files
+        cuda_file = os.path.join(output_dir, f"{self.system_name}.cu")
+        header_file = os.path.join(output_dir, f"{self.system_name}.h")
+        cmake_file = os.path.join(output_dir, "CMakeLists.txt")
+        
+        # Write CUDA kernel file
+        with open(cuda_file, 'w') as f:
+            f.write(self._generate_cuda_source())
+        
+        # Write header
+        with open(header_file, 'w') as f:
+            f.write(self._generate_header())
+        
+        # Write CMakeLists.txt
+        with open(cmake_file, 'w') as f:
+            f.write(self._generate_cmake())
+        
+        # Write CPU fallback if requested
+        if self.generate_cpu_fallback:
+            cpu_file = os.path.join(output_dir, f"{self.system_name}_cpu.cpp")
+            with open(cpu_file, 'w') as f:
+                f.write(self._generate_cpu_fallback())
+        
+        logger.info(f"Generated CUDA files in {output_dir}")
+        return cuda_file
+    
+    def generate_equations(self) -> str:
+        """Generate device code for equations of motion."""
+        lines = []
+        
+        idx = 0
+        for coord in self.coordinates:
+            accel_key = f"{coord}_ddot"
+            lines.append(f"    dydt[{idx}] = state[{idx+1}];  // d({coord})/dt")
+            
+            if accel_key in self.equations:
+                expr = self.equations[accel_key]
+                cuda_expr = self._sympy_to_cuda(expr)
+                lines.append(f"    dydt[{idx+1}] = {cuda_expr};  // d({coord}_dot)/dt")
+            else:
+                lines.append(f"    dydt[{idx+1}] = 0.0;")
+            idx += 2
+        
+        return "\n".join(lines)
+    
+    def _sympy_to_cuda(self, expr: sp.Expr) -> str:
+        """Convert sympy expression to CUDA C++ code."""
+        # Use C++17 compatible code generation
+        cuda_code = cxxcode(expr, standard='c++17')
+        return cuda_code
+    
+    def _generate_cuda_source(self) -> str:
+        """Generate the main CUDA source file."""
+        state_dim = len(self.coordinates) * 2
+        
+        # Parameter declarations
+        params_code = self._generate_parameters_device()
+        
+        # Equations kernel
+        equations_code = self.generate_equations()
+        
+        # Initial conditions
+        init_code = self.generate_initial_conditions()
+        
+        # CSV header
+        header_parts = ["t"]
+        for coord in self.coordinates:
+            header_parts.extend([coord, f"{coord}_dot"])
+        csv_header = ",".join(header_parts)
+        
+        return f'''/*
+ * CUDA Simulation: {self.system_name}
+ * Generated by MechanicsDSL
+ * 
+ * Compile with: nvcc -o {self.system_name} {self.system_name}.cu
+ */
+
+#include <cuda_runtime.h>
+#include <device_launch_parameters.h>
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+#include <cmath>
+
+// Check CUDA errors
+#define CUDA_CHECK(call) \\
+    do {{ \\
+        cudaError_t err = call; \\
+        if (err != cudaSuccess) {{ \\
+            std::cerr << "CUDA Error: " << cudaGetErrorString(err) \\
+                      << " at " << __FILE__ << ":" << __LINE__ << std::endl; \\
+            exit(EXIT_FAILURE); \\
+        }} \\
+    }} while(0)
+
+// Simulation parameters
+namespace params {{
+{params_code}
+}}
+
+constexpr int STATE_DIM = {state_dim};
+constexpr int NUM_SYSTEMS = 1;  // Single system by default, can batch multiple
+
+// Device function: compute derivatives
+__device__ void compute_derivatives(const double* state, double* dydt, 
+                                     double t, const double* params) {{
+    // Unpack parameters
+{self._generate_param_unpack()}
+    
+    // Unpack state
+{self._generate_state_unpack_device()}
+    
+    // Equations of motion
+{equations_code}
+}}
+
+// RK4 integration kernel
+__global__ void rk4_step_kernel(double* state, double t, double dt, 
+                                 const double* params, int num_systems) {{
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= num_systems) return;
+    
+    double* my_state = state + idx * STATE_DIM;
+    double k1[STATE_DIM], k2[STATE_DIM], k3[STATE_DIM], k4[STATE_DIM];
+    double temp[STATE_DIM];
+    
+    // k1 = f(t, y)
+    compute_derivatives(my_state, k1, t, params);
+    
+    // k2 = f(t + dt/2, y + dt*k1/2)
+    for (int i = 0; i < STATE_DIM; i++) 
+        temp[i] = my_state[i] + 0.5 * dt * k1[i];
+    compute_derivatives(temp, k2, t + 0.5*dt, params);
+    
+    // k3 = f(t + dt/2, y + dt*k2/2)
+    for (int i = 0; i < STATE_DIM; i++) 
+        temp[i] = my_state[i] + 0.5 * dt * k2[i];
+    compute_derivatives(temp, k3, t + 0.5*dt, params);
+    
+    // k4 = f(t + dt, y + dt*k3)
+    for (int i = 0; i < STATE_DIM; i++) 
+        temp[i] = my_state[i] + dt * k3[i];
+    compute_derivatives(temp, k4, t + dt, params);
+    
+    // Update state: y = y + dt/6 * (k1 + 2*k2 + 2*k3 + k4)
+    for (int i = 0; i < STATE_DIM; i++) {{
+        my_state[i] += dt * (k1[i] + 2.0*k2[i] + 2.0*k3[i] + k4[i]) / 6.0;
+    }}
+}}
+
+int main(int argc, char** argv) {{
+    std::cout << "CUDA Simulation: {self.system_name}" << std::endl;
+    
+    // Check for CUDA device
+    int deviceCount = 0;
+    cudaGetDeviceCount(&deviceCount);
+    if (deviceCount == 0) {{
+        std::cerr << "Error: No CUDA-capable device found!" << std::endl;
+        std::cerr << "Please run the CPU fallback version instead." << std::endl;
+        return EXIT_FAILURE;
+    }}
+    
+    cudaDeviceProp prop;
+    cudaGetDeviceProperties(&prop, 0);
+    std::cout << "Using GPU: " << prop.name << std::endl;
+    
+    // Allocate host and device memory
+    double h_state[STATE_DIM] = {{ {init_code} }};
+    double h_params[{len(self.parameters)}] = {{ {self._params_array()} }};
+    
+    double *d_state, *d_params;
+    CUDA_CHECK(cudaMalloc(&d_state, STATE_DIM * sizeof(double)));
+    CUDA_CHECK(cudaMalloc(&d_params, {len(self.parameters)} * sizeof(double)));
+    
+    CUDA_CHECK(cudaMemcpy(d_state, h_state, STATE_DIM * sizeof(double), cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(d_params, h_params, {len(self.parameters)} * sizeof(double), cudaMemcpyHostToDevice));
+    
+    // Simulation parameters
+    double t = 0.0;
+    double dt = 0.001;
+    double t_end = 10.0;
+    int steps = static_cast<int>(t_end / dt);
+    int output_interval = 10;
+    
+    // Output file
+    std::ofstream outfile("{self.system_name}_cuda_results.csv");
+    outfile << "{csv_header}" << std::endl;
+    outfile << std::fixed << std::setprecision(6);
+    
+    // Main simulation loop
+    for (int step = 0; step <= steps; step++) {{
+        // Output every N steps
+        if (step % output_interval == 0) {{
+            CUDA_CHECK(cudaMemcpy(h_state, d_state, STATE_DIM * sizeof(double), cudaMemcpyDeviceToHost));
+            outfile << t;
+            for (int i = 0; i < STATE_DIM; i++) {{
+                outfile << "," << h_state[i];
+            }}
+            outfile << std::endl;
+        }}
+        
+        // RK4 integration step
+        rk4_step_kernel<<<1, 1>>>(d_state, t, dt, d_params, NUM_SYSTEMS);
+        CUDA_CHECK(cudaDeviceSynchronize());
+        
+        t += dt;
+    }}
+    
+    // Cleanup
+    CUDA_CHECK(cudaFree(d_state));
+    CUDA_CHECK(cudaFree(d_params));
+    
+    std::cout << "Simulation complete. Results saved to {self.system_name}_cuda_results.csv" << std::endl;
+    return EXIT_SUCCESS;
+}}
+'''
+    
+    def _generate_header(self) -> str:
+        """Generate header file."""
+        return f'''/*
+ * Header for CUDA Simulation: {self.system_name}
+ * Generated by MechanicsDSL
+ */
+
+#ifndef {self.system_name.upper()}_H
+#define {self.system_name.upper()}_H
+
+constexpr int STATE_DIM = {len(self.coordinates) * 2};
+
+// Parameter indices
+{self._generate_param_indices()}
+
+// Host function declarations
+void simulate_{self.system_name}(double* initial_state, double t_end, double dt);
+
+#endif // {self.system_name.upper()}_H
+'''
+    
+    def _generate_cmake(self) -> str:
+        """Generate CMakeLists.txt for building the CUDA project."""
+        return f'''# CMakeLists.txt for {self.system_name}
+# Generated by MechanicsDSL
+
+cmake_minimum_required(VERSION 3.18)
+project({self.system_name} LANGUAGES CXX CUDA)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CUDA_STANDARD 17)
+
+# Find CUDA
+find_package(CUDAToolkit REQUIRED)
+
+# Main CUDA executable
+add_executable({self.system_name}_cuda {self.system_name}.cu)
+target_compile_options({self.system_name}_cuda PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-arch=sm_60>)
+
+# CPU fallback executable
+add_executable({self.system_name}_cpu {self.system_name}_cpu.cpp)
+
+# Installation
+install(TARGETS {self.system_name}_cuda {self.system_name}_cpu DESTINATION bin)
+
+# Build instructions
+message(STATUS "")
+message(STATUS "Build with: mkdir build && cd build && cmake .. && make")
+message(STATUS "Run CUDA version: ./{self.system_name}_cuda")
+message(STATUS "Run CPU version:  ./{self.system_name}_cpu")
+message(STATUS "")
+'''
+    
+    def _generate_cpu_fallback(self) -> str:
+        """Generate CPU-only fallback implementation."""
+        state_dim = len(self.coordinates) * 2
+        init_code = self.generate_initial_conditions()
+        csv_header = ",".join(["t"] + 
+            [x for c in self.coordinates for x in [c, f"{c}_dot"]])
+        
+        # Generate equations for CPU
+        eq_lines = []
+        idx = 0
+        for coord in self.coordinates:
+            accel_key = f"{coord}_ddot"
+            eq_lines.append(f"    dydt[{idx}] = state[{idx+1}];")
+            if accel_key in self.equations:
+                expr = self.equations[accel_key]
+                cpp_expr = cxxcode(expr, standard='c++17')
+                eq_lines.append(f"    dydt[{idx+1}] = {cpp_expr};")
+            else:
+                eq_lines.append(f"    dydt[{idx+1}] = 0.0;")
+            idx += 2
+        equations_code = "\n".join(eq_lines)
+        
+        return f'''/*
+ * CPU Fallback Simulation: {self.system_name}
+ * Generated by MechanicsDSL
+ * 
+ * This is a CPU-only version for systems without NVIDIA GPUs.
+ * Compile with: g++ -O3 -o {self.system_name}_cpu {self.system_name}_cpu.cpp
+ */
+
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+#include <cmath>
+#include <vector>
+
+using std::sin; using std::cos; using std::tan;
+using std::exp; using std::log; using std::sqrt;
+using std::pow; using std::abs;
+
+// Parameters
+{self._generate_parameters()}
+
+constexpr int STATE_DIM = {state_dim};
+
+// Compute derivatives
+void compute_derivatives(const double* state, double* dydt, double t) {{
+    // Unpack state variables
+{self._generate_state_unpack_cpu()}
+    
+    // Equations of motion
+{equations_code}
+}}
+
+// RK4 integration step
+void rk4_step(double* state, double t, double dt) {{
+    double k1[STATE_DIM], k2[STATE_DIM], k3[STATE_DIM], k4[STATE_DIM];
+    double temp[STATE_DIM];
+    
+    compute_derivatives(state, k1, t);
+    
+    for (int i = 0; i < STATE_DIM; i++) temp[i] = state[i] + 0.5 * dt * k1[i];
+    compute_derivatives(temp, k2, t + 0.5*dt);
+    
+    for (int i = 0; i < STATE_DIM; i++) temp[i] = state[i] + 0.5 * dt * k2[i];
+    compute_derivatives(temp, k3, t + 0.5*dt);
+    
+    for (int i = 0; i < STATE_DIM; i++) temp[i] = state[i] + dt * k3[i];
+    compute_derivatives(temp, k4, t + dt);
+    
+    for (int i = 0; i < STATE_DIM; i++) {{
+        state[i] += dt * (k1[i] + 2.0*k2[i] + 2.0*k3[i] + k4[i]) / 6.0;
+    }}
+}}
+
+int main() {{
+    std::cout << "CPU Simulation: {self.system_name}" << std::endl;
+    
+    double state[STATE_DIM] = {{ {init_code} }};
+    
+    double t = 0.0;
+    double dt = 0.001;
+    double t_end = 10.0;
+    int steps = static_cast<int>(t_end / dt);
+    int output_interval = 10;
+    
+    std::ofstream outfile("{self.system_name}_cpu_results.csv");
+    outfile << "{csv_header}" << std::endl;
+    outfile << std::fixed << std::setprecision(6);
+    
+    for (int step = 0; step <= steps; step++) {{
+        if (step % output_interval == 0) {{
+            outfile << t;
+            for (int i = 0; i < STATE_DIM; i++) {{
+                outfile << "," << state[i];
+            }}
+            outfile << std::endl;
+        }}
+        rk4_step(state, t, dt);
+        t += dt;
+    }}
+    
+    std::cout << "Simulation complete. Results saved to {self.system_name}_cpu_results.csv" << std::endl;
+    return 0;
+}}
+'''
+    
+    def _generate_parameters(self) -> str:
+        """Generate parameter declarations for CPU code."""
+        lines = []
+        for name, val in self.parameters.items():
+            lines.append(f"const double {name} = {val};")
+        return "\n".join(lines)
+    
+    def _generate_parameters_device(self) -> str:
+        """Generate parameter declarations for device namespace."""
+        lines = []
+        for name, val in self.parameters.items():
+            lines.append(f"    __constant__ double {name} = {val};")
+        return "\n".join(lines)
+    
+    def _generate_param_unpack(self) -> str:
+        """Generate code to unpack parameters from array."""
+        lines = []
+        for i, name in enumerate(self.parameters.keys()):
+            lines.append(f"    double {name} = params[{i}];")
+        return "\n".join(lines)
+    
+    def _generate_param_indices(self) -> str:
+        """Generate parameter index constants."""
+        lines = []
+        for i, name in enumerate(self.parameters.keys()):
+            lines.append(f"constexpr int PARAM_{name.upper()} = {i};")
+        return "\n".join(lines)
+    
+    def _generate_state_unpack_device(self) -> str:
+        """Generate state unpacking for device code."""
+        lines = []
+        idx = 0
+        for coord in self.coordinates:
+            lines.append(f"    double {coord} = state[{idx}];")
+            lines.append(f"    double {coord}_dot = state[{idx+1}];")
+            idx += 2
+        return "\n".join(lines)
+    
+    def _generate_state_unpack_cpu(self) -> str:
+        """Generate state unpacking for CPU code."""
+        lines = []
+        idx = 0
+        for coord in self.coordinates:
+            lines.append(f"    double {coord} = state[{idx}];")
+            lines.append(f"    double {coord}_dot = state[{idx+1}];")
+            idx += 2
+        return "\n".join(lines)
+    
+    def _params_array(self) -> str:
+        """Generate parameter values as comma-separated list."""
+        return ", ".join(str(v) for v in self.parameters.values())

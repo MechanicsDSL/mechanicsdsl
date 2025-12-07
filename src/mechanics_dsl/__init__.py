@@ -24,7 +24,7 @@ from .parser import MechanicsParser as _MechanicsParser
 from .symbolic import SymbolicEngine as _SymbolicEngine
 from .solver import NumericalSimulator as _NumericalSimulator
 
-__version__ = "1.2.2"
+__version__ = "1.2.3"
 __author__ = "Noah Parsons"
 __license__ = "MIT"
 
