@@ -5,6 +5,62 @@ All notable changes to MechanicsDSL will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2024-12-06
+
+### Added
+
+#### Classical Mechanics Modules
+- **13 New Physics Modules** in `mechanics_dsl.classical/`:
+  - `central_force.py` - Central force problems (orbits, scattering)
+  - `coupled_oscillators.py` - Coupled harmonic oscillators
+  - `damped_driven.py` - Damped and driven oscillators
+  - `elastic_collision.py` - Elastic collision mechanics
+  - `gravitational.py` - N-body gravitational systems
+  - `gyroscope.py` - Gyroscopic motion and precession
+  - `noninertial.py` - Non-inertial reference frames
+  - `projectile.py` - Projectile motion with drag
+  - `rigid_body_dynamics.py` - Rigid body motion
+  - `rotating_frame.py` - Rotating reference frames
+  - `small_oscillations.py` - Small oscillation analysis
+  - `variational.py` - Variational methods
+  - `virtual_work.py` - Virtual work principles
+
+#### Code Generation Backends
+- **5 New Code Generators** in `mechanics_dsl.codegen/`:
+  - `julia.py` - Julia code generation (DifferentialEquations.jl)
+  - `rust.py` - Rust code generation (nalgebra/ode_solvers)
+  - `matlab.py` - MATLAB/Octave code generation
+  - `fortran.py` - Modern Fortran code generation
+  - `javascript.py` - JavaScript/Node.js code generation
+
+#### Jupyter Notebooks
+- **30+ Interactive Notebooks** in `examples/notebooks/`:
+  - Beginner tutorials (pendulum, oscillator, projectile)
+  - Intermediate examples (double pendulum, coupled systems)
+  - Advanced topics (Hamiltonian, Lagrangian, rigid body)
+  - Tools demonstrations (visualization, code generation)
+  - Fluids and celestial mechanics examples
+
+#### Documentation
+- Comprehensive documentation for all 13 new classical mechanics modules
+- API references with theory explanations and usage examples
+- Updated `docs/index.rst` with new module documentation
+- Updated `README.md` with expanded feature list
+
+### Fixed
+- Test suite now passes 100% (47/47 tests)
+- Fixed DSL syntax issues in `test_compiler.py`
+- Fixed acceleration key format in `test_solver.py`
+- Corrected method names in `test_visualization.py`
+- Fixed validation behavior in `test_energy.py`
+- Fixed `Config` attribute error (`default_trail_length`)
+
+### Changed
+- Improved test coverage across all modules
+- Enhanced backward compatibility imports
+
+---
+
 ## [1.2.0] - 2024-XX-XX
 
 ### Added
