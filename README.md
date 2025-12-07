@@ -131,7 +131,7 @@ compiler.compile_to_cpp("dam_break.cpp", target="standard", compile_binary=True)
 ### Analysis Tools
 - **Energy conservation** monitoring
 - **Phase space** visualization & Poincaré sections
-- **368 passing tests** for reliability
+- **534 passing tests** for reliability
 
 ---
 
