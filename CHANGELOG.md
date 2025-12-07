@@ -5,49 +5,6 @@ All notable changes to MechanicsDSL will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.0] - 2025-12-07
-
-### Added
-
-#### Rigid Body Quaternions
-- Full quaternion kinetic energy formulation using E-matrix method
-- `_quaternion_E_matrix()`, `_angular_velocity_quaternion()`, `quaternion_constraint()`
-- Enhanced `Quaternion` class with `from_euler_angles()`, `to_rotation_matrix()`, `rotate_vector()`
-- 20 new quaternion tests
-
-#### Numba/JIT Acceleration
-- New `solver_numba.py` with JIT-compiled RK4, Euler, RK45 integrators
-- `NumbaSimulator` class with 5-10x speedup over SciPy
-- Automatic fallback to pure NumPy when Numba unavailable
-
-#### CUDA Backend
-- New `CudaGenerator` for GPU-accelerated simulations
-- CUDA kernel generation with RK4 integration
-- CPU fallback code + CMakeLists.txt generation
-
-#### Additional Code Generators
-- `OpenMPGenerator` - Multi-core parallel C++
-- `WasmGenerator` - WebAssembly with HTML canvas
-- `ArduinoGenerator` - Embedded .ino sketches
-- `CudaSPHGenerator` - GPU SPH particle simulations
-
-#### Backend Validation
-- Comprehensive test suite for all 12 code generators
-- Demo directories with READMEs and compile scripts
-- Performance benchmarks (`numba_performance.py`, `cuda_performance.py`, `comparison_matrix.py`)
-
-#### Documentation
-- `docs/user_guide/code_generation.rst` - All backends guide
-- `docs/user_guide/performance_optimization.rst`
-- `docs/user_guide/cuda_guide.rst`
-- `examples/advanced/20_quaternion_rigid_body.py`
-
-### Changed
-- Total of 12 code generators now available
-- 73 new tests added across all features
-
----
-
 ## [1.2.3] - 2024-12-06
 
 ### Added
