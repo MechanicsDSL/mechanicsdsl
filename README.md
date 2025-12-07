@@ -38,7 +38,7 @@ pip install mechanicsdsl-core
 
 ---
 
-## 📖 Quick Start
+## Quick Start
 
 ### The Famous Figure-8 Three-Body Orbit
 
