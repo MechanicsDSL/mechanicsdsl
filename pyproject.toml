@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mechanicsdsl-core"
-version = "1.3.0"
+version = "1.3.1"
 description = "A Domain-Specific Language and Transpiler for Classical Mechanics"
 authors = [
   { name="Noah Parsons", email="nomapa223@gmail.com" },
@@ -24,12 +24,13 @@ dependencies = [
     "scipy>=1.7.0",
     "sympy>=1.8",
     "matplotlib>=3.4.0",
-    "numba>=0.56.0",
 ]
 
 [project.optional-dependencies]
 test = ["pytest"]
-codegen = ["pybind11"] # Optional dependency for Python extension generation
+codegen = ["pybind11"]
+jit = ["numba>=0.56.0"]  # Optional: for JIT acceleration
+all = ["numba>=0.56.0", "pybind11"]
 
 [project.urls]
 "Repository" = "https://github.com/MechanicsDSL/mechanicsdsl"
