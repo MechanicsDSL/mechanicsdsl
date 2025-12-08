@@ -649,10 +649,23 @@ class MechanicsDSLApp {
         const energyEl = document.getElementById('sim-energy');
         const fpsEl = document.getElementById('sim-fps');
         const errorEl = document.getElementById('energy-error');
+
         if (timeEl) timeEl.textContent = this.time.toFixed(2) + ' s';
-        if (energyEl) energyEl.textContent = (this.simulation?.energy() || 0).toFixed(2) + ' J';
         if (fpsEl) fpsEl.textContent = this.fps;
-        if (errorEl) errorEl.textContent = (this.simulation?.energyError?.() || 0).toFixed(4) + '%';
+
+        // Get energy from Python or JS
+        if (this.pythonMode && this.pyodide?.isReady) {
+            // Async energy fetch for Python mode
+            this.pyodide.getEnergy().then(e => {
+                if (energyEl) energyEl.textContent = e.toFixed(2) + ' J';
+            });
+            this.pyodide.getEnergyError().then(e => {
+                if (errorEl) errorEl.textContent = e.toFixed(4) + '%';
+            });
+        } else {
+            if (energyEl) energyEl.textContent = (this.simulation?.energy() || 0).toFixed(2) + ' J';
+            if (errorEl) errorEl.textContent = (this.simulation?.energyError?.() || 0).toFixed(4) + '%';
+        }
 
         requestAnimationFrame(() => this.animate());
     }
