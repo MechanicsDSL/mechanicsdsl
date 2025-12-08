@@ -12,6 +12,7 @@
     <link rel="icon" type="image/svg+xml"
         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚛️</text></svg>">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
 </head>
 
 <body>
@@ -98,6 +99,10 @@
                         simulation.mdsl
                     </div>
                     <div class="panel-actions">
+                        <button class="action-btn mode-toggle" id="python-mode-btn"
+                            title="Toggle Python Mode (uses real SciPy)">
+                            <span>🐍</span> Python
+                        </button>
                         <button class="action-btn" id="run-btn" title="Run Simulation">
                             <span class="play-icon">▶</span> Run
                         </button>
@@ -439,6 +444,7 @@ void rk4_step(double* y, double t, double dt) {
     <div id="toast-container"></div>
 
     <script src="./js/physics.js"></script>
+    <script src="./js/pyodide-bridge.js"></script>
     <script src="./js/examples.js"></script>
     <script src="./js/app.js"></script>
 </body>

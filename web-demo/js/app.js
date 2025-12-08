@@ -20,6 +20,11 @@ class MechanicsDSLApp {
         this.fps = 60;
         this.theme = 'dark';
 
+        // Python mode
+        this.pythonMode = false;
+        this.pyodide = null;
+        this.pythonReady = false;
+
         // Three.js
         this.threeScene = null;
         this.threeCamera = null;
@@ -31,6 +36,9 @@ class MechanicsDSLApp {
 
         // Recording
         this.recordedFrames = [];
+
+        // State for Python sim
+        this.pythonState = null;
     }
 
     init() {
@@ -46,6 +54,7 @@ class MechanicsDSLApp {
         this.setupShare();
         this.setupDownload();
         this.setup3D();
+        this.setupPythonMode();
         this.loadExample('double-pendulum');
     }
 
@@ -274,16 +283,112 @@ class MechanicsDSLApp {
 
         // Use pendulum angles to rotate the 3D object
         if (this.simulation && this.threeMesh) {
-            const state = this.simulation.state;
-            if (state.theta1 !== undefined) {
+            const state = this.pythonMode ? this.pythonState : this.simulation.state;
+            if (state?.theta1 !== undefined) {
                 this.threeMesh.rotation.x = state.theta1;
                 this.threeMesh.rotation.z = state.theta2 || 0;
-            } else if (state.theta !== undefined) {
+            } else if (state?.theta !== undefined) {
                 this.threeMesh.rotation.z = state.theta;
             }
         }
 
         this.threeRenderer.render(this.threeScene, this.threeCamera);
+    }
+
+    // ========================================
+    // PYTHON MODE
+    // ========================================
+    setupPythonMode() {
+        const btn = document.getElementById('python-mode-btn');
+        if (!btn) return;
+
+        btn.addEventListener('click', async () => {
+            if (this.pythonMode) {
+                // Switch to JavaScript mode
+                this.pythonMode = false;
+                btn.classList.remove('active');
+                this.showToast('Switched to JavaScript mode (faster)');
+            } else {
+                // Switch to Python mode
+                btn.classList.add('loading');
+                btn.innerHTML = '<span>⏳</span> Loading...';
+
+                try {
+                    if (!this.pyodide) {
+                        this.pyodide = new PyodideBridge();
+                        this.pyodide.onProgress((msg, pct) => {
+                            btn.innerHTML = `<span>🐍</span> ${pct}%`;
+                        });
+                    }
+
+                    await this.pyodide.initialize();
+                    this.pythonMode = true;
+                    this.pythonReady = true;
+                    btn.classList.remove('loading');
+                    btn.classList.add('active');
+                    btn.innerHTML = '<span>🐍</span> Python';
+                    this.showToast('Python mode active! Using real SciPy RK45');
+
+                    // Re-run simulation in Python mode
+                    if (this.isRunning) {
+                        this.runSimulation();
+                    }
+                } catch (error) {
+                    console.error('Failed to load Pyodide:', error);
+                    btn.classList.remove('loading');
+                    btn.innerHTML = '<span>🐍</span> Python';
+                    this.showToast('Failed to load Python: ' + error.message);
+                }
+            }
+        });
+    }
+
+    async runPythonSimulation() {
+        if (!this.pyodide?.isReady) return;
+
+        const active = document.querySelector('.example-card.active');
+        const exampleName = active?.dataset.example || 'double-pendulum';
+        const ex = EXAMPLES[exampleName];
+        const p = { ...ex.params, ...this.params };
+
+        await this.pyodide.createSimulation(p.type, p);
+    }
+
+    async stepPython(dt) {
+        try {
+            // Step the Python simulation
+            const result = await this.pyodide.step(dt);
+
+            if (result) {
+                // Convert Python dict to JS object and store
+                this.pythonState = {};
+                result.forEach((value, key) => {
+                    this.pythonState[key] = value;
+                });
+
+                // Update the JS simulation state for rendering
+                if (this.simulation?.state) {
+                    Object.assign(this.simulation.state, this.pythonState);
+                }
+
+                // Store phase point
+                let pp;
+                if (this.pythonState.theta2 !== undefined) {
+                    pp = { x: this.pythonState.theta2, y: this.pythonState.omega2 };
+                } else if (this.pythonState.theta !== undefined) {
+                    pp = { x: this.pythonState.theta, y: this.pythonState.omega };
+                } else if (this.pythonState.x !== undefined) {
+                    pp = { x: this.pythonState.x, y: this.pythonState.v || this.pythonState.vx || 0 };
+                }
+
+                if (pp) {
+                    this.phaseTrail.push(pp);
+                    if (this.phaseTrail.length > 2000) this.phaseTrail.shift();
+                }
+            }
+        } catch (error) {
+            console.error('Python step error:', error);
+        }
     }
 
     // ========================================
@@ -412,7 +517,7 @@ class MechanicsDSLApp {
         this.phaseTrail2 = [];
     }
 
-    runSimulation() {
+    async runSimulation() {
         document.getElementById('canvas-overlay')?.classList.add('hidden');
         const active = document.querySelector('.example-card.active');
         const ex = EXAMPLES[active?.dataset.example || 'double-pendulum'];
@@ -420,12 +525,19 @@ class MechanicsDSLApp {
         // Merge URL/slider params with example params
         const p = { ...ex.params, ...this.params };
 
+        // Always create JavaScript simulation (for rendering)
         if (p.type === 'pendulum') this.simulation = this.physics.createPendulum(p);
         else if (p.type === 'double-pendulum') this.simulation = this.physics.createDoublePendulum(p);
         else if (p.type === 'spring') this.simulation = this.physics.createSpring(p);
         else if (p.type === 'orbital') this.simulation = this.physics.createOrbital(p);
         else if (p.type === 'sph') this.simulation = this.physics.createSPH(p);
         else this.simulation = this.physics.createDoublePendulum({});
+
+        // Also initialize Python simulation if in Python mode
+        if (this.pythonMode && this.pyodide?.isReady) {
+            await this.pyodide.createSimulation(p.type, p);
+            this.pythonState = null;
+        }
 
         // Reset compare sim if in compare mode
         if (this.compareMode) {
@@ -478,7 +590,11 @@ class MechanicsDSLApp {
             const dt = 0.016 * this.speed;
             const substeps = Math.max(1, Math.floor(this.speed * 10));
 
-            if (this.simulation) {
+            if (this.pythonMode && this.pyodide?.isReady) {
+                // Python mode - use async step
+                this.stepPython(dt);
+            } else if (this.simulation) {
+                // JavaScript mode
                 for (let i = 0; i < substeps; i++) this.simulation.step(dt / substeps);
 
                 // Store phase point
