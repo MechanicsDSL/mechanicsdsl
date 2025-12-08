@@ -1,6 +1,6 @@
 /**
  * MechanicsDSL Pyodide Bridge
- * Runs actual Python MechanicsDSL in the browser via WebAssembly
+ * Runs actual MechanicsDSL Python package in the browser via WebAssembly
  */
 
 class PyodideBridge {
@@ -10,6 +10,7 @@ class PyodideBridge {
         this.isLoading = false;
         this.loadingProgress = 0;
         this.onProgressCallbacks = [];
+        this.compiledSystem = null;
     }
 
     onProgress(callback) {
@@ -24,7 +25,6 @@ class PyodideBridge {
     async initialize() {
         if (this.isReady) return true;
         if (this.isLoading) {
-            // Wait for existing load
             while (this.isLoading) {
                 await new Promise(r => setTimeout(r, 100));
             }
@@ -39,67 +39,85 @@ class PyodideBridge {
             this.pyodide = await loadPyodide({
                 indexURL: "https://cdn.jsdelivr.net/pyodide/v0.24.1/full/"
             });
-            this.notifyProgress('Installing NumPy...', 20);
+            this.notifyProgress('Installing NumPy & SciPy...', 15);
 
             // Install required packages
-            await this.pyodide.loadPackage(['numpy', 'sympy', 'scipy']);
-            this.notifyProgress('Installing SymPy...', 50);
+            await this.pyodide.loadPackage(['numpy', 'scipy', 'sympy', 'micropip']);
+            this.notifyProgress('Installing MechanicsDSL...', 50);
 
-            this.notifyProgress('Setting up MechanicsDSL...', 70);
+            // Install mechanicsdsl-core from PyPI
+            await this.pyodide.runPythonAsync(`
+import micropip
+await micropip.install('mechanicsdsl-core')
+`);
+            this.notifyProgress('Setting up simulation engine...', 80);
 
-            // Initialize MechanicsDSL-like functionality directly in Python
+            // Initialize the bridge code
             await this.pyodide.runPythonAsync(`
 import numpy as np
 from scipy.integrate import solve_ivp
-import sympy as sp
-from sympy import symbols, sin, cos, diff, solve, lambdify, Rational
-from sympy.physics.mechanics import dynamicsymbols
 
-class SimplePendulumSystem:
-    """Simple pendulum simulation using Lagrangian mechanics."""
+# Try to import MechanicsDSL
+try:
+    from mechanics_dsl import PhysicsCompiler, NumericalSimulator, SymbolicEngine
+    HAVE_DSL = True
+    print("MechanicsDSL loaded successfully!")
+except ImportError as e:
+    print(f"MechanicsDSL import failed: {e}")
+    HAVE_DSL = False
+
+# Simulation state
+current_sim = None
+initial_energy = None
+sim_time = 0.0
+
+def parse_dsl_code(code):
+    """Parse DSL code and return compiled system."""
+    global HAVE_DSL
+    if not HAVE_DSL:
+        return None, "MechanicsDSL not available"
     
-    def __init__(self, m=1.0, l=1.0, g=9.81, theta0=0.5, omega0=0.0):
-        self.m = m
-        self.l = l
-        self.g = g
-        self.state = np.array([theta0, omega0])
-        self.t = 0.0
-        self.initial_energy = self.energy()
+    try:
+        compiler = PhysicsCompiler()
+        system = compiler.compile(code)
+        return system, None
+    except Exception as e:
+        return None, str(e)
+
+def create_simulation_from_dsl(code, params=None):
+    """Create simulation from DSL code."""
+    global current_sim, initial_energy, sim_time, HAVE_DSL
+    
+    system, error = parse_dsl_code(code)
+    if error:
+        return {"error": error}
+    
+    try:
+        # Create numerical simulator
+        simulator = NumericalSimulator(system)
         
-    def derivatives(self, t, y):
-        theta, omega = y
-        dtheta = omega
-        domega = -self.g / self.l * np.sin(theta)
-        return [dtheta, domega]
-    
-    def step(self, dt):
-        sol = solve_ivp(self.derivatives, [self.t, self.t + dt], self.state, 
-                       method='RK45', dense_output=True)
-        self.state = sol.y[:, -1]
-        self.t += dt
-        return {'theta': float(self.state[0]), 'omega': float(self.state[1])}
-    
-    def energy(self):
-        theta, omega = self.state
-        KE = 0.5 * self.m * (self.l * omega)**2
-        PE = self.m * self.g * self.l * (1 - np.cos(theta))
-        return float(KE + PE)
-    
-    def energy_error(self):
-        if self.initial_energy == 0:
-            return 0.0
-        return abs((self.energy() - self.initial_energy) / self.initial_energy) * 100
+        # Apply custom parameters if provided
+        if params:
+            for key, value in params.items():
+                if hasattr(simulator, key):
+                    setattr(simulator, key, value)
+        
+        current_sim = simulator
+        initial_energy = simulator.compute_energy() if hasattr(simulator, 'compute_energy') else None
+        sim_time = 0.0
+        
+        return {"success": True, "system_name": system.name if hasattr(system, 'name') else "system"}
+    except Exception as e:
+        return {"error": str(e)}
 
-
-class DoublePendulumSystem:
-    """Double pendulum using derived equations of motion from Lagrangian."""
-    
+# Fallback simulation classes for when DSL compilation isn't ready
+class FallbackDoublePendulum:
     def __init__(self, m1=1.0, m2=1.0, l1=1.0, l2=1.0, g=9.81,
-                 theta1_0=2.5, omega1_0=0.0, theta2_0=2.0, omega2_0=0.0):
+                 theta1=2.5, theta2=2.0, omega1=0.0, omega2=0.0):
         self.m1, self.m2 = m1, m2
         self.l1, self.l2 = l1, l2
         self.g = g
-        self.state = np.array([theta1_0, omega1_0, theta2_0, omega2_0])
+        self.state = np.array([theta1, omega1, theta2, omega2])
         self.t = 0.0
         self.initial_energy = self.energy()
         
@@ -139,13 +157,10 @@ class DoublePendulumSystem:
     def energy(self):
         t1, o1, t2, o2 = self.state
         m1, m2, l1, l2, g = self.m1, self.m2, self.l1, self.l2, self.g
-        
         y1 = -l1 * np.cos(t1)
         y2 = y1 - l2 * np.cos(t2)
-        
         v1sq = l1**2 * o1**2
         v2sq = l1**2 * o1**2 + l2**2 * o2**2 + 2*l1*l2*o1*o2*np.cos(t1-t2)
-        
         KE = 0.5 * m1 * v1sq + 0.5 * m2 * v2sq
         PE = m1*g*y1 + m2*g*y2 + (m1+m2)*g*(l1+l2)
         return float(KE + PE)
@@ -156,12 +171,39 @@ class DoublePendulumSystem:
         return abs((self.energy() - self.initial_energy) / self.initial_energy) * 100
 
 
-class SpringSystem:
-    """Damped harmonic oscillator."""
+class FallbackPendulum:
+    def __init__(self, m=1.0, l=1.0, g=9.81, theta=0.5, omega=0.0):
+        self.m, self.l, self.g = m, l, g
+        self.state = np.array([theta, omega])
+        self.t = 0.0
+        self.initial_energy = self.energy()
+        
+    def derivatives(self, t, y):
+        theta, omega = y
+        return [omega, -self.g / self.l * np.sin(theta)]
     
-    def __init__(self, k=10.0, m=1.0, b=0.1, x0=1.5, v0=0.0):
+    def step(self, dt):
+        sol = solve_ivp(self.derivatives, [self.t, self.t + dt], self.state, method='RK45')
+        self.state = sol.y[:, -1]
+        self.t += dt
+        return {'theta': float(self.state[0]), 'omega': float(self.state[1])}
+    
+    def energy(self):
+        theta, omega = self.state
+        KE = 0.5 * self.m * (self.l * omega)**2
+        PE = self.m * self.g * self.l * (1 - np.cos(theta))
+        return float(KE + PE)
+    
+    def energy_error(self):
+        if self.initial_energy == 0:
+            return 0.0
+        return abs((self.energy() - self.initial_energy) / self.initial_energy) * 100
+
+
+class FallbackSpring:
+    def __init__(self, k=10.0, m=1.0, b=0.1, x=1.5, v=0.0):
         self.k, self.m, self.b = k, m, b
-        self.state = np.array([x0, v0])
+        self.state = np.array([x, v])
         self.t = 0.0
         self.initial_energy = self.energy()
         
@@ -180,17 +222,15 @@ class SpringSystem:
         return float(0.5 * self.m * v**2 + 0.5 * self.k * x**2)
     
     def energy_error(self):
-        return 0.0  # Damped system doesn't conserve energy
+        return 0.0  # Damped system
 
 
-class OrbitalSystem:
-    """Two-body orbital mechanics."""
-    
-    def __init__(self, GM=1000.0, x0=100.0, y0=0.0, vx0=0.0, vy0=None):
+class FallbackOrbital:
+    def __init__(self, GM=1000.0, x=100.0, y=0.0, vx=0.0, vy=None):
         self.GM = GM
-        if vy0 is None:
-            vy0 = np.sqrt(GM / x0) * 0.8  # Elliptical orbit
-        self.state = np.array([x0, y0, vx0, vy0])
+        if vy is None:
+            vy = np.sqrt(GM / x) * 0.8
+        self.state = np.array([x, y, vx, vy])
         self.t = 0.0
         self.initial_energy = self.energy()
         
@@ -218,29 +258,19 @@ class OrbitalSystem:
         return abs((self.energy() - self.initial_energy) / self.initial_energy) * 100
 
 
-# Global simulation instance
-current_sim = None
-
-def create_pendulum(m=1.0, l=1.0, g=9.81, theta=0.5, omega=0.0):
+def create_sim(sim_type, **kwargs):
     global current_sim
-    current_sim = SimplePendulumSystem(m, l, g, theta, omega)
-    return "pendulum"
-
-def create_double_pendulum(m1=1.0, m2=1.0, l1=1.0, l2=1.0, g=9.81,
-                           theta1=2.5, omega1=0.0, theta2=2.0, omega2=0.0):
-    global current_sim
-    current_sim = DoublePendulumSystem(m1, m2, l1, l2, g, theta1, omega1, theta2, omega2)
-    return "double-pendulum"
-
-def create_spring(k=10.0, m=1.0, b=0.1, x=1.5, v=0.0):
-    global current_sim
-    current_sim = SpringSystem(k, m, b, x, v)
-    return "spring"
-
-def create_orbital(GM=1000.0, x=100.0, y=0.0, vx=0.0, vy=None):
-    global current_sim
-    current_sim = OrbitalSystem(GM, x, y, vx, vy)
-    return "orbital"
+    if sim_type == 'pendulum':
+        current_sim = FallbackPendulum(**kwargs)
+    elif sim_type == 'double-pendulum':
+        current_sim = FallbackDoublePendulum(**kwargs)
+    elif sim_type == 'spring':
+        current_sim = FallbackSpring(**kwargs)
+    elif sim_type == 'orbital':
+        current_sim = FallbackOrbital(**kwargs)
+    else:
+        current_sim = FallbackDoublePendulum(**kwargs)
+    return sim_type
 
 def sim_step(dt):
     global current_sim
@@ -266,12 +296,21 @@ def sim_time():
         return 0.0
     return current_sim.t
 
-print("MechanicsDSL Python engine ready!")
+def has_dsl():
+    return HAVE_DSL
+
+print("Python simulation engine ready!")
+print(f"MechanicsDSL available: {HAVE_DSL}")
 `);
 
             this.notifyProgress('Ready!', 100);
             this.isReady = true;
             this.isLoading = false;
+
+            // Check if DSL is available
+            this.hasDSL = await this.pyodide.runPythonAsync('has_dsl()');
+            console.log('MechanicsDSL available:', this.hasDSL);
+
             return true;
         } catch (error) {
             console.error('Failed to initialize Pyodide:', error);
@@ -281,30 +320,43 @@ print("MechanicsDSL Python engine ready!")
         }
     }
 
+    async compileDSL(code) {
+        if (!this.isReady || !this.hasDSL) {
+            return { error: 'MechanicsDSL not available' };
+        }
+
+        try {
+            const result = await this.pyodide.runPythonAsync(`
+import json
+result = create_simulation_from_dsl('''${code.replace(/'/g, "\\'")}''')
+json.dumps(result)
+`);
+            return JSON.parse(result);
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+
     async createSimulation(type, params = {}) {
         if (!this.isReady) {
             await this.initialize();
         }
 
-        let pythonCode;
-        switch (type) {
-            case 'pendulum':
-                pythonCode = `create_pendulum(${params.m || 1.0}, ${params.l || 1.0}, ${params.g || 9.81}, ${params.theta || 0.5}, ${params.omega || 0.0})`;
-                break;
-            case 'double-pendulum':
-                pythonCode = `create_double_pendulum(${params.m1 || 1.0}, ${params.m2 || 1.0}, ${params.l1 || 1.0}, ${params.l2 || 1.0}, ${params.g || 9.81}, ${params.theta1 !== undefined ? params.theta1 : 2.5}, ${params.omega1 || 0.0}, ${params.theta2 !== undefined ? params.theta2 : 2.0}, ${params.omega2 || 0.0})`;
-                break;
-            case 'spring':
-                pythonCode = `create_spring(${params.k || 10.0}, ${params.m || 1.0}, ${params.b || 0.1}, ${params.x || 1.5}, ${params.v || 0.0})`;
-                break;
-            case 'orbital':
-                pythonCode = `create_orbital(${params.GM || 1000.0}, ${params.x || 100.0}, ${params.y || 0.0}, ${params.vx || 0.0}, ${params.vy || 'None'})`;
-                break;
-            default:
-                pythonCode = `create_double_pendulum()`;
-        }
+        // Build kwargs string
+        const kwargs = Object.entries(params)
+            .filter(([k, v]) => k !== 'type' && v !== undefined && v !== null)
+            .map(([k, v]) => `${k}=${typeof v === 'string' ? `"${v}"` : v}`)
+            .join(', ');
 
-        return await this.pyodide.runPythonAsync(pythonCode);
+        const pythonCode = `create_sim("${type}", ${kwargs})`;
+
+        try {
+            return await this.pyodide.runPythonAsync(pythonCode);
+        } catch (error) {
+            console.error('Create simulation error:', error);
+            // Fallback to default
+            return await this.pyodide.runPythonAsync(`create_sim("double-pendulum")`);
+        }
     }
 
     async step(dt) {
