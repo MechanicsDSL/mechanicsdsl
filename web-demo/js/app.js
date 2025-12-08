@@ -195,9 +195,12 @@ class MechanicsDSLApp {
                     // Update simulation params in real-time
                     if (this.simulation?.params) {
                         this.simulation.params[config.param] = this.params[config.param];
+                        // Reset initial energy since params changed
+                        this.simulation.initialEnergy = null;
                     }
                     if (this.compareSimulation?.params) {
                         this.compareSimulation.params[config.param] = this.params[config.param];
+                        this.compareSimulation.initialEnergy = null;
                     }
                 });
             }

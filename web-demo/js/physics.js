@@ -118,25 +118,62 @@ class PhysicsEngine {
             color: params.color || '#f59e0b',
 
             step(dt) {
-                const { theta1, omega1, theta2, omega2 } = this.state;
                 const { g, m1, m2, l1, l2 } = this.params;
 
-                const delta = theta1 - theta2;
-                const den1 = (m1 + m2) * l1 - m2 * l1 * Math.cos(delta) * Math.cos(delta);
-                const den2 = (l2 / l1) * den1;
+                // Compute accelerations given state
+                const accel = (t1, o1, t2, o2) => {
+                    const delta = t1 - t2;
+                    const cosDelta = Math.cos(delta);
+                    const sinDelta = Math.sin(delta);
+                    const den1 = (m1 + m2) * l1 - m2 * l1 * cosDelta * cosDelta;
+                    const den2 = (l2 / l1) * den1;
 
-                const alpha1 = (m2 * l1 * omega1 * omega1 * Math.sin(delta) * Math.cos(delta)
-                    + m2 * g * Math.sin(theta2) * Math.cos(delta) + m2 * l2 * omega2 * omega2 * Math.sin(delta)
-                    - (m1 + m2) * g * Math.sin(theta1)) / den1;
+                    const a1 = (m2 * l1 * o1 * o1 * sinDelta * cosDelta
+                        + m2 * g * Math.sin(t2) * cosDelta
+                        + m2 * l2 * o2 * o2 * sinDelta
+                        - (m1 + m2) * g * Math.sin(t1)) / den1;
 
-                const alpha2 = (-m2 * l2 * omega2 * omega2 * Math.sin(delta) * Math.cos(delta)
-                    + (m1 + m2) * g * Math.sin(theta1) * Math.cos(delta) - (m1 + m2) * l1 * omega1 * omega1 * Math.sin(delta)
-                    - (m1 + m2) * g * Math.sin(theta2)) / den2;
+                    const a2 = (-m2 * l2 * o2 * o2 * sinDelta * cosDelta
+                        + (m1 + m2) * g * Math.sin(t1) * cosDelta
+                        - (m1 + m2) * l1 * o1 * o1 * sinDelta
+                        - (m1 + m2) * g * Math.sin(t2)) / den2;
 
-                this.state.omega1 += alpha1 * dt;
-                this.state.omega2 += alpha2 * dt;
-                this.state.theta1 += this.state.omega1 * dt;
-                this.state.theta2 += this.state.omega2 * dt;
+                    return [a1, a2];
+                };
+
+                // RK4 integration
+                const { theta1, omega1, theta2, omega2 } = this.state;
+
+                // k1
+                const [a1_1, a2_1] = accel(theta1, omega1, theta2, omega2);
+                const k1 = [omega1, a1_1, omega2, a2_1];
+
+                // k2
+                const [a1_2, a2_2] = accel(
+                    theta1 + 0.5 * dt * k1[0], omega1 + 0.5 * dt * k1[1],
+                    theta2 + 0.5 * dt * k1[2], omega2 + 0.5 * dt * k1[3]
+                );
+                const k2 = [omega1 + 0.5 * dt * k1[1], a1_2, omega2 + 0.5 * dt * k1[3], a2_2];
+
+                // k3
+                const [a1_3, a2_3] = accel(
+                    theta1 + 0.5 * dt * k2[0], omega1 + 0.5 * dt * k2[1],
+                    theta2 + 0.5 * dt * k2[2], omega2 + 0.5 * dt * k2[3]
+                );
+                const k3 = [omega1 + 0.5 * dt * k2[1], a1_3, omega2 + 0.5 * dt * k2[3], a2_3];
+
+                // k4
+                const [a1_4, a2_4] = accel(
+                    theta1 + dt * k3[0], omega1 + dt * k3[1],
+                    theta2 + dt * k3[2], omega2 + dt * k3[3]
+                );
+                const k4 = [omega1 + dt * k3[1], a1_4, omega2 + dt * k3[3], a2_4];
+
+                // Update state
+                this.state.theta1 += dt * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]) / 6;
+                this.state.omega1 += dt * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]) / 6;
+                this.state.theta2 += dt * (k1[2] + 2 * k2[2] + 2 * k3[2] + k4[2]) / 6;
+                this.state.omega2 += dt * (k1[3] + 2 * k2[3] + 2 * k3[3] + k4[3]) / 6;
 
                 if (this.initialEnergy === null) this.initialEnergy = this.energy();
 
