@@ -75,6 +75,9 @@ Documentation Contents
    user_guide/guide
    user_guide/dsl_syntax
    user_guide/physics_background
+   user_guide/code_generation
+   user_guide/performance_optimization
+   user_guide/cuda_guide
 
 .. toctree::
    :maxdepth: 2
@@ -120,6 +123,13 @@ Documentation Contents
    codegen/python
    codegen/wasm
    codegen/cuda
+   codegen/openmp
+   codegen/julia
+   codegen/rust
+   codegen/fortran
+   codegen/matlab
+   codegen/javascript
+   codegen/arduino
 
 .. toctree::
    :maxdepth: 2
