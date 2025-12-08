@@ -1,5 +1,5 @@
 /**
- * MechanicsDSL Physics Engine
+ * MechanicsDSL Physics Engine - Enhanced
  */
 
 class PhysicsEngine {
@@ -17,26 +17,54 @@ class PhysicsEngine {
             type: 'pendulum',
             params: { g, l },
             state: { theta: theta0, omega: omega0 },
+            initialEnergy: null,
             trail: [],
+            phaseTrail: [],
             maxTrail: 200,
+            history: [],
 
             step(dt) {
+                const { g, l } = this.params;
                 const f = (theta) => -g / l * Math.sin(theta);
-                const k1_omega = f(this.state.theta);
-                const k2_omega = f(this.state.theta + 0.5 * dt * this.state.omega);
-                const k3_omega = f(this.state.theta + 0.5 * dt * this.state.omega);
-                const k4_omega = f(this.state.theta + dt * this.state.omega);
 
+                // RK4
+                const k1_theta = this.state.omega;
+                const k1_omega = f(this.state.theta);
+                const k2_theta = this.state.omega + 0.5 * dt * k1_omega;
+                const k2_omega = f(this.state.theta + 0.5 * dt * k1_theta);
+                const k3_theta = this.state.omega + 0.5 * dt * k2_omega;
+                const k3_omega = f(this.state.theta + 0.5 * dt * k2_theta);
+                const k4_theta = this.state.omega + dt * k3_omega;
+                const k4_omega = f(this.state.theta + dt * k3_theta);
+
+                this.state.theta += dt * (k1_theta + 2 * k2_theta + 2 * k3_theta + k4_theta) / 6;
                 this.state.omega += dt * (k1_omega + 2 * k2_omega + 2 * k3_omega + k4_omega) / 6;
-                this.state.theta += this.state.omega * dt;
+
+                // Track initial energy
+                if (this.initialEnergy === null) this.initialEnergy = this.energy();
+
+                // Store history for export
+                this.history.push({ ...this.state, energy: this.energy() });
+                if (this.history.length > 10000) this.history.shift();
+
                 return this.state;
             },
 
             energy() {
+                const { g, l } = this.params;
                 return 0.5 * l * l * this.state.omega * this.state.omega + g * l * (1 - Math.cos(this.state.theta));
             },
 
-            render(ctx, width, height) {
+            energyError() {
+                if (!this.initialEnergy) return 0;
+                return Math.abs((this.energy() - this.initialEnergy) / this.initialEnergy) * 100;
+            },
+
+            getPhasePoint() {
+                return { x: this.state.theta, y: this.state.omega };
+            },
+
+            render(ctx, width, height, theme = 'dark') {
                 const cx = width / 2, cy = height / 3;
                 const scale = Math.min(width, height) * 0.3;
                 const x = cx + scale * Math.sin(this.state.theta);
@@ -45,24 +73,28 @@ class PhysicsEngine {
                 this.trail.push({ x, y });
                 if (this.trail.length > this.maxTrail) this.trail.shift();
 
+                const colors = theme === 'light' ?
+                    { trail: 'rgba(79, 70, 229, ', rod: '#4f46e5', pivot: '#4338ca', bob: '#6366f1' } :
+                    { trail: 'rgba(99, 102, 241, ', rod: '#6366f1', pivot: '#4f46e5', bob: '#6366f1' };
+
                 if (this.trail.length > 1) {
                     ctx.beginPath();
                     ctx.moveTo(this.trail[0].x, this.trail[0].y);
                     for (let i = 1; i < this.trail.length; i++) {
-                        ctx.strokeStyle = `rgba(99, 102, 241, ${i / this.trail.length * 0.5})`;
+                        ctx.strokeStyle = colors.trail + (i / this.trail.length * 0.5) + ')';
                         ctx.lineTo(this.trail[i].x, this.trail[i].y);
                     }
                     ctx.stroke();
                 }
 
                 ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y);
-                ctx.strokeStyle = '#6366f1'; ctx.lineWidth = 3; ctx.stroke();
+                ctx.strokeStyle = colors.rod; ctx.lineWidth = 3; ctx.stroke();
 
                 ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI * 2);
-                ctx.fillStyle = '#4f46e5'; ctx.fill();
+                ctx.fillStyle = colors.pivot; ctx.fill();
 
                 ctx.beginPath(); ctx.arc(x, y, 20, 0, Math.PI * 2);
-                ctx.fillStyle = '#6366f1'; ctx.fill();
+                ctx.fillStyle = colors.bob; ctx.fill();
             }
         };
     }
@@ -71,15 +103,19 @@ class PhysicsEngine {
         const g = params.g || 9.81;
         const m1 = params.m1 || 1.0, m2 = params.m2 || 1.0;
         const l1 = params.l1 || 1.0, l2 = params.l2 || 1.0;
-        const theta1_0 = params.theta1 || 2.5, theta2_0 = params.theta2 || 2.0;
+        const theta1_0 = params.theta1 !== undefined ? params.theta1 : 2.5;
+        const theta2_0 = params.theta2 !== undefined ? params.theta2 : 2.0;
         const omega1_0 = params.omega1 || 0, omega2_0 = params.omega2 || 0;
 
         return {
             type: 'double-pendulum',
             params: { g, m1, m2, l1, l2 },
             state: { theta1: theta1_0, omega1: omega1_0, theta2: theta2_0, omega2: omega2_0 },
+            initialEnergy: null,
             trail2: [],
             maxTrail: 500,
+            history: [],
+            color: params.color || '#f59e0b',
 
             step(dt) {
                 const { theta1, omega1, theta2, omega2 } = this.state;
@@ -101,6 +137,12 @@ class PhysicsEngine {
                 this.state.omega2 += alpha2 * dt;
                 this.state.theta1 += this.state.omega1 * dt;
                 this.state.theta2 += this.state.omega2 * dt;
+
+                if (this.initialEnergy === null) this.initialEnergy = this.energy();
+
+                this.history.push({ ...this.state, energy: this.energy() });
+                if (this.history.length > 10000) this.history.shift();
+
                 return this.state;
             },
 
@@ -114,7 +156,16 @@ class PhysicsEngine {
                 return 0.5 * m1 * v1sq + 0.5 * m2 * v2sq + m1 * g * y1 + m2 * g * y2 + (m1 + m2) * g * (l1 + l2);
             },
 
-            render(ctx, width, height) {
+            energyError() {
+                if (!this.initialEnergy) return 0;
+                return Math.abs((this.energy() - this.initialEnergy) / this.initialEnergy) * 100;
+            },
+
+            getPhasePoint() {
+                return { x: this.state.theta2, y: this.state.omega2 };
+            },
+
+            render(ctx, width, height, theme = 'dark') {
                 const { theta1, theta2 } = this.state;
                 const { l1, l2 } = this.params;
                 const cx = width / 2, cy = height / 3, scale = Math.min(width, height) * 0.2;
@@ -139,7 +190,7 @@ class PhysicsEngine {
                 ctx.strokeStyle = '#6366f1'; ctx.lineWidth = 3; ctx.stroke();
                 ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI * 2); ctx.fillStyle = '#4f46e5'; ctx.fill();
                 ctx.beginPath(); ctx.arc(x1, y1, 16, 0, Math.PI * 2); ctx.fillStyle = '#06b6d4'; ctx.fill();
-                ctx.beginPath(); ctx.arc(x2, y2, 16, 0, Math.PI * 2); ctx.fillStyle = '#f59e0b'; ctx.fill();
+                ctx.beginPath(); ctx.arc(x2, y2, 16, 0, Math.PI * 2); ctx.fillStyle = this.color; ctx.fill();
             }
         };
     }
@@ -149,13 +200,22 @@ class PhysicsEngine {
         const x0 = params.x || 1.5, v0 = params.v || 0;
         return {
             type: 'spring', params: { k, m, b }, state: { x: x0, v: v0 },
+            initialEnergy: null, history: [],
             step(dt) {
                 const a = (-this.params.k * this.state.x - this.params.b * this.state.v) / this.params.m;
                 this.state.v += a * dt; this.state.x += this.state.v * dt;
+                if (this.initialEnergy === null) this.initialEnergy = this.energy();
+                this.history.push({ ...this.state, energy: this.energy() });
+                if (this.history.length > 10000) this.history.shift();
                 return this.state;
             },
             energy() { return 0.5 * this.params.m * this.state.v ** 2 + 0.5 * this.params.k * this.state.x ** 2; },
-            render(ctx, width, height) {
+            energyError() {
+                if (!this.initialEnergy) return 0;
+                return Math.abs((this.energy() - this.initialEnergy) / this.initialEnergy) * 100;
+            },
+            getPhasePoint() { return { x: this.state.x, y: this.state.v }; },
+            render(ctx, width, height, theme = 'dark') {
                 const cx = width / 2, cy = height / 2, scale = 60;
                 const baseX = cx - 150, currentX = baseX + 150 + this.state.x * scale;
                 ctx.beginPath(); ctx.moveTo(baseX, cy);
@@ -166,7 +226,8 @@ class PhysicsEngine {
                 }
                 ctx.lineTo(currentX - 30, cy);
                 ctx.strokeStyle = '#6366f1'; ctx.lineWidth = 3; ctx.stroke();
-                ctx.fillStyle = '#3f3f50'; ctx.fillRect(baseX - 20, cy - 50, 20, 100);
+                ctx.fillStyle = theme === 'light' ? '#64748b' : '#3f3f50';
+                ctx.fillRect(baseX - 20, cy - 50, 20, 100);
                 ctx.fillStyle = '#06b6d4'; ctx.fillRect(currentX - 30, cy - 25, 50, 50);
             }
         };
@@ -176,20 +237,29 @@ class PhysicsEngine {
         const GM = params.GM || 1000, r0 = params.r || 100;
         const v0 = params.v || Math.sqrt(GM / r0) * 0.8;
         return {
-            type: 'orbital', params: { GM }, state: { x: r0, y: 0, vx: 0, vy: v0 }, trail: [], maxTrail: 1000,
+            type: 'orbital', params: { GM }, state: { x: r0, y: 0, vx: 0, vy: v0 },
+            initialEnergy: null, trail: [], maxTrail: 1000, history: [],
             step(dt) {
                 const { x, y, vx, vy } = this.state;
                 const r = Math.sqrt(x * x + y * y);
                 const a = -this.params.GM / (r * r * r);
                 this.state.vx += a * x * dt; this.state.vy += a * y * dt;
                 this.state.x += this.state.vx * dt; this.state.y += this.state.vy * dt;
+                if (this.initialEnergy === null) this.initialEnergy = this.energy();
+                this.history.push({ ...this.state, energy: this.energy() });
+                if (this.history.length > 10000) this.history.shift();
                 return this.state;
             },
             energy() {
                 const r = Math.sqrt(this.state.x ** 2 + this.state.y ** 2);
                 return 0.5 * (this.state.vx ** 2 + this.state.vy ** 2) - this.params.GM / r;
             },
-            render(ctx, width, height) {
+            energyError() {
+                if (!this.initialEnergy) return 0;
+                return Math.abs((this.energy() - this.initialEnergy) / this.initialEnergy) * 100;
+            },
+            getPhasePoint() { return { x: this.state.x, y: this.state.vx }; },
+            render(ctx, width, height, theme = 'dark') {
                 const cx = width / 2, cy = height / 2, s = 1.5;
                 const x = cx + this.state.x * s, y = cy + this.state.y * s;
                 this.trail.push({ x, y }); if (this.trail.length > this.maxTrail) this.trail.shift();
@@ -213,6 +283,7 @@ class PhysicsEngine {
         }
         return {
             type: 'sph', params: { h, gravity: 0.5, viscosity: 0.1, k: 50 }, particles, width: 400, height: 300,
+            initialEnergy: null, history: [],
             step(dt) {
                 const { h, gravity, viscosity, k } = this.params;
                 const h2 = h * h;
@@ -246,12 +317,15 @@ class PhysicsEngine {
                     if (p.y < 10) { p.y = 10; p.vy *= -0.3; }
                     if (p.y > this.height - 10) { p.y = this.height - 10; p.vy *= -0.3; }
                 }
+                if (this.initialEnergy === null) this.initialEnergy = this.energy();
             },
             energy() { return this.particles.reduce((e, p) => e + 0.5 * (p.vx ** 2 + p.vy ** 2) + this.params.gravity * p.y, 0); },
-            render(ctx, width, height) {
+            energyError() { return 0; }, // SPH doesn't conserve energy well
+            getPhasePoint() { return { x: this.particles[0]?.x || 0, y: this.particles[0]?.vy || 0 }; },
+            render(ctx, width, height, theme = 'dark') {
                 const s = Math.min(width / this.width, height / this.height);
                 const ox = (width - this.width * s) / 2, oy = (height - this.height * s) / 2;
-                ctx.strokeStyle = '#3f3f50'; ctx.lineWidth = 3;
+                ctx.strokeStyle = theme === 'light' ? '#94a3b8' : '#3f3f50'; ctx.lineWidth = 3;
                 ctx.strokeRect(ox, oy, this.width * s, this.height * s);
                 for (let p of this.particles) {
                     const sp = Math.sqrt(p.vx ** 2 + p.vy ** 2);

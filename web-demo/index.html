@@ -11,6 +11,7 @@
         rel="stylesheet">
     <link rel="icon" type="image/svg+xml"
         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚛️</text></svg>">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 
 <body>
@@ -25,6 +26,7 @@
                 <a href="#playground">Playground</a>
                 <a href="#examples">Examples</a>
                 <a href="#features">Features</a>
+                <button class="theme-toggle" id="theme-toggle" title="Toggle Theme">🌙</button>
                 <a href="https://github.com/MechanicsDSL/mechanicsdsl" target="_blank" class="github-link">
                     <svg height="20" viewBox="0 0 16 16" width="20" fill="currentColor">
                         <path
@@ -130,40 +132,103 @@
 \initial{theta1=2.5, theta2=2.0}
 \initial{theta1_dot=0, theta2_dot=0}</textarea>
                 </div>
+
+                <!-- Parameter Sliders -->
+                <div class="parameter-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span class="file-icon">🎚️</span>
+                            Parameters
+                        </div>
+                    </div>
+                    <div class="sliders-container">
+                        <div class="slider-group">
+                            <label>Gravity: <span id="gravity-value">9.81</span> m/s²</label>
+                            <input type="range" id="gravity-slider" min="0" max="20" step="0.1" value="9.81">
+                        </div>
+                        <div class="slider-group">
+                            <label>Mass 1: <span id="m1-value">1.0</span> kg</label>
+                            <input type="range" id="m1-slider" min="0.1" max="5" step="0.1" value="1.0">
+                        </div>
+                        <div class="slider-group">
+                            <label>Mass 2: <span id="m2-value">1.0</span> kg</label>
+                            <input type="range" id="m2-slider" min="0.1" max="5" step="0.1" value="1.0">
+                        </div>
+                        <div class="slider-group">
+                            <label>Length 1: <span id="l1-value">1.0</span> m</label>
+                            <input type="range" id="l1-slider" min="0.5" max="2" step="0.1" value="1.0">
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="visualization-panel">
-                <div class="panel-header">
-                    <div class="panel-title">
-                        <span class="file-icon">🎬</span>
-                        Visualization
+            <div class="visualization-column">
+                <div class="visualization-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span class="file-icon">🎬</span>
+                            Visualization
+                        </div>
+                        <div class="sim-controls">
+                            <button class="control-btn" id="compare-btn" title="Compare Mode">⚖️</button>
+                            <button class="control-btn" id="3d-btn" title="3D View">🎮</button>
+                            <button class="control-btn" id="pause-btn" title="Pause">⏸</button>
+                            <button class="control-btn" id="slow-btn" title="Slow Motion">🐢</button>
+                            <button class="control-btn active" id="normal-btn" title="Normal Speed">1x</button>
+                            <button class="control-btn" id="fast-btn" title="Fast">🐇</button>
+                        </div>
                     </div>
-                    <div class="sim-controls">
-                        <button class="control-btn" id="pause-btn" title="Pause">⏸</button>
-                        <button class="control-btn" id="slow-btn" title="Slow Motion">🐢</button>
-                        <button class="control-btn active" id="normal-btn" title="Normal Speed">1x</button>
-                        <button class="control-btn" id="fast-btn" title="Fast">🐇</button>
+                    <div class="canvas-wrapper">
+                        <canvas id="sim-canvas"></canvas>
+                        <div id="three-container" class="three-container hidden"></div>
+                        <div class="canvas-overlay" id="canvas-overlay">
+                            <span>Click Run to start simulation</span>
+                        </div>
+                    </div>
+                    <div class="sim-info">
+                        <div class="info-item">
+                            <span class="info-label">Time</span>
+                            <span class="info-value" id="sim-time">0.00 s</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Energy</span>
+                            <span class="info-value" id="sim-energy">0.00 J</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">FPS</span>
+                            <span class="info-value" id="sim-fps">60</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Energy Error</span>
+                            <span class="info-value" id="energy-error">0.00%</span>
+                        </div>
                     </div>
                 </div>
-                <div class="canvas-wrapper">
-                    <canvas id="sim-canvas"></canvas>
-                    <div class="canvas-overlay" id="canvas-overlay">
-                        <span>Click Run to start simulation</span>
+
+                <!-- Phase Portrait -->
+                <div class="phase-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span class="file-icon">📊</span>
+                            Phase Portrait
+                        </div>
+                    </div>
+                    <div class="phase-wrapper">
+                        <canvas id="phase-canvas"></canvas>
                     </div>
                 </div>
-                <div class="sim-info">
-                    <div class="info-item">
-                        <span class="info-label">Time</span>
-                        <span class="info-value" id="sim-time">0.00 s</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Energy</span>
-                        <span class="info-value" id="sim-energy">0.00 J</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">FPS</span>
-                        <span class="info-value" id="sim-fps">60</span>
-                    </div>
+
+                <!-- Action Buttons -->
+                <div class="action-bar">
+                    <button class="action-btn secondary" id="share-btn">
+                        <span>🔗</span> Share
+                    </button>
+                    <button class="action-btn secondary" id="download-csv-btn">
+                        <span>📊</span> CSV
+                    </button>
+                    <button class="action-btn secondary" id="download-gif-btn">
+                        <span>🎬</span> GIF
+                    </button>
                 </div>
             </div>
         </div>
@@ -352,6 +417,26 @@ void rk4_step(double* y, double t, double dt) {
             </div>
         </div>
     </footer>
+
+    <!-- Share Modal -->
+    <div class="modal" id="share-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Share Simulation</h3>
+                <button class="modal-close" id="close-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <p>Copy this URL to share your simulation:</p>
+                <div class="share-url-container">
+                    <input type="text" id="share-url" readonly>
+                    <button class="copy-btn" id="copy-share-url">📋</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
 
     <script src="js/physics.js"></script>
     <script src="js/examples.js"></script>
