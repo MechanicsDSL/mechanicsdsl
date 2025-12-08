@@ -65,7 +65,8 @@ class MechanicsDSLApp {
     setTheme(theme) {
         this.theme = theme;
         document.documentElement.setAttribute('data-theme', theme);
-        document.getElementById('theme-toggle').textContent = theme === 'dark' ? '🌙' : '☀️';
+        const toggle = document.getElementById('theme-toggle');
+        if (toggle) toggle.textContent = theme === 'dark' ? '🌙' : '☀️';
         localStorage.setItem('theme', theme);
     }
 
@@ -525,10 +526,14 @@ class MechanicsDSLApp {
         }
 
         // Update info
-        document.getElementById('sim-time').textContent = this.time.toFixed(2) + ' s';
-        document.getElementById('sim-energy').textContent = (this.simulation?.energy() || 0).toFixed(2) + ' J';
-        document.getElementById('sim-fps').textContent = this.fps;
-        document.getElementById('energy-error').textContent = (this.simulation?.energyError?.() || 0).toFixed(4) + '%';
+        const timeEl = document.getElementById('sim-time');
+        const energyEl = document.getElementById('sim-energy');
+        const fpsEl = document.getElementById('sim-fps');
+        const errorEl = document.getElementById('energy-error');
+        if (timeEl) timeEl.textContent = this.time.toFixed(2) + ' s';
+        if (energyEl) energyEl.textContent = (this.simulation?.energy() || 0).toFixed(2) + ' J';
+        if (fpsEl) fpsEl.textContent = this.fps;
+        if (errorEl) errorEl.textContent = (this.simulation?.energyError?.() || 0).toFixed(4) + '%';
 
         requestAnimationFrame(() => this.animate());
     }
