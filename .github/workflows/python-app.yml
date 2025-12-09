@@ -1,7 +1,7 @@
 name: Python CI
 
 permissions:
-  contents: read
+  contents: read 
 
 on:
   push:
@@ -82,14 +82,11 @@ jobs:
           -W ignore::DeprecationWarning \
           -W ignore::PendingDeprecationWarning
 
-    - name: Upload coverage reports to Codecov # Updated name for clarity
-      if: matrix.python-version == '3.11' and always()
-      # Changed from @v4 to @v5 as recommended by Codecov docs
+    - name: Upload coverage reports to Codecov
+      if: matrix.python-version == '3.11' && always() # <-- FIX IS HERE
       uses: codecov/codecov-action@v5 
       with:
-        # Using the secret you already configured
         token: ${{ secrets.CODECOV_TOKEN }}
-        # The 'file' input is optional in v5 if using standard locations, but safe to keep
         file: ./coverage.xml 
         fail_ci_if_error: false
         flags: unittests
