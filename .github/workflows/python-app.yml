@@ -105,7 +105,7 @@ jobs:
         author_email: actions@github.com
         message: 'GH Actions: Update coverage badge'
         add: 'coverage.svg'
-        branch: 'gh-pages'
+        branch: 'main'
         # Ensures the action pushes to the branch even if it fails the first time
         push: true 
     # --- End New Steps ---
