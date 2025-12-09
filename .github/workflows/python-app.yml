@@ -1,6 +1,7 @@
 name: Python CI
+
 permissions:
-  contents: read
+  contents: write # Needs write permission to commit the SVG file
 
 on:
   push:
@@ -19,33 +20,36 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
+      with:
+        # Fetch entire history for the 'git commit' action to work properly
+        fetch-depth: 0 
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
-    
+
     - name: Upgrade pip, setuptools, and wheel
       run: |
         python -m pip install --upgrade pip setuptools wheel
-    
+
     - name: Install build dependencies
       run: |
         pip install build
-    
+
     - name: Install runtime dependencies
       run: |
         pip install numpy scipy sympy matplotlib
-    
+
     - name: Install package in editable mode
       run: |
         pip install -e .
-    
-    - name: Install test dependencies
+
+    - name: Install test dependencies and coverage badge generator
       run: |
-        pip install pytest pytest-cov
-    
+        pip install pytest pytest-cov anybadge
+
     - name: Verify installation
       env:
         PYTHONPATH: ${{ github.workspace }}/src
@@ -55,14 +59,14 @@ jobs:
         python -c "from mechanics_dsl import PhysicsCompiler; print('✓ PhysicsCompiler import successful')"
         # Ensure we're using the installed package, not reference/core.py
         python -c "import mechanics_dsl; import inspect; print(f'✓ Package location: {inspect.getfile(mechanics_dsl)}')"
-    
+
     - name: Configure matplotlib for headless environment
       env:
         MPLBACKEND: Agg
         PYTHONPATH: ${{ github.workspace }}/src
       run: |
         python -c "import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt; print('✓ Matplotlib backend configured: Agg')"
-    
+
     - name: Run tests with coverage
       env:
         CI: true
@@ -80,7 +84,32 @@ jobs:
           --maxfail=5 \
           -W ignore::DeprecationWarning \
           -W ignore::PendingDeprecationWarning
-    
+
+    # --- New Steps for Coverage Badge ---
+    - name: Generate coverage badge (coverage.svg)
+      if: matrix.python-version == '3.11'
+      run: |
+        pip install anybadge
+        # Extract the coverage percentage from the coverage report (coverage.xml)
+        coverage_percent=$(python -c "import xml.etree.ElementTree as ET; tree = ET.parse('coverage.xml'); root = tree.getroot(); print(root.attrib['line-rate'])")
+        # Convert the float to an integer percentage (e.g., 0.95 -> 95)
+        coverage_percent=$(printf '%.0f' $(echo "$coverage_percent * 100" | bc))
+        # Generate the badge file
+        anybadge --value=$coverage_percent --label=coverage --file=coverage.svg
+
+    - name: Commit coverage badge to gh-pages branch
+      if: matrix.python-version == '3.11' && success()
+      uses: EndBug/add-and-commit@v9
+      with:
+        author_name: GitHub Actions Bot
+        author_email: actions@github.com
+        message: 'GH Actions: Update coverage badge'
+        add: 'coverage.svg'
+        branch: 'gh-pages'
+        # Ensures the action pushes to the branch even if it fails the first time
+        push: true 
+    # --- End New Steps ---
+
     - name: Upload coverage to Codecov
       if: matrix.python-version == '3.11' && always()
       uses: codecov/codecov-action@v4
