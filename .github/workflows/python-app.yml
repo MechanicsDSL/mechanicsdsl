@@ -1,7 +1,6 @@
 name: Python CI
 
 permissions:
-  # The 'write' permission is no longer needed for 'contents', reverted to 'read'
   contents: read 
 
 on:
@@ -21,7 +20,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      # Removed fetch-depth: 0 as we no longer need to commit/push
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
@@ -46,7 +44,6 @@ jobs:
         pip install -e .
 
     - name: Install test dependencies
-      # Removed 'anybadge' installation here
       run: |
         pip install pytest pytest-cov
 
@@ -85,15 +82,16 @@ jobs:
           -W ignore::DeprecationWarning \
           -W ignore::PendingDeprecationWarning
 
-    # Removed "Generate coverage badge" and "Commit coverage badge" steps
-
-    - name: Upload coverage to Codecov
+    - name: Upload coverage reports to Codecov # Updated name for clarity
       if: matrix.python-version == '3.11' and always()
-      uses: codecov/codecov-action@v4
+      # Changed from @v4 to @v5 as recommended by Codecov docs
+      uses: codecov/codecov-action@v5 
       with:
-        file: ./coverage.xml
-        fail_ci_if_error: false
+        # Using the secret you already configured
         token: ${{ secrets.CODECOV_TOKEN }}
+        # The 'file' input is optional in v5 if using standard locations, but safe to keep
+        file: ./coverage.xml 
+        fail_ci_if_error: false
         flags: unittests
         name: codecov-umbrella
         verbose: true
