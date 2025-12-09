@@ -14,7 +14,7 @@
 <a href="https://codecov.io/github/MechanicsDSL/mechanicsdsl" > 
  <img src="https://codecov.io/github/MechanicsDSL/mechanicsdsl/graph/badge.svg"/> 
 </a>
-
+[![CodeQL Advanced](https://github.com/MechanicsDSL/mechanicsdsl/actions/workflows/codeql.yml/badge.svg)](https://github.com/MechanicsDSL/mechanicsdsl/actions/workflows/codeql.yml)
 </p>
 
 ---
