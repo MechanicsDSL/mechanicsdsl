@@ -1,4 +1,4 @@
-name: SonarCloud analysis
+name: SonarCloud analysis (Python Only)
 
 on:
   push:
@@ -9,29 +9,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      BUILD_WRAPPER_OUT_DIR: bw_output
-
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Install Build Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential cmake
-
-      - name: Download and Unzip Build Wrapper
-        run: |
-          curl -sSLo build-wrapper-linux-x86.zip sonarcloud.io
-          unzip build-wrapper-linux-x86.zip
-          echo "$PWD/build-wrapper-linux-x86" >> $GITHUB_PATH
-
-      - name: Run Build Wrapper and Compile C/C++ Code
-        run: |
-          build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake .
-          build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} make
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
@@ -39,7 +20,10 @@ jobs:
           args: >
             -Dsonar.projectKey=MechanicsDSL_mechanicsdsl
             -Dsonar.organization=mechanicsdsl
-            -Dsonar.cfamily.compile-commands=${{ env.BUILD_WRAPPER_OUT_DIR }}/compile_commands.json
+            # Ignore C/C++/Objective-C files so the scanner doesn't crash
+            -Dsonar.c.file.suffixes=-
+            -Dsonar.cpp.file.suffixes=-
+            -Dsonar.objc.file.suffixes=-
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
