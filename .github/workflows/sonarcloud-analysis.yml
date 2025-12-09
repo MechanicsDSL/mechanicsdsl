@@ -25,13 +25,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential cmake
 
-      # Download and configure the Sonar build wrapper utility
       - name: Download and Unzip Build Wrapper
         run: |
-          # Make sure the full HTTPS URL is present here:
           curl -sSLo build-wrapper-linux-x86.zip sonarcloud.io
           unzip build-wrapper-linux-x86.zip
-          # Add the build-wrapper executable to the system PATH for the next step
           echo "$PWD/build-wrapper-linux-x86" >> $GITHUB_PATH
 
       # Run the C/C++ compilation *wrapped* by the build-wrapper
