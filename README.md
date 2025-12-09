@@ -10,7 +10,7 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   <a href="https://doi.org/10.5281/zenodo.17771040"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.17771040.svg" alt="DOI"></a>
   <a href="https://mechanicsdsl.readthedocs.io/en/latest/?badge=latest"><img src="https://readthedocs.org/projects/mechanicsdsl/badge/?version=latest" alt="Documentation Status"></a>
-  <img alt="PyPI - Downloads" src="https://img.shields.io/pypi/:period/mechanicsdsl-core">
+  <img alt="PyPI - Downloads" src="https://img.shields.io/pypi/:dt/mechanicsdsl-core">
 </p>
 
 ---
