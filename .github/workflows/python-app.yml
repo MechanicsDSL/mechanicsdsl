@@ -83,10 +83,11 @@ jobs:
           -W ignore::PendingDeprecationWarning
 
     - name: Upload coverage reports to Codecov
-      if: matrix.python-version == '3.11' && always() # <-- FIX IS HERE
+      if: matrix.python-version == '3.11' && always()
       uses: codecov/codecov-action@v5 
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
+        slug: MechanicsDSL/mechanicsdsl
         file: ./coverage.xml 
         fail_ci_if_error: false
         flags: unittests
