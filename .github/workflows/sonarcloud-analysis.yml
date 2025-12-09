@@ -9,17 +9,14 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # Define environment variable for the build wrapper output directory
     env:
       BUILD_WRAPPER_OUT_DIR: bw_output
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Required for SonarCloud to analyze the full repo history
+          fetch-depth: 0
 
-      # Install necessary build dependencies (adjust if your project needs different tools)
       - name: Install Build Dependencies
         run: |
           sudo apt-get update
@@ -31,23 +28,18 @@ jobs:
           unzip build-wrapper-linux-x86.zip
           echo "$PWD/build-wrapper-linux-x86" >> $GITHUB_PATH
 
-      # Run the C/C++ compilation *wrapped* by the build-wrapper
       - name: Run Build Wrapper and Compile C/C++ Code
         run: |
-          # The build-wrapper monitors your compiler commands to generate compile_commands.json
-          # Replace 'cmake .' and 'make' with your actual project's build commands
           build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake .
           build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} make
 
-      # Run the SonarCloud scanner action to upload results
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         with:
           args: >
             -Dsonar.projectKey=MechanicsDSL_mechanicsdsl
             -Dsonar.organization=mechanicsdsl
-            # Tell Sonar where to find the generated compilation database file
             -Dsonar.cfamily.compile-commands=${{ env.BUILD_WRAPPER_OUT_DIR }}/compile_commands.json
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Provided automatically by GitHub Actions
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}   # The secret you stored in GitHub Settings
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
