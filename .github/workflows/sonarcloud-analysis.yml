@@ -20,7 +20,6 @@ jobs:
           args: >
             -Dsonar.projectKey=MechanicsDSL_mechanicsdsl
             -Dsonar.organization=mechanicsdsl
-            # Ignore C/C++/Objective-C files so the scanner doesn't crash
             -Dsonar.c.file.suffixes=-
             -Dsonar.cpp.file.suffixes=-
             -Dsonar.objc.file.suffixes=-
