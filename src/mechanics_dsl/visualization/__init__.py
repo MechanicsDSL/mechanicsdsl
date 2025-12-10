@@ -19,10 +19,16 @@ import os
 _parent_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _viz_module_path = os.path.join(_parent_path, 'visualization.py')
 
+# Use a module name that coverage tools can track
+_MODULE_NAME = "mechanics_dsl._visualization_module"
+
 if os.path.exists(_viz_module_path):
     import importlib.util
-    _spec = importlib.util.spec_from_file_location("_visualization_module", _viz_module_path)
+    _spec = importlib.util.spec_from_file_location(_MODULE_NAME, _viz_module_path)
     _viz_module = importlib.util.module_from_spec(_spec)
+    # Register in sys.modules BEFORE loading so relative imports work
+    _viz_module.__package__ = "mechanics_dsl"
+    sys.modules[_MODULE_NAME] = _viz_module
     try:
         _spec.loader.exec_module(_viz_module)
         MechanicsVisualizer = _viz_module.MechanicsVisualizer
@@ -38,3 +44,4 @@ else:
         pass
 
 __all__ = ['Animator', 'Plotter', 'PhaseSpaceVisualizer', 'MechanicsVisualizer']
+

@@ -22,7 +22,7 @@ import matplotlib.animation as animation
 
 # Import MechanicsVisualizer from the visualization.py module file
 # The visualization/ folder shadows visualization.py when using normal imports
-# Use importlib tricks with parent package properly set
+# Use the same module name as visualization/__init__.py for coverage tracking
 _src_path = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
     'src'
@@ -30,19 +30,21 @@ _src_path = os.path.join(
 if _src_path not in sys.path:
     sys.path.insert(0, _src_path)
 
-# Now import using special module name to get the .py file, not the folder
-import importlib.util
+# Module name must match what visualization/__init__.py uses for coverage to work
+_MODULE_NAME = "mechanics_dsl._visualization_module"
 _viz_file = os.path.join(_src_path, 'mechanics_dsl', 'visualization.py')
-_spec = importlib.util.spec_from_file_location(
-    "mechanics_dsl.visualization_file", 
-    _viz_file,
-    submodule_search_locations=[]
-)
-_viz_module = importlib.util.module_from_spec(_spec)
-# Set parent package so relative imports work
-_viz_module.__package__ = "mechanics_dsl"
-sys.modules["mechanics_dsl.visualization_file"] = _viz_module
-_spec.loader.exec_module(_viz_module)
+
+# Check if already loaded by package import
+if _MODULE_NAME in sys.modules:
+    _viz_module = sys.modules[_MODULE_NAME]
+else:
+    import importlib.util
+    _spec = importlib.util.spec_from_file_location(_MODULE_NAME, _viz_file)
+    _viz_module = importlib.util.module_from_spec(_spec)
+    _viz_module.__package__ = "mechanics_dsl"
+    sys.modules[_MODULE_NAME] = _viz_module
+    _spec.loader.exec_module(_viz_module)
+
 MechanicsVisualizer = _viz_module.MechanicsVisualizer
 
 
