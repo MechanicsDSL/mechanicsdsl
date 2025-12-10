@@ -10,6 +10,14 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   <a href="https://doi.org/10.5281/zenodo.17771040"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.17771040.svg" alt="DOI"></a>
   <a href="https://mechanicsdsl.readthedocs.io/en/latest/?badge=latest"><img src="https://readthedocs.org/projects/mechanicsdsl/badge/?version=latest" alt="Documentation Status"></a>
+  <img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dm/mechanicsdsl-core">
+<a href="https://codecov.io/github/MechanicsDSL/mechanicsdsl" > 
+ <img src="https://codecov.io/github/MechanicsDSL/mechanicsdsl/graph/badge.svg"/> 
+</a>
+<a href="https://github.com/MechanicsDSL/mechanicsdsl/actions/workflows/codeql.yml"> 
+ <img src="https://github.com/MechanicsDSL/mechanicsdsl/actions/workflows/codeql.yml/badge.svg" alt="CodeQL Advanced"> 
+</a>
+
 </p>
 
 ---
@@ -131,7 +139,7 @@ compiler.compile_to_cpp("dam_break.cpp", target="standard", compile_binary=True)
 ### Analysis Tools
 - **Energy conservation** monitoring
 - **Phase space** visualization & Poincaré sections
-- **534 passing tests** for reliability
+- **607 passing tests** for reliability
 
 ---
 

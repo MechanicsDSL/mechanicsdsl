@@ -798,7 +798,7 @@ class MechanicsDSLApp {
             this.showToast('Code copied!');
         });
         document.getElementById('copy-install')?.addEventListener('click', () => {
-            navigator.clipboard.writeText('pip install mechanics-dsl');
+            navigator.clipboard.writeText('pip install mechanicsdsl-core');
             this.showToast('Copied!');
         });
     }
