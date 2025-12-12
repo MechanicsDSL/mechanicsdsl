@@ -1,0 +1,12 @@
+MechanicsDSL Benchmark Results
+==================================================
+
+compile_Simple Pendulum (1 DOF): 51.08 ms
+compile_Double Pendulum (2 DOF): 107.89 ms
+simulate_Simple Pendulum (1 DOF): 28.48 ms
+simulate_Double Pendulum (2 DOF): 38.45 ms
+codegen_C++: 1.36 ms
+codegen_Python: 0.45 ms
+codegen_Julia: 0.36 ms
+validation_ho_period_error: 3.85e-11
+validation_energy_error: 1.54e-07
