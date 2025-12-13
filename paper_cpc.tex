@@ -58,13 +58,10 @@
 
 \title{MechanicsDSL: A Compiler Framework for Symbolic-Numerical Classical Mechanics Simulation}
 
-\author[inst1]{Noah Parsons\corref{cor1}}
-\ead{contact@mechanicsdsl.org}
-\cortext[cor1]{Corresponding author}
-\affiliation[inst1]{organization={Independent Researcher},
-            city={Newcastle},
-            state={Wyoming},
-            country={USA}}
+% Author information removed for double-blind review
+\author[inst1]{Anonymous Author}
+\affiliation[inst1]{organization={Anonymous Institution},
+            country={Anonymous}}
 
 \begin{abstract}
 We present MechanicsDSL, a domain-specific language and compiler framework that automates the complete pipeline from human-readable physics notation to optimized numerical simulation. The system accepts a LaTeX-inspired syntax for defining Lagrangian or Hamiltonian mechanical systems, automatically derives equations of motion via symbolic computation, and generates efficient numerical solvers. We introduce a formal algebraic characterization of the compilation process and a novel algorithm for robust symbolic acceleration extraction. The framework supports 17 classical mechanics domains including constraints, dissipation, and perturbation theory, along with code generation for 11 target platforms (C++, CUDA, WebAssembly, etc.). Benchmarks demonstrate that the compiled simulations match hand-optimized code performance while requiring 10-50$\times$ less development time. Validation against analytical solutions shows errors below $10^{-8}$ for standard test problems. The software is freely available under the MIT license.
@@ -116,8 +113,7 @@ We present MechanicsDSL, a domain-specific language (DSL) and compiler framework
 \hfill
 \begin{minipage}{0.48\textwidth}
 \centering
-% Placeholder for output figure
-\fbox{\parbox{0.9\textwidth}{\centering\vspace{3cm}Phase Space Output\vspace{3cm}}}
+\includegraphics[width=\textwidth]{fig1_double_pendulum_phase.pdf}
 \end{minipage}
 \caption{Overview of MechanicsDSL: A double pendulum system defined in the DSL (left) produces phase space trajectories and animations (right) without any manual equation derivation.}
 \label{fig:overview}
@@ -225,6 +221,13 @@ For a DSL program $\sigma$ encoding physical system with Lagrangian $L$:
 \end{equation}
 where $\epsilon$ depends on integration step size and tolerances.
 \end{theorem}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{fig3_architecture.pdf}
+\caption{The MechanicsDSL compilation pipeline, showing the sequence of operators from DSL source to numerical trajectory.}
+\label{fig:architecture}
+\end{figure}
 
 %============================================================================
 \section{The Acceleration Extraction Algorithm}
@@ -373,6 +376,13 @@ Figure-8 orbit & Periodicity return & $\mathbf{r}(T) = \mathbf{r}(0)$ & $6.3 \ti
 \end{tabular}
 \end{table}
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.9\textwidth]{fig2_energy_conservation.pdf}
+\caption{Energy conservation for a simple pendulum over 50 seconds. Top: kinetic, potential, and total energy components. Bottom: relative energy error remains below $6 \times 10^{-8}$.}
+\label{fig:energy}
+\end{figure}
+
 \subsection{Performance Benchmark}
 
 We compare compilation time for equivalent simulations:
@@ -504,10 +514,11 @@ The framework bridges the gap between analytical mechanics formalism and numeric
 
 \subsection{Availability}
 
+% URLs anonymized for double-blind review
 \begin{itemize}
-    \item \textbf{Repository}: \url{https://github.com/MechanicsDSL/mechanicsdsl}
-    \item \textbf{Package}: \texttt{pip install mechanicsdsl-core}
-    \item \textbf{Documentation}: \url{https://mechanicsdsl.readthedocs.io}
+    \item \textbf{Repository}: [URL removed for review]
+    \item \textbf{Package}: [Package name removed for review]
+    \item \textbf{Documentation}: [URL removed for review]
     \item \textbf{License}: MIT
 \end{itemize}
 
@@ -516,7 +527,7 @@ The framework bridges the gap between analytical mechanics formalism and numeric
 %============================================================================
 \section*{Acknowledgements}
 
-This project was developed as an independent research initiative. The author thanks the open-source community for maintaining SymPy, NumPy, SciPy, and Matplotlib.
+% Acknowledgements removed for double-blind review
 
 %============================================================================
 % References
