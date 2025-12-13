@@ -154,19 +154,31 @@ The DSL uses a declarative syntax for fluid specification:
 
 \subsection{Automatic Kernel Selection}
 
-The compiler automatically selects appropriate kernels:
+A key contribution of this work is the automatic selection of SPH kernels based on the physical quantity being computed. The compiler analyzes each term in the momentum equation and selects the appropriate kernel based on the following decision rules:
+
+\begin{enumerate}
+    \item \textbf{Density computation}: Uses Poly6 kernel because it is smooth, non-negative everywhere, and has continuous second derivatives, ensuring stable density estimates.
+    
+    \item \textbf{Pressure gradient}: Uses Spiky kernel because its gradient has a repulsive singularity as $r \to 0$, preventing particle clustering that would occur with Poly6's zero gradient at $r=0$.
+    
+    \item \textbf{Viscosity}: Uses the dedicated viscosity kernel Laplacian, which is always positive, ensuring physically correct dissipation (Poly6 Laplacian can be negative near the boundary).
+    
+    \item \textbf{Surface tension}: Uses Poly6 gradient for color field normal computation, as it provides continuous surface normals without noise.
+\end{enumerate}
+
+This automatic selection is crucial because incorrect kernel choices lead to numerical instabilities. For example, using Poly6 for pressure forces causes particles to clump together, while using Spiky for density estimation produces noisy results.
 
 \begin{table}[htbp]
 \centering
-\caption{Automatic kernel assignment}
+\caption{Automatic kernel assignment based on physical quantity}
 \label{tab:kernels}
 \begin{tabular}{@{}lll@{}}
 \toprule
-Quantity & Kernel & Reason \\
+Quantity & Kernel & Selection Criterion \\
 \midrule
 Density & Poly6 & Smooth, non-negative \\
-Pressure force & Spiky gradient & Avoids clustering \\
-Viscosity & Viscosity Laplacian & Correct diffusion \\
+Pressure force & Spiky gradient & Repulsive at $r \to 0$ \\
+Viscosity & Viscosity Laplacian & Always positive \\
 Surface tension & Poly6 gradient & Continuous normal \\
 \bottomrule
 \end{tabular}

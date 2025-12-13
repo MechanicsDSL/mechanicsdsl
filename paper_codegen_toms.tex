@@ -65,13 +65,15 @@ Physics simulation code is traditionally developed for a single target platform,
 
 We address this problem through multi-target code generation from a single high-level specification. Our system accepts domain-specific language (DSL) input describing physical systems in mathematical notation and generates complete, standalone simulation programs for eleven target platforms.
 
+\textbf{Scope and differentiation}: This paper focuses exclusively on the \textit{software engineering} aspects of the code generation system: compiler architecture, intermediate representation design, backend optimization strategies, and performance metrics. We do not discuss the physics derivation process (Lagrangian mechanics, equations of motion) or the symbolic computation layer, which are addressed in separate work. Our contribution is the multi-target code generator itself.
+
 \subsection{Contributions}
 
 \begin{enumerate}
-    \item \textbf{Multi-target architecture}: A code generation framework supporting eleven output platforms from a single source
-    \item \textbf{Target-specific optimization}: Automatic adaptation to platform idioms (SIMD, GPU parallelism, etc.)
-    \item \textbf{Validation}: Numerical equivalence testing across targets with $<10^{-10}$ relative error
-    \item \textbf{Performance analysis}: Comprehensive benchmarking comparing generated vs. hand-written code
+    \item \textbf{Multi-target architecture}: A code generation framework supporting eleven output platforms from a single intermediate representation
+    \item \textbf{Backend optimization}: Target-specific code transformations (SIMD vectorization, GPU thread blocking, memory layout optimization)
+    \item \textbf{Compilation metrics}: Analysis of generation time, binary size, and AST transformation complexity
+    \item \textbf{Runtime benchmarks}: Comprehensive performance comparison of generated code across all targets
 \end{enumerate}
 
 %============================================================================
