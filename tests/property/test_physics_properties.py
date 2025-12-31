@@ -4,9 +4,12 @@ Property-based tests using Hypothesis for physics invariants.
 These tests verify fundamental physics properties hold across a wide range of inputs.
 """
 import pytest
-from hypothesis import given, strategies as st, settings, assume
 import numpy as np
 
+# Skip all tests in this module if hypothesis is not installed
+pytest.importorskip("hypothesis")
+
+from hypothesis import given, strategies as st, settings, assume
 
 class TestEnergyConservation:
     """Test that conservative systems preserve energy."""
