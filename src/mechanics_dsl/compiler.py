@@ -31,7 +31,7 @@ from .solver import NumericalSimulator
 from .visualization import MechanicsVisualizer
 from .units import UnitSystem
 
-__version__ = "1.0.0"
+__version__ = "1.3.1"
 
 class SystemSerializer:
     """Serialize and deserialize compiled physics systems"""

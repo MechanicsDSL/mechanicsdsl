@@ -178,5 +178,5 @@ If you use MechanicsDSL in your research, please cite:
      title = {MechanicsDSL: A Domain-Specific Language for Classical Mechanics},
      author = {Parsons, Noah},
      year = {2024},
-     url = {https://github.com/noahparsons/mechanicsdsl}
+     url = {https://github.com/MechanicsDSL/mechanicsdsl}
    }

@@ -68,7 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.2.0] - 2024-XX-XX
+## [1.2.0] - 2025-12-31
 
 ### Added
 
@@ -129,7 +129,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.1.0] - 2024-XX-XX
+## [1.1.0] - 2024-09-01
 
 ### Added
 - SPH fluid dynamics support
@@ -145,7 +145,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.0.0] - 2024-XX-XX
+## [1.0.0] - 2024-06-15
 
 ### Added
 - Initial release

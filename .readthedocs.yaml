@@ -5,7 +5,6 @@ build:
   tools:
     python: "3.10"
 
-# This block was missing!
 sphinx:
   configuration: docs/conf.py
 
