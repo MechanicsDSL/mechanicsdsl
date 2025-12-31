@@ -232,10 +232,136 @@ Convenience Functions
    lam_C = compton_wavelength(mass=9.11e-31)  # Electron Compton wavelength
    
    # Heisenberg uncertainty minimum
+   # Heisenberg uncertainty minimum
    min_uncertainty = heisenberg_minimum(hbar=1.0)  # ℏ/2
+
+Quantum Tunneling
+-----------------
+
+The ``QuantumTunneling`` class provides exact and WKB-based tunneling calculations.
+
+**Rectangular Barrier (Exact)**
+
+For a barrier of height V₀ and width a:
+
+.. math::
+
+   T = \frac{1}{1 + \frac{V_0^2 \sinh^2(\kappa a)}{4E(V_0 - E)}}
+
+where :math:`\kappa = \sqrt{2m(V_0 - E)}/\hbar`.
+
+.. code-block:: python
+
+   from mechanics_dsl.domains.quantum import QuantumTunneling
+   
+   tunneling = QuantumTunneling(mass=1.0, hbar=1.0)
+   
+   # Transmission through rectangular barrier
+   T = tunneling.rectangular_barrier(E=1.0, V0=2.0, width=1.0)
+   print(f"Transmission probability: {T:.4f}")
+   
+   # WKB for arbitrary potentials
+   def gaussian_barrier(x):
+       return 2.0 * np.exp(-x**2)
+   
+   T_wkb = tunneling.wkb_transmission(E=0.5, potential=gaussian_barrier, 
+                                       x1=-2, x2=2)
+
+**Alpha Decay (Gamow Factor)**
+
+.. code-block:: python
+
+   from mechanics_dsl.domains.quantum import alpha_decay_rate
+   
+   # Uranium-238 alpha decay (E_alpha ≈ 4.2 MeV)
+   E_alpha = 4.2e6 * 1.602e-19  # Convert MeV to Joules
+   Z_thorium = 90  # Daughter nucleus
+   
+   decay_rate = alpha_decay_rate(E_alpha, Z_daughter=Z_thorium)
+
+Finite Square Well
+------------------
+
+The ``FiniteSquareWell`` solves the transcendental eigenvalue equations:
+
+.. math::
+
+   \text{Even parity:} \quad k \tan(ka/2) = \kappa
+
+.. math::
+
+   \text{Odd parity:} \quad -k \cot(ka/2) = \kappa
+
+where :math:`k = \sqrt{2m(E+V_0)}/\hbar` and :math:`\kappa = \sqrt{-2mE}/\hbar`.
+
+.. code-block:: python
+
+   from mechanics_dsl.domains.quantum import FiniteSquareWell
+   
+   well = FiniteSquareWell(depth=10.0, width=2.0, mass=1.0, hbar=1.0)
+   
+   # Find all bound states
+   states = well.find_bound_states()
+   for state in states:
+       print(f"n={state.n}: E = {state.energy:.4f}")
+   
+   # Scattering transmission (E > 0)
+   T = well.transmission_coefficient(E=5.0)
+
+Hydrogen Atom
+-------------
+
+Exact energy levels for hydrogen-like atoms:
+
+.. math::
+
+   E_n = -\frac{Z^2 \times 13.6 \text{ eV}}{n^2}
+
+.. code-block:: python
+
+   from mechanics_dsl.domains.quantum import HydrogenAtom
+   
+   H = HydrogenAtom(Z=1)
+   
+   # Ground state energy
+   E1 = H.energy_level(n=1)  # -13.6 eV
+   
+   # Bohr radius
+   r1 = H.bohr_radius_n(n=1)  # 5.29e-11 m
+   
+   # Lyman-alpha wavelength (2→1)
+   lam_alpha = H.transition_wavelength(n_initial=2, n_final=1)  # 121.6 nm
+   
+   # Balmer series (visible spectrum)
+   balmer = H.spectral_series(n_final=2, n_max=7)
+   
+   # Helium ion (Z=2)
+   He_plus = HydrogenAtom(Z=2)
+   E1_He = He_plus.energy_level(n=1)  # -54.4 eV
+
+Step Potential & Delta Barrier
+------------------------------
+
+.. code-block:: python
+
+   from mechanics_dsl.domains.quantum import StepPotential, DeltaFunctionBarrier
+   
+   # Step potential
+   step = StepPotential(height=5.0)
+   R, T = step.reflection_transmission(E=10.0)
+   print(f"R = {R:.3f}, T = {T:.3f}")
+   
+   # Delta function barrier: V(x) = λδ(x)
+   barrier = DeltaFunctionBarrier(strength=1.0)
+   T = barrier.transmission(E=0.5)
+   
+   # Attractive delta well has one bound state
+   well = DeltaFunctionBarrier(strength=-1.0)
+   E_bound = well.bound_state_energy()  # -0.5
 
 See Also
 --------
 
 - :doc:`relativistic` - For relativistic quantum extensions
 - :doc:`../physics/oscillations` - For classical oscillator comparison
+

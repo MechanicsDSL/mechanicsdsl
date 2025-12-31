@@ -447,6 +447,424 @@ class InfiniteSquareWell:
         return x_sq - (self.L/2)**2
 
 
+class FiniteSquareWell:
+    """
+    Particle in a finite square well (bound states).
+    
+    V(x) = -V₀ for |x| < a/2
+    V(x) = 0   otherwise
+    
+    Bound state energies satisfy transcendental equations:
+    - Even parity: k tan(ka/2) = κ
+    - Odd parity:  k cot(ka/2) = -κ
+    
+    where k = √(2m(E+V₀))/ℏ and κ = √(-2mE)/ℏ
+    
+    Always has at least one bound state.
+    
+    Example:
+        >>> well = FiniteSquareWell(depth=10.0, width=2.0)
+        >>> energies = well.find_bound_states()
+    """
+    
+    def __init__(self, depth: float, width: float, mass: float = 1.0, 
+                 hbar: float = 1.0):
+        """
+        Initialize finite square well.
+        
+        Args:
+            depth: Well depth V₀ (positive)
+            width: Well width a
+            mass: Particle mass
+            hbar: Reduced Planck constant
+        """
+        if depth <= 0:
+            raise ValueError("Well depth must be positive")
+        self.V0 = depth
+        self.a = width
+        self.mass = mass
+        self.hbar = hbar
+    
+    def dimensionless_parameter(self) -> float:
+        """
+        Compute dimensionless well parameter z₀ = a√(2mV₀)/(2ℏ).
+        
+        The number of bound states is ⌊z₀/π⌋ + 1.
+        """
+        return (self.a / 2) * np.sqrt(2 * self.mass * self.V0) / self.hbar
+    
+    def max_bound_states(self) -> int:
+        """Maximum number of bound states."""
+        z0 = self.dimensionless_parameter()
+        return int(np.floor(z0 / (np.pi / 2))) + 1
+    
+    def _even_parity_equation(self, E: float) -> float:
+        """Transcendental equation for even parity states: k tan(ka/2) - κ = 0."""
+        if E >= 0 or E < -self.V0:
+            return float('inf')
+        
+        k = np.sqrt(2 * self.mass * (E + self.V0)) / self.hbar
+        kappa = np.sqrt(-2 * self.mass * E) / self.hbar
+        
+        return k * np.tan(k * self.a / 2) - kappa
+    
+    def _odd_parity_equation(self, E: float) -> float:
+        """Transcendental equation for odd parity states: -k cot(ka/2) - κ = 0."""
+        if E >= 0 or E < -self.V0:
+            return float('inf')
+        
+        k = np.sqrt(2 * self.mass * (E + self.V0)) / self.hbar
+        kappa = np.sqrt(-2 * self.mass * E) / self.hbar
+        
+        tan_val = np.tan(k * self.a / 2)
+        if abs(tan_val) < 1e-10:
+            return float('inf')
+        
+        return -k / tan_val - kappa
+    
+    def find_bound_states(self, n_search: int = 100) -> List[EnergyLevel]:
+        """
+        Find all bound state energies by solving transcendental equations.
+        
+        Args:
+            n_search: Number of search points in energy grid
+            
+        Returns:
+            List of EnergyLevel objects for bound states
+        """
+        from scipy.optimize import brentq
+        
+        levels = []
+        E_grid = np.linspace(-self.V0 * 0.999, -1e-10, n_search)
+        
+        # Find even parity states
+        for i in range(len(E_grid) - 1):
+            try:
+                f1 = self._even_parity_equation(E_grid[i])
+                f2 = self._even_parity_equation(E_grid[i + 1])
+                if f1 * f2 < 0 and np.isfinite(f1) and np.isfinite(f2):
+                    E = brentq(self._even_parity_equation, E_grid[i], E_grid[i + 1])
+                    levels.append(EnergyLevel(n=len(levels), energy=E))
+            except (ValueError, RuntimeError):
+                pass
+        
+        # Find odd parity states
+        for i in range(len(E_grid) - 1):
+            try:
+                f1 = self._odd_parity_equation(E_grid[i])
+                f2 = self._odd_parity_equation(E_grid[i + 1])
+                if f1 * f2 < 0 and np.isfinite(f1) and np.isfinite(f2):
+                    E = brentq(self._odd_parity_equation, E_grid[i], E_grid[i + 1])
+                    levels.append(EnergyLevel(n=len(levels), energy=E))
+            except (ValueError, RuntimeError):
+                pass
+        
+        # Sort by energy
+        levels.sort(key=lambda x: x.energy)
+        for i, level in enumerate(levels):
+            level.n = i
+        
+        return levels
+    
+    def transmission_coefficient(self, E: float) -> float:
+        """
+        Transmission coefficient for scattering states (E > 0).
+        
+        T = 1 / (1 + V₀²sin²(k₁a)/(4E(E+V₀)))
+        
+        where k₁ = √(2m(E+V₀))/ℏ
+        """
+        if E <= 0:
+            return 0.0
+        
+        k1 = np.sqrt(2 * self.mass * (E + self.V0)) / self.hbar
+        sin_term = np.sin(k1 * self.a)**2
+        
+        denominator = 1 + (self.V0**2 * sin_term) / (4 * E * (E + self.V0))
+        return 1.0 / denominator
+
+
+class StepPotential:
+    """
+    Quantum step potential (transmission and reflection).
+    
+    V(x) = 0   for x < 0
+    V(x) = V₀  for x ≥ 0
+    
+    Exact transmission and reflection coefficients:
+    
+    For E > V₀:
+        R = ((k₁ - k₂)/(k₁ + k₂))²
+        T = 4k₁k₂/(k₁ + k₂)²
+        
+    For E < V₀:
+        R = 1 (total reflection)
+        T = 0
+        
+    where k₁ = √(2mE)/ℏ, k₂ = √(2m(E-V₀))/ℏ
+    
+    Example:
+        >>> step = StepPotential(height=5.0)
+        >>> R, T = step.reflection_transmission(E=10.0)
+    """
+    
+    def __init__(self, height: float, mass: float = 1.0, hbar: float = 1.0):
+        """
+        Initialize step potential.
+        
+        Args:
+            height: Step height V₀
+            mass: Particle mass
+            hbar: Reduced Planck constant
+        """
+        self.V0 = height
+        self.mass = mass
+        self.hbar = hbar
+    
+    def reflection_transmission(self, E: float) -> Tuple[float, float]:
+        """
+        Calculate reflection and transmission coefficients.
+        
+        Args:
+            E: Particle energy (must be > 0)
+            
+        Returns:
+            Tuple of (R, T) where R + T = 1
+        """
+        if E <= 0:
+            raise ValueError("Energy must be positive")
+        
+        k1 = np.sqrt(2 * self.mass * E) / self.hbar
+        
+        if E > self.V0:
+            # Above barrier: partial transmission
+            k2 = np.sqrt(2 * self.mass * (E - self.V0)) / self.hbar
+            R = ((k1 - k2) / (k1 + k2))**2
+            T = 4 * k1 * k2 / (k1 + k2)**2
+        else:
+            # Below barrier: total reflection (no tunneling for step)
+            R = 1.0
+            T = 0.0
+        
+        return R, T
+    
+    def penetration_depth(self, E: float) -> float:
+        """
+        Calculate penetration depth into forbidden region.
+        
+        δ = ℏ / √(2m(V₀-E))
+        
+        Args:
+            E: Particle energy (E < V₀)
+            
+        Returns:
+            Penetration depth
+        """
+        if E >= self.V0:
+            return float('inf')
+        
+        kappa = np.sqrt(2 * self.mass * (self.V0 - E)) / self.hbar
+        return 1.0 / kappa
+
+
+class DeltaFunctionBarrier:
+    """
+    Delta function potential barrier: V(x) = λδ(x)
+    
+    A thin, infinitely high barrier with finite area.
+    
+    Transmission coefficient:
+        T = 1 / (1 + mλ²/(2ℏ²E))
+    
+    Reflection coefficient:
+        R = 1 - T = (mλ²/(2ℏ²E)) / (1 + mλ²/(2ℏ²E))
+    
+    Example:
+        >>> barrier = DeltaFunctionBarrier(strength=1.0)
+        >>> T = barrier.transmission(E=0.5)
+    """
+    
+    def __init__(self, strength: float, mass: float = 1.0, hbar: float = 1.0):
+        """
+        Initialize delta function barrier.
+        
+        Args:
+            strength: Barrier strength λ (positive for barrier, negative for well)
+            mass: Particle mass
+            hbar: Reduced Planck constant
+        """
+        self.lambda_ = strength
+        self.mass = mass
+        self.hbar = hbar
+    
+    def transmission(self, E: float) -> float:
+        """
+        Transmission coefficient T(E).
+        
+        T = 1 / (1 + mλ²/(2ℏ²E))
+        """
+        if E <= 0:
+            return 0.0
+        
+        factor = self.mass * self.lambda_**2 / (2 * self.hbar**2 * E)
+        return 1.0 / (1 + factor)
+    
+    def reflection(self, E: float) -> float:
+        """Reflection coefficient R(E) = 1 - T(E)."""
+        return 1.0 - self.transmission(E)
+    
+    def bound_state_energy(self) -> Optional[float]:
+        """
+        Bound state energy for attractive delta well (λ < 0).
+        
+        E = -mλ²/(2ℏ²)
+        
+        Returns:
+            Bound state energy, or None if λ ≥ 0
+        """
+        if self.lambda_ >= 0:
+            return None
+        
+        return -self.mass * self.lambda_**2 / (2 * self.hbar**2)
+
+
+class HydrogenAtom:
+    """
+    Hydrogen atom energy levels and wavefunctions.
+    
+    Exact Bohr model energies:
+        E_n = -13.6 eV / n² = -m_e e⁴ / (2(4πε₀)²ℏ²n²)
+    
+    Bohr radius:
+        a₀ = 4πε₀ℏ² / (m_e e²) ≈ 0.529 Å
+    
+    Example:
+        >>> hydrogen = HydrogenAtom()
+        >>> E1 = hydrogen.energy_level(n=1)  # Ground state: -13.6 eV
+    """
+    
+    # Physical constants (SI)
+    ELECTRON_MASS = 9.109e-31  # kg
+    ELEMENTARY_CHARGE = 1.602e-19  # C
+    BOHR_RADIUS = 5.292e-11  # m
+    RYDBERG_ENERGY = 13.6  # eV
+    
+    def __init__(self, Z: int = 1, reduced_mass: Optional[float] = None):
+        """
+        Initialize hydrogen-like atom.
+        
+        Args:
+            Z: Nuclear charge (Z=1 for hydrogen)
+            reduced_mass: Reduced mass (default: electron mass)
+        """
+        self.Z = Z
+        self.mu = reduced_mass if reduced_mass else self.ELECTRON_MASS
+    
+    def energy_level(self, n: int) -> float:
+        """
+        Energy eigenvalue for principal quantum number n.
+        
+        E_n = -Z² × 13.6 eV / n²
+        
+        Args:
+            n: Principal quantum number (n ≥ 1)
+            
+        Returns:
+            Energy in eV (negative for bound states)
+        """
+        if n < 1:
+            raise ValueError("n must be ≥ 1")
+        
+        return -self.Z**2 * self.RYDBERG_ENERGY / n**2
+    
+    def energy_level_joules(self, n: int) -> float:
+        """Energy in Joules."""
+        return self.energy_level(n) * self.ELEMENTARY_CHARGE
+    
+    def bohr_radius_n(self, n: int) -> float:
+        """
+        Most probable radius for state n.
+        
+        r_n = n² × a₀ / Z
+        """
+        return n**2 * self.BOHR_RADIUS / self.Z
+    
+    def ionization_energy(self) -> float:
+        """Ionization energy (energy to remove electron from ground state)."""
+        return -self.energy_level(1)
+    
+    def degeneracy(self, n: int) -> int:
+        """
+        Degeneracy of energy level n.
+        
+        g_n = 2n² (including spin)
+        """
+        return 2 * n**2
+    
+    def orbital_angular_momentum(self, l: int) -> float:
+        """
+        Orbital angular momentum magnitude.
+        
+        L = √(l(l+1)) × ℏ
+        """
+        return np.sqrt(l * (l + 1)) * HBAR
+    
+    def radial_probability_max(self, n: int, l: int) -> float:
+        """
+        Most probable radius for quantum numbers (n, l).
+        
+        For l = n-1 (circular orbits): r_max = n² × a₀ / Z
+        """
+        if l >= n or l < 0:
+            raise ValueError("l must satisfy 0 ≤ l < n")
+        
+        # For general (n, l), approximate using Bohr model
+        return n**2 * self.BOHR_RADIUS / self.Z
+    
+    def transition_wavelength(self, n_initial: int, n_final: int) -> float:
+        """
+        Wavelength of photon emitted/absorbed in transition.
+        
+        1/λ = R_H × Z² × |1/n_f² - 1/n_i²|
+        
+        where R_H = 1.097e7 m⁻¹ (Rydberg constant)
+        
+        Returns:
+            Wavelength in meters
+        """
+        R_H = 1.097e7  # Rydberg constant
+        
+        delta_inv = abs(1/n_final**2 - 1/n_initial**2)
+        inv_lambda = R_H * self.Z**2 * delta_inv
+        
+        return 1.0 / inv_lambda
+    
+    def transition_energy(self, n_initial: int, n_final: int) -> float:
+        """Energy of photon in transition (eV)."""
+        return abs(self.energy_level(n_initial) - self.energy_level(n_final))
+    
+    def spectral_series(self, n_final: int, n_max: int = 7) -> Dict[str, float]:
+        """
+        Calculate spectral series wavelengths.
+        
+        Args:
+            n_final: Final state (1=Lyman, 2=Balmer, 3=Paschen, etc.)
+            n_max: Maximum initial state
+            
+        Returns:
+            Dictionary of wavelengths keyed by transition name
+        """
+        series_names = {1: "Lyman", 2: "Balmer", 3: "Paschen", 
+                       4: "Brackett", 5: "Pfund"}
+        series = {}
+        
+        for n_i in range(n_final + 1, n_max + 1):
+            name = f"{series_names.get(n_final, f'n={n_final}')}_{n_i}->{n_final}"
+            series[name] = self.transition_wavelength(n_i, n_final)
+        
+        return series
+
+
 # Convenience functions
 
 def de_broglie_wavelength(momentum: float, hbar: float = HBAR) -> float:
@@ -488,6 +906,313 @@ def heisenberg_minimum(hbar: float = 1.0) -> float:
     return hbar / 2
 
 
+class QuantumTunneling:
+    """
+    Quantum tunneling calculations for potential barriers.
+    
+    Implements:
+    - WKB tunneling approximation: T ≈ exp(-2∫κ dx)
+    - Exact rectangular barrier solution
+    - Gamow tunneling factor for alpha decay
+    - Double-well tunneling splitting
+    
+    The WKB transmission coefficient through a barrier:
+        T ≈ exp(-2/ℏ ∫√(2m(V(x)-E)) dx)
+    
+    where the integral is over the classically forbidden region.
+    
+    Example:
+        >>> tunneling = QuantumTunneling(mass=1.0, hbar=1.0)
+        >>> T = tunneling.rectangular_barrier(E=1.0, V0=2.0, width=1.0)
+    """
+    
+    def __init__(self, mass: float = 1.0, hbar: float = 1.0):
+        """
+        Initialize tunneling calculator.
+        
+        Args:
+            mass: Particle mass
+            hbar: Reduced Planck constant
+        """
+        self.mass = mass
+        self.hbar = hbar
+    
+    def decay_constant(self, E: float, V: float) -> float:
+        """
+        Calculate decay constant κ = √(2m(V-E))/ℏ in forbidden region.
+        
+        Args:
+            E: Particle energy
+            V: Barrier potential
+            
+        Returns:
+            Decay constant κ (imaginary wavevector)
+        """
+        if V <= E:
+            return 0.0
+        return np.sqrt(2 * self.mass * (V - E)) / self.hbar
+    
+    def rectangular_barrier(self, E: float, V0: float, width: float) -> float:
+        """
+        Exact transmission coefficient for rectangular barrier.
+        
+        For E < V0:
+            T = 1 / (1 + (V0²sinh²(κa))/(4E(V0-E)))
+        
+        where κ = √(2m(V0-E))/ℏ and a = width.
+        
+        For E > V0 (above barrier):
+            T = 1 / (1 + (V0²sin²(ka))/(4E(E-V0)))
+        
+        Args:
+            E: Particle energy (E > 0)
+            V0: Barrier height
+            width: Barrier width
+            
+        Returns:
+            Transmission probability T ∈ [0, 1]
+        """
+        if E <= 0:
+            return 0.0
+        
+        if E < V0:
+            # Tunneling regime
+            kappa = np.sqrt(2 * self.mass * (V0 - E)) / self.hbar
+            kappa_a = kappa * width
+            
+            # Prevent overflow for large barriers
+            if kappa_a > 50:
+                return 0.0
+            
+            sinh_term = np.sinh(kappa_a)**2
+            denominator = 1 + (V0**2 * sinh_term) / (4 * E * (V0 - E))
+            return 1.0 / denominator
+        
+        else:
+            # Above-barrier scattering
+            k = np.sqrt(2 * self.mass * (E - V0)) / self.hbar
+            ka = k * width
+            sin_term = np.sin(ka)**2
+            
+            if E == V0:
+                return 1.0
+            
+            denominator = 1 + (V0**2 * sin_term) / (4 * E * (E - V0))
+            return 1.0 / denominator
+    
+    def wkb_transmission(self, E: float, potential: Callable[[float], float],
+                         x1: float, x2: float, n_points: int = 1000) -> float:
+        """
+        WKB tunneling transmission coefficient.
+        
+        T ≈ exp(-2γ) where γ = (1/ℏ) ∫_{x1}^{x2} √(2m(V(x)-E)) dx
+        
+        Args:
+            E: Particle energy
+            potential: Potential function V(x)
+            x1: Left turning point (entry into barrier)
+            x2: Right turning point (exit from barrier)
+            n_points: Integration points
+            
+        Returns:
+            WKB transmission coefficient
+        """
+        from scipy.integrate import quad
+        
+        def integrand(x):
+            V = potential(x)
+            if V > E:
+                return np.sqrt(2 * self.mass * (V - E))
+            return 0.0
+        
+        gamma, _ = quad(integrand, x1, x2)
+        gamma /= self.hbar
+        
+        # Transmission coefficient
+        if gamma > 50:  # Prevent underflow
+            return 0.0
+        return np.exp(-2 * gamma)
+    
+    def gamow_factor(self, E: float, Z1: int, Z2: int, 
+                     R_nuclear: float = 1e-14) -> float:
+        """
+        Gamow tunneling factor for alpha decay / nuclear reactions.
+        
+        For Coulomb barrier with V(r) = Z1*Z2*e²/(4πε₀r):
+        
+        G = exp(-2π * η) where η = Z1*Z2*e²/(4πε₀*ℏ*v)
+        
+        Simplified formula:
+        G ≈ exp(-2π * Z1*Z2 * sqrt(m/(2E)) * e²/(4πε₀*ℏ))
+        
+        Args:
+            E: Kinetic energy (Joules)
+            Z1, Z2: Atomic numbers
+            R_nuclear: Nuclear radius (≈ 1 fm)
+            
+        Returns:
+            Gamow penetration factor
+        """
+        # Physical constants (SI)
+        e = 1.602e-19  # Elementary charge
+        epsilon_0 = 8.854e-12  # Permittivity
+        k_coulomb = 1 / (4 * np.pi * epsilon_0)
+        
+        # Sommerfeld parameter
+        v = np.sqrt(2 * E / self.mass)  # Velocity
+        eta = Z1 * Z2 * k_coulomb * e**2 / (self.hbar * v)
+        
+        return np.exp(-2 * np.pi * eta)
+    
+    def tunneling_time_wkb(self, E: float, potential: Callable[[float], float],
+                           x1: float, x2: float) -> float:
+        """
+        Estimate tunneling traversal time (Büttiker-Landauer time).
+        
+        τ = m * ∫_{x1}^{x2} dx / √(2m(V(x)-E))
+        
+        Note: Tunneling time is a subtle concept with multiple definitions.
+        This gives the "dwell time" in the barrier region.
+        
+        Args:
+            E: Particle energy
+            potential: Potential function V(x)
+            x1: Left turning point
+            x2: Right turning point
+            
+        Returns:
+            Characteristic tunneling time
+        """
+        from scipy.integrate import quad
+        
+        def integrand(x):
+            V = potential(x)
+            if V > E:
+                kappa = np.sqrt(2 * self.mass * (V - E))
+                return self.mass / kappa
+            return 0.0
+        
+        tau, _ = quad(integrand, x1, x2)
+        return tau
+    
+    def double_well_splitting(self, omega: float, barrier_height: float,
+                              well_separation: float) -> float:
+        """
+        Tunnel splitting for symmetric double-well potential.
+        
+        For V(x) = V0 * ((x/a)² - 1)² with minima at x = ±a:
+        
+        ΔE ≈ ℏω * exp(-S_inst/ℏ)
+        
+        where S_inst is the instanton action.
+        
+        Approximate formula:
+        ΔE ≈ ℏω * (8V0/(ℏω))^(1/2) * exp(-πV0/(ℏω))
+        
+        Args:
+            omega: Ground state angular frequency
+            barrier_height: Height of central barrier V0
+            well_separation: Distance between well minima 2a
+            
+        Returns:
+            Energy splitting between symmetric/antisymmetric states
+        """
+        ratio = barrier_height / (self.hbar * omega)
+        
+        if ratio > 50:  # Prevent underflow
+            return 0.0
+        
+        prefactor = self.hbar * omega * np.sqrt(8 * ratio / np.pi)
+        exponent = -np.pi * ratio / 2
+        
+        return prefactor * np.exp(exponent)
+    
+    def resonant_tunneling_peaks(self, V0_left: float, V0_right: float,
+                                  well_width: float, barrier_widths: Tuple[float, float],
+                                  n_max: int = 5) -> List[float]:
+        """
+        Find resonant tunneling energies for double-barrier structure.
+        
+        Resonances occur when the phase condition is satisfied:
+        2*k*w + φ_L + φ_R = 2πn
+        
+        At resonance, T → 1 (unity transmission).
+        
+        Args:
+            V0_left, V0_right: Barrier heights
+            well_width: Width of central well
+            barrier_widths: (left_barrier_width, right_barrier_width)
+            n_max: Maximum quantum number
+            
+        Returns:
+            List of resonance energies
+        """
+        resonances = []
+        
+        # Approximate: quantized levels in finite well
+        # E_n ≈ n²π²ℏ²/(2m*w²) for infinitely deep well
+        for n in range(1, n_max + 1):
+            E_approx = (n**2 * np.pi**2 * self.hbar**2) / (2 * self.mass * well_width**2)
+            
+            # Only include if below barrier
+            if E_approx < min(V0_left, V0_right):
+                resonances.append(E_approx)
+        
+        return resonances
+
+
+def tunneling_probability_rectangular(E: float, V0: float, width: float,
+                                      mass: float = 1.0, hbar: float = 1.0) -> float:
+    """
+    Convenience function for rectangular barrier tunneling.
+    
+    Args:
+        E: Particle energy
+        V0: Barrier height
+        width: Barrier width
+        mass: Particle mass
+        hbar: Reduced Planck constant
+        
+    Returns:
+        Transmission probability
+    """
+    tunneling = QuantumTunneling(mass=mass, hbar=hbar)
+    return tunneling.rectangular_barrier(E, V0, width)
+
+
+def alpha_decay_rate(E_alpha: float, Z_daughter: int,
+                     R_nuclear: float = 1.4e-15 * 4**(1/3),
+                     mass_alpha: float = 6.644e-27) -> float:
+    """
+    Estimate alpha decay rate using Gamow formula.
+    
+    λ ≈ (v/2R) * G²
+    
+    where G is the Gamow factor and v is alpha velocity.
+    
+    Args:
+        E_alpha: Alpha particle kinetic energy (J)
+        Z_daughter: Atomic number of daughter nucleus
+        R_nuclear: Nuclear radius (default for A≈4)
+        mass_alpha: Alpha particle mass
+        
+    Returns:
+        Decay rate (s⁻¹)
+    """
+    tunneling = QuantumTunneling(mass=mass_alpha, hbar=HBAR)
+    
+    # Alpha velocity
+    v = np.sqrt(2 * E_alpha / mass_alpha)
+    
+    # Gamow factor (Z_alpha = 2)
+    G = tunneling.gamow_factor(E_alpha, Z1=2, Z2=Z_daughter)
+    
+    # Attempt frequency ~ v / (2R)
+    attempt_freq = v / (2 * R_nuclear)
+    
+    return attempt_freq * G**2
+
+
 __all__ = [
     'HBAR',
     'PLANCK_H',
@@ -497,7 +1222,16 @@ __all__ = [
     'QuantumHarmonicOscillator',
     'EhrenfestDynamics',
     'InfiniteSquareWell',
+    'FiniteSquareWell',
+    'StepPotential',
+    'DeltaFunctionBarrier',
+    'HydrogenAtom',
+    'QuantumTunneling',
     'de_broglie_wavelength',
     'compton_wavelength',
     'heisenberg_minimum',
+    'tunneling_probability_rectangular',
+    'alpha_decay_rate',
 ]
+
+

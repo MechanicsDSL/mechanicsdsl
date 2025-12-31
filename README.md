@@ -134,15 +134,30 @@ compiler.compile_to_cpp("dam_break.cpp", target="standard", compile_binary=True)
 - **Variable Mass**: Tsiolkovsky rocket equation, conveyor belts
 - **Continuous Systems**: Vibrating strings, membranes, field equations
 
-### Code Generation
-- **Native C++** with optimized numerics
-- **OpenMP** for parallel simulations
-- **WebAssembly** for browser-based physics
+### Quantum Mechanics
+- **Bound States**: Infinite well, finite square well, hydrogen atom
+- **Scattering**: Step potential, delta barriers, transmission/reflection coefficients
+- **Quantum Tunneling**: Rectangular barriers, WKB approximation, Gamow factor
+- **Semiclassical**: WKB wavefunctions, Bohr-Sommerfeld quantization
+- **Hydrogen Atom**: Energy levels, Bohr radius, spectral series (Lyman, Balmer, etc.)
+- **Ehrenfest Theorem**: Quantum-classical correspondence
 
-### Analysis Tools
-- **Energy conservation** monitoring
-- **Phase space** visualization & Poincaré sections
-- **1,000+ passing tests** for reliability
+### Electromagnetism
+- **Charged Particles**: Lorentz force, cyclotron motion, Larmor radius
+- **Traps**: Penning trap, magnetic dipole traps, gradient/curvature drift
+- **Potentials**: Scalar/vector potentials, gauge transformations
+
+### Special Relativity
+- **Kinematics**: Lorentz boosts, velocity addition, time dilation, length contraction
+- **Four-Vectors**: Spacetime intervals, invariants, metric signature (+,-,-,-)
+- **Doppler Effect**: Longitudinal, transverse, cosmological redshift
+- **Collisions**: Invariant mass, threshold energies, Compton scattering
+
+### Fluid Dynamics
+- **SPH Solver**: Smoothed Particle Hydrodynamics for incompressible fluids
+- **Kernels**: Poly6, Spiky, Viscosity with Tait equation of state
+- **Boundaries**: No-slip, periodic, reflective conditions
+
 
 ---
 
