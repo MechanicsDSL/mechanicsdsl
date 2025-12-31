@@ -45,7 +45,7 @@ jobs:
 
     - name: Install test dependencies
       run: |
-        pip install pytest pytest-cov
+        pip install pytest pytest-cov hypothesis
 
     - name: Install type checking dependencies
       if: matrix.python-version == '3.11'
