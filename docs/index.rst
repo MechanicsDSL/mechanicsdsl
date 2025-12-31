@@ -101,6 +101,9 @@ Documentation Contents
    physics/continuum
    physics/fluid_dynamics
    physics/multiphysics
+   physics/electromagnetic
+   physics/relativistic
+   physics/quantum
 
 .. toctree::
    :maxdepth: 2

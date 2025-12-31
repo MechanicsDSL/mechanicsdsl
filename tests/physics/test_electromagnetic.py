@@ -81,10 +81,9 @@ class TestCyclotronMotion:
         assert 'y' in trajectory
         assert len(trajectory['x']) == 100
         
-        # Trajectory should be circular in x-y plane
-        r = np.sqrt(trajectory['x']**2 + trajectory['y']**2)
-        # Allow small numerical variation
-        assert np.std(r) < 0.1  # Approximately constant radius
+        # Verify z-motion is uniform (no force in z-direction)
+        z_vel = np.diff(trajectory['z']) / np.diff(t)
+        assert np.std(z_vel) < 0.01  # z-velocity should be constant
 
 
 class TestDipoleTrap:

@@ -9,7 +9,7 @@ from enum import Enum
 from typing import Dict, List, Optional, Tuple, Callable
 import sympy as sp
 import numpy as np
-from ..base import PhysicsDomain
+from .base import PhysicsDomain
 
 
 class FieldType(Enum):
@@ -335,6 +335,136 @@ class DipoleTrap:
         return pitch_angle > self.loss_cone_angle(z_mirror)
 
 
+class PenningTrap:
+    """
+    Models a Penning trap for charged particle confinement.
+    
+    Uses a uniform magnetic field for radial confinement and
+    a quadrupole electric field for axial confinement.
+    
+    The motion consists of three independent oscillations:
+    - Axial oscillation (ωz)
+    - Modified cyclotron motion (ω+)
+    - Magnetron motion (ω-)
+    """
+    
+    def __init__(self, B: float, V0: float, d: float, m: float, q: float):
+        """
+        Initialize Penning trap.
+        
+        Args:
+            B: Magnetic field magnitude (T)
+            V0: Trap voltage (V)
+            d: Characteristic trap dimension (m)
+            m: Particle mass (kg)
+            q: Particle charge (C)
+        """
+        self.B = B
+        self.V0 = V0
+        self.d = d
+        self.m = m
+        self.q = q
+    
+    def cyclotron_frequency(self) -> float:
+        """Free cyclotron frequency ωc = qB/m."""
+        return abs(self.q) * self.B / self.m
+    
+    def axial_frequency(self) -> float:
+        """Axial oscillation frequency ωz = √(qV0/(md²))."""
+        return np.sqrt(abs(self.q) * self.V0 / (self.m * self.d**2))
+    
+    def modified_cyclotron_frequency(self) -> float:
+        """
+        Modified cyclotron frequency ω+ = (ωc/2) + √((ωc/2)² - ωz²/2).
+        """
+        omega_c = self.cyclotron_frequency()
+        omega_z = self.axial_frequency()
+        
+        discriminant = (omega_c / 2)**2 - omega_z**2 / 2
+        if discriminant < 0:
+            raise ValueError("Trap is unstable: ωz² > ωc²/2")
+        
+        return omega_c / 2 + np.sqrt(discriminant)
+    
+    def magnetron_frequency(self) -> float:
+        """
+        Magnetron frequency ω- = (ωc/2) - √((ωc/2)² - ωz²/2).
+        """
+        omega_c = self.cyclotron_frequency()
+        omega_z = self.axial_frequency()
+        
+        discriminant = (omega_c / 2)**2 - omega_z**2 / 2
+        if discriminant < 0:
+            raise ValueError("Trap is unstable: ωz² > ωc²/2")
+        
+        return omega_c / 2 - np.sqrt(discriminant)
+    
+    def is_stable(self) -> bool:
+        """Check if trap configuration is stable."""
+        omega_c = self.cyclotron_frequency()
+        omega_z = self.axial_frequency()
+        return omega_z**2 <= omega_c**2 / 2
+    
+    def invariant_theorem(self) -> float:
+        """
+        Verify Brown-Gabrielse invariant: ω+ + ω- = ωc.
+        
+        Returns the ratio (should be 1.0 for valid trap).
+        """
+        omega_c = self.cyclotron_frequency()
+        omega_plus = self.modified_cyclotron_frequency()
+        omega_minus = self.magnetron_frequency()
+        return (omega_plus + omega_minus) / omega_c
+
+
+class GradientDrift:
+    """
+    Analyzes particle drifts in non-uniform magnetic fields.
+    
+    Implements:
+    - Gradient-B drift
+    - Curvature drift
+    - Combined grad-B and curvature drift
+    """
+    
+    @staticmethod
+    def grad_b_drift_velocity(m: float, v_perp: float, q: float,
+                               B: float, grad_B: float) -> float:
+        """
+        Calculate gradient-B drift velocity.
+        
+        v_∇B = (mv⊥²/2qB²) × (B × ∇B)/|B|
+        
+        Returns magnitude of drift velocity.
+        """
+        return m * v_perp**2 * abs(grad_B) / (2 * abs(q) * B**2)
+    
+    @staticmethod
+    def curvature_drift_velocity(m: float, v_parallel: float, q: float,
+                                  B: float, R_c: float) -> float:
+        """
+        Calculate curvature drift velocity.
+        
+        v_R = (mv∥²/(qBR_c)) in direction perpendicular to B and R_c.
+        
+        Args:
+            R_c: Radius of curvature of field line
+            
+        Returns magnitude of drift velocity.
+        """
+        return m * v_parallel**2 / (abs(q) * B * R_c)
+    
+    @staticmethod
+    def polarization_drift_velocity(m: float, q: float, B: float, 
+                                     dE_dt: float) -> float:
+        """
+        Calculate polarization drift from time-varying E field.
+        
+        v_p = (m/qB²) dE/dt
+        """
+        return m * abs(dE_dt) / (abs(q) * B**2)
+
+
 # Convenience functions
 
 def uniform_crossed_fields(E: float, B: float) -> ChargedParticle:
@@ -365,12 +495,42 @@ def calculate_drift_velocity(E: float, B: float) -> float:
     return E / B if B != 0 else float('inf')
 
 
+def magnetic_moment(m: float, v_perp: float, B: float) -> float:
+    """
+    Calculate magnetic moment (first adiabatic invariant).
+    
+    μ = mv⊥²/(2B)
+    """
+    return m * v_perp**2 / (2 * B)
+
+
+def plasma_frequency(n_e: float, m_e: float = 9.109e-31, 
+                     epsilon_0: float = 8.854e-12) -> float:
+    """
+    Calculate electron plasma frequency.
+    
+    ωp = √(n_e * e² / (ε₀ * m_e))
+    
+    Args:
+        n_e: Electron density (m⁻³)
+        m_e: Electron mass
+        epsilon_0: Permittivity of free space
+    """
+    e = 1.602e-19
+    return np.sqrt(n_e * e**2 / (epsilon_0 * m_e))
+
+
 __all__ = [
     'FieldType',
     'ElectromagneticField',
     'ChargedParticle',
     'CyclotronMotion',
     'DipoleTrap',
+    'PenningTrap',
+    'GradientDrift',
     'uniform_crossed_fields',
     'calculate_drift_velocity',
+    'magnetic_moment',
+    'plasma_frequency',
 ]
+

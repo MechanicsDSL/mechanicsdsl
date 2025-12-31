@@ -12,7 +12,7 @@ from enum import Enum
 from typing import Dict, List, Optional, Tuple, Union
 import sympy as sp
 import numpy as np
-from ..base import PhysicsDomain
+from .base import PhysicsDomain
 
 
 # Physical constants (SI units)
@@ -444,13 +444,126 @@ def rapidity(v: float, c: float = SPEED_OF_LIGHT) -> float:
     return np.arctanh(v / c)
 
 
+class DopplerEffect:
+    """
+    Relativistic Doppler effect for light and sound.
+    
+    Handles both longitudinal and transverse Doppler shifts.
+    """
+    
+    @staticmethod
+    def longitudinal_frequency(f_source: float, v: float, 
+                               c: float = SPEED_OF_LIGHT,
+                               approaching: bool = True) -> float:
+        """
+        Calculate observed frequency for source moving toward/away.
+        
+        f_obs = f_source * √((1 + β)/(1 - β)) for approaching
+        f_obs = f_source * √((1 - β)/(1 + β)) for receding
+        
+        Args:
+            f_source: Source frequency
+            v: Relative velocity
+            c: Speed of light
+            approaching: True if source approaches observer
+            
+        Returns:
+            Observed frequency
+        """
+        beta_val = v / c
+        if approaching:
+            return f_source * np.sqrt((1 + beta_val) / (1 - beta_val))
+        else:
+            return f_source * np.sqrt((1 - beta_val) / (1 + beta_val))
+    
+    @staticmethod
+    def transverse_frequency(f_source: float, v: float,
+                             c: float = SPEED_OF_LIGHT) -> float:
+        """
+        Calculate transverse Doppler shift (time dilation effect).
+        
+        f_obs = f_source / γ
+        
+        Occurs when source moves perpendicular to line of sight.
+        """
+        gamma_val = 1.0 / np.sqrt(1 - (v/c)**2)
+        return f_source / gamma_val
+    
+    @staticmethod
+    def redshift(v: float, c: float = SPEED_OF_LIGHT) -> float:
+        """
+        Calculate cosmological redshift z for receding source.
+        
+        z = √((1 + β)/(1 - β)) - 1
+        """
+        beta_val = v / c
+        return np.sqrt((1 + beta_val) / (1 - beta_val)) - 1
+    
+    @staticmethod
+    def velocity_from_redshift(z: float, c: float = SPEED_OF_LIGHT) -> float:
+        """
+        Calculate velocity from observed redshift.
+        
+        β = ((1+z)² - 1) / ((1+z)² + 1)
+        """
+        factor = (1 + z)**2
+        beta_val = (factor - 1) / (factor + 1)
+        return beta_val * c
+
+
+def relativistic_aberration(theta_source: float, v: float, 
+                            c: float = SPEED_OF_LIGHT) -> float:
+    """
+    Calculate relativistic stellar aberration.
+    
+    cos(θ_obs) = (cos(θ_source) - β) / (1 - β*cos(θ_source))
+    
+    Args:
+        theta_source: Angle in source frame (radians)
+        v: Relative velocity
+        c: Speed of light
+        
+    Returns:
+        Observed angle (radians)
+    """
+    beta_val = v / c
+    cos_source = np.cos(theta_source)
+    cos_obs = (cos_source - beta_val) / (1 - beta_val * cos_source)
+    return np.arccos(np.clip(cos_obs, -1, 1))
+
+
+def compton_wavelength_shift(theta: float, m_e: float = 9.109e-31,
+                             c: float = SPEED_OF_LIGHT,
+                             h: float = 6.626e-34) -> float:
+    """
+    Calculate Compton wavelength shift for photon-electron scattering.
+    
+    Δλ = (h/m_e c)(1 - cos(θ))
+    
+    Args:
+        theta: Scattering angle (radians)
+        m_e: Electron mass
+        c: Speed of light
+        h: Planck constant
+        
+    Returns:
+        Wavelength shift (m)
+    """
+    lambda_c = h / (m_e * c)  # Compton wavelength
+    return lambda_c * (1 - np.cos(theta))
+
+
 __all__ = [
     'SPEED_OF_LIGHT',
     'RelativisticParticle',
     'FourVector',
     'LorentzTransform',
     'RelativisticCollision',
+    'DopplerEffect',
     'gamma',
     'beta',
     'rapidity',
+    'relativistic_aberration',
+    'compton_wavelength_shift',
 ]
+

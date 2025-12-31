@@ -14,7 +14,7 @@ from typing import Dict, List, Optional, Tuple, Callable, Union
 import sympy as sp
 import numpy as np
 from scipy import integrate
-from ..base import PhysicsDomain
+from .base import PhysicsDomain
 
 
 # Physical constants (SI units)
