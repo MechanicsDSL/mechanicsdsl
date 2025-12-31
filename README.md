@@ -144,14 +144,34 @@ compiler.compile_to_cpp("dam_break.cpp", target="standard", compile_binary=True)
 
 ### Electromagnetism
 - **Charged Particles**: Lorentz force, cyclotron motion, Larmor radius
+- **Waves**: Plane waves, Poynting vector, radiation pressure
+- **Antennas**: Hertzian dipole, λ/2 dipole, radiation resistance
+- **Waveguides**: TE/TM modes, cutoff frequencies, group velocity
 - **Traps**: Penning trap, magnetic dipole traps, gradient/curvature drift
-- **Potentials**: Scalar/vector potentials, gauge transformations
 
 ### Special Relativity
 - **Kinematics**: Lorentz boosts, velocity addition, time dilation, length contraction
 - **Four-Vectors**: Spacetime intervals, invariants, metric signature (+,-,-,-)
 - **Doppler Effect**: Longitudinal, transverse, cosmological redshift
-- **Collisions**: Invariant mass, threshold energies, Compton scattering
+- **Radiation**: Synchrotron radiation, Thomas precession, twin paradox
+
+### General Relativity
+- **Black Holes**: Schwarzschild metric, Kerr (rotating), ergosphere
+- **Geodesics**: Light bending, ISCO, photon sphere
+- **Lensing**: Deflection angle, Einstein radius, magnification
+- **Cosmology**: FLRW metric, Hubble law, comoving distance
+
+### Statistical Mechanics
+- **Ensembles**: Microcanonical, canonical, grand canonical
+- **Distributions**: Boltzmann, Fermi-Dirac, Bose-Einstein
+- **Models**: Ising model, ideal gas, quantum harmonic oscillator
+- **Thermodynamic Quantities**: Partition functions, entropy, free energy
+
+### Thermodynamics
+- **Heat Engines**: Carnot, Otto, Diesel cycles
+- **Equations of State**: Ideal gas, van der Waals
+- **Phase Transitions**: Clausius-Clapeyron, latent heat
+- **Heat Capacity**: Debye, Einstein models
 
 ### Fluid Dynamics
 - **SPH Solver**: Smoothed Particle Hydrodynamics for incompressible fluids
