@@ -27,7 +27,7 @@ class TestEnergyConservation:
         \\parameter{{m}}{{{mass}}}{{kg}}
         \\parameter{{l}}{{{length}}}{{m}}
         \\parameter{{g}}{{9.81}}{{m/s^2}}
-        \\lagrangian{{0.5 * m * l^2 * \\dot{{theta}}^2 + m * g * l * \\cos(theta)}}
+        \\lagrangian{{0.5 * m * l^2 * \\dot{{theta}}^2 + m * g * l * \\cos{{theta}}}}
         \\initial{{theta={initial_angle}, theta_dot=0}}
         """
         
@@ -88,7 +88,7 @@ class TestNumericalStability:
         \\parameter{m}{1.0}{kg}
         \\parameter{l}{1.0}{m}
         \\parameter{g}{9.81}{m/s^2}
-        \\lagrangian{0.5 * m * l^2 * \\dot{theta}^2 + m * g * l * \\cos(theta)}
+        \\lagrangian{0.5 * m * l^2 * \\dot{theta}^2 + m * g * l * \\cos{theta}}
         \\initial{theta=0.5, theta_dot=0}
         """
         
