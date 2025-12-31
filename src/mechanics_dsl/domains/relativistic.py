@@ -553,6 +553,345 @@ def compton_wavelength_shift(theta: float, m_e: float = 9.109e-31,
     return lambda_c * (1 - np.cos(theta))
 
 
+class SynchrotronRadiation:
+    """
+    Synchrotron radiation from relativistic charged particles.
+    
+    When charged particles are accelerated (e.g., in magnetic fields),
+    they emit electromagnetic radiation. For relativistic particles,
+    this radiation is beamed in the forward direction.
+    
+    Key formulas:
+    - Radiated power: P = (q²c/6πε₀)(γ⁴/R²)β⁴  (circular motion)
+    - Critical frequency: ω_c = (3/2) γ³ c/R
+    - Beaming angle: θ ≈ 1/γ
+    
+    Example:
+        >>> synch = SynchrotronRadiation(charge=1.6e-19, mass=9.1e-31)
+        >>> power = synch.radiated_power(gamma=1000, radius=1.0)
+    """
+    
+    EPSILON_0 = 8.854e-12
+    
+    def __init__(self, charge: float, mass: float, c: float = SPEED_OF_LIGHT):
+        """
+        Initialize synchrotron radiation calculator.
+        
+        Args:
+            charge: Particle charge (C)
+            mass: Particle rest mass (kg)
+            c: Speed of light (m/s)
+        """
+        self.q = abs(charge)
+        self.m = mass
+        self.c = c
+    
+    def radiated_power(self, gamma_factor: float, radius: float) -> float:
+        """
+        Power radiated by relativistic particle in circular motion.
+        
+        P = (q²c/6πε₀)(γ⁴/R²)β⁴= (q²c/6πε₀)(γ⁴/R²)(1 - 1/γ²)²
+        
+        Simplified for γ >> 1:
+        P ≈ (q²c γ⁴)/(6πε₀ R²)
+        
+        Args:
+            gamma_factor: Lorentz factor γ
+            radius: Radius of circular motion (m)
+            
+        Returns:
+            Radiated power (W)
+        """
+        beta_sq = 1 - 1/gamma_factor**2
+        prefactor = self.q**2 * self.c / (6 * np.pi * self.EPSILON_0)
+        return prefactor * (gamma_factor**4 / radius**2) * beta_sq**2
+    
+    def critical_frequency(self, gamma_factor: float, radius: float) -> float:
+        """
+        Critical frequency of synchrotron spectrum.
+        
+        ω_c = (3/2) γ³ c/R
+        
+        Half the radiated power is above this frequency.
+        """
+        return (3/2) * gamma_factor**3 * self.c / radius
+    
+    def characteristic_angle(self, gamma_factor: float) -> float:
+        """
+        Characteristic opening angle of radiation cone.
+        
+        θ ≈ 1/γ (radians)
+        """
+        return 1.0 / gamma_factor
+    
+    def energy_loss_per_turn(self, gamma_factor: float, radius: float) -> float:
+        """
+        Energy lost per revolution in circular accelerator.
+        
+        ΔE = (4π/3)(r_e/R)(γ⁴/m_e c²) for electrons
+        """
+        circumference = 2 * np.pi * radius
+        power = self.radiated_power(gamma_factor, radius)
+        period = circumference / (self.c * np.sqrt(1 - 1/gamma_factor**2))
+        return power * period
+
+
+class ThomasPrecession:
+    """
+    Thomas precession of spinning particles.
+    
+    When a spinning particle accelerates, its spin axis precesses
+    even in the absence of torques (relativistic kinematic effect).
+    
+    Precession frequency: Ω_T = (γ-1)/v² × (a × v)
+    
+    For circular motion: Ω_T = (γ-1) ω
+    
+    Example:
+        >>> thomas = ThomasPrecession()
+        >>> omega_T = thomas.precession_frequency(v=0.1*c, a=1e10, theta_av=np.pi/2)
+    """
+    
+    def __init__(self, c: float = SPEED_OF_LIGHT):
+        """
+        Initialize Thomas precession calculator.
+        
+        Args:
+            c: Speed of light
+        """
+        self.c = c
+    
+    def precession_frequency(self, v: float, a: float, theta_av: float) -> float:
+        """
+        Thomas precession angular frequency.
+        
+        |Ω_T| = (γ-1)/v² × |a × v| = (γ-1) a sin(θ)/v
+        
+        Args:
+            v: Particle speed
+            a: Magnitude of acceleration
+            theta_av: Angle between a and v (radians)
+            
+        Returns:
+            Precession angular frequency (rad/s)
+        """
+        gamma_val = 1.0 / np.sqrt(1 - (v/self.c)**2)
+        return (gamma_val - 1) * a * np.sin(theta_av) / v
+    
+    def circular_motion_precession(self, omega_orbit: float, v: float) -> float:
+        """
+        Thomas precession for circular motion.
+        
+        Ω_T = (γ - 1) × ω_orbit
+        
+        Args:
+            omega_orbit: Orbital angular frequency
+            v: Orbital speed
+        """
+        gamma_val = 1.0 / np.sqrt(1 - (v/self.c)**2)
+        return (gamma_val - 1) * omega_orbit
+
+
+class TwinParadox:
+    """
+    Twin paradox calculations.
+    
+    Calculates proper time for various worldlines to show that
+    the traveling twin ages less than the stationary twin.
+    
+    For constant velocity travel at speed v for distance L:
+    - Earth time: t_E = 2L/v
+    - Traveler proper time: τ = 2L/(γv) = t_E/γ
+    
+    Example:
+        >>> paradox = TwinParadox()
+        >>> ages = paradox.constant_velocity(distance=4.0, speed=0.8, c=1.0)
+    """
+    
+    def __init__(self, c: float = SPEED_OF_LIGHT):
+        """
+        Initialize twin paradox calculator.
+        
+        Args:
+            c: Speed of light
+        """
+        self.c = c
+    
+    def constant_velocity(self, distance: float, speed: float) -> Dict[str, float]:
+        """
+        Simple twin paradox with constant velocity travel.
+        
+        Args:
+            distance: One-way distance (m)
+            speed: Travel speed (m/s)
+            
+        Returns:
+            Dictionary with 'earth_time', 'proper_time', 'age_difference'
+        """
+        gamma_val = 1.0 / np.sqrt(1 - (speed/self.c)**2)
+        earth_time = 2 * distance / speed
+        proper_time = earth_time / gamma_val
+        
+        return {
+            'earth_time': earth_time,
+            'proper_time': proper_time,
+            'age_difference': earth_time - proper_time,
+            'gamma': gamma_val
+        }
+    
+    def constant_acceleration(self, distance: float, 
+                              acceleration: float) -> Dict[str, float]:
+        """
+        Twin paradox with constant proper acceleration.
+        
+        Uses hyperbolic motion for more realistic scenario.
+        
+        For constant acceleration a, traveling to distance d and back:
+        
+        τ = (4c/a) × arcsinh(√(ad/c²))
+        
+        Args:
+            distance: One-way distance (m)
+            acceleration: Proper acceleration (m/s²)
+            
+        Returns:
+            Dictionary with timing information
+        """
+        # Time for one leg (accelerate to midpoint, decelerate to end)
+        # Using hyperbolic motion
+        c = self.c
+        a = acceleration
+        d = distance / 2  # Midpoint
+        
+        # Coordinate time for one quarter trip
+        t_quarter = (c/a) * np.sqrt((2*a*d/c**2) + (a*d/c**2)**2)
+        t_total = 4 * t_quarter  # Four quarters (there, back)
+        
+        # Proper time
+        tau_quarter = (c/a) * np.arcsinh(a * t_quarter / c)
+        tau_total = 4 * tau_quarter
+        
+        return {
+            'earth_time': t_total,
+            'proper_time': tau_total,
+            'age_difference': t_total - tau_total
+        }
+
+
+def proper_acceleration(coordinate_acceleration: float, v: float,
+                       c: float = SPEED_OF_LIGHT) -> float:
+    """
+    Convert coordinate acceleration to proper acceleration.
+    
+    a_proper = γ³ × a_coordinate (for parallel motion)
+    
+    Args:
+        coordinate_acceleration: Acceleration measured in lab frame
+        v: Current velocity
+        c: Speed of light
+        
+    Returns:
+        Proper acceleration felt by accelerating observer
+    """
+    gamma_val = 1.0 / np.sqrt(1 - (v/c)**2)
+    return gamma_val**3 * coordinate_acceleration
+
+
+def relativistic_mass(rest_mass: float, v: float,
+                     c: float = SPEED_OF_LIGHT) -> float:
+    """
+    Relativistic mass (deprecated concept but sometimes useful).
+    
+    m_rel = γ × m_0
+    
+    Note: Modern physics prefers to use rest mass and momentum.
+    """
+    gamma_val = 1.0 / np.sqrt(1 - (v/c)**2)
+    return gamma_val * rest_mass
+
+
+def gravitational_redshift(delta_phi: float, c: float = SPEED_OF_LIGHT) -> float:
+    """
+    Gravitational redshift (weak field approximation).
+    
+    z = Δφ/c² (for Δφ << c²)
+    
+    where Δφ is the gravitational potential difference.
+    
+    Args:
+        delta_phi: Potential difference (J/kg) = GM(1/r₁ - 1/r₂)
+        c: Speed of light
+        
+    Returns:
+        Redshift z = Δλ/λ
+    """
+    return delta_phi / c**2
+
+
+def relativistic_kinetic_energy(mass: float, v: float,
+                                c: float = SPEED_OF_LIGHT) -> float:
+    """
+    Relativistic kinetic energy T = (γ-1)mc².
+    
+    Args:
+        mass: Rest mass
+        v: Velocity
+        c: Speed of light
+    """
+    gamma_val = 1.0 / np.sqrt(1 - (v/c)**2)
+    return (gamma_val - 1) * mass * c**2
+
+
+def velocity_from_kinetic_energy(T: float, mass: float,
+                                  c: float = SPEED_OF_LIGHT) -> float:
+    """
+    Calculate velocity from relativistic kinetic energy.
+    
+    From T = (γ-1)mc², solve for v.
+    
+    Args:
+        T: Kinetic energy
+        mass: Rest mass
+        c: Speed of light
+        
+    Returns:
+        Velocity
+    """
+    gamma_val = T / (mass * c**2) + 1
+    beta_sq = 1 - 1/gamma_val**2
+    return c * np.sqrt(beta_sq)
+
+
+def momentum_from_energy(E: float, mass: float, c: float = SPEED_OF_LIGHT) -> float:
+    """
+    Calculate momentum from total energy using E² = (pc)² + (mc²)².
+    
+    p = √(E² - (mc²)²) / c
+    """
+    E0 = mass * c**2  # Rest energy
+    if E < E0:
+        raise ValueError("Energy must be >= rest energy")
+    return np.sqrt(E**2 - E0**2) / c
+
+
+def mandelstam_s(p1: FourVector, p2: FourVector) -> float:
+    """
+    Mandelstam s variable (center of mass energy squared).
+    
+    s = (p₁ + p₂)²
+    
+    For collision of particles with 4-momenta p1 and p2.
+    """
+    # Sum the four-vectors
+    sum_vec = FourVector(
+        ct=p1.ct + p2.ct,
+        x=p1.x + p2.x,
+        y=p1.y + p2.y,
+        z=p1.z + p2.z
+    )
+    return sum_vec.invariant()
+
+
 __all__ = [
     'SPEED_OF_LIGHT',
     'RelativisticParticle',
@@ -560,10 +899,21 @@ __all__ = [
     'LorentzTransform',
     'RelativisticCollision',
     'DopplerEffect',
+    'SynchrotronRadiation',
+    'ThomasPrecession',
+    'TwinParadox',
     'gamma',
     'beta',
     'rapidity',
     'relativistic_aberration',
     'compton_wavelength_shift',
+    'proper_acceleration',
+    'relativistic_mass',
+    'gravitational_redshift',
+    'relativistic_kinetic_energy',
+    'velocity_from_kinetic_energy',
+    'momentum_from_energy',
+    'mandelstam_s',
 ]
+
 
