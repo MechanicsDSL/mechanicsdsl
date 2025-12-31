@@ -1,0 +1,54 @@
+{% set name = "mechanicsdsl-core" %}
+{% set version = "1.3.1" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
+  # sha256: <UPDATE_WITH_ACTUAL_HASH>
+
+build:
+  number: 0
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv
+
+requirements:
+  host:
+    - python >=3.8
+    - pip
+    - setuptools >=61.0
+  run:
+    - python >=3.8
+    - numpy >=1.20.0
+    - scipy >=1.7.0
+    - sympy >=1.8
+    - matplotlib-base >=3.4.0
+
+test:
+  imports:
+    - mechanics_dsl
+    - mechanics_dsl.compiler
+    - mechanics_dsl.parser
+    - mechanics_dsl.solver
+  commands:
+    - python -c "from mechanics_dsl import PhysicsCompiler; print('Import successful')"
+
+about:
+  home: https://github.com/MechanicsDSL/mechanicsdsl
+  license: MIT
+  license_family: MIT
+  license_file: LICENSE
+  summary: A Domain-Specific Language and Transpiler for Classical Mechanics
+  description: |
+    MechanicsDSL is a computational physics framework that lets you define 
+    physical systems in a natural, LaTeX-inspired syntax and automatically 
+    generates high-performance simulations. From pendulums to planetary orbits, 
+    from Lagrangian mechanics to fluid dynamics—describe it once, simulate it anywhere.
+  doc_url: https://mechanicsdsl.readthedocs.io/
+  dev_url: https://github.com/MechanicsDSL/mechanicsdsl
+
+extra:
+  recipe-maintainers:
+    - MechanicsDSL

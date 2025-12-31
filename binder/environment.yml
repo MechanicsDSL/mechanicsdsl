@@ -1,0 +1,14 @@
+name: mechanicsdsl-demo
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - jupyter
+  - numpy
+  - scipy
+  - sympy
+  - matplotlib
+  - pip:
+    - mechanicsdsl-core

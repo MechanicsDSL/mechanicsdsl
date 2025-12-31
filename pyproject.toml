@@ -27,10 +27,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-test = ["pytest"]
+test = ["pytest", "pytest-cov", "hypothesis>=6.0"]
 codegen = ["pybind11"]
 jit = ["numba>=0.56.0"]  # Optional: for JIT acceleration
-all = ["numba>=0.56.0", "pybind11"]
+typing = ["mypy", "types-setuptools"]
+all = ["numba>=0.56.0", "pybind11", "hypothesis>=6.0", "mypy"]
 
 [project.urls]
 "Repository" = "https://github.com/MechanicsDSL/mechanicsdsl"

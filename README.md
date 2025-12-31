@@ -17,6 +17,9 @@
 <a href="https://github.com/MechanicsDSL/mechanicsdsl/actions/workflows/codeql.yml"> 
  <img src="https://github.com/MechanicsDSL/mechanicsdsl/actions/workflows/codeql.yml/badge.svg" alt="CodeQL Advanced"> 
 </a>
+<a href="https://mybinder.org/v2/gh/MechanicsDSL/mechanicsdsl/main?filepath=examples/notebooks">
+ <img src="https://mybinder.org/badge_logo.svg" alt="Launch Binder">
+</a>
 
 </p>
 

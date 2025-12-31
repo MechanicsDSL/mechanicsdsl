@@ -1,0 +1,40 @@
+{
+    "name": "mechanicsdsl",
+    "displayName": "MechanicsDSL",
+    "description": "Syntax highlighting for MechanicsDSL physics domain-specific language",
+    "version": "0.1.0",
+    "publisher": "mechanicsdsl",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/MechanicsDSL/mechanicsdsl"
+    },
+    "engines": {
+        "vscode": "^1.60.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [
+            {
+                "id": "mechanicsdsl",
+                "aliases": [
+                    "MechanicsDSL",
+                    "mdsl"
+                ],
+                "extensions": [
+                    ".mdsl",
+                    ".mechanics"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "mechanicsdsl",
+                "scopeName": "source.mechanicsdsl",
+                "path": "./syntaxes/mechanicsdsl.tmLanguage.json"
+            }
+        ]
+    }
+}

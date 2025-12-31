@@ -1,0 +1,84 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "MechanicsDSL",
+    "scopeName": "source.mechanicsdsl",
+    "patterns": [
+        {
+            "include": "#comments"
+        },
+        {
+            "include": "#commands"
+        },
+        {
+            "include": "#math"
+        },
+        {
+            "include": "#strings"
+        },
+        {
+            "include": "#numbers"
+        },
+        {
+            "include": "#operators"
+        }
+    ],
+    "repository": {
+        "comments": {
+            "name": "comment.line.percentage.mechanicsdsl",
+            "match": "%.*$"
+        },
+        "commands": {
+            "patterns": [
+                {
+                    "name": "keyword.control.mechanicsdsl",
+                    "match": "\\\\(system|defvar|parameter|lagrangian|hamiltonian|initial|constraint|force|damping|fluid|boundary|region)\\b"
+                },
+                {
+                    "name": "keyword.other.mechanicsdsl",
+                    "match": "\\\\(transform|define|particle_mass|equation_of_state)\\b"
+                },
+                {
+                    "name": "entity.name.function.mechanicsdsl",
+                    "match": "\\\\(dot|ddot|frac|sqrt|sin|cos|tan|exp|log|ln)\\b"
+                },
+                {
+                    "name": "constant.language.greek.mechanicsdsl",
+                    "match": "\\\\(alpha|beta|gamma|delta|epsilon|theta|lambda|mu|omega|phi|psi|pi|sigma|tau|rho|nu|kappa)\\b"
+                }
+            ]
+        },
+        "math": {
+            "patterns": [
+                {
+                    "name": "support.function.math.mechanicsdsl",
+                    "match": "\\\\(partial|int|oint|sum|lim|nabla|grad|div|curl)\\b"
+                },
+                {
+                    "name": "keyword.operator.math.mechanicsdsl",
+                    "match": "\\\\(cdot|times|cross|wedge|otimes)\\b"
+                }
+            ]
+        },
+        "strings": {
+            "name": "string.other.mechanicsdsl",
+            "begin": "\\{",
+            "end": "\\}",
+            "patterns": [
+                {
+                    "include": "#commands"
+                },
+                {
+                    "include": "#numbers"
+                }
+            ]
+        },
+        "numbers": {
+            "name": "constant.numeric.mechanicsdsl",
+            "match": "\\b[0-9]+(\\.[0-9]+)?([eE][+-]?[0-9]+)?\\b"
+        },
+        "operators": {
+            "name": "keyword.operator.mechanicsdsl",
+            "match": "[+\\-*/^=<>]"
+        }
+    }
+}

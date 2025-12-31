@@ -47,6 +47,16 @@ jobs:
       run: |
         pip install pytest pytest-cov
 
+    - name: Install type checking dependencies
+      if: matrix.python-version == '3.11'
+      run: |
+        pip install mypy types-setuptools
+
+    - name: Run type checking
+      if: matrix.python-version == '3.11'
+      run: |
+        mypy src/mechanics_dsl --ignore-missing-imports --no-error-summary || echo "Type checking completed with warnings"
+
     - name: Verify installation
       env:
         PYTHONPATH: ${{ github.workspace }}/src
