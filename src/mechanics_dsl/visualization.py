@@ -273,7 +273,10 @@ class MechanicsVisualizer:
         """
         import pandas as pd
         
-        if not validate_file_path(csv_filename, must_exist=True):
+        try:
+            validate_file_path(csv_filename, must_exist=True)
+        except (TypeError, ValueError, FileNotFoundError) as e:
+            logger.warning(f"Invalid file path: {e}")
             return None
             
         logger.info(f"Loading fluid data from {csv_filename}...")
@@ -283,8 +286,14 @@ class MechanicsVisualizer:
             logger.error(f"Failed to read CSV: {e}")
             return None
 
+
         # Get unique time steps
-        times = df['t'].unique()
+        try:
+            times = df['t'].unique()
+        except KeyError:
+            logger.error("CSV missing required 't' column")
+            return None
+
         logger.info(f"Found {len(times)} frames for {len(df[df['t']==times[0]])} particles")
         
         # Setup Plot
