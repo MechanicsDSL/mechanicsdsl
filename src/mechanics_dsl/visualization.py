@@ -16,6 +16,8 @@ from .utils import (
 )
 from .energy import PotentialEnergyCalculator
 
+__all__ = ['MechanicsVisualizer']
+
 class MechanicsVisualizer:
     """Enhanced visualization with circular buffers and configurable options"""
     

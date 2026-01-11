@@ -16,12 +16,33 @@ from .validation import (
     validate_time_span, validate_solution_dict, validate_file_path,
     resource_manager, AdvancedErrorHandler
 )
+from .registry import (
+    VariableCategory, COORDINATE_TYPES, CONSTANT_TYPES,
+    COMMON_COORDINATE_NAMES, COMMON_CONSTANT_NAMES,
+    is_coordinate_type, is_constant_type, is_likely_coordinate, classify_variable
+)
 
-# Re-export constants for backward compatibility
+# Re-export constants for backward compatibility and convenience
 from .config import (
-    DEFAULT_TRAIL_LENGTH, DEFAULT_FPS, ENERGY_TOLERANCE, DEFAULT_RTOL, DEFAULT_ATOL,
-    SIMPLIFICATION_TIMEOUT, MAX_PARSER_ERRORS, ANIMATION_INTERVAL_MS, TRAIL_ALPHA,
-    PRIMARY_COLOR, SECONDARY_COLOR, TERTIARY_COLOR
+    # Physical constants
+    STANDARD_GRAVITY, DEFAULT_GRAVITY, SPEED_OF_LIGHT, PLANCK_CONSTANT, HBAR,
+    # Numerical constants
+    DEFAULT_RTOL, DEFAULT_ATOL, ENERGY_TOLERANCE, DEFAULT_NUM_POINTS,
+    DEFAULT_MAX_STEP_FRACTION, DEFAULT_STIFFNESS_TEST_DURATION,
+    SIMPLIFICATION_TIMEOUT, MAX_PARSER_ERRORS, MAX_SOLVER_ITERATIONS,
+    NUMERICAL_INFINITY, SINGULARITY_THRESHOLD,
+    # Visualization constants
+    DEFAULT_TRAIL_LENGTH, DEFAULT_FPS, ANIMATION_INTERVAL_MS,
+    DEFAULT_DPI, MIN_DPI, MAX_DPI, TRAIL_ALPHA,
+    PRIMARY_COLOR, SECONDARY_COLOR, TERTIARY_COLOR,
+    ACCENT_COLOR, WARNING_COLOR, SUCCESS_COLOR,
+    DEFAULT_MARKER_SIZE, LARGE_MARKER_SIZE,
+    # File constants
+    MAX_PATH_LENGTH, MAX_FILE_SIZE,
+    # Cache constants
+    DEFAULT_CACHE_SIZE, DEFAULT_CACHE_MEMORY_MB,
+    # Logging constants
+    LOG_LEVELS,
 )
 
 __all__ = [
@@ -38,8 +59,21 @@ __all__ = [
     'runtime_type_check', 'validate_finite', 'validate_positive', 'validate_non_negative',
     'validate_time_span', 'validate_solution_dict', 'validate_file_path',
     'resource_manager', 'AdvancedErrorHandler',
-    # Constants
-    'DEFAULT_TRAIL_LENGTH', 'DEFAULT_FPS', 'ENERGY_TOLERANCE', 'DEFAULT_RTOL', 'DEFAULT_ATOL',
-    'SIMPLIFICATION_TIMEOUT', 'MAX_PARSER_ERRORS', 'ANIMATION_INTERVAL_MS', 'TRAIL_ALPHA',
-    'PRIMARY_COLOR', 'SECONDARY_COLOR', 'TERTIARY_COLOR',
+    # Registry
+    'VariableCategory', 'COORDINATE_TYPES', 'CONSTANT_TYPES',
+    'COMMON_COORDINATE_NAMES', 'COMMON_CONSTANT_NAMES',
+    'is_coordinate_type', 'is_constant_type', 'is_likely_coordinate', 'classify_variable',
+    # Physical Constants
+    'STANDARD_GRAVITY', 'DEFAULT_GRAVITY', 'SPEED_OF_LIGHT', 'PLANCK_CONSTANT', 'HBAR',
+    # Numerical Constants
+    'DEFAULT_RTOL', 'DEFAULT_ATOL', 'ENERGY_TOLERANCE', 'DEFAULT_NUM_POINTS',
+    'SIMPLIFICATION_TIMEOUT', 'MAX_PARSER_ERRORS', 'MAX_SOLVER_ITERATIONS',
+    'NUMERICAL_INFINITY', 'SINGULARITY_THRESHOLD',
+    # Visualization Constants
+    'DEFAULT_TRAIL_LENGTH', 'DEFAULT_FPS', 'ANIMATION_INTERVAL_MS',
+    'TRAIL_ALPHA', 'PRIMARY_COLOR', 'SECONDARY_COLOR', 'TERTIARY_COLOR',
+    # File/Cache Constants
+    'MAX_PATH_LENGTH', 'MAX_FILE_SIZE', 'DEFAULT_CACHE_SIZE', 'DEFAULT_CACHE_MEMORY_MB',
 ]
+
+

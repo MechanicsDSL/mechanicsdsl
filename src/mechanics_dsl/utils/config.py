@@ -7,24 +7,110 @@ from typing import Dict, Any, Tuple
 from .logging import logger
 
 # ============================================================================
-# CONSTANTS
+# PHYSICAL CONSTANTS
 # ============================================================================
 
-# Numerical constants
-DEFAULT_TRAIL_LENGTH = 150
-DEFAULT_FPS = 30
-ENERGY_TOLERANCE = 0.01
+# Standard gravity (m/s²)
+STANDARD_GRAVITY = 9.80665
+DEFAULT_GRAVITY = 9.81
+
+# Speed of light (m/s)
+SPEED_OF_LIGHT = 299792458.0
+
+# Planck constant (J·s)
+PLANCK_CONSTANT = 6.62607015e-34
+HBAR = 1.054571817e-34
+
+# ============================================================================
+# NUMERICAL CONSTANTS
+# ============================================================================
+
+# Default tolerances for numerical integration
 DEFAULT_RTOL = 1e-6
 DEFAULT_ATOL = 1e-8
-SIMPLIFICATION_TIMEOUT = 5.0  # seconds
+
+# Energy conservation tolerance (relative)
+ENERGY_TOLERANCE = 0.01
+
+# Default number of simulation points
+DEFAULT_NUM_POINTS = 1000
+
+# Default simulation time step hints
+DEFAULT_MAX_STEP_FRACTION = 0.01  # Max step as fraction of time span
+DEFAULT_STIFFNESS_TEST_DURATION = 0.01
+
+# Simplification timeout (seconds)
+SIMPLIFICATION_TIMEOUT = 5.0
+
+# Maximum parser errors before aborting
 MAX_PARSER_ERRORS = 10
 
-# Animation constants
+# Maximum number of iterations for solvers
+MAX_SOLVER_ITERATIONS = 1000
+
+# Infinity approximation for numerical comparisons
+NUMERICAL_INFINITY = 1e10
+
+# Near-zero threshold for singularity detection  
+SINGULARITY_THRESHOLD = 1e-12
+
+# ============================================================================
+# VISUALIZATION CONSTANTS
+# ============================================================================
+
+# Animation settings
+DEFAULT_TRAIL_LENGTH = 150
+DEFAULT_FPS = 30
 ANIMATION_INTERVAL_MS = 33  # ~30 FPS
+DEFAULT_DPI = 100
+MIN_DPI = 10
+MAX_DPI = 1000
+
+# Trail appearance
 TRAIL_ALPHA = 0.4
-PRIMARY_COLOR = '#E63946'
-SECONDARY_COLOR = '#457B9D'
-TERTIARY_COLOR = '#F1FAEE'
+
+# Default color scheme (professional palette)
+PRIMARY_COLOR = '#E63946'    # Red-orange
+SECONDARY_COLOR = '#457B9D'  # Steel blue
+TERTIARY_COLOR = '#F1FAEE'   # Off-white
+ACCENT_COLOR = '#A8DADC'     # Light cyan
+WARNING_COLOR = '#FFB703'    # Amber
+SUCCESS_COLOR = '#2A9D8F'    # Teal
+
+# Marker sizes
+DEFAULT_MARKER_SIZE = 10
+LARGE_MARKER_SIZE = 100
+
+# ============================================================================
+# FILE VALIDATION CONSTANTS
+# ============================================================================
+
+# Maximum file path length
+MAX_PATH_LENGTH = 4096
+
+# Maximum file size for loading (bytes) - 100MB
+MAX_FILE_SIZE = 100 * 1024 * 1024
+
+# ============================================================================
+# CACHE CONSTANTS
+# ============================================================================
+
+# Default LRU cache settings
+DEFAULT_CACHE_SIZE = 128
+DEFAULT_CACHE_MEMORY_MB = 100.0
+
+# ============================================================================
+# LOGGING CONSTANTS
+# ============================================================================
+
+# Log level mappings
+LOG_LEVELS = {
+    'DEBUG': logging.DEBUG,
+    'INFO': logging.INFO,
+    'WARNING': logging.WARNING,
+    'ERROR': logging.ERROR,
+    'CRITICAL': logging.CRITICAL,
+}
 
 
 class Config:
@@ -272,6 +358,7 @@ class Config:
             Dictionary containing all configuration values
         """
         return {
+            # Core settings
             'enable_profiling': self._enable_profiling,
             'enable_debug_logging': self._enable_debug_logging,
             'simplification_timeout': self._simplification_timeout,
@@ -282,11 +369,25 @@ class Config:
             'animation_fps': self._animation_fps,
             'save_intermediate_results': self._save_intermediate_results,
             'cache_symbolic_results': self._cache_symbolic_results,
+            # v6.0 Advanced features
+            'enable_performance_monitoring': self._enable_performance_monitoring,
+            'cache_max_size': self._cache_max_size,
+            'cache_max_memory_mb': self._cache_max_memory_mb,
+            'enable_adaptive_solver': self._enable_adaptive_solver,
+            'enable_parallel_processing': self._enable_parallel_processing,
+            'max_workers': self._max_workers,
+            'enable_memory_monitoring': self._enable_memory_monitoring,
+            'gc_threshold': self._gc_threshold,
+            'enable_type_checking': self._enable_type_checking,
+            'error_recovery_enabled': self._error_recovery_enabled,
+            'max_retry_attempts': self._max_retry_attempts,
         }
     
     def from_dict(self, data: Dict[str, Any]) -> None:
         """
         Load configuration from dictionary with validation.
+        
+        Uses property setters to ensure all values are validated.
         
         Args:
             data: Dictionary containing configuration values
@@ -298,12 +399,32 @@ class Config:
         if not isinstance(data, dict):
             raise TypeError(f"data must be dict, got {type(data).__name__}")
         
-        for k, v in data.items():
-            if hasattr(self, k):
-                setattr(self, k, v)
+        # Map property names (some internal names differ from property names)
+        property_mapping = {
+            'gc_threshold': '_gc_threshold',
+            'max_workers': '_max_workers',
+            'enable_parallel_processing': '_enable_parallel_processing',
+            'enable_type_checking': '_enable_type_checking',
+            'max_retry_attempts': '_max_retry_attempts',
+        }
+        
+        for key, value in data.items():
+            # Try to use property setter first (provides validation)
+            if hasattr(self.__class__, key) and isinstance(getattr(self.__class__, key, None), property):
+                try:
+                    setattr(self, key, value)
+                except (TypeError, ValueError) as e:
+                    logger.warning(f"Invalid value for config key '{key}': {e}")
+            # Fallback to direct attribute setting for internal-only fields
+            elif key in property_mapping:
+                internal_name = property_mapping[key]
+                setattr(self, internal_name, value)
+            elif key.startswith('_') and hasattr(self, key):
+                setattr(self, key, value)
             else:
-                logger.warning(f"Unknown configuration key: {k}")
+                logger.warning(f"Unknown configuration key: {key}")
 
 
 # Global config instance
 config = Config()
+

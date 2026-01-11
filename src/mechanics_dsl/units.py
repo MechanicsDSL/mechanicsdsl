@@ -4,7 +4,8 @@ Unit system for MechanicsDSL with dimensional analysis
 import ast
 import operator
 import numpy as np
-from typing import Dict, Union
+from functools import lru_cache
+from typing import Dict, Union, Tuple
 from dataclasses import dataclass, field
 
 from .utils import logger

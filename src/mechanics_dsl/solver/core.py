@@ -6,12 +6,14 @@ import sympy as sp
 from scipy.integrate import solve_ivp
 from typing import List, Dict, Optional, Tuple, Callable
 
-from .utils import (
+from ..utils import (
     logger, config, profile_function, timeout, TimeoutError,
     validate_array_safe, safe_float_conversion, safe_array_access,
     validate_finite, validate_time_span, _perf_monitor
 )
-from .symbolic import SymbolicEngine
+from ..symbolic import SymbolicEngine
+
+__all__ = ['NumericalSimulator']
 
 class NumericalSimulator:
     """Enhanced numerical simulator with better stability and diagnostics"""

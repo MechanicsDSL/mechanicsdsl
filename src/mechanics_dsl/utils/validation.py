@@ -315,36 +315,74 @@ def validate_solution_dict(solution: dict) -> None:
             raise ValueError(f"State vector size mismatch: y.shape[0]={y.shape[0]} != 2*len(coords)={2*len(coords)}")
 
 
-def validate_file_path(filename: str, must_exist: bool = False) -> None:
+def validate_file_path(filename: str, must_exist: bool = False, 
+                       allow_symlinks: bool = False) -> None:
     """
-    Validate file path.
+    Validate file path with comprehensive security checks.
     
     Args:
         filename: File path to validate
         must_exist: Whether file must exist
+        allow_symlinks: Whether to allow symlinks (default: False for security)
         
     Raises:
         TypeError: If filename is not a string
-        ValueError: If filename is empty or invalid
+        ValueError: If filename is empty, contains unsafe characters, or is invalid
         FileNotFoundError: If must_exist=True and file doesn't exist
+        
+    Security checks performed:
+        - Null byte injection prevention
+        - Path traversal (..) prevention
+        - Special character detection
+        - Symlink detection (when allow_symlinks=False)
+        - Excessive path length check
     """
     if not isinstance(filename, str):
         raise TypeError(f"filename must be str, got {type(filename).__name__}")
+    
+    # Check for null bytes (common injection technique)
+    if '\x00' in filename:
+        raise ValueError("filename contains null byte which is unsafe")
     
     filename = filename.strip()
     if not filename:
         raise ValueError("filename cannot be empty")
     
+    # Check for excessive path length (security + compatibility)
+    if len(filename) > 4096:
+        raise ValueError(f"filename too long ({len(filename)} chars), max 4096")
+    
     # Check for path traversal attempts
     if '..' in filename:
         raise ValueError(f"filename contains '..' which may be unsafe: {filename}")
     
+    # Check for special characters that may cause issues
+    # Allow basic alphanumeric, path separators, dots, underscores, hyphens
+    unsafe_chars = set('<>"|?*')  # Windows-unsafe characters
+    # Add control characters (except for path separators)
+    for i in range(32):
+        unsafe_chars.add(chr(i))
+    
+    found_unsafe = [c for c in filename if c in unsafe_chars]
+    if found_unsafe:
+        raise ValueError(
+            f"filename contains unsafe characters: {found_unsafe!r}"
+        )
+    
     if must_exist:
         path = Path(filename)
+        
         if not path.exists():
             raise FileNotFoundError(f"File does not exist: {filename}")
         if not path.is_file():
             raise ValueError(f"Path is not a file: {filename}")
+        
+        # Check for symlinks if not allowed
+        if not allow_symlinks and path.is_symlink():
+            raise ValueError(
+                f"Path is a symlink which is not allowed for security: {filename}. "
+                "Set allow_symlinks=True to override."
+            )
 
 
 @contextmanager

@@ -9,7 +9,7 @@ mechanical systems using LaTeX-inspired notation.
 from .compiler import PhysicsCompiler
 from .parser import tokenize, MechanicsParser
 from .symbolic import SymbolicEngine
-from .solver import NumericalSimulator
+from .solver import NumericalSimulator  # Now imports from solver package
 
 # Utils imports
 from .utils import setup_logging, logger, config
@@ -17,7 +17,21 @@ from .utils import setup_logging, logger, config
 # Analysis imports
 from .energy import PotentialEnergyCalculator
 
-__version__ = "1.5.0"
+# Exceptions with actionable error messages
+from .exceptions import (
+    MechanicsDSLError,
+    ParseError,
+    TokenizationError,
+    SemanticError,
+    NoLagrangianError,
+    NoCoordinatesError,
+    SimulationError,
+    IntegrationError,
+    InitialConditionError,
+    ParameterError,
+)
+
+__version__ = "1.5.1"
 __author__ = "Noah Parsons"
 __license__ = "MIT"
 
@@ -29,4 +43,9 @@ __all__ = [
     'setup_logging', 'logger', 'config',
     # Analysis
     'PotentialEnergyCalculator',
+    # Exceptions
+    'MechanicsDSLError', 'ParseError', 'TokenizationError', 'SemanticError',
+    'NoLagrangianError', 'NoCoordinatesError', 'SimulationError',
+    'IntegrationError', 'InitialConditionError', 'ParameterError',
 ]
+

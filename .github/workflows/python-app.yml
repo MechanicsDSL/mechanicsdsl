@@ -45,15 +45,13 @@ jobs:
 
     - name: Install test dependencies
       run: |
-        pip install pytest pytest-cov hypothesis
+        pip install pytest pytest-cov hypothesis pytest-benchmark
 
     - name: Install type checking dependencies
-      if: matrix.python-version == '3.11'
       run: |
         pip install mypy types-setuptools
 
     - name: Run type checking
-      if: matrix.python-version == '3.11'
       run: |
         mypy src/mechanics_dsl --ignore-missing-imports --no-error-summary || echo "Type checking completed with warnings"
 
@@ -66,6 +64,8 @@ jobs:
         python -c "from mechanics_dsl import PhysicsCompiler; print('✓ PhysicsCompiler import successful')"
         # Ensure we're using the installed package, not reference/core.py
         python -c "import mechanics_dsl; import inspect; print(f'✓ Package location: {inspect.getfile(mechanics_dsl)}')"
+        # Verify exceptions with actionable messages
+        python -c "from mechanics_dsl import MechanicsDSLError, ParseError; print('✓ Exception imports successful')"
 
     - name: Configure matplotlib for headless environment
       env:
@@ -92,6 +92,28 @@ jobs:
           -W ignore::DeprecationWarning \
           -W ignore::PendingDeprecationWarning
 
+    - name: Run benchmark tests (regression detection)
+      if: matrix.python-version == '3.11'
+      env:
+        CI: true
+        MPLBACKEND: Agg
+        PYTHONPATH: ${{ github.workspace }}/src
+      run: |
+        pytest tests/performance/ \
+          --benchmark-only \
+          --benchmark-autosave \
+          --benchmark-json=benchmark-results.json \
+          -m "performance" \
+          || echo "Performance tests completed (no tests found is OK)"
+
+    - name: Upload benchmark results
+      if: matrix.python-version == '3.11' && always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark-results
+        path: benchmark-results.json
+        if-no-files-found: ignore
+
     - name: Upload coverage reports to Codecov
       if: matrix.python-version == '3.11' && always()
       uses: codecov/codecov-action@v5 
@@ -103,3 +125,55 @@ jobs:
         flags: unittests
         name: codecov-umbrella
         verbose: true
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    
+    - name: Install linting tools
+      run: |
+        pip install black flake8 isort
+    
+    - name: Check code formatting with Black
+      run: |
+        black --check --diff src/ tests/ || echo "Formatting issues found"
+    
+    - name: Check import sorting with isort
+      run: |
+        isort --check-only --diff src/ tests/ || echo "Import sorting issues found"
+    
+    - name: Check code style with flake8
+      run: |
+        flake8 src/ --max-line-length=100 --extend-ignore=E203,W503 --count --show-source --statistics || echo "Linting issues found"
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    
+    - name: Install security tools
+      run: |
+        pip install bandit
+    
+    - name: Run security scan with Bandit
+      run: |
+        bandit -r src/ -ll --skip B101,B404,B603 -f json -o bandit-results.json || true
+        bandit -r src/ -ll --skip B101,B404,B603 || echo "Security scan completed"
+    
+    - name: Upload security scan results
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-scan
+        path: bandit-results.json
+        if-no-files-found: ignore

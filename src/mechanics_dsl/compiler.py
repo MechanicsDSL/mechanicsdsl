@@ -17,7 +17,7 @@ from .codegen.cpp import CppGenerator
 
 from .utils import (
     logger, config, profile_function, validate_file_path,
-    LRUCache, _perf_monitor
+    LRUCache, _perf_monitor, is_likely_coordinate
 )
 from .parser import (
     tokenize, MechanicsParser, ASTNode, Expression,
@@ -31,7 +31,11 @@ from .solver import NumericalSimulator
 from .visualization import MechanicsVisualizer
 from .units import UnitSystem
 
-__version__ = "1.4.0"
+# Version imported from package root for single source of truth
+try:
+    from . import __version__
+except ImportError:
+    __version__ = "1.5.0"
 
 class SystemSerializer:
     """Serialize and deserialize compiled physics systems"""
@@ -500,23 +504,20 @@ class PhysicsCompiler:
                 logger.debug(f"Initial conditions: {node.conditions}")
 
     def get_coordinates(self) -> List[str]:
-        """Extract generalized coordinates (exclude constants)"""
+        """
+        Extract generalized coordinates (exclude constants).
+        
+        Uses the registry module's is_likely_coordinate() function to determine
+        which variables are dynamic coordinates vs. constants/parameters.
+        
+        Returns:
+            List of coordinate variable names
+        """
         coordinates = []
         
         for var_name, var_info in self.variables.items():
-            # Exclude constants and parameters
-            if var_info['type'] in ['Constant', 'Parameter', 'Mass', 'Spring Constant', 
-                                   'Damping Coeff', 'Acceleration', 'Gravitational Constant',
-                                   'Electric Field', 'Magnetic Field', 'Charge', 'Angular Velocity',
-                                   'Drive Frequency', 'Force Amplitude', 'Coupling Constant',
-                                   'Moment of Inertia 1', 'Moment of Inertia 3', 'Spin Rate',
-                                   'Radius', 'Incline Angle', 'Damping Parameter', 'Natural Frequency',
-                                   'Parameter']:
-                continue
-            # Include only dynamic variables
-            if (var_info['type'] in ['Angle', 'Position', 'Coordinate'] or
-                var_name in ['theta', 'theta1', 'theta2', 'theta3', 'x', 'x1', 'x2', 'y', 'z', 
-                           'r', 'phi', 'psi']):
+            # Use registry-based classification
+            if is_likely_coordinate(var_name, var_info['type']):
                 coordinates.append(var_name)
         
         logger.debug(f"Coordinates: {coordinates}")

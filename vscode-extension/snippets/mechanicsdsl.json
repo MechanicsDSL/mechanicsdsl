@@ -1,0 +1,185 @@
+{
+    "Simple Pendulum": {
+        "prefix": "pendulum",
+        "body": [
+            "\\\\system{${1:pendulum}}",
+            "",
+            "% Define generalized coordinate",
+            "\\\\defvar{${2:theta}}{Angle}",
+            "",
+            "% Physical parameters",
+            "\\\\parameter{m}{${3:1.0}}      % mass (kg)",
+            "\\\\parameter{l}{${4:1.0}}      % length (m)",
+            "\\\\parameter{g}{${5:9.81}}     % gravity (m/s^2)",
+            "",
+            "% Lagrangian: L = T - V",
+            "\\\\lagrangian{\\\\frac{1}{2}*m*l^2*\\\\dot{${2:theta}}^2 + m*g*l*\\\\cos{${2:theta}}}",
+            "",
+            "% Initial conditions",
+            "\\\\initial{${2:theta}}{${6:0.5}}",
+            "\\\\initial{${2:theta}_dot}{${7:0}}"
+        ],
+        "description": "Simple pendulum system template"
+    },
+    "Double Pendulum": {
+        "prefix": "double-pendulum",
+        "body": [
+            "\\\\system{${1:double_pendulum}}",
+            "",
+            "% Generalized coordinates",
+            "\\\\defvar{theta1}{Angle}",
+            "\\\\defvar{theta2}{Angle}",
+            "",
+            "% Parameters",
+            "\\\\parameter{m1}{${2:1.0}}",
+            "\\\\parameter{m2}{${3:1.0}}",
+            "\\\\parameter{l1}{${4:1.0}}",
+            "\\\\parameter{l2}{${5:1.0}}",
+            "\\\\parameter{g}{9.81}",
+            "",
+            "% Lagrangian (kinetic - potential energy)",
+            "\\\\lagrangian{",
+            "    \\\\frac{1}{2}*(m1+m2)*l1^2*\\\\dot{theta1}^2 +",
+            "    \\\\frac{1}{2}*m2*l2^2*\\\\dot{theta2}^2 +",
+            "    m2*l1*l2*\\\\dot{theta1}*\\\\dot{theta2}*\\\\cos{theta1 - theta2} +",
+            "    (m1+m2)*g*l1*\\\\cos{theta1} +",
+            "    m2*g*l2*\\\\cos{theta2}",
+            "}",
+            "",
+            "\\\\initial{theta1}{${6:0.5}}",
+            "\\\\initial{theta1_dot}{0}",
+            "\\\\initial{theta2}{${7:0.5}}",
+            "\\\\initial{theta2_dot}{0}"
+        ],
+        "description": "Double pendulum (chaotic) system template"
+    },
+    "Harmonic Oscillator": {
+        "prefix": "oscillator",
+        "body": [
+            "\\\\system{${1:harmonic_oscillator}}",
+            "",
+            "\\\\defvar{x}{Position}",
+            "",
+            "\\\\parameter{m}{${2:1.0}}     % mass",
+            "\\\\parameter{k}{${3:1.0}}     % spring constant",
+            "",
+            "% Lagrangian: L = T - V = (1/2)mv^2 - (1/2)kx^2",
+            "\\\\lagrangian{\\\\frac{1}{2}*m*\\\\dot{x}^2 - \\\\frac{1}{2}*k*x^2}",
+            "",
+            "\\\\initial{x}{${4:1.0}}",
+            "\\\\initial{x_dot}{${5:0}}"
+        ],
+        "description": "Simple harmonic oscillator template"
+    },
+    "Damped Oscillator": {
+        "prefix": "damped",
+        "body": [
+            "\\\\system{${1:damped_oscillator}}",
+            "",
+            "\\\\defvar{x}{Position}",
+            "",
+            "\\\\parameter{m}{${2:1.0}}",
+            "\\\\parameter{k}{${3:1.0}}",
+            "\\\\parameter{b}{${4:0.1}}     % damping coefficient",
+            "",
+            "\\\\lagrangian{\\\\frac{1}{2}*m*\\\\dot{x}^2 - \\\\frac{1}{2}*k*x^2}",
+            "\\\\damping{b*\\\\dot{x}}",
+            "",
+            "\\\\initial{x}{${5:1.0}}",
+            "\\\\initial{x_dot}{0}"
+        ],
+        "description": "Damped harmonic oscillator template"
+    },
+    "System Definition": {
+        "prefix": "system",
+        "body": [
+            "\\\\system{${1:system_name}}",
+            "$0"
+        ],
+        "description": "Define a new physics system"
+    },
+    "Variable Definition": {
+        "prefix": "defvar",
+        "body": [
+            "\\\\defvar{${1:name}}{${2|Angle,Position,Coordinate|}}"
+        ],
+        "description": "Define a generalized coordinate"
+    },
+    "Parameter": {
+        "prefix": "param",
+        "body": [
+            "\\\\parameter{${1:name}}{${2:value}}"
+        ],
+        "description": "Define a physical parameter"
+    },
+    "Lagrangian": {
+        "prefix": "lagrangian",
+        "body": [
+            "\\\\lagrangian{${1:T - V}}"
+        ],
+        "description": "Define the Lagrangian (T - V)"
+    },
+    "Hamiltonian": {
+        "prefix": "hamiltonian",
+        "body": [
+            "\\\\hamiltonian{${1:T + V}}"
+        ],
+        "description": "Define the Hamiltonian (T + V)"
+    },
+    "Initial Condition": {
+        "prefix": "initial",
+        "body": [
+            "\\\\initial{${1:variable}}{${2:value}}"
+        ],
+        "description": "Set initial condition"
+    },
+    "Constraint": {
+        "prefix": "constraint",
+        "body": [
+            "\\\\constraint{${1:expression = 0}}"
+        ],
+        "description": "Add a holonomic constraint"
+    },
+    "Derivative (dot)": {
+        "prefix": "dot",
+        "body": [
+            "\\\\dot{${1:variable}}"
+        ],
+        "description": "First time derivative"
+    },
+    "Derivative (ddot)": {
+        "prefix": "ddot",
+        "body": [
+            "\\\\ddot{${1:variable}}"
+        ],
+        "description": "Second time derivative"
+    },
+    "Fraction": {
+        "prefix": "frac",
+        "body": [
+            "\\\\frac{${1:numerator}}{${2:denominator}}"
+        ],
+        "description": "Fraction"
+    },
+    "Greek Letter": {
+        "prefix": "greek",
+        "body": [
+            "\\\\${1|alpha,beta,gamma,delta,epsilon,theta,lambda,mu,nu,omega,phi,psi,pi,sigma,tau,rho,kappa|}"
+        ],
+        "description": "Insert Greek letter"
+    },
+    "SPH Fluid": {
+        "prefix": "fluid",
+        "body": [
+            "\\\\region{${1:fluid_region}}{rectangle}",
+            "    \\\\constraint{x}{0, ${2:1.0}}",
+            "    \\\\constraint{y}{0, ${3:0.5}}",
+            "",
+            "\\\\fluid{${4:water}}{${1:fluid_region}}",
+            "    \\\\density{${5:1000}}",
+            "    \\\\viscosity{${6:0.001}}",
+            "    \\\\smoothing{${7:0.02}}"
+        ],
+        "description": "SPH fluid simulation setup"
+    }
+}

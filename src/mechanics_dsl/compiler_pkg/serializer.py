@@ -116,6 +116,11 @@ class SystemSerializer:
             ValueError: If filename is invalid.
             FileNotFoundError: If file doesn't exist.
             
+        Warning:
+            Pickle files can execute arbitrary code when loaded. Only import
+            pickle files from trusted sources. Consider using JSON format
+            for untrusted data.
+            
         Example:
             >>> state = SystemSerializer.import_system('pendulum.json')
             >>> if state:
@@ -128,10 +133,16 @@ class SystemSerializer:
                 with open(filename, 'r', encoding='utf-8') as f:
                     state = json.load(f)
             elif filename.endswith('.pkl') or filename.endswith('.pickle'):
+                # Security warning for pickle files
+                logger.warning(
+                    f"Loading pickle file '{filename}'. WARNING: Pickle files can "
+                    "execute arbitrary code. Only load pickle files from trusted sources. "
+                    "Consider using JSON format for safer serialization."
+                )
                 with open(filename, 'rb') as f:
                     state = pickle.load(f)
             else:
-                # Try JSON first
+                # Try JSON first (safer default)
                 with open(filename, 'r', encoding='utf-8') as f:
                     state = json.load(f)
             
@@ -144,3 +155,4 @@ class SystemSerializer:
 
 
 __all__ = ['SystemSerializer']
+

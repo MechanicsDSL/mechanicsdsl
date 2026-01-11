@@ -5,6 +5,117 @@ All notable changes to MechanicsDSL will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.1] - 2026-01-11
+
+### Added
+
+#### Architecture Improvements
+- **Variable Registry Module** (`utils/registry.py`) - Centralized variable type classification
+  - Replaces hardcoded coordinate/constant detection logic
+  - Extensible `VariableCategory` enum and classification functions
+  - `is_likely_coordinate()`, `is_constant_type()`, `classify_variable()` utilities
+
+- **Solver Package Migration** - Created modular `solver/` package
+  - `solver/core.py` - Main NumericalSimulator class (725 lines)
+  - `solver/__init__.py` - Clean public API
+  - Deleted legacy `solver.py` module
+
+- **Protocol-based Typing** (`protocols.py`) - Structural typing support
+  - `SimulatableProtocol`, `CompilableProtocol`, `VisualizableProtocol`
+  - `CodeGeneratorProtocol`, `PhysicsDomainProtocol`
+  - Runtime-checkable for duck-typing validation
+
+- **Actionable Exception Classes** (`exceptions.py`) - 14 new exception types
+  - `MechanicsDSLError` base class with suggestions and docs links
+  - `NoLagrangianError`, `NoCoordinatesError`, `IntegrationError`
+  - Each exception provides actionable suggestions for fixing errors
+
+- **Expanded Constants** - 50+ magic numbers moved to `utils/config.py`
+  - Physical constants: `STANDARD_GRAVITY`, `SPEED_OF_LIGHT`, `HBAR`
+  - Numerical constants: `DEFAULT_NUM_POINTS`, `SINGULARITY_THRESHOLD`
+  - Visualization: `DEFAULT_DPI`, `ACCENT_COLOR`, `WARNING_COLOR`
+  - Cache/file limits: `MAX_PATH_LENGTH`, `MAX_FILE_SIZE`
+
+#### Security Enhancements
+- **Pickle Security Warning** - Added explicit warning when loading pickle files
+  - Warns users about arbitrary code execution risks
+  - Recommends JSON format for untrusted data
+  
+- **Enhanced File Path Validation** - Comprehensive security checks
+  - Null byte injection prevention
+  - Path traversal (`..`) detection
+  - Special character filtering
+  - Symlink attack prevention (optional)
+  - Excessive path length check
+
+#### Developer Experience
+- **VS Code Extension Enhancements**
+  - 15+ snippets for common physics systems (pendulum, oscillator, fluid)
+  - Version sync with package (now v1.5.0)
+  - Added snippet support and better metadata
+
+- **Pre-commit Hooks** - Enhanced code quality automation
+  - `isort` - Import sorting
+  - `bandit` - Security vulnerability scanning
+  - `docformatter` - Consistent docstring formatting
+  - Additional pre-commit-hooks (check-ast, check-docstring-first)
+
+- **CI/CD Pipeline Improvements**
+  - `mypy` runs on all Python versions (was only 3.11)
+  - Benchmark tests with `pytest-benchmark`
+  - Lint job with `black`, `isort`, `flake8`
+  - Security scanning job with `bandit`
+
+- **Pytest Markers** - Test categorization
+  - `@pytest.mark.slow` - Long-running tests
+  - `@pytest.mark.gpu_required` - GPU-dependent tests
+  - `@pytest.mark.physics_validation` - Physics correctness checks
+  - `@pytest.mark.performance` - Benchmark tests
+
+#### Documentation
+- **Expanded Fluid Dynamics Docs** - 38 → 250+ lines
+  - Comprehensive SPH theory
+  - Code examples for all features
+  - Kernel descriptions and boundary handling
+
+- **Updated Binder Environment**
+  - JupyterLab support
+  - Flexible Python version (3.9-3.12)
+  - Additional packages (ipywidgets, hypothesis)
+
+- **Updated Conda Recipe**
+  - Version 1.5.0
+  - Expanded test suite
+  - Better feature description
+
+### Changed
+
+#### Code Organization
+- **Parser Package Migration Complete** - Deleted legacy `parser.py` (1,030 lines)
+  - All imports now use the modular `parser/` package structure
+  - Backward compatible - no import changes required
+  
+- **Solver Package Migration** - Deleted legacy `solver.py` (700+ lines)
+  - All functionality now in `solver/` package
+
+- **Module Exports** - Added `__all__` to core modules
+  - `symbolic.py`, `solver.py`, `visualization.py`
+  - Clearer public API definition
+   
+#### Configuration
+- **Config.to_dict()** - Now exports all v6.0 properties (was missing 11 fields)
+- **Config.from_dict()** - Now uses property setters for proper validation
+
+### Fixed
+- Version string mismatch between `compiler.py` (was 1.4.0) and package (1.5.0)
+
+### Improved
+- Enhanced docstrings throughout with `Warning:` sections for security-sensitive APIs
+- Improved error messages to be more actionable with suggestions
+- All 1,052 unit tests passing
+
+---
+
 ## [1.4.0] - 2026-01-04
 
 ### Added

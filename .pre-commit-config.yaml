@@ -1,6 +1,7 @@
 # Pre-commit hooks for code quality
 # Install: pip install pre-commit
 # Setup: pre-commit install
+# Run all: pre-commit run --all-files
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -15,6 +16,16 @@ repos:
       - id: check-toml
       - id: check-merge-conflict
       - id: debug-statements
+      - id: check-ast
+      - id: check-docstring-first
+      - id: name-tests-test
+        args: ['--pytest-test-first']
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: ['--profile=black', '--line-length=100']
 
   - repo: https://github.com/psf/black
     rev: 23.12.1
@@ -27,8 +38,21 @@ repos:
     rev: 7.0.0
     hooks:
       - id: flake8
-        args: ['--max-line-length=100', '--extend-ignore=E203,W503']
+        args: ['--max-line-length=100', '--extend-ignore=E203,W503,D100,D101,D102,D103,D104,D105']
         additional_dependencies: [flake8-docstrings]
+
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.7
+    hooks:
+      - id: bandit
+        args: ['-r', 'src/', '-ll', '--skip=B101,B404,B603']
+        # B101: assert, B404: subprocess, B603: subprocess_without_shell_equals_true
+
+  - repo: https://github.com/PyCQA/docformatter
+    rev: v1.7.5
+    hooks:
+      - id: docformatter
+        args: ['--in-place', '--wrap-summaries=100', '--wrap-descriptions=100']
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.8.0
@@ -36,3 +60,4 @@ repos:
       - id: mypy
         additional_dependencies: [types-all]
         args: ['--ignore-missing-imports']
+        exclude: 'tests/'

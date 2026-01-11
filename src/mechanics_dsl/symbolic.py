@@ -11,6 +11,8 @@ from .parser import (
     FunctionCallExpr, VectorExpr, VectorOpExpr
 )
 
+__all__ = ['SymbolicEngine']
+
 class SymbolicEngine:
     """Enhanced symbolic mathematics engine with advanced caching and performance monitoring"""
     

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mechanicsdsl-core"
-version = "1.5.0"
+version = "1.5.1"
 description = "A Domain-Specific Language and Transpiler for Classical Mechanics"
 authors = [
   { name="Noah Parsons", email="nomapa223@gmail.com" },
@@ -31,7 +31,52 @@ test = ["pytest", "pytest-cov", "hypothesis>=6.0"]
 codegen = ["pybind11"]
 jit = ["numba>=0.56.0"]  # Optional: for JIT acceleration
 typing = ["mypy", "types-setuptools"]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "hypothesis>=6.0",
+    "mypy",
+    "types-setuptools",
+    "black",
+    "flake8",
+    "isort",
+    "bandit",
+]
 all = ["numba>=0.56.0", "pybind11", "hypothesis>=6.0", "mypy"]
 
 [project.urls]
 "Repository" = "https://github.com/MechanicsDSL/mechanicsdsl"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "gpu_required: marks tests that require GPU/CUDA (deselect with '-m \"not gpu_required\"')",
+    "physics_validation: marks tests that validate physics correctness",
+    "performance: marks performance/benchmark tests",
+    "integration: marks integration tests",
+    "numba_required: marks tests that require numba JIT compiler",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py38", "py39", "py310", "py311", "py312"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.8"
+ignore_missing_imports = true
+warn_return_any = true
+warn_unused_configs = true
+
