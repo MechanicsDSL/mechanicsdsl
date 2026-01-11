@@ -13,6 +13,7 @@ from . import quantum
 from . import general_relativity
 from . import statistical
 from . import thermodynamics
+from . import kinematics
 
 __all__ = [
     'PhysicsDomain',
@@ -22,5 +23,7 @@ __all__ = [
     'general_relativity',
     'statistical',
     'thermodynamics',
+    'kinematics',
 ]
+
 
