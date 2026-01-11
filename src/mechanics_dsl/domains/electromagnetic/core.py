@@ -9,7 +9,7 @@ from enum import Enum
 from typing import Dict, List, Optional, Tuple, Callable
 import sympy as sp
 import numpy as np
-from .base import PhysicsDomain
+from ..base import PhysicsDomain
 
 
 class FieldType(Enum):

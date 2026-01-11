@@ -12,7 +12,7 @@ from enum import Enum
 from typing import Dict, List, Optional, Tuple, Union
 import sympy as sp
 import numpy as np
-from .base import PhysicsDomain
+from ..base import PhysicsDomain
 
 
 # Physical constants (SI units)
