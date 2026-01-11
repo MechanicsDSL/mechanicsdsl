@@ -85,6 +85,7 @@ Documentation Contents
 
    physics/lagrangian_mechanics
    physics/hamiltonian_mechanics
+   physics/kinematics
    physics/constraint_physics
    physics/dissipation
    physics/stability
@@ -104,6 +105,9 @@ Documentation Contents
    physics/electromagnetic
    physics/relativistic
    physics/quantum
+   physics/statistical
+   physics/thermodynamics
+   physics/general_relativity
 
 .. toctree::
    :maxdepth: 2

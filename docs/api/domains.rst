@@ -228,6 +228,120 @@ RigidBodyDynamics
       Set the 3×3 inertia tensor.
 
 
+Kinematics
+----------
+
+The ``mechanics_dsl.domains.kinematics`` package provides analytical kinematics
+tools for motion analysis without forces.
+
+KinematicsSolver
+~~~~~~~~~~~~~~~~
+
+.. py:class:: mechanics_dsl.domains.kinematics.KinematicsSolver
+
+   Analytical solver for constant acceleration problems.
+
+   **Example:**
+
+   .. code-block:: python
+
+      from mechanics_dsl.domains.kinematics import KinematicsSolver
+      
+      solver = KinematicsSolver()
+      solution = solver.solve(v0=10, a=-9.81, t=2)
+      
+      print(f"Final velocity: {solution.state.final_velocity} m/s")
+      print(solution.show_work())
+
+   **Methods:**
+
+   .. py:method:: solve(**kwargs) -> KinematicSolution
+
+      Solve for unknown kinematic variables given knowns.
+
+   .. py:method:: derive_formula(unknown: str, knowns: List[str]) -> sp.Expr
+
+      Derive a symbolic formula for the unknown.
+
+
+ProjectileMotion
+~~~~~~~~~~~~~~~~
+
+.. py:class:: mechanics_dsl.domains.kinematics.ProjectileMotion
+
+   Complete projectile motion analysis.
+
+   **Example:**
+
+   .. code-block:: python
+
+      from mechanics_dsl.domains.kinematics import ProjectileMotion
+      
+      proj = ProjectileMotion(v0=20, angle=45, height=0)
+      
+      print(f"Range: {proj.range():.2f} m")
+      print(f"Max height: {proj.max_height():.2f} m")
+      print(f"Flight time: {proj.time_of_flight():.2f} s")
+
+   **Methods:**
+
+   .. py:method:: max_height() -> float
+
+      Calculate maximum height above launch point.
+
+   .. py:method:: range() -> float
+
+      Calculate horizontal range.
+
+   .. py:method:: time_of_flight() -> float
+
+      Calculate total time in air.
+
+   .. py:method:: position_at(t: float) -> Tuple[float, float]
+
+      Get (x, y) position at time t.
+
+   .. py:method:: velocity_at(t: float) -> Tuple[float, float]
+
+      Get (vx, vy) velocity at time t.
+
+
+UniformMotion
+~~~~~~~~~~~~~
+
+.. py:class:: mechanics_dsl.domains.kinematics.UniformMotion
+
+   Constant velocity motion (zero acceleration).
+
+   **Methods:**
+
+   .. py:method:: position_at(t: float) -> float
+
+      Get position at time t.
+
+   .. py:method:: time_to_reach(x: float) -> float
+
+      Get time to reach position x.
+
+
+FreeFall
+~~~~~~~~
+
+.. py:class:: mechanics_dsl.domains.kinematics.FreeFall
+
+   Free-fall motion near Earth's surface.
+
+   **Methods:**
+
+   .. py:method:: time_to_ground() -> float
+
+      Calculate time to reach ground.
+
+   .. py:method:: velocity_at_ground() -> float
+
+      Calculate velocity when reaching ground.
+
+
 Fluid Dynamics
 --------------
 
