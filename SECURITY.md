@@ -1,11 +1,5 @@
 # Security Policy
 
-## Supported Versions
-
-| Version | Supported       |
-|---------|-----------------|
-| 1.0.0   | :white_check_mark:|
-
 ## Reporting a Vulnerability
 
 MechanicsDSL includes an exec()-free compiler architecture designed to prevent arbitrary code execution from DSL files. However, if you discover a security vulnerability (e.g., AST injection, path traversal), please report it responsibly.
