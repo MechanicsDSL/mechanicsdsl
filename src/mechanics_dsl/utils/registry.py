@@ -27,11 +27,14 @@ COORDINATE_TYPES: FrozenSet[str] = frozenset({
 })
 
 # Variable types that represent constants/parameters (not coordinates)
+# NOTE: 'Length' is intentionally NOT here because it's ambiguous:
+#   - r (Length) -> coordinate (radial position)
+#   - l (Length) -> parameter (pendulum length)
+# Use name-based fallback for 'Length' types.
 CONSTANT_TYPES: FrozenSet[str] = frozenset({
     'Constant',
     'Parameter',
     'Mass',
-    'Length', 
     'Spring Constant',
     'Damping Coeff',
     'Damping Coefficient',
@@ -57,6 +60,7 @@ CONSTANT_TYPES: FrozenSet[str] = frozenset({
     'Amplitude',
     'Frequency',
     'Phase',
+    'Central Mass',  # e.g., M in Kepler problem
 })
 
 # Common coordinate variable names (fallback if type detection fails)
@@ -139,6 +143,11 @@ def is_likely_coordinate(var_name: str, var_type: str) -> bool:
     Uses both type information and naming conventions to determine
     if a variable represents a generalized coordinate.
     
+    Priority:
+    1. Explicit COORDINATE types (Angle, Position, Coordinate) -> IS coordinate
+    2. Explicit CONSTANT types (Parameter, Constant, Mass) -> NOT coordinate  
+    3. Name-based fallback for ambiguous types (like 'Length') -> use common names
+    
     Args:
         var_name: The variable name
         var_type: The variable type string
@@ -146,13 +155,16 @@ def is_likely_coordinate(var_name: str, var_type: str) -> bool:
     Returns:
         True if this is likely a coordinate, False otherwise
     """
-    # Explicit type takes precedence
-    if is_constant_type(var_type):
-        return False
+    # Explicit coordinate types take highest priority
     if is_coordinate_type(var_type):
         return True
     
-    # Fall back to name-based detection
+    # Explicit constant/parameter types
+    if is_constant_type(var_type):
+        return False
+    
+    # For unknown/ambiguous types, use name-based detection
+    # This handles cases like r (Length) where type is ambiguous
     return var_name in COMMON_COORDINATE_NAMES
 
 
