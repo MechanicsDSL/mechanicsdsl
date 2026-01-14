@@ -113,11 +113,20 @@ class MechanicsDSLNode:
                 
                 self._compiler = PhysicsCompiler()
                 
-                # Try file first
+                # Try file first with path validation
                 file_path = self.get_parameter('dsl_file').value
-                if file_path and Path(file_path).exists():
-                    with open(file_path) as f:
-                        code = f.read()
+                if file_path:
+                    # Validate the file path
+                    resolved = Path(file_path).resolve()
+                    # Only allow .mdsl and .dsl extensions
+                    if resolved.suffix.lower() not in ('.mdsl', '.dsl', '.txt'):
+                        self.get_logger().error(f'Invalid file extension: {resolved.suffix}')
+                        return
+                    if resolved.exists():
+                        with open(resolved, 'r') as f:
+                            code = f.read()
+                    else:
+                        code = self.get_parameter('dsl_code').value
                 else:
                     code = self.get_parameter('dsl_code').value
                 

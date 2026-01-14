@@ -193,8 +193,21 @@ class ModelicaImporter:
             
         Returns:
             MechanicsDSL code string
+            
+        Raises:
+            ValueError: If file path is invalid or has wrong extension
         """
-        with open(file_path, 'r') as f:
+        # Validate file path
+        resolved = Path(file_path).resolve()
+        
+        # Only allow .mo extension
+        if resolved.suffix.lower() != '.mo':
+            raise ValueError(f"Invalid file extension: {resolved.suffix}. Expected .mo")
+        
+        if not resolved.exists():
+            raise FileNotFoundError(f"Modelica file not found: {file_path}")
+        
+        with open(resolved, 'r', encoding='utf-8') as f:
             content = f.read()
         
         return self.parse(content)

@@ -24,6 +24,10 @@ from .registry import (
 from .rate_limit import (
     RateLimiter, SimulationRateLimiter, RateLimitExceeded, TokenBucket
 )
+from .path_validation import (
+    PathValidationError, is_safe_filename, secure_filename,
+    validate_path_within_base, safe_open, safe_path_join
+)
 
 # Re-export constants for backward compatibility and convenience
 from .config import (
@@ -68,6 +72,9 @@ __all__ = [
     'is_coordinate_type', 'is_constant_type', 'is_likely_coordinate', 'classify_variable',
     # Rate Limiting
     'RateLimiter', 'SimulationRateLimiter', 'RateLimitExceeded', 'TokenBucket',
+    # Path Validation (CWE-22 prevention)
+    'PathValidationError', 'is_safe_filename', 'secure_filename',
+    'validate_path_within_base', 'safe_open', 'safe_path_join',
     # Physical Constants
     'STANDARD_GRAVITY', 'DEFAULT_GRAVITY', 'SPEED_OF_LIGHT', 'PLANCK_CONSTANT', 'HBAR',
     # Numerical Constants
