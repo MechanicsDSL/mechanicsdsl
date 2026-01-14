@@ -17,7 +17,7 @@
 <a href="https://github.com/MechanicsDSL/mechanicsdsl/actions/workflows/codeql.yml"> 
  <img src="https://github.com/MechanicsDSL/mechanicsdsl/actions/workflows/codeql.yml/badge.svg" alt="CodeQL Advanced"> 
 </a>
-<a href="https://mybinder.org/v2/gh/MechanicsDSL/mechanicsdsl/main?filepath=examples/notebooks">
+<a href="https://mybinder.org/v2/gh/MechanicsDSL/mechanicsdsl/main?filepath=tutorials">
  <img src="https://mybinder.org/badge_logo.svg" alt="Launch Binder">
 </a>
 
@@ -27,22 +27,35 @@
 
 **MechanicsDSL** is a computational physics framework that lets you define physical systems in a natural, LaTeX-inspired syntax and automatically generates high-performance simulations. From pendulums to planetary orbits, from Lagrangian mechanics to fluid dynamics—describe it once, simulate it anywhere.
 
-## Why MechanicsDSL?
+## ✨ Why MechanicsDSL?
 
 | Feature | Description |
 |---------|-------------|
 | **Symbolic Engine** | Automatically derives equations of motion from Lagrangians or Hamiltonians |
-| **Fluid Dynamics** | Built-in SPH solver for dam breaks, waves, and liquid physics |
-| **High Performance** | Generates optimized C++, OpenMP, and WebAssembly code |
-| **Rich Visualization** | Phase space plots, energy analysis, and smooth animations |
-| **Research Ready** | Validated against analytical solutions and conservation laws |
+| **12+ Code Generators** | C++, Rust, Julia, CUDA, WebAssembly, Unity, Unreal, Modelica, and more |
+| **GPU Acceleration** | JAX backend with JIT compilation and automatic differentiation |
+| **Inverse Problems** | Parameter estimation, sensitivity analysis, MCMC uncertainty |
+| **Jupyter Native** | `%%mechanicsdsl` magic commands for notebooks |
+| **Real-time API** | FastAPI server with WebSocket streaming |
+| **IDE Support** | LSP server for VS Code with autocomplete and diagnostics |
+| **Plugin Architecture** | Extensible with custom physics domains and solvers |
 
 ---
 
-## Installation
+## 📦 Installation
 
 ```bash
 pip install mechanicsdsl-core
+```
+
+**With optional features:**
+
+```bash
+pip install mechanicsdsl-core[jax]      # GPU acceleration + autodiff
+pip install mechanicsdsl-core[server]   # FastAPI real-time server
+pip install mechanicsdsl-core[jupyter]  # Notebook magic commands
+pip install mechanicsdsl-core[lsp]      # VS Code language server
+pip install mechanicsdsl-core[all]      # Everything
 ```
 
 **Requirements:** Python 3.8+ with NumPy, SciPy, SymPy, and Matplotlib (installed automatically).
@@ -116,6 +129,52 @@ compiler.compile_dsl(fluid_code)
 compiler.compile_to_cpp("dam_break.cpp", target="standard", compile_binary=True)
 ```
 
+---
+
+## 🆕 New in v1.6.0
+
+### Jupyter Magic Commands
+
+```python
+%load_ext mechanics_dsl.jupyter
+
+%%mechanicsdsl --animate --t_span=0,20
+\system{pendulum}
+\defvar{theta}{Angle}{rad}
+\parameter{m}{1.0}{kg}
+\lagrangian{\frac{1}{2}*m*l^2*\dot{theta}^2 - m*g*l*(1-\cos{theta})}
+\initial{theta=2.5, theta_dot=0.0}
+```
+
+### Parameter Estimation
+
+```python
+from mechanics_dsl.inverse import ParameterEstimator
+
+estimator = ParameterEstimator(compiler)
+result = estimator.fit(observations, t_obs, ['m', 'k'])
+print(f"Fitted: m={result.parameters['m']:.3f}, k={result.parameters['k']:.3f}")
+```
+
+### Real-time API Server
+
+```bash
+python -m mechanics_dsl.server
+# -> http://localhost:8000/docs
+```
+
+### External Integrations
+
+| Platform | Module | Purpose |
+|----------|--------|---------|
+| **OpenMDAO** | `integrations.openmao` | Multidisciplinary optimization |
+| **ROS2** | `integrations.ros2` | Robotics simulation |
+| **Unity** | `integrations.unity` | Game engine (C#) |
+| **Unreal** | `integrations.unreal` | Game engine (C++) |
+| **Modelica** | `integrations.modelica` | Standards-based simulation |
+
+---
+
 ## Core Capabilities
 
 ### Classical Mechanics (17 Modules)
@@ -181,9 +240,21 @@ compiler.compile_to_cpp("dam_break.cpp", target="standard", compile_binary=True)
 
 ---
 
-## Examples
+## 📚 Examples & Tutorials
 
-The [`examples/`](examples/) directory contains 30 progressive tutorials:
+### Interactive Tutorials (Jupyter)
+
+| # | Tutorial | Topics |
+|---|----------|--------|
+| 1 | [Getting Started](tutorials/01_getting_started.ipynb) | DSL basics, simple pendulum, export |
+| 2 | [Double Pendulum](tutorials/02_double_pendulum.ipynb) | Chaos, sensitivity, phase space |
+| 3 | [Parameter Estimation](tutorials/03_parameter_estimation.ipynb) | Inverse problems, Sobol analysis |
+
+[![Launch Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/MechanicsDSL/mechanicsdsl/main?labpath=tutorials)
+
+### Example Scripts
+
+The [`examples/`](examples/) directory contains 30+ progressive examples:
 
 | Level | Examples |
 |-------|----------|
