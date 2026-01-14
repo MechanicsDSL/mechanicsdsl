@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mechanicsdsl-core"
-version = "1.5.1"
+version = "1.6.0"
 description = "A Domain-Specific Language and Transpiler for Classical Mechanics"
 authors = [
   { name="Noah Parsons", email="nomapa223@gmail.com" },
@@ -29,8 +29,15 @@ dependencies = [
 [project.optional-dependencies]
 test = ["pytest", "pytest-cov", "hypothesis>=6.0"]
 codegen = ["pybind11"]
-jit = ["numba>=0.56.0"]  # Optional: for JIT acceleration
+jit = ["numba>=0.56.0"]
 typing = ["mypy", "types-setuptools"]
+# New v1.6.0 optional dependencies
+jax = ["jax>=0.4.0", "jaxlib>=0.4.0", "diffrax>=0.4.0"]
+jax-gpu = ["jax[cuda12]>=0.4.0", "diffrax>=0.4.0"]
+server = ["fastapi>=0.100.0", "uvicorn>=0.22.0", "websockets>=11.0"]
+jupyter = ["ipywidgets>=8.0.0", "ipython>=8.0.0"]
+lsp = ["pygls>=1.0.0", "lsprotocol>=2023.0.0"]
+openmao = ["openmdao>=3.25.0"]
 dev = [
     "pytest",
     "pytest-cov",
@@ -42,7 +49,16 @@ dev = [
     "isort",
     "bandit",
 ]
-all = ["numba>=0.56.0", "pybind11", "hypothesis>=6.0", "mypy"]
+all = [
+    "numba>=0.56.0", 
+    "pybind11", 
+    "hypothesis>=6.0", 
+    "mypy",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.22.0",
+    "ipywidgets>=8.0.0",
+    "pygls>=1.0.0",
+]
 
 [project.urls]
 "Repository" = "https://github.com/MechanicsDSL/mechanicsdsl"
