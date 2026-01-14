@@ -33,6 +33,7 @@ class UnityGenerator(CodeGenerator if CodeGenerator != object else object):
         return ".cs"
     
     def __init__(self, compiler=None):
+        super().__init__()
         self.compiler = compiler
         if compiler:
             self.system_name = getattr(compiler, 'system_name', 'Physics')
