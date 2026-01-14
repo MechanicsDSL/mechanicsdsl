@@ -312,57 +312,91 @@ class SymbolicEngine:
             
         Returns:
             List of equations of motion
+            
+        Note:
+            The Euler-Lagrange equations are:
+            d/dt(∂L/∂q̇ᵢ) - ∂L/∂qᵢ = 0
+            
+            For coupled systems (e.g., double pendulum), ALL coordinates must
+            be treated as functions of time simultaneously to correctly compute
+            cross-coupling terms like ∂²θ₂/∂t² appearing in the θ₁ equation.
         """
         logger.info(f"Deriving equations of motion for {len(coordinates)} coordinates")
+        
+        # CRITICAL FIX: Create functions and symbols for ALL coordinates at once
+        # This ensures cross-coupling terms are correctly derived
+        coord_funcs = {}  # q -> q(t)
+        coord_syms = {}   # q -> symbol
+        coord_dots = {}   # q -> q_dot symbol
+        coord_ddots = {}  # q -> q_ddot symbol
+        
+        for q in coordinates:
+            coord_syms[q] = self.get_symbol(q)
+            coord_dots[q] = self.get_symbol(f"{q}_dot")
+            coord_ddots[q] = self.get_symbol(f"{q}_ddot")
+            coord_funcs[q] = sp.Function(q)(self.time_symbol)
+        
+        # Substitute ALL coordinates and velocities as time-functions SIMULTANEOUSLY
+        # This is critical for coupled systems where cos(theta1 - theta2) involves both
+        L_with_funcs = lagrangian
+        for q in coordinates:
+            L_with_funcs = L_with_funcs.subs(coord_syms[q], coord_funcs[q])
+        for q in coordinates:
+            L_with_funcs = L_with_funcs.subs(coord_dots[q], sp.diff(coord_funcs[q], self.time_symbol))
+        
         equations = []
         
         for q in coordinates:
             logger.debug(f"Processing coordinate: {q}")
-            q_sym = self.get_symbol(q)
-            q_dot_sym = self.get_symbol(f"{q}_dot")
-            q_ddot_sym = self.get_symbol(f"{q}_ddot")
-
-            q_func = sp.Function(q)(self.time_symbol)
-
-            L_with_funcs = lagrangian.subs(q_sym, q_func)
-            L_with_funcs = L_with_funcs.subs(q_dot_sym, sp.diff(q_func, self.time_symbol))
-
-            dL_dq_dot = sp.diff(L_with_funcs, sp.diff(q_func, self.time_symbol))
+            
+            q_func = coord_funcs[q]
+            dq_dt = sp.diff(q_func, self.time_symbol)
+            d2q_dt2 = sp.diff(q_func, self.time_symbol, 2)
+            
+            # Euler-Lagrange: d/dt(∂L/∂q̇) - ∂L/∂q = 0
+            dL_dq_dot = sp.diff(L_with_funcs, dq_dt)
             d_dt_dL_dq_dot = sp.diff(dL_dq_dot, self.time_symbol)
             dL_dq = sp.diff(L_with_funcs, q_func)
-
+            
             equation = d_dt_dL_dq_dot - dL_dq
-
-            # CRITICAL: Replace derivatives BEFORE simplification to preserve structure
-            # Replace second derivative first (most specific)
-            d2q_dt2 = sp.diff(q_func, self.time_symbol, 2)
-            equation = equation.subs(d2q_dt2, q_ddot_sym)
             
-            # Replace first derivative
-            dq_dt = sp.diff(q_func, self.time_symbol)
-            equation = equation.subs(dq_dt, q_dot_sym)
+            # Back-substitute ALL coordinates' derivatives and functions
+            # Order matters: most specific (second derivatives) first
+            for coord in coordinates:
+                d2coord_dt2 = sp.diff(coord_funcs[coord], self.time_symbol, 2)
+                equation = equation.subs(d2coord_dt2, coord_ddots[coord])
             
-            # Replace function
-            equation = equation.subs(q_func, q_sym)
+            for coord in coordinates:
+                dcoord_dt = sp.diff(coord_funcs[coord], self.time_symbol)
+                equation = equation.subs(dcoord_dt, coord_dots[coord])
             
-            # Also try to replace any remaining Derivative objects by pattern matching
+            for coord in coordinates:
+                equation = equation.subs(coord_funcs[coord], coord_syms[coord])
+            
+            # Handle any remaining Derivative objects by pattern matching
             for term in equation.atoms(sp.Derivative):
-                if term.order == 2 and term.has(self.time_symbol):
-                    try:
-                        if hasattr(term.expr, 'func') and str(term.expr.func) == q:
-                            equation = equation.subs(term, q_ddot_sym)
-                    except:
-                        if str(term).startswith(f"Derivative({q}"):
-                            equation = equation.subs(term, q_ddot_sym)
-                elif term.order == 1 and term.has(self.time_symbol):
-                    try:
-                        if hasattr(term.expr, 'func') and str(term.expr.func) == q:
-                            equation = equation.subs(term, q_dot_sym)
-                    except:
-                        if str(term).startswith(f"Derivative({q}"):
-                            equation = equation.subs(term, q_dot_sym)
+                for coord in coordinates:
+                    if hasattr(term, 'order'):
+                        order = term.order if isinstance(term.order, int) else len(term.variables)
+                    else:
+                        order = len(term.variables) if hasattr(term, 'variables') else 0
+                    
+                    if order >= 2 and term.has(self.time_symbol):
+                        try:
+                            if hasattr(term.expr, 'func') and str(term.expr.func) == coord:
+                                equation = equation.subs(term, coord_ddots[coord])
+                        except:
+                            if str(term).startswith(f"Derivative({coord}"):
+                                equation = equation.subs(term, coord_ddots[coord])
+                    elif order == 1 and term.has(self.time_symbol):
+                        try:
+                            if hasattr(term.expr, 'func') and str(term.expr.func) == coord:
+                                equation = equation.subs(term, coord_dots[coord])
+                        except:
+                            if str(term).startswith(f"Derivative({coord}"):
+                                equation = equation.subs(term, coord_dots[coord])
 
-            # Simplify with timeout (after substitution to preserve acceleration term)
+            # Simplify with timeout (after substitution to preserve acceleration terms)
             try:
                 if config.simplification_timeout > 0:
                     with timeout(config.simplification_timeout):
@@ -374,9 +408,11 @@ class SymbolicEngine:
             except (ValueError, TypeError, AttributeError) as e:
                 logger.warning(f"Simplification error for {q}: {e}, using unsimplified equation")
             
-            # Verify acceleration term is present after simplification
-            if not equation.has(q_ddot_sym):
-                logger.warning(f"Acceleration term {q_ddot_sym} missing after simplification for {q}, equation: {equation}")
+            # Verify acceleration terms are present after simplification
+            missing_accels = [coord for coord in coordinates if not equation.has(coord_ddots[coord])]
+            if missing_accels:
+                # For some simple systems, not all accelerations appear in all equations
+                logger.debug(f"Accelerations {missing_accels} not in equation for {q}")
             
             equations.append(equation)
             logger.debug(f"Equation for {q}: {equation}")
