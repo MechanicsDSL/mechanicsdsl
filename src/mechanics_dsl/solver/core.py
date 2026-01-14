@@ -1,10 +1,12 @@
 """
 Numerical simulation engine for MechanicsDSL
 """
+import asyncio
+import concurrent.futures
 import numpy as np
 import sympy as sp
 from scipy.integrate import solve_ivp
-from typing import List, Dict, Optional, Tuple, Callable
+from typing import List, Dict, Optional, Tuple, Callable, Any
 
 from ..utils import (
     logger, config, profile_function, timeout, TimeoutError,
@@ -722,3 +724,118 @@ class NumericalSimulator:
                 'success': False,
                 'error': str(e)
             }
+
+    async def simulate_async(
+        self, 
+        t_span: Tuple[float, float], 
+        num_points: int = 1000,
+        method: str = None, 
+        rtol: float = None, 
+        atol: float = None,
+        detect_stiff: bool = True,
+        executor: Optional[concurrent.futures.Executor] = None
+    ) -> Dict[str, Any]:
+        """
+        Run numerical simulation asynchronously.
+        
+        This method runs the simulation in a thread pool executor to avoid
+        blocking the event loop. Useful for:
+        - Jupyter notebooks (keeps the kernel responsive)
+        - Async web backends (FastAPI, aiohttp)
+        - GUI applications with async event loops
+        
+        Args:
+            t_span: Time span (t_start, t_end)
+            num_points: Number of output points
+            method: Integration method ('RK45', 'LSODA', 'Radau', etc.)
+            rtol: Relative tolerance
+            atol: Absolute tolerance  
+            detect_stiff: Whether to detect stiff systems
+            executor: Optional custom executor (defaults to ThreadPoolExecutor)
+            
+        Returns:
+            Dictionary with solution data and metadata
+            
+        Example:
+            >>> import asyncio
+            >>> async def main():
+            ...     result = await simulator.simulate_async((0, 10), num_points=1000)
+            ...     print(f"Success: {result['success']}")
+            >>> asyncio.run(main())
+            
+        Note:
+            For CPU-bound simulations, consider using ProcessPoolExecutor
+            for true parallelism (requires picklable equations).
+        """
+        loop = asyncio.get_event_loop()
+        
+        # Use provided executor or create a new thread pool
+        if executor is None:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                result = await loop.run_in_executor(
+                    pool,
+                    lambda: self.simulate(
+                        t_span=t_span,
+                        num_points=num_points,
+                        method=method,
+                        rtol=rtol,
+                        atol=atol,
+                        detect_stiff=detect_stiff
+                    )
+                )
+        else:
+            result = await loop.run_in_executor(
+                executor,
+                lambda: self.simulate(
+                    t_span=t_span,
+                    num_points=num_points,
+                    method=method,
+                    rtol=rtol,
+                    atol=atol,
+                    detect_stiff=detect_stiff
+                )
+            )
+        
+        return result
+
+    async def simulate_batch_async(
+        self,
+        simulations: List[Dict[str, Any]],
+        max_concurrent: int = 4
+    ) -> List[Dict[str, Any]]:
+        """
+        Run multiple simulations concurrently.
+        
+        Useful for parameter sweeps, sensitivity analysis, or ensemble
+        simulations where many similar systems need to be simulated.
+        
+        Args:
+            simulations: List of simulation parameter dicts, each containing:
+                - t_span: Tuple[float, float] (required)
+                - num_points: int (optional, default 1000)
+                - method: str (optional)
+                - rtol: float (optional)
+                - atol: float (optional)
+            max_concurrent: Maximum concurrent simulations
+            
+        Returns:
+            List of simulation results in the same order as input
+            
+        Example:
+            >>> simulations = [
+            ...     {'t_span': (0, 10), 'num_points': 500},
+            ...     {'t_span': (0, 20), 'num_points': 1000},
+            ... ]
+            >>> results = await simulator.simulate_batch_async(simulations)
+        """
+        semaphore = asyncio.Semaphore(max_concurrent)
+        
+        async def run_with_semaphore(sim_params: Dict[str, Any]) -> Dict[str, Any]:
+            async with semaphore:
+                return await self.simulate_async(**sim_params)
+        
+        tasks = [run_with_semaphore(sim) for sim in simulations]
+        results = await asyncio.gather(*tasks)
+        
+        return list(results)
+

@@ -1,8 +1,9 @@
 """
 Symbolic computation engine for MechanicsDSL
 """
+import weakref
 import sympy as sp
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
 
 from .utils import logger, config, profile_function, timeout, TimeoutError, LRUCache, _perf_monitor
 from .parser import (
@@ -16,12 +17,34 @@ __all__ = ['SymbolicEngine']
 class SymbolicEngine:
     """Enhanced symbolic mathematics engine with advanced caching and performance monitoring"""
     
-    def __init__(self):
+    # Class-level weak reference registry for shared symbols across engines
+    # This helps prevent memory leaks in long-running applications
+    _global_symbol_registry: weakref.WeakValueDictionary = weakref.WeakValueDictionary()
+    
+    def __init__(self, use_weak_refs: bool = False):
+        """
+        Initialize the symbolic computation engine.
+        
+        Args:
+            use_weak_refs: If True, use weak references for symbol storage.
+                           Recommended for long-running applications to prevent
+                           memory leaks. Default is False for compatibility.
+        """
         self.sp = sp
-        self.symbol_map: Dict[str, sp.Symbol] = {}
+        self._use_weak_refs = use_weak_refs
+        
+        # Symbol storage - either regular dict or weak value dict
+        if use_weak_refs:
+            self.symbol_map: Dict[str, sp.Symbol] = {}
+            self._weak_symbol_map: weakref.WeakValueDictionary = weakref.WeakValueDictionary()
+        else:
+            self.symbol_map: Dict[str, sp.Symbol] = {}
+            self._weak_symbol_map = None
+            
         self.function_map: Dict[str, sp.Function] = {}
         self.time_symbol = sp.Symbol('t', real=True)
         self.assumptions: Dict[str, dict] = {}
+        
         # v6.0: Advanced LRU cache
         if config.cache_symbolic_results:
             self._cache = LRUCache(
@@ -40,7 +63,76 @@ class SymbolicEngine:
             self.symbol_map[name] = sp.Symbol(name, **default_assumptions)
             self.assumptions[name] = default_assumptions
             logger.debug(f"Created symbol: {name} with assumptions {default_assumptions}")
+            
+            # Also store in weak ref registry if using weak refs
+            if self._use_weak_refs and self._weak_symbol_map is not None:
+                self._weak_symbol_map[name] = self.symbol_map[name]
+                
         return self.symbol_map[name]
+
+    def clear_cache(self) -> int:
+        """
+        Clear all caches to free memory.
+        
+        Useful for long-running applications that process many different
+        mechanical systems. Clears:
+        - LRU expression cache
+        - Symbol map (keeps time_symbol)
+        - Function map
+        
+        Returns:
+            Number of cached items cleared
+            
+        Example:
+            >>> engine = SymbolicEngine()
+            >>> # ... do lots of computation ...
+            >>> cleared = engine.clear_cache()
+            >>> print(f"Freed {cleared} cached items")
+        """
+        count = 0
+        
+        # Clear LRU cache
+        if self._cache is not None:
+            count += len(self._cache._cache) if hasattr(self._cache, '_cache') else 0
+            self._cache.clear()
+        
+        # Clear symbol map (keep time symbol)
+        count += len(self.symbol_map)
+        self.symbol_map.clear()
+        self.assumptions.clear()
+        
+        # Clear function map
+        count += len(self.function_map)
+        self.function_map.clear()
+        
+        # Clear weak refs
+        if self._weak_symbol_map is not None:
+            self._weak_symbol_map.clear()
+        
+        logger.info(f"Cleared {count} cached items from SymbolicEngine")
+        return count
+
+    def memory_stats(self) -> Dict[str, int]:
+        """
+        Get memory usage statistics.
+        
+        Returns:
+            Dictionary with counts of cached items by category
+        """
+        stats = {
+            'symbols': len(self.symbol_map),
+            'functions': len(self.function_map),
+            'assumptions': len(self.assumptions),
+        }
+        
+        if self._cache is not None:
+            stats['cache_entries'] = len(self._cache._cache) if hasattr(self._cache, '_cache') else 0
+            stats['cache_hit_rate'] = self._cache.hit_rate
+            
+        if self._weak_symbol_map is not None:
+            stats['weak_refs'] = len(self._weak_symbol_map)
+            
+        return stats
 
     def get_function(self, name: str) -> sp.Function:
         """Get or create a SymPy function (cached)"""

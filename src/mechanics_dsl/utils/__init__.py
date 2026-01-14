@@ -21,6 +21,9 @@ from .registry import (
     COMMON_COORDINATE_NAMES, COMMON_CONSTANT_NAMES,
     is_coordinate_type, is_constant_type, is_likely_coordinate, classify_variable
 )
+from .rate_limit import (
+    RateLimiter, SimulationRateLimiter, RateLimitExceeded, TokenBucket
+)
 
 # Re-export constants for backward compatibility and convenience
 from .config import (
@@ -63,6 +66,8 @@ __all__ = [
     'VariableCategory', 'COORDINATE_TYPES', 'CONSTANT_TYPES',
     'COMMON_COORDINATE_NAMES', 'COMMON_CONSTANT_NAMES',
     'is_coordinate_type', 'is_constant_type', 'is_likely_coordinate', 'classify_variable',
+    # Rate Limiting
+    'RateLimiter', 'SimulationRateLimiter', 'RateLimitExceeded', 'TokenBucket',
     # Physical Constants
     'STANDARD_GRAVITY', 'DEFAULT_GRAVITY', 'SPEED_OF_LIGHT', 'PLANCK_CONSTANT', 'HBAR',
     # Numerical Constants
@@ -75,5 +80,3 @@ __all__ = [
     # File/Cache Constants
     'MAX_PATH_LENGTH', 'MAX_FILE_SIZE', 'DEFAULT_CACHE_SIZE', 'DEFAULT_CACHE_MEMORY_MB',
 ]
-
-
