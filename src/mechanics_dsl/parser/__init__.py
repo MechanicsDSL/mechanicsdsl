@@ -44,7 +44,7 @@ from .ast_nodes import (
     # Statements
     SystemDef, VarDef, ParameterDef, DefineDef,
     LagrangianDef, HamiltonianDef, TransformDef,
-    ConstraintDef, NonHolonomicConstraintDef, ForceDef, DampingDef,
+    ConstraintDef, NonHolonomicConstraintDef, ForceDef, DampingDef, RayleighDef,
     InitialCondition, SolveDef, AnimateDef, ExportDef, ImportDef,
     # SPH
     RegionDef, FluidDef, BoundaryDef,
@@ -93,6 +93,7 @@ __all__ = [
     'NonHolonomicConstraintDef',
     'ForceDef',
     'DampingDef',
+    'RayleighDef',
     'InitialCondition',
     'SolveDef',
     'AnimateDef',

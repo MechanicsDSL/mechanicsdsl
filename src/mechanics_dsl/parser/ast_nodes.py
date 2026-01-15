@@ -595,6 +595,28 @@ class DampingDef(ASTNode):
 
 
 @dataclass
+class RayleighDef(ASTNode):
+    """
+    Rayleigh dissipation function definition (\\rayleigh{expr}).
+    
+    Defines the Rayleigh dissipation function F where the generalized
+    dissipative forces are Q_i = -∂F/∂q̇_i.
+    
+    For velocity-dependent damping: F = ½Σ bᵢⱼ q̇ᵢ q̇ⱼ
+    
+    Attributes:
+        expr: The dissipation function expression.
+    
+    Example:
+        \\rayleigh{\\frac{1}{2} * b * \\dot{x}^2}
+    """
+    expr: Expression
+    
+    def __repr__(self) -> str:
+        return f"Rayleigh({self.expr})"
+
+
+@dataclass
 class InitialCondition(ASTNode):
     """
     Initial conditions statement (\\initial{var1=val1, ...}).
@@ -785,6 +807,7 @@ __all__ = [
     'NonHolonomicConstraintDef',
     'ForceDef',
     'DampingDef',
+    'RayleighDef',
     'InitialCondition',
     'SolveDef',
     'AnimateDef',

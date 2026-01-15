@@ -45,7 +45,7 @@ from .ast_nodes import (
     # Statements
     SystemDef, VarDef, ParameterDef, DefineDef,
     LagrangianDef, HamiltonianDef, TransformDef,
-    ConstraintDef, NonHolonomicConstraintDef, ForceDef, DampingDef,
+    ConstraintDef, NonHolonomicConstraintDef, ForceDef, DampingDef, RayleighDef,
     InitialCondition, SolveDef, AnimateDef, ExportDef, ImportDef,
     # SPH
     RegionDef, FluidDef, BoundaryDef,
@@ -247,6 +247,7 @@ class MechanicsParser:
             "NONHOLONOMIC": self.parse_nonholonomic,
             "FORCE": self.parse_force,
             "DAMPING": self.parse_damping,
+            "RAYLEIGH": self.parse_rayleigh,
             "INITIAL": self.parse_initial,
             "SOLVE": self.parse_solve,
             "ANIMATE": self.parse_animate,
@@ -480,6 +481,26 @@ class MechanicsParser:
         expr = self.parse_expression()
         self.expect("RBRACE")
         return DampingDef(expr)
+
+    def parse_rayleigh(self):
+        """
+        Parse \\rayleigh{expression}.
+        
+        The Rayleigh dissipation function F represents velocity-dependent
+        dissipative forces. The generalized dissipative forces are:
+        Q_i = -∂F/∂q̇_i
+        
+        For linear damping: F = ½ Σ bᵢⱼ q̇ᵢ q̇ⱼ
+        
+        Example:
+            \\rayleigh{\\frac{1}{2} * b * \\dot{x}^2}
+        """
+        from .ast_nodes import RayleighDef
+        self.expect("RAYLEIGH")
+        self.expect("LBRACE")
+        expr = self.parse_expression()
+        self.expect("RBRACE")
+        return RayleighDef(expr)
 
     def parse_initial(self) -> InitialCondition:
         """Parse \\initial{var1=val1, var2=val2, ...}."""

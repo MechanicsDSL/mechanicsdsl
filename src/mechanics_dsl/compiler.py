@@ -24,7 +24,8 @@ from .parser import (
     SystemDef, VarDef, ParameterDef, DefineDef,
     LagrangianDef, HamiltonianDef, TransformDef,
     ConstraintDef, NonHolonomicConstraintDef, ForceDef,
-    DampingDef, InitialCondition, FluidDef, BoundaryDef, RegionDef
+    DampingDef, InitialCondition, FluidDef, BoundaryDef, RegionDef,
+    RayleighDef
 )
 from .symbolic import SymbolicEngine
 from .solver import NumericalSimulator
@@ -197,6 +198,7 @@ class PhysicsCompiler:
         self.non_holonomic_constraints: List[Expression] = []
         self.forces: List[Expression] = []
         self.damping_forces: List[Expression] = []
+        self.rayleigh_dissipation: Optional[Expression] = None
         self.initial_conditions: Dict[str, float] = {}
         self.fluid_particles: List[Dict[str, float]] = [] # [{'x': 1.0, 'y': 2.0, 'm': 0.01}, ...]
         self.boundary_particles: List[Dict[str, float]] = []
@@ -498,6 +500,10 @@ class PhysicsCompiler:
             elif isinstance(node, DampingDef):
                 self.damping_forces.append(node.expr)
                 logger.debug("Damping force added")
+            
+            elif isinstance(node, RayleighDef):
+                self.rayleigh_dissipation = node.expr
+                logger.debug("Rayleigh dissipation function defined")
                 
             elif isinstance(node, InitialCondition):
                 self.initial_conditions.update(node.conditions)
@@ -592,7 +598,23 @@ class PhysicsCompiler:
                     # Subtract Force but don't expand yet - preserve derivative structure
                     eq_list[i] = eq_list[i] - F_sym
         
-        # 3. Solve for accelerations (this will handle derivative replacement)
+        # 3. Apply Rayleigh Dissipation: Q_i = -∂F/∂q̇_i
+        # The dissipative generalized force is the negative partial derivative of
+        # the Rayleigh dissipation function F with respect to the generalized velocity
+        if self.rayleigh_dissipation is not None:
+            logger.info("Applying Rayleigh dissipation function")
+            F_dissip = self.symbolic.ast_to_sympy(self.rayleigh_dissipation)
+            
+            for i, q in enumerate(coordinates):
+                q_dot_sym = self.symbolic.get_symbol(f"{q}_dot")
+                # Dissipative force: Q_i = -∂F/∂q̇_i
+                Q_dissip = -sp.diff(F_dissip, q_dot_sym)
+                if Q_dissip != 0:
+                    logger.debug(f"Dissipation force for {q}: {Q_dissip}")
+                    # Add to equation: EL_i + Q_dissip = 0 (dissipation opposes motion)
+                    eq_list[i] = eq_list[i] - Q_dissip
+        
+        # 4. Solve for accelerations (this will handle derivative replacement)
         accelerations = self.symbolic.solve_for_accelerations(eq_list, coordinates)
         
         return accelerations

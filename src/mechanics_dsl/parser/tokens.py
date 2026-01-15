@@ -39,6 +39,7 @@ TOKEN_TYPES = [
     ("NONHOLONOMIC", r"\\nonholonomic"),
     ("FORCE", r"\\force"),
     ("DAMPING", r"\\damping"),
+    ("RAYLEIGH", r"\\rayleigh"),
     ("INITIAL", r"\\initial"),
     ("SOLVE", r"\\solve"),
     ("ANIMATE", r"\\animate"),
