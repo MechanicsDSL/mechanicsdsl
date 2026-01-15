@@ -31,6 +31,13 @@ class PotentialEnergyCalculator:
             g = parameters.get('g', 9.81)
             # Minimum PE when both pendulums hang straight down
             return -m1 * g * l1 - m2 * g * (l1 + l2)
+        
+        elif 'spherical' in system and 'pendulum' in system:
+            m = parameters.get('m', 1.0)
+            l = parameters.get('l', 1.0)
+            g = parameters.get('g', 9.81)
+            # Spherical pendulum: minimum PE when theta=0 (hanging straight down)
+            return 0.0  # PE = mgl(1-cos(theta)), already 0 at theta=0
             
         elif 'pendulum' in system:
             m = parameters.get('m', 1.0)
@@ -88,21 +95,33 @@ class PotentialEnergyCalculator:
                 l = parameters.get('l', 1.0)
                 KE = 0.5 * m * l**2 * theta_dot**2
                 
-            elif len(coords) >= 2:  # Double pendulum
+            elif len(coords) >= 2:  # Double or spherical pendulum
                 if y.shape[0] < 4:
-                    logger.warning("Insufficient state vector for double pendulum KE")
+                    logger.warning("Insufficient state vector for multi-coord pendulum KE")
                     return KE
-                theta1_dot, theta2_dot = y[1], y[3]
-                theta1, theta2 = y[0], y[2]
-                m1 = parameters.get('m1', 1.0)
-                m2 = parameters.get('m2', 1.0)
-                l1 = parameters.get('l1', 1.0)
-                l2 = parameters.get('l2', 1.0)
                 
-                KE1 = 0.5 * m1 * l1**2 * theta1_dot**2
-                KE2 = 0.5 * m2 * (l1**2 * theta1_dot**2 + l2**2 * theta2_dot**2 + 
-                                  2 * l1 * l2 * theta1_dot * theta2_dot * np.cos(theta1 - theta2))
-                KE = KE1 + KE2
+                # Check for spherical pendulum (theta, phi) vs double pendulum (theta1, theta2)
+                if 'phi' in coords:
+                    # Spherical pendulum: T = 0.5*m*l^2*(theta_dot^2 + sin^2(theta)*phi_dot^2)
+                    theta = y[0]
+                    theta_dot = y[1]
+                    phi_dot = y[3]
+                    m = parameters.get('m', 1.0)
+                    l = parameters.get('l', 1.0)
+                    KE = 0.5 * m * l**2 * (theta_dot**2 + np.sin(theta)**2 * phi_dot**2)
+                else:
+                    # Double pendulum
+                    theta1_dot, theta2_dot = y[1], y[3]
+                    theta1, theta2 = y[0], y[2]
+                    m1 = parameters.get('m1', 1.0)
+                    m2 = parameters.get('m2', 1.0)
+                    l1 = parameters.get('l1', 1.0)
+                    l2 = parameters.get('l2', 1.0)
+                    
+                    KE1 = 0.5 * m1 * l1**2 * theta1_dot**2
+                    KE2 = 0.5 * m2 * (l1**2 * theta1_dot**2 + l2**2 * theta2_dot**2 + 
+                                      2 * l1 * l2 * theta1_dot * theta2_dot * np.cos(theta1 - theta2))
+                    KE = KE1 + KE2
                 
         else:  # Cartesian systems
             v = y[1] if y.shape[0] > 1 else np.zeros_like(t)
@@ -139,23 +158,34 @@ class PotentialEnergyCalculator:
                 offset = PotentialEnergyCalculator.compute_pe_offset('simple_pendulum', parameters)
                 PE = PE - offset
                 
-            elif len(coords) >= 2:  # Double pendulum
+            elif len(coords) >= 2:  # Double or spherical pendulum
                 if y.shape[0] < 3:
-                    logger.warning("Insufficient state vector for double pendulum PE")
+                    logger.warning("Insufficient state vector for multi-coord pendulum PE")
                     return PE
-                theta1, theta2 = y[0], y[2]
-                m1 = parameters.get('m1', 1.0)
-                m2 = parameters.get('m2', 1.0)
-                l1 = parameters.get('l1', 1.0)
-                l2 = parameters.get('l2', 1.0)
-                g = parameters.get('g', 9.81)
                 
-                PE1 = -m1 * g * l1 * np.cos(theta1)
-                PE2 = -m2 * g * (l1 * np.cos(theta1) + l2 * np.cos(theta2))
-                PE = PE1 + PE2
-                
-                offset = PotentialEnergyCalculator.compute_pe_offset('double_pendulum', parameters)
-                PE = PE - offset
+                # Check for spherical pendulum (theta, phi) vs double pendulum (theta1, theta2)
+                if 'phi' in coords or 'spherical' in system_type.lower():
+                    # Spherical pendulum: V = mgl(1 - cos(theta))
+                    theta = y[0]
+                    m = parameters.get('m', 1.0)
+                    l = parameters.get('l', 1.0)
+                    g = parameters.get('g', 9.81)
+                    PE = m * g * l * (1 - np.cos(theta))
+                else:
+                    # Double pendulum
+                    theta1, theta2 = y[0], y[2]
+                    m1 = parameters.get('m1', 1.0)
+                    m2 = parameters.get('m2', 1.0)
+                    l1 = parameters.get('l1', 1.0)
+                    l2 = parameters.get('l2', 1.0)
+                    g = parameters.get('g', 9.81)
+                    
+                    PE1 = -m1 * g * l1 * np.cos(theta1)
+                    PE2 = -m2 * g * (l1 * np.cos(theta1) + l2 * np.cos(theta2))
+                    PE = PE1 + PE2
+                    
+                    offset = PotentialEnergyCalculator.compute_pe_offset('double_pendulum', parameters)
+                    PE = PE - offset
                 
         else:  # Cartesian systems
             if y.shape[0] < 1:
