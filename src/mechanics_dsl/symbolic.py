@@ -592,131 +592,154 @@ class SymbolicEngine:
     def solve_for_accelerations(self, equations: List[sp.Expr], 
                                coordinates: List[str]) -> Dict[str, sp.Expr]:
         """
-        Solve equations of motion using Atom Iteration + Linear Extraction.
-        This ignores object identity issues by scanning the equation tree
-        for any second derivatives and manually forcing them to be symbols.
-        """
-        logger.info("Solving for accelerations (Search & Destroy Mode)")
-        accelerations = {}
+        Solve equations of motion for accelerations SIMULTANEOUSLY.
         
-        for i, q in enumerate(coordinates):
+        For coupled systems like double pendulum, accelerations are interdependent:
+        M * [q1_ddot, q2_ddot, ...]^T = F
+        
+        This function:
+        1. Substitutes all derivative notations with symbols
+        2. Extracts the mass matrix M and force vector F
+        3. Solves the linear system M*a = F simultaneously
+        4. Returns simplified acceleration expressions
+        
+        This is CRITICAL for coupled systems where accelerations appear in
+        each other's equations.
+        """
+        logger.info("Solving for accelerations (Simultaneous Coupled System)")
+        
+        n = len(coordinates)
+        if n == 0:
+            return {}
+        
+        # --- Step 1: Create acceleration symbols ---
+        accel_syms = []
+        for q in coordinates:
             accel_key = f"{q}_ddot"
-            accel_sym = self.get_symbol(accel_key)
+            accel_syms.append(self.get_symbol(accel_key))
+        
+        # --- Step 2: Substitute all derivatives with symbols ---
+        processed_eqs = []
+        for i, eq in enumerate(equations):
+            # Clean up the equation - replace Derivative objects with symbols
+            eq_clean = eq
             
-            # The Equation
-            eq = equations[i]
-            
-            # Debug: log equation structure
-            logger.debug(f"Equation for {q} (before processing): {eq}")
-            
-            # Check if acceleration symbol is already in the equation
-            has_accel = False
-            try:
-                has_accel = eq.has(accel_sym) or str(accel_sym) in str(eq) or accel_sym in eq.free_symbols
-            except:
-                has_accel = str(accel_sym) in str(eq)
-            
-            if has_accel:
-                # Equation already has acceleration symbol - use linear extraction directly
-                eq_expanded = sp.expand(eq)
-                A = sp.diff(eq_expanded, accel_sym)
-                B = eq_expanded.subs(accel_sym, 0)
-                if A != 0:
-                    sol = -B / A
-                    accelerations[accel_key] = sp.simplify(sol)
-                    logger.info(f"Solved {accel_key} via direct symbol extraction")
-                    continue
-                else:
-                    logger.warning(f"Acceleration symbol found but coefficient is zero for {accel_key}")
-            
-            # --- STEP 1: SEARCH AND DESTROY DERIVATIVES ---
-            # Iterate through every atomic part of the equation
-            # If it is a Derivative of order 2 matching our coordinate, replace it.
-            
-            # Approach 1: Direct Derivative objects
-            for term in eq.atoms(sp.Derivative):
-                # Check if it is a 2nd derivative with respect to time
-                if hasattr(term, 'order') and term.order == 2:
-                    if term.has(self.time_symbol):
-                        # Check if the function name matches our coordinate
-                        try:
-                            if hasattr(term.expr, 'func') and str(term.expr.func) == q:
-                                eq = eq.subs(term, accel_sym)
-                        except:
-                            # Try alternative matching
-                            if str(term).startswith(f"Derivative({q}"):
-                                eq = eq.subs(term, accel_sym)
-            
-            # Approach 2: Try to find derivatives by pattern matching
-            try:
-                q_func = sp.Function(q)(self.time_symbol)
-                d2q_dt2 = sp.diff(q_func, self.time_symbol, 2)
-                if eq.has(d2q_dt2):
-                    eq = eq.subs(d2q_dt2, accel_sym)
-            except:
-                pass
-            
-            # Also clean up 1st derivatives (velocity) just in case
-            vel_sym = self.get_symbol(f"{q}_dot")
-            for term in eq.atoms(sp.Derivative):
-                if hasattr(term, 'order') and term.order == 1:
-                    if term.has(self.time_symbol):
-                        try:
-                            if hasattr(term.expr, 'func') and str(term.expr.func) == q:
-                                eq = eq.subs(term, vel_sym)
-                        except:
-                            if str(term).startswith(f"Derivative({q}"):
-                                eq = eq.subs(term, vel_sym)
-            
-            # Try pattern matching for first derivative
-            try:
-                q_func = sp.Function(q)(self.time_symbol)
-                dq_dt = sp.diff(q_func, self.time_symbol)
-                if eq.has(dq_dt):
-                    eq = eq.subs(dq_dt, vel_sym)
-            except:
-                pass
-                        
-            # Clean up raw functions (position)
-            pos_sym = self.get_symbol(q)
-            for term in eq.atoms(sp.Function):
+            # Replace ALL second derivatives (not just for current coordinate)
+            for j, q in enumerate(coordinates):
+                accel_sym = accel_syms[j]
+                vel_sym = self.get_symbol(f"{q}_dot")
+                pos_sym = self.get_symbol(q)
+                
+                # Try pattern matching for derivatives
                 try:
-                    if hasattr(term, 'func') and str(term.func) == q:
-                        eq = eq.subs(term, pos_sym)
-                except:
-                    pass
-
-            # --- STEP 2: LINEAR EXTRACTION ---
-            # Now the equation is guaranteed to be algebraic: A * accel + B = 0
-            eq_expanded = sp.expand(eq)
-            
-            # Differentiating by the symbol isolates the mass matrix term (A)
-            A = sp.diff(eq_expanded, accel_sym)
-            
-            # Setting symbol to 0 isolates the rest (B)
-            B = eq_expanded.subs(accel_sym, 0)
-            
-            if A != 0:
-                # Ax + B = 0  ->  x = -B/A
-                sol = -B / A
-                accelerations[accel_key] = sp.simplify(sol)
-                logger.info(f"Solved {accel_key} via Search & Destroy")
-            else:
-                logger.error(f"CRITICAL: Acceleration term {accel_key} not found in equation!")
-                logger.error(f"Equation (expanded): {eq_expanded}")
-                logger.error(f"Looking for symbol: {accel_sym}")
-                # Try one more time: check if the symbol name appears as a string
-                if accel_key in str(eq):
-                    logger.warning(f"Symbol name '{accel_key}' found in string representation, trying alternative extraction")
-                    # Try to solve algebraically
+                    q_func = sp.Function(q)(self.time_symbol)
+                    d2q_dt2 = sp.diff(q_func, self.time_symbol, 2)
+                    dq_dt = sp.diff(q_func, self.time_symbol)
+                    
+                    eq_clean = eq_clean.subs(d2q_dt2, accel_sym)
+                    eq_clean = eq_clean.subs(dq_dt, vel_sym)
+                    eq_clean = eq_clean.subs(q_func, pos_sym)
+                except Exception as e:
+                    logger.debug(f"Pattern substitution warning for {q}: {e}")
+                
+                # Fallback: Iterate through Derivative atoms
+                for term in eq_clean.atoms(sp.Derivative):
                     try:
-                        sol = sp.solve(eq, accel_sym)
-                        if sol:
-                            accelerations[accel_key] = sp.simplify(sol[0])
-                            logger.info(f"Solved {accel_key} via algebraic solve")
-                            continue
+                        term_str = str(term)
+                        if f"Derivative({q}(t), (t, 2))" in term_str or f"Derivative({q}(t), t, t)" in term_str:
+                            eq_clean = eq_clean.subs(term, accel_sym)
+                        elif f"Derivative({q}(t), t)" in term_str:
+                            eq_clean = eq_clean.subs(term, vel_sym)
                     except:
                         pass
-                accelerations[accel_key] = sp.S.Zero
                 
+                # Also clean up raw Function objects
+                for term in eq_clean.atoms(sp.Function):
+                    try:
+                        if str(term.func) == q and term.args == (self.time_symbol,):
+                            eq_clean = eq_clean.subs(term, pos_sym)
+                    except:
+                        pass
+            
+            processed_eqs.append(sp.expand(eq_clean))
+            logger.debug(f"Processed equation {i}: {eq_clean}")
+        
+        # --- Step 3: For single coordinate, use direct extraction ---
+        if n == 1:
+            accel_sym = accel_syms[0]
+            eq = processed_eqs[0]
+            
+            A = sp.diff(eq, accel_sym)
+            B = eq.subs(accel_sym, 0)
+            
+            if A != 0:
+                sol = sp.simplify(-B / A)
+                accel_key = f"{coordinates[0]}_ddot"
+                logger.info(f"Solved {accel_key} (single coordinate)")
+                return {accel_key: sol}
+            else:
+                logger.error("Could not solve single-coordinate equation")
+                return {f"{coordinates[0]}_ddot": sp.S.Zero}
+        
+        # --- Step 4: For multiple coordinates, solve SIMULTANEOUSLY ---
+        # The equations are linear in accelerations: M * a + F = 0
+        # Extract M (mass matrix) and F (force vector)
+        
+        try:
+            # Use sympy's linear solver for the system
+            solutions = sp.solve(processed_eqs, accel_syms, dict=True)
+            
+            if solutions:
+                sol_dict = solutions[0] if isinstance(solutions, list) else solutions
+                accelerations = {}
+                for j, q in enumerate(coordinates):
+                    accel_key = f"{q}_ddot"
+                    accel_sym = accel_syms[j]
+                    if accel_sym in sol_dict:
+                        accelerations[accel_key] = sp.simplify(sol_dict[accel_sym])
+                        logger.info(f"Solved {accel_key} via simultaneous solution")
+                    else:
+                        logger.warning(f"No solution found for {accel_key}")
+                        accelerations[accel_key] = sp.S.Zero
+                
+                return accelerations
+        except Exception as e:
+            logger.warning(f"sp.solve failed: {e}, trying matrix method")
+        
+        # Fallback: Manual matrix extraction and solve
+        M = sp.zeros(n, n)
+        F = sp.zeros(n, 1)
+        
+        for i in range(n):
+            eq = processed_eqs[i]
+            for j in range(n):
+                # Mass matrix entry M[i,j] = coefficient of accel_j in eq_i
+                M[i, j] = sp.diff(eq, accel_syms[j])
+            # Force vector F[i] = eq with all accelerations set to 0
+            F[i, 0] = -eq.subs([(a, 0) for a in accel_syms])
+        
+        logger.debug(f"Mass matrix M:\n{M}")
+        logger.debug(f"Force vector F:\n{F}")
+        
+        # Solve M * a = F
+        try:
+            if M.det() != 0:
+                a_vec = M.solve(F)
+                accelerations = {}
+                for j, q in enumerate(coordinates):
+                    accel_key = f"{q}_ddot"
+                    accelerations[accel_key] = sp.simplify(a_vec[j])
+                    logger.info(f"Solved {accel_key} via matrix inversion")
+                return accelerations
+            else:
+                logger.error("Mass matrix is singular!")
+        except Exception as e:
+            logger.error(f"Matrix solve failed: {e}")
+        
+        # Last resort: return zeros with warning
+        logger.error("CRITICAL: Could not solve for accelerations!")
+        accelerations = {}
+        for q in coordinates:
+            accelerations[f"{q}_ddot"] = sp.S.Zero
         return accelerations
+
