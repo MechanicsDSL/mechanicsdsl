@@ -1,0 +1,231 @@
+# Coverage and Quality Enforcement Workflow
+# =========================================
+# Ensures code meets quality standards
+
+name: Quality Assurance
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  MIN_COVERAGE: 85
+  MIN_BRANCH_COVERAGE: 75
+
+jobs:
+  # Code Coverage
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -e .[all]
+          pip install pytest pytest-cov pytest-xdist hypothesis
+      
+      - name: Run tests with coverage
+        run: |
+          pytest tests/ \
+            --cov=src/mechanics_dsl \
+            --cov-report=xml \
+            --cov-report=html \
+            --cov-report=term-missing \
+            --cov-fail-under=${{ env.MIN_COVERAGE }} \
+            -n auto \
+            -v
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: coverage.xml
+          fail_ci_if_error: true
+          verbose: true
+      
+      - name: Upload coverage HTML
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: htmlcov/
+        if: always()
+      
+      - name: Check branch coverage
+        run: |
+          pip install coverage
+          coverage report --fail-under=${{ env.MIN_BRANCH_COVERAGE }}
+
+  # Type Checking
+  type-check:
+    name: Type Checking (mypy)
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install -e .
+          pip install mypy types-requests types-PyYAML
+      
+      - name: Run mypy
+        run: |
+          mypy src/mechanics_dsl \
+            --ignore-missing-imports \
+            --no-strict-optional \
+            --show-error-codes \
+            --pretty
+
+  # Linting
+  lint:
+    name: Linting
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install linters
+        run: pip install flake8 black isort pylint
+      
+      - name: Check Black formatting
+        run: black --check src/ tests/
+      
+      - name: Check isort
+        run: isort --check-only src/ tests/
+      
+      - name: Run flake8
+        run: |
+          flake8 src/ \
+            --max-line-length=100 \
+            --extend-ignore=E203,W503 \
+            --count \
+            --statistics
+      
+      - name: Run pylint
+        run: |
+          pylint src/mechanics_dsl \
+            --exit-zero \
+            --output-format=colorized \
+            --disable=C0114,C0115,C0116
+        continue-on-error: true
+
+  # Documentation
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install -e .
+          pip install sphinx sphinx-rtd-theme myst-parser
+      
+      - name: Check docstrings
+        run: |
+          pip install pydocstyle
+          pydocstyle src/mechanics_dsl \
+            --convention=google \
+            --add-ignore=D100,D104,D107 || true
+
+  # Complexity Analysis
+  complexity:
+    name: Complexity Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install radon
+        run: pip install radon
+      
+      - name: Check cyclomatic complexity
+        run: |
+          echo "# Cyclomatic Complexity Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          radon cc src/mechanics_dsl -a -s >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Check maintainability index
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# Maintainability Index" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          radon mi src/mechanics_dsl -s >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+  # Property-Based Tests
+  property-tests:
+    name: Property-Based Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install -e .
+          pip install pytest hypothesis
+      
+      - name: Run property tests
+        run: |
+          pytest tests/property/ \
+            -v \
+            --hypothesis-show-statistics
+
+  # Summary
+  summary:
+    name: Quality Summary
+    needs: [coverage, type-check, lint, complexity, property-tests]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Report Status
+        run: |
+          echo "# Quality Check Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Coverage | ${{ needs.coverage.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Type Check | ${{ needs.type-check.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Lint | ${{ needs.lint.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Complexity | ${{ needs.complexity.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Property Tests | ${{ needs.property-tests.result }} |" >> $GITHUB_STEP_SUMMARY

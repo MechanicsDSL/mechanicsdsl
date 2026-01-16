@@ -55,8 +55,23 @@ pip install mechanicsdsl-core[jax]      # GPU acceleration + autodiff
 pip install mechanicsdsl-core[server]   # FastAPI real-time server
 pip install mechanicsdsl-core[jupyter]  # Notebook magic commands
 pip install mechanicsdsl-core[lsp]      # VS Code language server
+pip install mechanicsdsl-core[embedded] # Raspberry Pi / ARM support
 pip install mechanicsdsl-core[all]      # Everything
 ```
+
+**Docker deployment:**
+
+```bash
+# CPU version
+docker pull ghcr.io/mechanicsdsl/mechanicsdsl:latest
+docker run -it ghcr.io/mechanicsdsl/mechanicsdsl:latest
+
+# GPU version (requires nvidia-docker)
+docker pull ghcr.io/mechanicsdsl/mechanicsdsl:gpu
+docker run --gpus all -it ghcr.io/mechanicsdsl/mechanicsdsl:gpu
+```
+
+**Requirements:** Python 3.8+ with NumPy, SciPy, SymPy, and Matplotlib (installed automatically).
 
 **Requirements:** Python 3.8+ with NumPy, SciPy, SymPy, and Matplotlib (installed automatically).
 

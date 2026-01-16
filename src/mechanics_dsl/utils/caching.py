@@ -118,3 +118,30 @@ class LRUCache:
             'hit_rate': hit_rate,
             'memory_mb': self._estimate_memory_mb()
         }
+    
+    # Dict-style access methods
+    def __getitem__(self, key: str) -> Any:
+        """Get item using cache[key] syntax."""
+        value = self.get(key)
+        if value is None and key not in self.cache:
+            raise KeyError(key)
+        return value
+    
+    def __setitem__(self, key: str, value: Any) -> None:
+        """Set item using cache[key] = value syntax."""
+        self.set(key, value)
+    
+    def __contains__(self, key: str) -> bool:
+        """Check if key exists using 'key in cache' syntax."""
+        return key in self.cache
+    
+    def __len__(self) -> int:
+        """Return cache size using len(cache) syntax."""
+        return len(self.cache)
+    
+    def __delitem__(self, key: str) -> None:
+        """Delete item using del cache[key] syntax."""
+        if key in self.cache:
+            del self.cache[key]
+        else:
+            raise KeyError(key)

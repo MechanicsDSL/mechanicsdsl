@@ -19,6 +19,8 @@ class CudaGenerator(CodeGenerator):
     Features:
     - GPU kernel generation for equations of motion
     - RK4 integration on GPU
+    - cuBLAS integration for linear algebra (optional)
+    - Batch simulation for parameter sweeps
     - CPU fallback for non-CUDA systems
     - CMakeLists.txt for nvcc compilation
     - SPH particle simulation support
@@ -29,7 +31,9 @@ class CudaGenerator(CodeGenerator):
         ...     coordinates=['theta'],
         ...     parameters={'g': 9.81, 'l': 1.0},
         ...     initial_conditions={'theta': 0.1, 'theta_dot': 0.0},
-        ...     equations={'theta_ddot': -g/l * sin(theta)}
+        ...     equations={'theta_ddot': -g/l * sin(theta)},
+        ...     use_cublas=True,
+        ...     batch_size=1000
         ... )
         >>> gen.generate("output/")
     """
@@ -39,14 +43,35 @@ class CudaGenerator(CodeGenerator):
                  equations: Dict[str, sp.Expr],
                  generate_cpu_fallback: bool = True,
                  fluid_particles: List[dict] = None,
-                 boundary_particles: List[dict] = None):
+                 boundary_particles: List[dict] = None,
+                 use_cublas: bool = False,
+                 batch_size: int = 1,
+                 compute_capability: str = "60"):
+        """
+        Initialize CUDA generator.
         
+        Args:
+            system_name: Name of the physics system
+            coordinates: List of coordinate names
+            parameters: Physical parameters
+            initial_conditions: Initial state
+            equations: SymPy equations of motion
+            generate_cpu_fallback: Include CPU fallback code
+            fluid_particles: SPH fluid particles
+            boundary_particles: SPH boundary particles
+            use_cublas: Enable cuBLAS for matrix operations
+            batch_size: Number of parallel simulations (for sweeps)
+            compute_capability: CUDA compute capability (30, 50, 60, 70, 80)
+        """
         super().__init__(system_name, coordinates, parameters, 
                         initial_conditions, equations)
         
         self.generate_cpu_fallback = generate_cpu_fallback
         self.fluid_particles = fluid_particles or []
         self.boundary_particles = boundary_particles or []
+        self.use_cublas = use_cublas
+        self.batch_size = batch_size
+        self.compute_capability = compute_capability
     
     @property
     def target_name(self) -> str:
@@ -498,3 +523,212 @@ int main() {{
     def _params_array(self) -> str:
         """Generate parameter values as comma-separated list."""
         return ", ".join(str(v) for v in self.parameters.values())
+
+    def _generate_cublas_helpers(self) -> str:
+        """Generate cuBLAS utility functions for matrix operations."""
+        return '''
+// =============================================================================
+// cuBLAS Helper Functions (for linear algebra operations)
+// =============================================================================
+
+#ifdef USE_CUBLAS
+#include <cublas_v2.h>
+
+cublasHandle_t cublas_handle;
+
+// Initialize cuBLAS
+inline void cublas_init() {
+    cublasCreate(&cublas_handle);
+    std::cout << "cuBLAS initialized" << std::endl;
+}
+
+// Cleanup cuBLAS
+inline void cublas_destroy() {
+    cublasDestroy(cublas_handle);
+}
+
+// Matrix-vector multiplication: y = A * x
+inline void cublas_gemv(int m, int n, double alpha, 
+                        const double* A, const double* x,
+                        double beta, double* y) {
+    cublasDgemv(cublas_handle, CUBLAS_OP_N, m, n, 
+                &alpha, A, m, x, 1, &beta, y, 1);
+}
+
+// Dot product: result = x . y
+inline double cublas_dot(int n, const double* x, const double* y) {
+    double result;
+    cublasDdot(cublas_handle, n, x, 1, y, 1, &result);
+    return result;
+}
+
+// Vector norm: ||x||_2
+inline double cublas_nrm2(int n, const double* x) {
+    double result;
+    cublasDnrm2(cublas_handle, n, x, 1, &result);
+    return result;
+}
+
+// Vector scaling: x = alpha * x
+inline void cublas_scal(int n, double alpha, double* x) {
+    cublasDscal(cublas_handle, n, &alpha, x, 1);
+}
+
+// Vector addition: y = alpha * x + y
+inline void cublas_axpy(int n, double alpha, const double* x, double* y) {
+    cublasDaxpy(cublas_handle, n, &alpha, x, 1, y, 1);
+}
+
+// Matrix-matrix multiplication: C = alpha * A * B + beta * C
+inline void cublas_gemm(int m, int n, int k, double alpha,
+                        const double* A, const double* B,
+                        double beta, double* C) {
+    cublasDgemm(cublas_handle, CUBLAS_OP_N, CUBLAS_OP_N,
+                m, n, k, &alpha, A, m, B, k, &beta, C, m);
+}
+#endif // USE_CUBLAS
+'''
+
+    def generate_batch_simulation(self, output_dir: str = ".") -> str:
+        """
+        Generate CUDA code for batch parallel simulations.
+        
+        Useful for:
+        - Parameter sweeps
+        - Monte Carlo analysis
+        - Sensitivity studies
+        
+        Args:
+            output_dir: Output directory
+            
+        Returns:
+            Path to generated file
+        """
+        import os
+        os.makedirs(output_dir, exist_ok=True)
+        
+        state_dim = len(self.coordinates) * 2
+        batch_file = os.path.join(output_dir, f"{self.system_name}_batch.cu")
+        
+        # Generate batch-specific CUDA code
+        batch_code = f'''/*
+ * Batch CUDA Simulation: {self.system_name}
+ * Generated by MechanicsDSL
+ * 
+ * Runs {self.batch_size} parallel simulations for parameter sweeps
+ */
+
+#include <cuda_runtime.h>
+#include <iostream>
+#include <fstream>
+#include <random>
+
+#define CUDA_CHECK(call) \\
+    do {{ \\
+        cudaError_t err = call; \\
+        if (err != cudaSuccess) {{ \\
+            std::cerr << "CUDA Error: " << cudaGetErrorString(err) << std::endl; \\
+            exit(1); \\
+        }} \\
+    }} while(0)
+
+constexpr int STATE_DIM = {state_dim};
+constexpr int BATCH_SIZE = {self.batch_size};
+constexpr int TOTAL_STATES = STATE_DIM * BATCH_SIZE;
+
+// Parameters (each simulation can have different params)
+{self._generate_parameters()}
+
+__device__ void compute_derivatives(const double* state, double* dydt, 
+                                     double t, int idx) {{
+{self._generate_state_unpack_device()}
+{self.generate_equations()}
+}}
+
+__global__ void batch_rk4_kernel(double* states, double t, double dt) {{
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= BATCH_SIZE) return;
+    
+    double* my_state = states + idx * STATE_DIM;
+    double k1[STATE_DIM], k2[STATE_DIM], k3[STATE_DIM], k4[STATE_DIM];
+    double temp[STATE_DIM];
+    
+    compute_derivatives(my_state, k1, t, idx);
+    
+    for (int i = 0; i < STATE_DIM; i++) temp[i] = my_state[i] + 0.5 * dt * k1[i];
+    compute_derivatives(temp, k2, t + 0.5*dt, idx);
+    
+    for (int i = 0; i < STATE_DIM; i++) temp[i] = my_state[i] + 0.5 * dt * k2[i];
+    compute_derivatives(temp, k3, t + 0.5*dt, idx);
+    
+    for (int i = 0; i < STATE_DIM; i++) temp[i] = my_state[i] + dt * k3[i];
+    compute_derivatives(temp, k4, t + dt, idx);
+    
+    for (int i = 0; i < STATE_DIM; i++) {{
+        my_state[i] += dt * (k1[i] + 2.0*k2[i] + 2.0*k3[i] + k4[i]) / 6.0;
+    }}
+}}
+
+int main() {{
+    std::cout << "Batch CUDA Simulation: {self.system_name}" << std::endl;
+    std::cout << "Running " << BATCH_SIZE << " parallel simulations" << std::endl;
+    
+    // Initialize random states
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::normal_distribution<> noise(0.0, 0.1);
+    
+    double* h_states = new double[TOTAL_STATES];
+    for (int b = 0; b < BATCH_SIZE; b++) {{
+        for (int i = 0; i < STATE_DIM; i++) {{
+            h_states[b * STATE_DIM + i] = noise(gen);
+        }}
+    }}
+    
+    double* d_states;
+    CUDA_CHECK(cudaMalloc(&d_states, TOTAL_STATES * sizeof(double)));
+    CUDA_CHECK(cudaMemcpy(d_states, h_states, TOTAL_STATES * sizeof(double), 
+                          cudaMemcpyHostToDevice));
+    
+    // Simulation
+    double t = 0.0, dt = 0.001, t_end = 10.0;
+    int threads = 256;
+    int blocks = (BATCH_SIZE + threads - 1) / threads;
+    
+    while (t < t_end) {{
+        batch_rk4_kernel<<<blocks, threads>>>(d_states, t, dt);
+        t += dt;
+    }}
+    
+    CUDA_CHECK(cudaDeviceSynchronize());
+    CUDA_CHECK(cudaMemcpy(h_states, d_states, TOTAL_STATES * sizeof(double), 
+                          cudaMemcpyDeviceToHost));
+    
+    // Save final states
+    std::ofstream out("{self.system_name}_batch_results.csv");
+    out << "batch_id";
+    for (int i = 0; i < STATE_DIM; i++) out << ",state" << i;
+    out << std::endl;
+    
+    for (int b = 0; b < BATCH_SIZE; b++) {{
+        out << b;
+        for (int i = 0; i < STATE_DIM; i++) {{
+            out << "," << h_states[b * STATE_DIM + i];
+        }}
+        out << std::endl;
+    }}
+    
+    std::cout << "Saved results to {self.system_name}_batch_results.csv" << std::endl;
+    
+    delete[] h_states;
+    cudaFree(d_states);
+    return 0;
+}}
+'''
+        
+        with open(batch_file, 'w') as f:
+            f.write(batch_code)
+        
+        logger.info(f"Generated batch simulation: {batch_file}")
+        return batch_file
+

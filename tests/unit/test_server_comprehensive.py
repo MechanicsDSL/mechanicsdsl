@@ -17,16 +17,17 @@ class TestServerApp:
         except ImportError:
             pytest.skip("Server module not available")
     
-    @patch('mechanics_dsl.server.app.Flask')
-    def test_create_app_mocked(self, mock_flask):
+    def test_create_app_mocked(self):
         """Test create_app with mocked Flask"""
         try:
             from mechanics_dsl.server.app import create_app
-            mock_flask.return_value = MagicMock()
-            app_instance = create_app()
-            assert app_instance is not None or mock_flask.called
-        except (ImportError, AttributeError):
-            pytest.skip("create_app not available")
+            from unittest.mock import patch, MagicMock
+            with patch('mechanics_dsl.server.app.Flask') as mock_flask:
+                mock_flask.return_value = MagicMock()
+                app_instance = create_app()
+                assert app_instance is not None or mock_flask.called
+        except (ImportError, AttributeError, ModuleNotFoundError):
+            pytest.skip("create_app or server module not available")
     
     def test_server_init(self):
         """Test server __init__ module"""
@@ -70,16 +71,15 @@ class TestServerWebSocket:
         except ImportError:
             pytest.skip("WebSocket module not available")
     
-    @patch('socketio.Server')
-    def test_websocket_server_mocked(self, mock_sio):
+    def test_websocket_server_mocked(self):
         """Test websocket with mocked SocketIO"""
         try:
+            import socketio
             from mechanics_dsl.server import websocket
-            mock_sio.return_value = MagicMock()
             # Just verify import works
             assert True
         except ImportError:
-            pytest.skip("WebSocket module not available")
+            pytest.skip("socketio or WebSocket module not available")
 
 
 class TestServerEndpoints:

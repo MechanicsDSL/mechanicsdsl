@@ -16,6 +16,7 @@ from .cuda import CudaGenerator
 from .openmp import OpenMPGenerator
 from .wasm import WasmGenerator
 from .arduino import ArduinoGenerator
+from .arm import ARMGenerator
 
 __all__ = [
     'CodeGenerator', 
@@ -29,7 +30,8 @@ __all__ = [
     'CudaGenerator',
     'OpenMPGenerator',
     'WasmGenerator',
-    'ArduinoGenerator'
+    'ArduinoGenerator',
+    'ARMGenerator'
 ]
 
 

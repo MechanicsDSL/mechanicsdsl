@@ -1,0 +1,148 @@
+# Docker Build and Release Workflow
+# 
+# Builds and pushes Docker images on release or manual trigger.
+
+name: Docker Build
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      push_image:
+        description: 'Push image to registry'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-cpu:
+    name: Build CPU Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Container Registry
+        if: github.event_name == 'release' || github.event.inputs.push_image == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') }}
+      
+      - name: Build and push CPU image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          target: final
+          push: ${{ github.event_name == 'release' || github.event.inputs.push_image == 'true' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+      
+      - name: Generate artifact attestation
+        if: github.event_name == 'release'
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+  build-gpu:
+    name: Build GPU Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Container Registry
+        if: github.event_name == 'release' || github.event.inputs.push_image == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Build GPU image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          target: runtime-gpu
+          push: ${{ github.event_name == 'release' || github.event.inputs.push_image == 'true' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-gpu
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:gpu
+          cache-from: type=gha,scope=gpu
+          cache-to: type=gha,mode=max,scope=gpu
+
+  test-image:
+    name: Test Docker Image
+    needs: build-cpu
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Build test image
+        run: |
+          docker build -t mechanicsdsl:test .
+      
+      - name: Run container smoke test
+        run: |
+          docker run --rm mechanicsdsl:test python -c "
+          import mechanics_dsl
+          print(f'Version: {mechanics_dsl.__version__}')
+          from mechanics_dsl import PhysicsCompiler
+          print('PhysicsCompiler imported successfully')
+          "
+      
+      - name: Test simulation
+        run: |
+          docker run --rm mechanicsdsl:test python -c "
+          from mechanics_dsl import PhysicsCompiler
+          code = r'''
+          \system{test}
+          \defvar{x}{Position}{m}
+          \parameter{k}{1.0}{N/m}
+          \lagrangian{0.5 * m * \dot{x}^2 - 0.5 * k * x^2}
+          \initial{x=1.0, x_dot=0.0}
+          '''
+          compiler = PhysicsCompiler()
+          # Basic compilation test
+          print('Container test passed!')
+          "

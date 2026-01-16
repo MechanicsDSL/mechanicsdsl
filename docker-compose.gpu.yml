@@ -1,0 +1,49 @@
+# ============================================================================
+# MechanicsDSL GPU Docker Compose Override
+# ============================================================================
+# 
+# Use with: docker compose -f docker-compose.yml -f docker-compose.gpu.yml up
+#
+# Requires:
+#   - NVIDIA GPU
+#   - nvidia-docker2 or nvidia-container-toolkit
+#   - CUDA 12.x drivers
+# ============================================================================
+
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime-gpu
+    image: mechanicsdsl:2.0-gpu
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - JAX_PLATFORM_NAME=gpu
+      - XLA_PYTHON_CLIENT_MEM_FRACTION=0.8
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime-gpu
+    image: mechanicsdsl:2.0-gpu
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - JAX_PLATFORM_NAME=gpu
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]

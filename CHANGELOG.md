@@ -5,6 +5,67 @@ All notable changes to MechanicsDSL will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-01-16
+
+### 🚀 Major Release: Enterprise & Embedded Support
+
+This release adds comprehensive support for enterprise deployment, ARM/embedded platforms, and enhanced code generation based on analysis of real-world user adoption patterns.
+
+### Added
+
+#### Enterprise Deployment
+- **Docker Support** - Multi-stage Dockerfile with CPU and GPU variants
+  - `Dockerfile` - Production-ready container image
+  - `docker-compose.yml` - API server, Jupyter, and worker services
+  - `docker-compose.gpu.yml` - NVIDIA GPU override for CUDA acceleration
+- **Enterprise Deployment Guide** (`docs/enterprise_deployment.md`)
+  - Docker and Kubernetes deployment instructions
+  - Internal PyPI mirror setup (Nexus, bandersnatch)
+  - Security sandboxing and monitoring configuration
+
+#### ARM & Embedded Platform Support
+- **Raspberry Pi Examples** (`examples/embedded/`)
+  - `raspberry_pi_pendulum.py` - Complete demo with C++ export
+  - `raspberry_pi_imu.py` - MPU6050 IMU integration with sensor fusion
+- **ARM Optimization Guide** (`docs/arm_optimization.md`)
+  - Platform compatibility matrix
+  - Performance tuning for Pi 3/4/5
+  - Real-time control examples
+- **Optional embedded dependencies** - `pip install mechanicsdsl-core[embedded]`
+
+#### Enhanced Code Generation
+- **C++ CMake Support** (`codegen/cpp.py`)
+  - New `generate_cmake()` method for CMakeLists.txt generation
+  - New `generate_project()` for complete project scaffolding
+  - ARM/NEON optimization detection
+  - Cross-compilation hints for Raspberry Pi
+- **Rust Cargo Support** (`codegen/rust.py`)
+  - New `generate_cargo_toml()` for Rust project setup
+  - New `generate_project()` with embedded (`no_std`) option
+  - ARM cross-compilation support
+
+#### CI/CD Improvements
+- **Python 3.14 Testing** - Added Python 3.14-dev to CI matrix (experimental)
+- **Extended Python Classifiers** - Added 3.8-3.13 individual classifiers
+- **Comprehensive Keywords** - Added `embedded`, `raspberry-pi`, `arm`, `gpu`, `cuda`
+
+### Changed
+
+- Bumped version to 2.0.0
+- Updated `pyproject.toml` with new classifiers and keywords
+- Black configuration extended to Python 3.13
+
+### User Impact Analysis
+
+This release specifically addresses needs identified from our global enterprise adoption:
+- 🇸🇬 **Singapore** (Rust developer, 42 downloads) → Enhanced Rust/C++ codegen
+- 🇬🇧 **UK** (Raspberry Pi user) → ARM examples and optimization guide
+- 🇨🇳 **China** (regulated industry) → Python 3.8 support maintained
+- 🇯🇵 **Japan** (Python 3.14 tester) → CI support for bleeding-edge Python
+- 🇰🇷 **Korea** (enterprise deployment) → Docker and enterprise docs
+
+
+
 ## [1.5.1] - 2026-01-11
 
 ### Added

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mechanicsdsl-core"
-version = "1.6.1"
+version = "2.0.0"
 description = "A Domain-Specific Language and Transpiler for Classical Mechanics"
 authors = [
   { name="Noah Parsons", email="nomapa223@gmail.com" },
@@ -12,12 +12,34 @@ authors = [
 readme = "README.md"
 requires-python = ">=3.8"
 license = {file = "LICENSE"}
+keywords = [
+    "physics", "simulation", "mechanics", "dsl", "lagrangian",
+    "hamiltonian", "code-generation", "scientific-computing",
+    "embedded", "raspberry-pi", "arm", "gpu", "cuda"
+]
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "Programming Language :: C++",
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: C++",
+    "Programming Language :: Rust",
     "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Software Development :: Code Generators",
     "Topic :: Software Development :: Compilers",
+    "Topic :: System :: Emulators",
+    "Topic :: System :: Hardware",
 ]
 dependencies = [
     "numpy>=1.20.0",
@@ -38,6 +60,8 @@ server = ["fastapi>=0.100.0", "uvicorn>=0.22.0", "websockets>=11.0"]
 jupyter = ["ipywidgets>=8.0.0", "ipython>=8.0.0"]
 lsp = ["pygls>=1.0.0", "lsprotocol>=2023.0.0"]
 openmao = ["openmdao>=3.25.0"]
+embedded = ["RPi.GPIO>=0.7.0; platform_machine == 'aarch64' or platform_machine == 'armv7l'"]
+arm = ["numpy>=1.20.0"]  # ARM-optimized builds
 dev = [
     "pytest",
     "pytest-cov",
@@ -84,7 +108,7 @@ filterwarnings = [
 
 [tool.black]
 line-length = 100
-target-version = ["py38", "py39", "py310", "py311", "py312"]
+target-version = ["py38", "py39", "py310", "py311", "py312", "py313"]
 
 [tool.isort]
 profile = "black"

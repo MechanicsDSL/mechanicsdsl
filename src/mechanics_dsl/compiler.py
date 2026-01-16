@@ -32,6 +32,14 @@ from .solver import NumericalSimulator
 from .visualization import MechanicsVisualizer
 from .units import UnitSystem
 
+# Security module for input validation
+try:
+    from .security import validate_dsl_code, InjectionError
+    SECURITY_AVAILABLE = True
+except ImportError:
+    SECURITY_AVAILABLE = False
+    InjectionError = ValueError
+
 # Version imported from package root for single source of truth
 try:
     from . import __version__
@@ -296,11 +304,23 @@ class PhysicsCompiler:
             logger.error(f"compile_dsl: {error_msg}")
             raise ValueError(error_msg)
         
-        # Check for potentially malicious patterns
-        dangerous_patterns = ['__import__', 'eval(', 'exec(', 'compile(']
-        for pattern in dangerous_patterns:
-            if pattern in dsl_source:
-                logger.warning(f"compile_dsl: potentially dangerous pattern '{pattern}' detected in source")
+        # Security validation - actually BLOCK dangerous patterns
+        if SECURITY_AVAILABLE:
+            try:
+                dsl_source = validate_dsl_code(dsl_source)
+            except InjectionError as e:
+                logger.error(f"compile_dsl: Security violation - {e}")
+                return {
+                    'success': False,
+                    'error': f'Security violation: {e}',
+                    'compilation_time': 0.0
+                }
+        else:
+            # Fallback: basic pattern check (warnings only)
+            dangerous_patterns = ['__import__', 'eval(', 'exec(', 'compile(']
+            for pattern in dangerous_patterns:
+                if pattern in dsl_source:
+                    logger.warning(f"compile_dsl: potentially dangerous pattern '{pattern}' detected in source")
         
         if not isinstance(use_hamiltonian, bool):
             error_msg = f"use_hamiltonian must be bool, got {type(use_hamiltonian).__name__}"
