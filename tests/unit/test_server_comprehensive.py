@@ -49,15 +49,15 @@ class TestServerRoutes:
         except ImportError:
             pytest.skip("Routes module not available")
     
-    @patch('flask.Blueprint')
-    def test_routes_blueprint_mocked(self, mock_bp):
+    def test_routes_blueprint_mocked(self):
         """Test routes with mocked Blueprint"""
         try:
+            import flask
             from mechanics_dsl.server import routes
             # Just verify import works with mocking
             assert True
         except ImportError:
-            pytest.skip("Routes module not available")
+            pytest.skip("Flask or routes module not available")
 
 
 class TestServerWebSocket:
