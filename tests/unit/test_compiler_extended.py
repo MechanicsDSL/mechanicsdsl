@@ -4,8 +4,8 @@ Extended unit tests for the compiler module.
 Tests the PhysicsCompiler class with more coverage.
 """
 
-import pytest
 import numpy as np
+import pytest
 import sympy as sp
 
 from mechanics_dsl.compiler import PhysicsCompiler
@@ -19,15 +19,15 @@ def compiler():
 
 class TestPhysicsCompilerInit:
     """Tests for PhysicsCompiler initialization."""
-    
+
     def test_init(self):
         compiler = PhysicsCompiler()
         assert compiler is not None
-    
+
     def test_has_class_name(self):
         compiler = PhysicsCompiler()
-        assert compiler.__class__.__name__ == 'PhysicsCompiler'
-    
+        assert compiler.__class__.__name__ == "PhysicsCompiler"
+
     def test_multiple_instances(self):
         c1 = PhysicsCompiler()
         c2 = PhysicsCompiler()
@@ -36,7 +36,7 @@ class TestPhysicsCompilerInit:
 
 class TestCompileMethod:
     """Tests for compile method."""
-    
+
     def test_compile_simple_oscillator(self, compiler):
         code = r"""
         \system{oscillator}
@@ -52,13 +52,13 @@ class TestCompileMethod:
                 assert result is not None
         except Exception:
             pass
-    
+
     def test_compile_empty_code(self, compiler):
         try:
             result = compiler.compile("")
         except Exception:
             pass
-    
+
     def test_compile_pendulum(self, compiler):
         code = r"""
         \system{pendulum}
@@ -75,7 +75,7 @@ class TestCompileMethod:
                 assert result is not None
         except Exception:
             pass
-    
+
     def test_compile_double_pendulum(self, compiler):
         code = r"""
         \system{double_pendulum}
@@ -97,7 +97,7 @@ class TestCompileMethod:
 
 class TestCompileExpressions:
     """Tests for expression compilation."""
-    
+
     def test_compile_various_codes(self, compiler):
         codes = [
             r"\system{test}",
@@ -115,18 +115,18 @@ class TestCompileExpressions:
 
 class TestCompilerAttributes:
     """Tests for compiler attributes."""
-    
+
     def test_has_dir(self, compiler):
         methods = dir(compiler)
         assert len(methods) > 0
-    
+
     def test_is_instance(self, compiler):
-        assert compiler.__class__.__name__ == 'PhysicsCompiler'
+        assert compiler.__class__.__name__ == "PhysicsCompiler"
 
 
 class TestRepeatedCompilation:
     """Tests for repeated compilation."""
-    
+
     def test_compile_twice(self, compiler):
         code1 = r"\system{test1}"
         code2 = r"\system{test2}"
@@ -139,7 +139,7 @@ class TestRepeatedCompilation:
 
 class TestCompileWithDifferentParameters:
     """Tests for compilation with various parameter types."""
-    
+
     def test_integer_parameters(self, compiler):
         code = r"""
         \system{test}
@@ -150,7 +150,7 @@ class TestCompileWithDifferentParameters:
             compiler.compile(code)
         except Exception:
             pass
-    
+
     def test_float_parameters(self, compiler):
         code = r"""
         \system{test}
@@ -161,7 +161,7 @@ class TestCompileWithDifferentParameters:
             compiler.compile(code)
         except Exception:
             pass
-    
+
     def test_scientific_parameters(self, compiler):
         code = r"""
         \system{test}

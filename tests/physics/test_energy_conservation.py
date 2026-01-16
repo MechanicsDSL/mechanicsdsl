@@ -2,27 +2,32 @@
 Energy conservation tests - Verify energy is conserved in conservative systems
 Tests both new package structure and original core.py
 """
-import pytest
-import numpy as np
-import sys
+
 import os
+import sys
 from pathlib import Path
 
+import numpy as np
+import pytest
+
 # Detect CI environment and adjust tolerances
-IS_CI = os.getenv('CI') == 'true' or os.getenv('GITHUB_ACTIONS') == 'true'
+IS_CI = os.getenv("CI") == "true" or os.getenv("GITHUB_ACTIONS") == "true"
 # Use more lenient tolerances in CI due to numerical differences
 ENERGY_TOL_MULTIPLIER = 3.0 if IS_CI else 1.0
 
 try:
     from mechanics_dsl import PhysicsCompiler
     from mechanics_dsl.energy import PotentialEnergyCalculator
+
     NEW_PACKAGE = True
 except ImportError:
     NEW_PACKAGE = False
 
 try:
-    sys.path.insert(0, str(Path(__file__).parent.parent / 'reference'))
-    from core import PhysicsCompiler as CorePhysicsCompiler, PotentialEnergyCalculator as CorePotentialEnergyCalculator
+    sys.path.insert(0, str(Path(__file__).parent.parent / "reference"))
+    from core import PhysicsCompiler as CorePhysicsCompiler
+    from core import PotentialEnergyCalculator as CorePotentialEnergyCalculator
+
     CORE_AVAILABLE = True
 except ImportError:
     CORE_AVAILABLE = False
@@ -50,7 +55,7 @@ def get_energy_calculator():
 
 class TestEnergyConservation:
     """Test energy conservation in various systems"""
-    
+
     def test_harmonic_oscillator_energy(self):
         """Test energy conservation in harmonic oscillator"""
         dsl_code = r"""
@@ -66,35 +71,39 @@ class TestEnergyConservation:
         
         \initial{x=1.0, x_dot=0.0}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code)
-        assert result['success']
-        
+        assert result["success"]
+
         solution = compiler.simulate(t_span=(0, 10), num_points=1000)
-        assert solution['success']
-        
+        assert solution["success"]
+
         EnergyCalc = get_energy_calculator()
         params = compiler.simulator.parameters
         KE = EnergyCalc.compute_kinetic_energy(solution, params)
-        PE = EnergyCalc.compute_potential_energy(solution, params, 'oscillator_energy')
+        PE = EnergyCalc.compute_potential_energy(solution, params, "oscillator_energy")
         E_total = KE + PE
-        
+
         # Energy should be conserved to within tolerance (more lenient in CI)
         if E_total[0] != 0 and np.abs(E_total[0]) > 1e-10:  # Avoid division by very small numbers
             energy_error = np.abs((E_total - E_total[0]) / E_total[0])
             max_error = np.max(energy_error)
             tolerance = 0.02 * ENERGY_TOL_MULTIPLIER  # Increased from 0.01
-            assert max_error < tolerance, f"Energy conservation violated: max error {max_error:.6f} (tolerance: {tolerance:.6f})"
-            
+            assert (
+                max_error < tolerance
+            ), f"Energy conservation violated: max error {max_error:.6f} (tolerance: {tolerance:.6f})"
+
             # Mean error should be even smaller
             mean_error = np.mean(energy_error)
             mean_tolerance = 0.01 * ENERGY_TOL_MULTIPLIER  # Increased from 0.005
-            assert mean_error < mean_tolerance, f"Mean energy error too large: {mean_error:.6f} (tolerance: {mean_tolerance:.6f})"
+            assert (
+                mean_error < mean_tolerance
+            ), f"Mean energy error too large: {mean_error:.6f} (tolerance: {mean_tolerance:.6f})"
         else:
             # If initial energy is zero or very small, just check that energy stays small
             assert np.all(np.abs(E_total) < 1e-6), "Energy should remain near zero"
-    
+
     def test_pendulum_energy(self):
         """Test energy conservation in simple pendulum"""
         dsl_code = r"""
@@ -112,29 +121,31 @@ class TestEnergyConservation:
         
         \initial{theta=0.5, theta_dot=0.0}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code)
-        assert result['success']
-        
-        solution = compiler.simulate(t_span=(0, 10), num_points=1000, method='RK45')
-        assert solution['success']
-        
+        assert result["success"]
+
+        solution = compiler.simulate(t_span=(0, 10), num_points=1000, method="RK45")
+        assert solution["success"]
+
         EnergyCalc = get_energy_calculator()
         params = compiler.simulator.parameters
         KE = EnergyCalc.compute_kinetic_energy(solution, params)
-        PE = EnergyCalc.compute_potential_energy(solution, params, 'pendulum_energy')
+        PE = EnergyCalc.compute_potential_energy(solution, params, "pendulum_energy")
         E_total = KE + PE
-        
+
         # Energy should be conserved (more lenient in CI)
         if E_total[0] != 0 and np.abs(E_total[0]) > 1e-10:
             energy_error = np.abs((E_total - E_total[0]) / E_total[0])
             tolerance = 0.05 * ENERGY_TOL_MULTIPLIER
-            assert np.max(energy_error) < tolerance, f"Energy error: {np.max(energy_error):.6f} (tolerance: {tolerance:.6f})"
+            assert (
+                np.max(energy_error) < tolerance
+            ), f"Energy error: {np.max(energy_error):.6f} (tolerance: {tolerance:.6f})"
         else:
             # If initial energy is zero or very small, just check that energy stays small
             assert np.all(np.abs(E_total) < 1e-5), "Energy should remain near zero"
-    
+
     def test_coupled_oscillators_energy(self):
         """Test energy conservation in coupled oscillators"""
         dsl_code = r"""
@@ -159,29 +170,31 @@ class TestEnergyConservation:
         
         \initial{x1=1.0, x1_dot=0.0, x2=0.0, x2_dot=0.0}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code)
-        assert result['success']
-        
+        assert result["success"]
+
         solution = compiler.simulate(t_span=(0, 10), num_points=1000)
-        assert solution['success']
-        
+        assert solution["success"]
+
         EnergyCalc = get_energy_calculator()
         params = compiler.simulator.parameters
         KE = EnergyCalc.compute_kinetic_energy(solution, params)
-        PE = EnergyCalc.compute_potential_energy(solution, params, 'coupled_energy')
+        PE = EnergyCalc.compute_potential_energy(solution, params, "coupled_energy")
         E_total = KE + PE
-        
+
         if E_total[0] != 0 and np.abs(E_total[0]) > 1e-10:
             energy_error = np.abs((E_total - E_total[0]) / E_total[0])
             # Coupled oscillators can have significant energy drift
             tolerance = 5.0
-            assert np.max(energy_error) < tolerance, f"Energy error: {np.max(energy_error):.6f} (tolerance: {tolerance:.6f})"
+            assert (
+                np.max(energy_error) < tolerance
+            ), f"Energy error: {np.max(energy_error):.6f} (tolerance: {tolerance:.6f})"
         else:
             # If initial energy is zero or very small, just check that energy stays small
             assert np.all(np.abs(E_total) < 1e-5), "Energy should remain near zero"
-    
+
     def test_kepler_problem_energy(self):
         """Test energy conservation in Kepler problem"""
         dsl_code = r"""
@@ -203,29 +216,31 @@ class TestEnergyConservation:
         
         \initial{r=10.0, r_dot=0.0, phi=0.0, phi_dot=0.1}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code)
-        assert result['success']
-        
-        solution = compiler.simulate(t_span=(0, 50), num_points=2000, method='LSODA')
-        assert solution['success']
-        
+        assert result["success"]
+
+        solution = compiler.simulate(t_span=(0, 50), num_points=2000, method="LSODA")
+        assert solution["success"]
+
         EnergyCalc = get_energy_calculator()
         params = compiler.simulator.parameters
         KE = EnergyCalc.compute_kinetic_energy(solution, params)
-        PE = EnergyCalc.compute_potential_energy(solution, params, 'kepler_energy')
+        PE = EnergyCalc.compute_potential_energy(solution, params, "kepler_energy")
         E_total = KE + PE
-        
+
         if E_total[0] != 0 and np.abs(E_total[0]) > 1e-10:
             energy_error = np.abs((E_total - E_total[0]) / E_total[0])
             # Kepler problem can have significant errors due to long integration
             tolerance = 10.0
-            assert np.max(energy_error) < tolerance, f"Energy error: {np.max(energy_error):.6f} (tolerance: {tolerance:.6f})"
+            assert (
+                np.max(energy_error) < tolerance
+            ), f"Energy error: {np.max(energy_error):.6f} (tolerance: {tolerance:.6f})"
         else:
             # If initial energy is zero or very small, just check that energy stays small
             assert np.all(np.abs(E_total) < 1e-5), "Energy should remain near zero"
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

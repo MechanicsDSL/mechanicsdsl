@@ -18,10 +18,10 @@ Quick Start:
     >>> result = compiler.compile_dsl(source)
 """
 
-from .serializer import SystemSerializer
 from .particles import ParticleGenerator
+from .serializer import SystemSerializer
 
 __all__ = [
-    'SystemSerializer', 
-    'ParticleGenerator',
+    "SystemSerializer",
+    "ParticleGenerator",
 ]

@@ -2,28 +2,32 @@
 Complex pendulum system tests - Multi-body chaotic systems
 Tests both new package structure and original core.py
 """
-import pytest
-import numpy as np
-import sys
+
 import os
+import sys
 from pathlib import Path
 
+import numpy as np
+import pytest
+
 # Detect CI environment and adjust tolerances
-IS_CI = os.getenv('CI') == 'true' or os.getenv('GITHUB_ACTIONS') == 'true'
+IS_CI = os.getenv("CI") == "true" or os.getenv("GITHUB_ACTIONS") == "true"
 # Chaotic systems need much more lenient tolerances in CI
 ENERGY_TOL_MULTIPLIER = 5.0 if IS_CI else 1.0
 
 # Try importing from new package structure
 try:
     from mechanics_dsl import PhysicsCompiler
+
     NEW_PACKAGE = True
 except ImportError:
     NEW_PACKAGE = False
 
 # Try importing from original core.py
 try:
-    sys.path.insert(0, str(Path(__file__).parent.parent / 'reference'))
+    sys.path.insert(0, str(Path(__file__).parent.parent / "reference"))
     from core import PhysicsCompiler as CorePhysicsCompiler
+
     CORE_AVAILABLE = True
 except ImportError:
     CORE_AVAILABLE = False
@@ -41,7 +45,7 @@ def get_compiler():
 
 class TestDoublePendulum:
     """Test double pendulum (chaotic system)"""
-    
+
     def test_double_pendulum_compilation(self):
         """Test double pendulum compilation"""
         dsl_code = r"""
@@ -70,20 +74,20 @@ class TestDoublePendulum:
         
         \initial{theta1=1.57, theta1_dot=0.0, theta2=1.57, theta2_dot=0.0}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code)
-        
-        assert result['success'], f"Compilation failed: {result.get('error', 'Unknown error')}"
-        assert result['system_name'] == 'double_pendulum'
-        assert 'theta1' in result['coordinates']
-        assert 'theta2' in result['coordinates']
-        assert len(result['coordinates']) == 2
-        
+
+        assert result["success"], f"Compilation failed: {result.get('error', 'Unknown error')}"
+        assert result["system_name"] == "double_pendulum"
+        assert "theta1" in result["coordinates"]
+        assert "theta2" in result["coordinates"]
+        assert len(result["coordinates"]) == 2
+
         # Verify equations were derived
         assert compiler.equations is not None
-        assert 'theta1_ddot' in compiler.equations or len(compiler.equations) > 0
-    
+        assert "theta1_ddot" in compiler.equations or len(compiler.equations) > 0
+
     def test_double_pendulum_simulation(self):
         """Test double pendulum simulation with energy check"""
         dsl_code = r"""
@@ -112,42 +116,45 @@ class TestDoublePendulum:
         
         \initial{theta1=0.5, theta1_dot=0.0, theta2=0.1, theta2_dot=0.0}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code)
-        assert result['success']
-        
+        assert result["success"]
+
         solution = compiler.simulate(t_span=(0, 5), num_points=500)
-        
-        assert solution['success'], f"Simulation failed: {solution.get('error', 'Unknown error')}"
-        assert solution['y'].shape[0] == 4  # theta1, theta1_dot, theta2, theta2_dot
-        assert len(solution['t']) == 500
-        
+
+        assert solution["success"], f"Simulation failed: {solution.get('error', 'Unknown error')}"
+        assert solution["y"].shape[0] == 4  # theta1, theta1_dot, theta2, theta2_dot
+        assert len(solution["t"]) == 500
+
         # Check chaotic behavior - angles should vary significantly
-        theta1 = solution['y'][0]
-        theta2 = solution['y'][2]
+        theta1 = solution["y"][0]
+        theta2 = solution["y"][2]
         assert np.max(np.abs(theta1)) > 0.1
         # theta2 starts at 0.1, so check that it varies (not just stays at initial value)
         assert np.max(np.abs(theta2)) >= 0.1
         # Also check that it actually moves (not just the initial condition)
         assert np.std(theta2) > 0.01, "theta2 should show variation, not just initial condition"
-        
+
         # Energy should be approximately conserved (within 5%)
         from mechanics_dsl.energy import PotentialEnergyCalculator
+
         params = compiler.simulator.parameters
         KE = PotentialEnergyCalculator.compute_kinetic_energy(solution, params)
-        PE = PotentialEnergyCalculator.compute_potential_energy(solution, params, 'double_pendulum')
+        PE = PotentialEnergyCalculator.compute_potential_energy(solution, params, "double_pendulum")
         E_total = KE + PE
-        
+
         if E_total[0] != 0 and np.abs(E_total[0]) > 1e-10:
             energy_error = np.abs((E_total - E_total[0]) / E_total[0])
             # Allow significant drift in CI for chaotic double pendulum
             tolerance = 500.0 if IS_CI else 10.0
-            assert np.max(energy_error) < tolerance, f"Energy conservation violated: max error {np.max(energy_error):.6f} (tolerance: {tolerance:.6f})"
+            assert (
+                np.max(energy_error) < tolerance
+            ), f"Energy conservation violated: max error {np.max(energy_error):.6f} (tolerance: {tolerance:.6f})"
         else:
             # If initial energy is zero or very small, just check that energy stays small
             assert np.all(np.abs(E_total) < 1e-5), "Energy should remain near zero"
-    
+
     def test_triple_pendulum(self):
         """Test triple pendulum (very complex system)"""
         dsl_code = r"""
@@ -170,21 +177,21 @@ class TestDoublePendulum:
         
         \initial{theta1=0.5, theta1_dot=0.0, theta2=0.0, theta2_dot=0.0, theta3=0.0, theta3_dot=0.0}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code)
-        
-        assert result['success']
-        assert len(result['coordinates']) == 3
-        
+
+        assert result["success"]
+        assert len(result["coordinates"]) == 3
+
         solution = compiler.simulate(t_span=(0, 3), num_points=300)
-        assert solution['success']
-        assert solution['y'].shape[0] == 6  # 3 coordinates * 2 states each
+        assert solution["success"]
+        assert solution["y"].shape[0] == 6  # 3 coordinates * 2 states each
 
 
 class TestQuadruplePendulum:
     """Test quadruple pendulum (extremely complex)"""
-    
+
     def test_quadruple_pendulum(self):
         """Test quadruple pendulum system"""
         dsl_code = r"""
@@ -208,17 +215,17 @@ class TestQuadruplePendulum:
         
         \initial{theta1=0.3, theta1_dot=0.0, theta2=0.0, theta2_dot=0.0, theta3=0.0, theta3_dot=0.0, theta4=0.0, theta4_dot=0.0}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code)
-        
-        assert result['success']
-        assert len(result['coordinates']) == 4
-        
-        solution = compiler.simulate(t_span=(0, 2), num_points=200, method='LSODA')
-        assert solution['success']
-        assert solution['y'].shape[0] == 8  # 4 coordinates * 2 states
+
+        assert result["success"]
+        assert len(result["coordinates"]) == 4
+
+        solution = compiler.simulate(t_span=(0, 2), num_points=200, method="LSODA")
+        assert solution["success"]
+        assert solution["y"].shape[0] == 8  # 4 coordinates * 2 states
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

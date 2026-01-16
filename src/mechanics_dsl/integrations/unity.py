@@ -3,7 +3,9 @@ Unity game engine code generator for MechanicsDSL.
 
 Generates C# MonoBehaviour scripts for Unity physics simulation.
 """
-from typing import Dict, List, Optional, Any
+
+from typing import Any, Dict, List, Optional
+
 import sympy as sp
 
 try:
@@ -15,42 +17,42 @@ except ImportError:
 class UnityGenerator(CodeGenerator if CodeGenerator != object else object):
     """
     Generate Unity C# scripts from MechanicsDSL.
-    
+
     Creates MonoBehaviour components that simulate physics
     using RK4 integration in FixedUpdate.
-    
+
     Example:
         gen = UnityGenerator(compiler)
         gen.generate('PendulumSimulator.cs')
     """
-    
+
     @property
     def target_name(self) -> str:
         return "unity"
-    
+
     @property
     def file_extension(self) -> str:
         return ".cs"
-    
+
     def __init__(self, compiler=None):
         super().__init__()
         self.compiler = compiler
         if compiler:
-            self.system_name = getattr(compiler, 'system_name', 'Physics')
-            self.coordinates = getattr(compiler.simulator, 'coordinates', [])
-            self.parameters = dict(getattr(compiler.simulator, 'parameters', {}))
-            self.accelerations = getattr(compiler, 'accelerations', {})
+            self.system_name = getattr(compiler, "system_name", "Physics")
+            self.coordinates = getattr(compiler.simulator, "coordinates", [])
+            self.parameters = dict(getattr(compiler.simulator, "parameters", {}))
+            self.accelerations = getattr(compiler, "accelerations", {})
         else:
-            self.system_name = 'Physics'
+            self.system_name = "Physics"
             self.coordinates = []
             self.parameters = {}
             self.accelerations = {}
-    
+
     def generate(self, output_file: Optional[str] = None) -> str:
         """Generate Unity C# code."""
         class_name = self._to_pascal_case(self.system_name)
-        
-        code = f'''using UnityEngine;
+
+        code = f"""using UnityEngine;
 using System;
 
 /// <summary>
@@ -208,74 +210,74 @@ public class {class_name}Simulator : MonoBehaviour
             Array.Copy(newState, state, state.Length);
     }}
 }}
-'''
-        
+"""
+
         if output_file:
-            with open(output_file, 'w') as f:
+            with open(output_file, "w") as f:
                 f.write(code)
-        
+
         return code
-    
+
     def _to_pascal_case(self, name: str) -> str:
         """Convert snake_case to PascalCase."""
-        return ''.join(word.capitalize() for word in name.split('_'))
-    
+        return "".join(word.capitalize() for word in name.split("_"))
+
     def _generate_parameters(self) -> str:
         """Generate parameter fields."""
         lines = []
         for name, value in self.parameters.items():
             lines.append(f"    public float {name} = {value}f;")
-        return '\n'.join(lines) if lines else "    // No parameters"
-    
+        return "\n".join(lines) if lines else "    // No parameters"
+
     def _generate_state_fields(self) -> str:
         """Generate state variable fields."""
         lines = []
         for coord in self.coordinates:
             lines.append(f"    [SerializeField] private float {coord};")
             lines.append(f"    [SerializeField] private float {coord}_dot;")
-        return '\n'.join(lines) if lines else "    // No state variables"
-    
+        return "\n".join(lines) if lines else "    // No state variables"
+
     def _generate_initial_conditions(self) -> str:
         """Generate initial condition assignments."""
         lines = []
         for i, coord in enumerate(self.coordinates):
             lines.append(f"        state[{2*i}] = {coord};")
             lines.append(f"        state[{2*i + 1}] = {coord}_dot;")
-        return '\n'.join(lines) if lines else "        // No initial conditions"
-    
+        return "\n".join(lines) if lines else "        // No initial conditions"
+
     def _generate_state_unpack(self) -> str:
         """Generate state unpacking code."""
         lines = []
         for i, coord in enumerate(self.coordinates):
             lines.append(f"        float {coord} = y[{2*i}];")
             lines.append(f"        float {coord}_dot = y[{2*i + 1}];")
-        return '\n'.join(lines) if lines else "        // No state to unpack"
-    
+        return "\n".join(lines) if lines else "        // No state to unpack"
+
     def _generate_accelerations(self) -> str:
         """Generate acceleration computations."""
         lines = []
         for coord in self.coordinates:
             # Simplified - real implementation would convert sympy to C#
             lines.append(f"        float {coord}_ddot = 0.0f; // TODO: Generated from symbolic")
-        return '\n'.join(lines) if lines else "        // No accelerations"
-    
+        return "\n".join(lines) if lines else "        // No accelerations"
+
     def _generate_derivatives_pack(self) -> str:
         """Generate derivative packing."""
         lines = []
         for i, coord in enumerate(self.coordinates):
             lines.append(f"        dydt[{2*i}] = {coord}_dot;")
             lines.append(f"        dydt[{2*i + 1}] = {coord}_ddot;")
-        return '\n'.join(lines) if lines else "        // No derivatives"
-    
+        return "\n".join(lines) if lines else "        // No derivatives"
+
     def _generate_transform_update(self) -> str:
         """Generate transform update (basic rotation for angles)."""
         if not self.coordinates:
             return "        // No coordinates"
-        
+
         coord = self.coordinates[0]
-        return f'''        // Example: rotate based on first coordinate
+        return f"""        // Example: rotate based on first coordinate
         float angle = state[0] * Mathf.Rad2Deg;
-        transform.localRotation = Quaternion.Euler(0, 0, -angle);'''
+        transform.localRotation = Quaternion.Euler(0, 0, -angle);"""
 
 
-__all__ = ['UnityGenerator']
+__all__ = ["UnityGenerator"]

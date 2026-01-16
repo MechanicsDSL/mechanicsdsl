@@ -4,18 +4,21 @@ CUDA Code Generator for MechanicsDSL
 Generates CUDA kernels for GPU-accelerated physics simulations.
 Includes CPU fallback code for systems without NVIDIA GPUs.
 """
+
 import os
+from typing import Dict, List, Optional
+
 import sympy as sp
 from sympy.printing.cxx import cxxcode
-from typing import Dict, List, Optional
-from .base import CodeGenerator
+
 from ..utils import logger
+from .base import CodeGenerator
 
 
 class CudaGenerator(CodeGenerator):
     """
     Generates CUDA C++ simulation code from symbolic equations.
-    
+
     Features:
     - GPU kernel generation for equations of motion
     - RK4 integration on GPU
@@ -24,7 +27,7 @@ class CudaGenerator(CodeGenerator):
     - CPU fallback for non-CUDA systems
     - CMakeLists.txt for nvcc compilation
     - SPH particle simulation support
-    
+
     Example:
         >>> gen = CudaGenerator(
         ...     system_name="pendulum",
@@ -37,19 +40,24 @@ class CudaGenerator(CodeGenerator):
         ... )
         >>> gen.generate("output/")
     """
-    
-    def __init__(self, system_name: str, coordinates: List[str],
-                 parameters: Dict[str, float], initial_conditions: Dict[str, float],
-                 equations: Dict[str, sp.Expr],
-                 generate_cpu_fallback: bool = True,
-                 fluid_particles: List[dict] = None,
-                 boundary_particles: List[dict] = None,
-                 use_cublas: bool = False,
-                 batch_size: int = 1,
-                 compute_capability: str = "60"):
+
+    def __init__(
+        self,
+        system_name: str,
+        coordinates: List[str],
+        parameters: Dict[str, float],
+        initial_conditions: Dict[str, float],
+        equations: Dict[str, sp.Expr],
+        generate_cpu_fallback: bool = True,
+        fluid_particles: List[dict] = None,
+        boundary_particles: List[dict] = None,
+        use_cublas: bool = False,
+        batch_size: int = 1,
+        compute_capability: str = "60",
+    ):
         """
         Initialize CUDA generator.
-        
+
         Args:
             system_name: Name of the physics system
             coordinates: List of coordinate names
@@ -63,73 +71,72 @@ class CudaGenerator(CodeGenerator):
             batch_size: Number of parallel simulations (for sweeps)
             compute_capability: CUDA compute capability (30, 50, 60, 70, 80)
         """
-        super().__init__(system_name, coordinates, parameters, 
-                        initial_conditions, equations)
-        
+        super().__init__(system_name, coordinates, parameters, initial_conditions, equations)
+
         self.generate_cpu_fallback = generate_cpu_fallback
         self.fluid_particles = fluid_particles or []
         self.boundary_particles = boundary_particles or []
         self.use_cublas = use_cublas
         self.batch_size = batch_size
         self.compute_capability = compute_capability
-    
+
     @property
     def target_name(self) -> str:
-        return 'cuda'
-    
+        return "cuda"
+
     @property
     def file_extension(self) -> str:
-        return '.cu'
-    
+        return ".cu"
+
     def generate(self, output_dir: str = ".") -> str:
         """
         Generate complete CUDA project with all necessary files.
-        
+
         Args:
             output_dir: Directory to write generated files
-            
+
         Returns:
             Path to main CUDA file
         """
         os.makedirs(output_dir, exist_ok=True)
-        
+
         logger.info(f"Generating CUDA code for {self.system_name}")
-        
+
         # Generate main files
         cuda_file = os.path.join(output_dir, f"{self.system_name}.cu")
         header_file = os.path.join(output_dir, f"{self.system_name}.h")
         cmake_file = os.path.join(output_dir, "CMakeLists.txt")
-        
+
         # Write CUDA kernel file
-        with open(cuda_file, 'w') as f:
+        with open(cuda_file, "w") as f:
             f.write(self._generate_cuda_source())
-        
+
         # Write header
-        with open(header_file, 'w') as f:
+        with open(header_file, "w") as f:
             f.write(self._generate_header())
-        
+
         # Write CMakeLists.txt
-        with open(cmake_file, 'w') as f:
+        with open(cmake_file, "w") as f:
             f.write(self._generate_cmake())
-        
+
         # Write CPU fallback if requested
         if self.generate_cpu_fallback:
             cpu_file = os.path.join(output_dir, f"{self.system_name}_cpu.cpp")
-            with open(cpu_file, 'w') as f:
+            with open(cpu_file, "w") as f:
                 f.write(self._generate_cpu_fallback())
-        
+
         logger.info(f"Generated CUDA files in {output_dir}")
         return cuda_file
-    
+
     def generate_equations(self) -> str:
         """Generate device code for equations of motion."""
         lines = []
-        
+
         idx = 0
         for coord in self.coordinates:
             accel_key = f"{coord}_ddot"
             lines.append(f"    dydt[{idx}] = state[{idx+1}];  // d({coord})/dt")
-            
+
             if accel_key in self.equations:
                 expr = self.equations[accel_key]
                 cuda_expr = self._sympy_to_cuda(expr)
@@ -137,35 +144,35 @@ class CudaGenerator(CodeGenerator):
             else:
                 lines.append(f"    dydt[{idx+1}] = 0.0;")
             idx += 2
-        
+
         return "\n".join(lines)
-    
+
     def _sympy_to_cuda(self, expr: sp.Expr) -> str:
         """Convert sympy expression to CUDA C++ code."""
         # Use C++17 compatible code generation
-        cuda_code = cxxcode(expr, standard='c++17')
+        cuda_code = cxxcode(expr, standard="c++17")
         return cuda_code
-    
+
     def _generate_cuda_source(self) -> str:
         """Generate the main CUDA source file."""
         state_dim = len(self.coordinates) * 2
-        
+
         # Parameter declarations
         params_code = self._generate_parameters_device()
-        
+
         # Equations kernel
         equations_code = self.generate_equations()
-        
+
         # Initial conditions
         init_code = self.generate_initial_conditions()
-        
+
         # CSV header
         header_parts = ["t"]
         for coord in self.coordinates:
             header_parts.extend([coord, f"{coord}_dot"])
         csv_header = ",".join(header_parts)
-        
-        return f'''/*
+
+        return f"""/*
  * CUDA Simulation: {self.system_name}
  * Generated by MechanicsDSL
  * 
@@ -310,11 +317,11 @@ int main(int argc, char** argv) {{
     std::cout << "Simulation complete. Results saved to {self.system_name}_cuda_results.csv" << std::endl;
     return EXIT_SUCCESS;
 }}
-'''
-    
+"""
+
     def _generate_header(self) -> str:
         """Generate header file."""
-        return f'''/*
+        return f"""/*
  * Header for CUDA Simulation: {self.system_name}
  * Generated by MechanicsDSL
  */
@@ -331,11 +338,11 @@ constexpr int STATE_DIM = {len(self.coordinates) * 2};
 void simulate_{self.system_name}(double* initial_state, double t_end, double dt);
 
 #endif // {self.system_name.upper()}_H
-'''
-    
+"""
+
     def _generate_cmake(self) -> str:
         """Generate CMakeLists.txt for building the CUDA project."""
-        return f'''# CMakeLists.txt for {self.system_name}
+        return f"""# CMakeLists.txt for {self.system_name}
 # Generated by MechanicsDSL
 
 cmake_minimum_required(VERSION 3.18)
@@ -363,15 +370,14 @@ message(STATUS "Build with: mkdir build && cd build && cmake .. && make")
 message(STATUS "Run CUDA version: ./{self.system_name}_cuda")
 message(STATUS "Run CPU version:  ./{self.system_name}_cpu")
 message(STATUS "")
-'''
-    
+"""
+
     def _generate_cpu_fallback(self) -> str:
         """Generate CPU-only fallback implementation."""
         state_dim = len(self.coordinates) * 2
         init_code = self.generate_initial_conditions()
-        csv_header = ",".join(["t"] + 
-            [x for c in self.coordinates for x in [c, f"{c}_dot"]])
-        
+        csv_header = ",".join(["t"] + [x for c in self.coordinates for x in [c, f"{c}_dot"]])
+
         # Generate equations for CPU
         eq_lines = []
         idx = 0
@@ -380,14 +386,14 @@ message(STATUS "")
             eq_lines.append(f"    dydt[{idx}] = state[{idx+1}];")
             if accel_key in self.equations:
                 expr = self.equations[accel_key]
-                cpp_expr = cxxcode(expr, standard='c++17')
+                cpp_expr = cxxcode(expr, standard="c++17")
                 eq_lines.append(f"    dydt[{idx+1}] = {cpp_expr};")
             else:
                 eq_lines.append(f"    dydt[{idx+1}] = 0.0;")
             idx += 2
         equations_code = "\n".join(eq_lines)
-        
-        return f'''/*
+
+        return f"""/*
  * CPU Fallback Simulation: {self.system_name}
  * Generated by MechanicsDSL
  * 
@@ -470,36 +476,36 @@ int main() {{
     std::cout << "Simulation complete. Results saved to {self.system_name}_cpu_results.csv" << std::endl;
     return 0;
 }}
-'''
-    
+"""
+
     def _generate_parameters(self) -> str:
         """Generate parameter declarations for CPU code."""
         lines = []
         for name, val in self.parameters.items():
             lines.append(f"const double {name} = {val};")
         return "\n".join(lines)
-    
+
     def _generate_parameters_device(self) -> str:
         """Generate parameter declarations for device namespace."""
         lines = []
         for name, val in self.parameters.items():
             lines.append(f"    __constant__ double {name} = {val};")
         return "\n".join(lines)
-    
+
     def _generate_param_unpack(self) -> str:
         """Generate code to unpack parameters from array."""
         lines = []
         for i, name in enumerate(self.parameters.keys()):
             lines.append(f"    double {name} = params[{i}];")
         return "\n".join(lines)
-    
+
     def _generate_param_indices(self) -> str:
         """Generate parameter index constants."""
         lines = []
         for i, name in enumerate(self.parameters.keys()):
             lines.append(f"constexpr int PARAM_{name.upper()} = {i};")
         return "\n".join(lines)
-    
+
     def _generate_state_unpack_device(self) -> str:
         """Generate state unpacking for device code."""
         lines = []
@@ -509,7 +515,7 @@ int main() {{
             lines.append(f"    double {coord}_dot = state[{idx+1}];")
             idx += 2
         return "\n".join(lines)
-    
+
     def _generate_state_unpack_cpu(self) -> str:
         """Generate state unpacking for CPU code."""
         lines = []
@@ -519,14 +525,14 @@ int main() {{
             lines.append(f"    double {coord}_dot = state[{idx+1}];")
             idx += 2
         return "\n".join(lines)
-    
+
     def _params_array(self) -> str:
         """Generate parameter values as comma-separated list."""
         return ", ".join(str(v) for v in self.parameters.values())
 
     def _generate_cublas_helpers(self) -> str:
         """Generate cuBLAS utility functions for matrix operations."""
-        return '''
+        return """
 // =============================================================================
 // cuBLAS Helper Functions (for linear algebra operations)
 // =============================================================================
@@ -587,31 +593,32 @@ inline void cublas_gemm(int m, int n, int k, double alpha,
                 m, n, k, &alpha, A, m, B, k, &beta, C, m);
 }
 #endif // USE_CUBLAS
-'''
+"""
 
     def generate_batch_simulation(self, output_dir: str = ".") -> str:
         """
         Generate CUDA code for batch parallel simulations.
-        
+
         Useful for:
         - Parameter sweeps
         - Monte Carlo analysis
         - Sensitivity studies
-        
+
         Args:
             output_dir: Output directory
-            
+
         Returns:
             Path to generated file
         """
         import os
+
         os.makedirs(output_dir, exist_ok=True)
-        
+
         state_dim = len(self.coordinates) * 2
         batch_file = os.path.join(output_dir, f"{self.system_name}_batch.cu")
-        
+
         # Generate batch-specific CUDA code
-        batch_code = f'''/*
+        batch_code = f"""/*
  * Batch CUDA Simulation: {self.system_name}
  * Generated by MechanicsDSL
  * 
@@ -724,11 +731,10 @@ int main() {{
     cudaFree(d_states);
     return 0;
 }}
-'''
-        
-        with open(batch_file, 'w') as f:
+"""
+
+        with open(batch_file, "w") as f:
             f.write(batch_code)
-        
+
         logger.info(f"Generated batch simulation: {batch_file}")
         return batch_file
-

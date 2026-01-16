@@ -2,26 +2,30 @@
 Chaotic system tests - Lorenz, Rössler, Hénon-Heiles, etc.
 Tests both new package structure and original core.py
 """
-import pytest
-import numpy as np
-import sys
+
 import os
+import sys
 from pathlib import Path
 
+import numpy as np
+import pytest
+
 # Detect CI environment and adjust tolerances
-IS_CI = os.getenv('CI') == 'true' or os.getenv('GITHUB_ACTIONS') == 'true'
+IS_CI = os.getenv("CI") == "true" or os.getenv("GITHUB_ACTIONS") == "true"
 # Chaotic systems are highly sensitive - need very lenient tolerances in CI
 ENERGY_TOL_MULTIPLIER = 5.0 if IS_CI else 1.0
 
 try:
     from mechanics_dsl import PhysicsCompiler
+
     NEW_PACKAGE = True
 except ImportError:
     NEW_PACKAGE = False
 
 try:
-    sys.path.insert(0, str(Path(__file__).parent.parent / 'reference'))
+    sys.path.insert(0, str(Path(__file__).parent.parent / "reference"))
     from core import PhysicsCompiler as CorePhysicsCompiler
+
     CORE_AVAILABLE = True
 except ImportError:
     CORE_AVAILABLE = False
@@ -39,7 +43,7 @@ def get_compiler():
 
 class TestLorenzSystem:
     """Test Lorenz attractor (chaotic)"""
-    
+
     def test_lorenz_system(self):
         """Test Lorenz system compilation and simulation"""
         dsl_code = r"""
@@ -67,30 +71,36 @@ class TestLorenzSystem:
         
         \initial{x=1.0, x_dot=0.0, y=1.0, y_dot=0.0, z=1.0, z_dot=0.0}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code)
-        
-        assert result['success']
-        assert len(result['coordinates']) == 3
-        
+
+        assert result["success"]
+        assert len(result["coordinates"]) == 3
+
         # Use automatic solver selection (will choose LSODA for stability)
         solution = compiler.simulate(t_span=(0, 10), num_points=1000)
-        
-        assert solution['success']
-        assert solution['y'].shape[0] == 6  # x, x_dot, y, y_dot, z, z_dot
-        
+
+        assert solution["success"]
+        assert solution["y"].shape[0] == 6  # x, x_dot, y, y_dot, z, z_dot
+
         # Check for chaotic behavior - values should vary significantly
-        x = solution['y'][0]
-        y = solution['y'][2]
-        z = solution['y'][4]
-        
+        x = solution["y"][0]
+        y = solution["y"][2]
+        z = solution["y"][4]
+
         # Use more lenient bounds in CI (chaotic systems are sensitive to initial conditions)
         min_excursion = 3.0 if IS_CI else 5.0
-        assert np.max(np.abs(x)) > min_excursion, f"Lorenz x excursion too small: {np.max(np.abs(x)):.3f}"
-        assert np.max(np.abs(y)) > min_excursion, f"Lorenz y excursion too small: {np.max(np.abs(y)):.3f}"
-        assert np.max(np.abs(z)) > min_excursion, f"Lorenz z excursion too small: {np.max(np.abs(z)):.3f}"
-        
+        assert (
+            np.max(np.abs(x)) > min_excursion
+        ), f"Lorenz x excursion too small: {np.max(np.abs(x)):.3f}"
+        assert (
+            np.max(np.abs(y)) > min_excursion
+        ), f"Lorenz y excursion too small: {np.max(np.abs(y)):.3f}"
+        assert (
+            np.max(np.abs(z)) > min_excursion
+        ), f"Lorenz z excursion too small: {np.max(np.abs(z)):.3f}"
+
         # Check that system doesn't blow up
         assert np.all(np.isfinite(x))
         assert np.all(np.isfinite(y))
@@ -99,7 +109,7 @@ class TestLorenzSystem:
 
 class TestRosslerAttractor:
     """Test Rössler attractor"""
-    
+
     def test_rossler_attractor(self):
         """Test Rössler attractor system"""
         dsl_code = r"""
@@ -127,30 +137,32 @@ class TestRosslerAttractor:
         
         \initial{x=1.0, x_dot=0.0, y=1.0, y_dot=0.0, z=0.0, z_dot=0.0}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code)
-        
-        assert result['success']
-        
+
+        assert result["success"]
+
         # Use automatic solver selection (will choose LSODA for stability)
         solution = compiler.simulate(t_span=(0, 50), num_points=2000)
-        
-        assert solution['success']
-        
+
+        assert solution["success"]
+
         # Rössler attractor should show bounded chaotic motion
-        x = solution['y'][0]
-        y = solution['y'][2]
-        z = solution['y'][4]
-        
+        x = solution["y"][0]
+        y = solution["y"][2]
+        z = solution["y"][4]
+
         # Check that at least initial portion is finite (chaotic systems can diverge)
         finite_count = np.sum(np.isfinite(x))
-        assert finite_count > len(x) // 2, f"Rössler system diverged too early: only {finite_count}/{len(x)} finite values"
+        assert (
+            finite_count > len(x) // 2
+        ), f"Rössler system diverged too early: only {finite_count}/{len(x)} finite values"
 
 
 class TestHenonHeiles:
     """Test Hénon-Heiles system"""
-    
+
     def test_henon_heiles(self):
         """Test Hénon-Heiles system with energy conservation"""
         dsl_code = r"""
@@ -169,29 +181,32 @@ class TestHenonHeiles:
         
         \initial{x=0.1, x_dot=0.0, y=0.0, y_dot=0.0}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code)
-        
-        assert result['success']
-        
+
+        assert result["success"]
+
         # Use automatic solver selection (will choose LSODA for stability)
         solution = compiler.simulate(t_span=(0, 20), num_points=1000)
-        
-        assert solution['success']
-        
+
+        assert solution["success"]
+
         # Check energy conservation
         from mechanics_dsl.energy import PotentialEnergyCalculator
+
         params = compiler.simulator.parameters
         KE = PotentialEnergyCalculator.compute_kinetic_energy(solution, params)
-        PE = PotentialEnergyCalculator.compute_potential_energy(solution, params, 'henon_heiles')
+        PE = PotentialEnergyCalculator.compute_potential_energy(solution, params, "henon_heiles")
         E_total = KE + PE
-        
+
         if E_total[0] != 0 and np.abs(E_total[0]) > 1e-10:
             energy_error = np.abs((E_total - E_total[0]) / E_total[0])
             # Hénon-Heiles is a chaotic system, so energy conservation is more challenging
             tolerance = 0.20 * ENERGY_TOL_MULTIPLIER
-            assert np.max(energy_error) < tolerance, f"Energy error too large: {np.max(energy_error):.6f} (tolerance: {tolerance:.6f})"
+            assert (
+                np.max(energy_error) < tolerance
+            ), f"Energy error too large: {np.max(energy_error):.6f} (tolerance: {tolerance:.6f})"
         else:
             # If initial energy is zero or very small, just check that energy stays small
             assert np.all(np.abs(E_total) < 1e-5), "Energy should remain near zero"
@@ -199,7 +214,7 @@ class TestHenonHeiles:
 
 class TestVanDerPol:
     """Test Van der Pol oscillator"""
-    
+
     def test_van_der_pol(self):
         """Test Van der Pol oscillator (limit cycle)"""
         dsl_code = r"""
@@ -220,25 +235,25 @@ class TestVanDerPol:
         
         \initial{x=2.0, x_dot=0.0}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code)
-        
-        assert result['success']
-        
+
+        assert result["success"]
+
         solution = compiler.simulate(t_span=(0, 20), num_points=1000)
-        
-        assert solution['success']
-        
+
+        assert solution["success"]
+
         # Van der Pol should show limit cycle behavior
-        x = solution['y'][0]
+        x = solution["y"][0]
         assert np.max(np.abs(x)) > 1.0
         assert np.all(np.isfinite(x))
 
 
 class TestDuffingOscillator:
     """Test Duffing oscillator (nonlinear)"""
-    
+
     def test_duffing_oscillator(self):
         """Test Duffing oscillator with nonlinear spring"""
         dsl_code = r"""
@@ -264,20 +279,20 @@ class TestDuffingOscillator:
         
         \initial{x=1.0, x_dot=0.0}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code)
-        
-        assert result['success']
-        
+
+        assert result["success"]
+
         solution = compiler.simulate(t_span=(0, 10), num_points=500)
-        
-        assert solution['success']
-        
+
+        assert solution["success"]
+
         # Should show nonlinear oscillation
-        x = solution['y'][0]
+        x = solution["y"][0]
         assert np.max(np.abs(x)) > 0.1
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

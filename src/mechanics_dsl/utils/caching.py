@@ -1,18 +1,20 @@
 """
 LRU Cache implementation for MechanicsDSL
 """
+
 import sys
+from collections import OrderedDict
+from typing import Any, Dict, Optional
+
 import numpy as np
 import sympy as sp
-from typing import Dict, Any, Optional
-from collections import OrderedDict
 
 from .logging import logger
 
 
 class LRUCache:
     """Advanced LRU cache with size limits and memory awareness"""
-    
+
     def __init__(self, maxsize: int = 128, max_memory_mb: float = 100.0):
         """Initialize LRU cache with validation"""
         if not isinstance(maxsize, int) or maxsize < 1:
@@ -26,7 +28,7 @@ class LRUCache:
         self.max_memory_mb = float(max_memory_mb)
         self.hits = 0
         self.misses = 0
-        
+
     def get(self, key: str) -> Optional[Any]:
         """Get item from cache with validation"""
         if not isinstance(key, str):
@@ -45,7 +47,7 @@ class LRUCache:
             logger.error(f"LRUCache.get: error accessing key '{key}': {e}")
             self.misses += 1
             return None
-    
+
     def set(self, key: str, value: Any) -> None:
         """Set item in cache with eviction if needed and validation"""
         if not isinstance(key, str):
@@ -72,7 +74,7 @@ class LRUCache:
                     self.cache.popitem(last=False)
             except Exception:
                 pass
-        
+
         # Check memory usage
         try:
             current_mem = self._estimate_memory_mb()
@@ -83,7 +85,7 @@ class LRUCache:
                     current_mem = self._estimate_memory_mb()
         except Exception:
             pass  # Memory estimation failed, continue
-    
+
     def _estimate_memory_mb(self) -> float:
         """Estimate cache memory usage"""
         try:
@@ -99,26 +101,26 @@ class LRUCache:
             return total / 1024 / 1024
         except Exception:
             return 0.0
-    
+
     def clear(self) -> None:
         """Clear cache"""
         self.cache.clear()
         self.hits = 0
         self.misses = 0
-    
+
     def get_stats(self) -> Dict[str, Any]:
         """Get cache statistics"""
         total = self.hits + self.misses
         hit_rate = self.hits / total if total > 0 else 0.0
         return {
-            'size': len(self.cache),
-            'maxsize': self.maxsize,
-            'hits': self.hits,
-            'misses': self.misses,
-            'hit_rate': hit_rate,
-            'memory_mb': self._estimate_memory_mb()
+            "size": len(self.cache),
+            "maxsize": self.maxsize,
+            "hits": self.hits,
+            "misses": self.misses,
+            "hit_rate": hit_rate,
+            "memory_mb": self._estimate_memory_mb(),
         }
-    
+
     # Dict-style access methods
     def __getitem__(self, key: str) -> Any:
         """Get item using cache[key] syntax."""
@@ -126,19 +128,19 @@ class LRUCache:
         if value is None and key not in self.cache:
             raise KeyError(key)
         return value
-    
+
     def __setitem__(self, key: str, value: Any) -> None:
         """Set item using cache[key] = value syntax."""
         self.set(key, value)
-    
+
     def __contains__(self, key: str) -> bool:
         """Check if key exists using 'key in cache' syntax."""
         return key in self.cache
-    
+
     def __len__(self) -> int:
         """Return cache size using len(cache) syntax."""
         return len(self.cache)
-    
+
     def __delitem__(self, key: str) -> None:
         """Delete item using del cache[key] syntax."""
         if key in self.cache:

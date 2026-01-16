@@ -1,21 +1,30 @@
 """
 C++ Code Generator for MechanicsDSL
 """
+
 import os
+from typing import Dict, List
+
 import sympy as sp
 from sympy.printing.cxx import cxxcode
-from typing import Dict, List
+
 from ..utils import logger
+
 
 class CppGenerator:
     """Generates C++ simulation code from symbolic equations"""
-    
-    def __init__(self, system_name: str, coordinates: List[str], 
-                 parameters: Dict[str, float], initial_conditions: Dict[str, float],
-                 equations: Dict[str, sp.Expr],
-                 fluid_particles: List[dict] = None,
-                 boundary_particles: List[dict] = None):
-        
+
+    def __init__(
+        self,
+        system_name: str,
+        coordinates: List[str],
+        parameters: Dict[str, float],
+        initial_conditions: Dict[str, float],
+        equations: Dict[str, sp.Expr],
+        fluid_particles: List[dict] = None,
+        boundary_particles: List[dict] = None,
+    ):
+
         self.system_name = system_name
         self.coordinates = coordinates
         self.parameters = parameters
@@ -23,10 +32,12 @@ class CppGenerator:
         self.equations = equations or {}
         self.fluid_particles = fluid_particles or []
         self.boundary_particles = boundary_particles or []
-        
+
         # Load template
-        self.template_path = os.path.join(os.path.dirname(__file__), 'templates', 'solver_template.cpp')
-        
+        self.template_path = os.path.join(
+            os.path.dirname(__file__), "templates", "solver_template.cpp"
+        )
+
         # LOGIC: Choose the template content
         if self.fluid_particles:
             # Case A: Fluids -> Use embedded SPH template
@@ -38,17 +49,17 @@ class CppGenerator:
             if not os.path.exists(self.template_path):
                 self.template_content = self._get_default_template()
             else:
-                with open(self.template_path, 'r') as f:
+                with open(self.template_path, "r") as f:
                     self.template_content = f.read()
 
     def generate(self, output_file: str = "simulation.cpp"):
         logger.info(f"Generating C++ code for {self.system_name}")
-        
+
         # 1. Generate Parameters
         param_str = "// Physical Parameters\n"
         for name, val in self.parameters.items():
             param_str += f"const double {name} = {val};\n"
-            
+
         # 2. Generate State Unpacking (For Rigid Bodies)
         unpack_str = "// Unpack state variables\n"
         idx = 0
@@ -56,7 +67,7 @@ class CppGenerator:
             unpack_str += f"    double {coord} = y[{idx}];\n"
             unpack_str += f"    double {coord}_dot = y[{idx+1}];\n"
             idx += 2
-            
+
         # 3. Generate Equations (For Rigid Bodies)
         eq_str = "// Computed Derivatives\n"
         idx = 0
@@ -65,7 +76,7 @@ class CppGenerator:
             eq_str += f"    dydt[{idx}] = {coord}_dot;\n"
             if accel_key in self.equations:
                 expr = self.equations[accel_key]
-                cpp_expr = cxxcode(expr, standard='c++17')
+                cpp_expr = cxxcode(expr, standard="c++17")
                 eq_str += f"    dydt[{idx+1}] = {cpp_expr};\n"
             else:
                 eq_str += f"    dydt[{idx+1}] = 0.0;\n"
@@ -79,7 +90,7 @@ class CppGenerator:
             init_vals.append(str(pos))
             init_vals.append(str(vel))
         init_str = ", ".join(init_vals)
-        
+
         # 5. CSV Header
         header_parts = ["t"]
         for coord in self.coordinates:
@@ -91,9 +102,13 @@ class CppGenerator:
         particle_init_str = ""
         if self.fluid_particles:
             for p in self.fluid_particles:
-                particle_init_str += f"    particles.push_back({{ {p['x']}, {p['y']}, 0, 0, 0, 0, 0, 0, 0 }});\n"
+                particle_init_str += (
+                    f"    particles.push_back({{ {p['x']}, {p['y']}, 0, 0, 0, 0, 0, 0, 0 }});\n"
+                )
             for p in self.boundary_particles:
-                particle_init_str += f"    particles.push_back({{ {p['x']}, {p['y']}, 0, 0, 0, 0, 0, 0, 1 }});\n"
+                particle_init_str += (
+                    f"    particles.push_back({{ {p['x']}, {p['y']}, 0, 0, 0, 0, 0, 0, 1 }});\n"
+                )
 
         # Fill Template
         code = self.template_content
@@ -104,23 +119,24 @@ class CppGenerator:
         code = code.replace("{{EQUATIONS}}", eq_str)
         code = code.replace("{{INITIAL_CONDITIONS}}", init_str)
         code = code.replace("{{CSV_HEADER}}", header_str)
-        code = code.replace("{{PARTICLE_INIT}}", particle_init_str) # Inject particles
-        
-        with open(output_file, 'w') as f:
+        code = code.replace("{{PARTICLE_INIT}}", particle_init_str)  # Inject particles
+
+        with open(output_file, "w") as f:
             f.write(code)
-            
+
         logger.info(f"Successfully wrote {output_file}")
         return output_file
 
     def generate_cmake(self, output_dir: str = ".") -> str:
         """Generate a CMakeLists.txt for building the simulation.
-        
+
         Includes ARM/NEON optimization flags when target is embedded.
         """
         import os
+
         cmake_path = os.path.join(output_dir, "CMakeLists.txt")
-        
-        cmake_content = f'''cmake_minimum_required(VERSION 3.14)
+
+        cmake_content = f"""cmake_minimum_required(VERSION 3.14)
 project({self.system_name} CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -158,29 +174,30 @@ install(TARGETS {self.system_name} DESTINATION bin)
 # --- Cross-compilation hints ---
 # For Raspberry Pi cross-compilation, use:
 #   cmake -DCMAKE_TOOLCHAIN_FILE=<path>/arm-linux-gnueabihf.cmake ..
-'''
-        with open(cmake_path, 'w') as f:
+"""
+        with open(cmake_path, "w") as f:
             f.write(cmake_content)
-        
+
         logger.info(f"Generated CMakeLists.txt at {cmake_path}")
         return cmake_path
 
     def generate_project(self, output_dir: str = ".") -> Dict[str, str]:
         """Generate complete C++ project with CMake.
-        
+
         Returns dict of generated file paths.
         """
         import os
+
         os.makedirs(output_dir, exist_ok=True)
-        
+
         cpp_file = os.path.join(output_dir, f"{self.system_name}.cpp")
         self.generate(cpp_file)
-        
+
         cmake_file = self.generate_cmake(output_dir)
-        
+
         # Generate README
         readme_path = os.path.join(output_dir, "README.md")
-        readme_content = f'''# {self.system_name}
+        readme_content = f"""# {self.system_name}
 
 Auto-generated by MechanicsDSL.
 
@@ -207,16 +224,12 @@ make -j4
 ## Output
 
 Results are saved to `{self.system_name}_results.csv`.
-'''
-        with open(readme_path, 'w') as f:
+"""
+        with open(readme_path, "w") as f:
             f.write(readme_content)
-        
+
         logger.info(f"Generated complete project in {output_dir}")
-        return {
-            'cpp': cpp_file,
-            'cmake': cmake_file,
-            'readme': readme_path
-        }
+        return {"cpp": cpp_file, "cmake": cmake_file, "readme": readme_path}
 
     def _get_default_template(self):
         # Fallback rigid body template

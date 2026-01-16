@@ -2,25 +2,29 @@
 Hamiltonian formulation tests
 Tests both new package structure and original core.py
 """
-import pytest
-import numpy as np
-import sys
+
 import os
+import sys
 from pathlib import Path
 
+import numpy as np
+import pytest
+
 # Detect CI environment and adjust tolerances
-IS_CI = os.getenv('CI') == 'true' or os.getenv('GITHUB_ACTIONS') == 'true'
+IS_CI = os.getenv("CI") == "true" or os.getenv("GITHUB_ACTIONS") == "true"
 ENERGY_TOL_MULTIPLIER = 2.0 if IS_CI else 1.0
 
 try:
     from mechanics_dsl import PhysicsCompiler
+
     NEW_PACKAGE = True
 except ImportError:
     NEW_PACKAGE = False
 
 try:
-    sys.path.insert(0, str(Path(__file__).parent.parent / 'reference'))
+    sys.path.insert(0, str(Path(__file__).parent.parent / "reference"))
     from core import PhysicsCompiler as CorePhysicsCompiler
+
     CORE_AVAILABLE = True
 except ImportError:
     CORE_AVAILABLE = False
@@ -38,7 +42,7 @@ def get_compiler():
 
 class TestHamiltonianOscillator:
     """Test harmonic oscillator using Hamiltonian formulation"""
-    
+
     def test_hamiltonian_oscillator(self):
         """Test harmonic oscillator with Hamiltonian formulation"""
         dsl_code = r"""
@@ -54,38 +58,43 @@ class TestHamiltonianOscillator:
         
         \initial{x=1.0, x_dot=0.0}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code, use_hamiltonian=True)
-        
-        assert result['success']
-        assert result['formulation'] == 'Hamiltonian'
+
+        assert result["success"]
+        assert result["formulation"] == "Hamiltonian"
         assert compiler.use_hamiltonian_formulation
-        
+
         solution = compiler.simulate(t_span=(0, 10), num_points=500)
-        
-        assert solution['success']
-        assert solution['use_hamiltonian']
-        
+
+        assert solution["success"]
+        assert solution["use_hamiltonian"]
+
         # Should show oscillatory motion
-        x = solution['y'][0]
+        x = solution["y"][0]
         assert np.max(np.abs(x)) > 0.5
-        
+
         # Energy should be conserved
         from mechanics_dsl.energy import PotentialEnergyCalculator
+
         params = compiler.simulator.parameters
         KE = PotentialEnergyCalculator.compute_kinetic_energy(solution, params)
-        PE = PotentialEnergyCalculator.compute_potential_energy(solution, params, 'hamiltonian_oscillator')
+        PE = PotentialEnergyCalculator.compute_potential_energy(
+            solution, params, "hamiltonian_oscillator"
+        )
         E_total = KE + PE
-        
+
         if E_total[0] != 0 and np.abs(E_total[0]) > 1e-10:
             energy_error = np.abs((E_total - E_total[0]) / E_total[0])
             tolerance = 0.05 * ENERGY_TOL_MULTIPLIER
-            assert np.max(energy_error) < tolerance, f"Energy error: {np.max(energy_error):.6f} (tolerance: {tolerance:.6f})"
+            assert (
+                np.max(energy_error) < tolerance
+            ), f"Energy error: {np.max(energy_error):.6f} (tolerance: {tolerance:.6f})"
         else:
             # If initial energy is zero or very small, just check that energy stays small
             assert np.all(np.abs(E_total) < 1e-5), "Energy should remain near zero"
-    
+
     def test_hamiltonian_pendulum(self):
         """Test pendulum with Hamiltonian formulation"""
         dsl_code = r"""
@@ -103,25 +112,25 @@ class TestHamiltonianOscillator:
         
         \initial{theta=0.5, theta_dot=0.0}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code, use_hamiltonian=True)
-        
-        assert result['success']
-        assert result['formulation'] == 'Hamiltonian'
-        
+
+        assert result["success"]
+        assert result["formulation"] == "Hamiltonian"
+
         solution = compiler.simulate(t_span=(0, 5), num_points=500)
-        
-        assert solution['success']
-        
+
+        assert solution["success"]
+
         # Should show periodic motion
-        theta = solution['y'][0]
+        theta = solution["y"][0]
         assert np.max(np.abs(theta)) > 0.1
 
 
 class TestExplicitHamiltonian:
     """Test systems with explicitly defined Hamiltonian"""
-    
+
     def test_explicit_hamiltonian(self):
         """Test system with explicit Hamiltonian definition"""
         dsl_code = r"""
@@ -138,23 +147,22 @@ class TestExplicitHamiltonian:
         
         \initial{x=1.0, p=0.0}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code)
-        
-        assert result['success']
-        assert result['formulation'] == 'Hamiltonian'
-        
+
+        assert result["success"]
+        assert result["formulation"] == "Hamiltonian"
+
         solution = compiler.simulate(t_span=(0, 10), num_points=500)
-        
-        assert solution['success']
-        assert solution['use_hamiltonian']
-        
+
+        assert solution["success"]
+        assert solution["use_hamiltonian"]
+
         # Position should oscillate
-        x = solution['y'][0]
+        x = solution["y"][0]
         assert np.max(np.abs(x)) > 0.5
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
-
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

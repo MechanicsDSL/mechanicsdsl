@@ -16,29 +16,30 @@ Features:
 
 import os
 from typing import Dict, List, Optional
+
 import sympy as sp
 from sympy.printing.c import ccode
 
-from .base import CodeGenerator
 from ..utils import logger
+from .base import CodeGenerator
 
 
 class ARMGenerator(CodeGenerator):
     """
     Generates ARM-optimized C code with NEON SIMD support.
-    
+
     Targets:
     - Raspberry Pi 3/4/5 (aarch64)
     - Jetson Nano/Xavier (aarch64 + CUDA)
     - Cortex-M embedded (thumb)
     """
-    
+
     # ARM NEON vector types
     NEON_TYPES = {
-        'float32x4_t': 4,  # 4 x 32-bit floats
-        'float64x2_t': 2,  # 2 x 64-bit doubles
+        "float32x4_t": 4,  # 4 x 32-bit floats
+        "float64x2_t": 2,  # 2 x 64-bit doubles
     }
-    
+
     def __init__(
         self,
         system_name: str,
@@ -48,11 +49,11 @@ class ARMGenerator(CodeGenerator):
         equations: Dict[str, sp.Expr],
         target: str = "raspberry_pi",
         use_neon: bool = True,
-        embedded: bool = False
+        embedded: bool = False,
     ):
         """
         Initialize ARM code generator.
-        
+
         Args:
             system_name: Name of the physics system
             coordinates: List of coordinate names
@@ -71,10 +72,10 @@ class ARMGenerator(CodeGenerator):
         self.target = target
         self.use_neon = use_neon
         self.embedded = embedded
-        
+
         # Set compiler flags based on target
         self._set_target_flags()
-    
+
     def _set_target_flags(self):
         """Set compiler flags for target platform."""
         if self.target == "raspberry_pi":
@@ -98,15 +99,15 @@ class ARMGenerator(CodeGenerator):
             self.cc = "gcc"
             self.cxx = "g++"
             self.cflags = ["-march=native", "-O3"]
-    
+
     @property
     def target_name(self) -> str:
         return f"arm_{self.target}"
-    
+
     @property
     def file_extension(self) -> str:
         return ".c"
-    
+
     def generate_equations(self) -> str:
         """Generate C code for equations of motion."""
         lines = []
@@ -122,7 +123,7 @@ class ARMGenerator(CodeGenerator):
                 lines.append(f"    dydt[{idx+1}] = 0.0;")
             idx += 2
         return "\n".join(lines)
-    
+
     def generate_initial_conditions(self) -> str:
         """Generate initial conditions as comma-separated values."""
         init_vals = []
@@ -130,25 +131,25 @@ class ARMGenerator(CodeGenerator):
             init_vals.append(str(self.initial_conditions.get(coord, 0.0)))
             init_vals.append(str(self.initial_conditions.get(f"{coord}_dot", 0.0)))
         return ", ".join(init_vals)
-    
+
     def generate(self, output_file: str = "simulation_arm.c") -> str:
         """Generate ARM-optimized C code."""
         logger.info(f"Generating ARM code for {self.system_name} (target: {self.target})")
-        
+
         if self.embedded:
             code = self._generate_embedded_code()
         else:
             code = self._generate_standard_code()
-        
-        with open(output_file, 'w', encoding='utf-8') as f:
+
+        with open(output_file, "w", encoding="utf-8") as f:
             f.write(code)
-        
+
         logger.info(f"Successfully wrote {output_file}")
         return output_file
-    
+
     def _generate_neon_intrinsics(self) -> str:
         """Generate NEON SIMD helper functions."""
-        return '''
+        return """
 #ifdef __ARM_NEON
 #include <arm_neon.h>
 
@@ -190,8 +191,8 @@ static inline void neon_rk4_step(float32x4_t* y, float32x4_t* dydt,
     }
 }
 #endif // __ARM_NEON
-'''
-    
+"""
+
     def _generate_standard_code(self) -> str:
         """Generate standard ARM code with optional NEON."""
         # Generate parameters
@@ -199,10 +200,10 @@ static inline void neon_rk4_step(float32x4_t* y, float32x4_t* dydt,
         for name, val in self.parameters.items():
             param_lines.append(f"static const double {name} = {val};")
         param_str = "\n".join(param_lines)
-        
+
         # State dimension
         state_dim = len(self.coordinates) * 2
-        
+
         # Generate equations
         eq_lines = []
         idx = 0
@@ -217,7 +218,7 @@ static inline void neon_rk4_step(float32x4_t* y, float32x4_t* dydt,
                 eq_lines.append(f"    dydt[{idx+1}] = 0.0;")
             idx += 2
         eq_str = "\n".join(eq_lines)
-        
+
         # State unpacking
         unpack_lines = []
         idx = 0
@@ -226,18 +227,18 @@ static inline void neon_rk4_step(float32x4_t* y, float32x4_t* dydt,
             unpack_lines.append(f"    double {coord}_dot = y[{idx+1}];")
             idx += 2
         unpack_str = "\n".join(unpack_lines)
-        
+
         # Initial conditions
         init_vals = []
         for coord in self.coordinates:
             init_vals.append(str(self.initial_conditions.get(coord, 0.0)))
             init_vals.append(str(self.initial_conditions.get(f"{coord}_dot", 0.0)))
         init_str = ", ".join(init_vals)
-        
+
         # NEON intrinsics (if enabled)
         neon_code = self._generate_neon_intrinsics() if self.use_neon else ""
-        
-        template = f'''/**
+
+        template = f"""/**
  * ARM-Optimized Simulation: {self.system_name}
  * Generated by MechanicsDSL
  * 
@@ -317,25 +318,25 @@ int main(void) {{
     printf("Done. Results saved to {self.system_name}_results.csv\\n");
     return 0;
 }}
-'''
+"""
         return template
-    
+
     def _generate_embedded_code(self) -> str:
         """Generate bare-metal code for Cortex-M."""
         param_lines = []
         for name, val in self.parameters.items():
             param_lines.append(f"#define {name.upper()} {val}f")
         param_str = "\n".join(param_lines)
-        
+
         state_dim = len(self.coordinates) * 2
-        
+
         init_vals = []
         for coord in self.coordinates:
             init_vals.append(str(self.initial_conditions.get(coord, 0.0)) + "f")
             init_vals.append(str(self.initial_conditions.get(f"{coord}_dot", 0.0)) + "f")
         init_str = ", ".join(init_vals)
-        
-        template = f'''/**
+
+        template = f"""/**
  * Embedded ARM Simulation: {self.system_name}
  * Generated by MechanicsDSL (bare-metal)
  * 
@@ -402,14 +403,14 @@ void reset_state(void) {{
     static const float init[DIM] = {{ {init_str} }};
     for (int i = 0; i < DIM; i++) state[i] = init[i];
 }}
-'''
+"""
         return template
-    
+
     def generate_makefile(self, output_dir: str = ".") -> str:
         """Generate Makefile for ARM cross-compilation."""
         makefile_path = os.path.join(output_dir, "Makefile")
-        
-        content = f'''# ARM Cross-compilation Makefile for {self.system_name}
+
+        content = f"""# ARM Cross-compilation Makefile for {self.system_name}
 # Generated by MechanicsDSL
 
 # Target platform: {self.target}
@@ -442,28 +443,28 @@ clean:
 
 run: native
 \t./$(TARGET)
-'''
-        
-        with open(makefile_path, 'w') as f:
+"""
+
+        with open(makefile_path, "w") as f:
             f.write(content)
-        
+
         logger.info(f"Generated Makefile at {makefile_path}")
         return makefile_path
-    
+
     def generate_project(self, output_dir: str = ".") -> Dict[str, str]:
         """Generate complete ARM project with build files."""
         os.makedirs(output_dir, exist_ok=True)
-        
+
         # Generate C code
         c_file = os.path.join(output_dir, f"{self.system_name}_arm.c")
         self.generate(c_file)
-        
+
         # Generate Makefile
         makefile = self.generate_makefile(output_dir)
-        
+
         # Generate README
         readme_path = os.path.join(output_dir, "README.md")
-        readme_content = f'''# {self.system_name} - ARM Build
+        readme_content = f"""# {self.system_name} - ARM Build
 
 Generated by MechanicsDSL for {self.target}.
 
@@ -492,13 +493,9 @@ scp {self.system_name}_cross pi@raspberrypi:~/
 - Compiled with: `{' '.join(self.cflags)}`
 - NEON SIMD: {'Enabled' if self.use_neon else 'Disabled'}
 - Target: {self.target}
-'''
-        with open(readme_path, 'w') as f:
+"""
+        with open(readme_path, "w") as f:
             f.write(readme_content)
-        
+
         logger.info(f"Generated complete ARM project in {output_dir}")
-        return {
-            'source': c_file,
-            'makefile': makefile,
-            'readme': readme_path
-        }
+        return {"source": c_file, "makefile": makefile, "readme": readme_path}

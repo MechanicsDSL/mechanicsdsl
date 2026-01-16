@@ -59,8 +59,7 @@ jobs:
       - name: Run Bandit
         run: |
           bandit -r src/ -ll -ii -f json -o bandit-report.json || true
-          bandit -r src/ -ll -ii -f txt || true
-        continue-on-error: true
+          bandit -r src/ -ll -ii -f txt
       
       - name: Upload Bandit Report
         uses: actions/upload-artifact@v4

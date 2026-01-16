@@ -2,25 +2,29 @@
 Constrained system tests - Holonomic and non-holonomic constraints
 Tests both new package structure and original core.py
 """
-import pytest
-import numpy as np
-import sys
+
 import os
+import sys
 from pathlib import Path
 
+import numpy as np
+import pytest
+
 # Detect CI environment and adjust tolerances
-IS_CI = os.getenv('CI') == 'true' or os.getenv('GITHUB_ACTIONS') == 'true'
+IS_CI = os.getenv("CI") == "true" or os.getenv("GITHUB_ACTIONS") == "true"
 CONSTRAINT_TOL_MULTIPLIER = 2.0 if IS_CI else 1.0
 
 try:
     from mechanics_dsl import PhysicsCompiler
+
     NEW_PACKAGE = True
 except ImportError:
     NEW_PACKAGE = False
 
 try:
-    sys.path.insert(0, str(Path(__file__).parent.parent / 'reference'))
+    sys.path.insert(0, str(Path(__file__).parent.parent / "reference"))
     from core import PhysicsCompiler as CorePhysicsCompiler
+
     CORE_AVAILABLE = True
 except ImportError:
     CORE_AVAILABLE = False
@@ -38,7 +42,7 @@ def get_compiler():
 
 class TestRollingBall:
     """Test rolling ball with constraint"""
-    
+
     def test_rolling_ball_constraint(self):
         """Test ball rolling down incline with rolling constraint"""
         dsl_code = r"""
@@ -65,19 +69,19 @@ class TestRollingBall:
         
         \initial{x=0.0, x_dot=0.0}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code, use_constraints=True)
-        
-        assert result['success']
-        assert len(result['coordinates']) >= 1
-        
+
+        assert result["success"]
+        assert len(result["coordinates"]) >= 1
+
         solution = compiler.simulate(t_span=(0, 5), num_points=500)
-        
-        assert solution['success']
-        
+
+        assert solution["success"]
+
         # Ball should accelerate down the incline
-        x = solution['y'][0]
+        x = solution["y"][0]
         # Allow for small numerical errors - check that it moves significantly
         movement = x[-1] - x[0]
         assert movement > -0.01, f"Ball should move forward, but moved {movement:.6f}"
@@ -87,7 +91,7 @@ class TestRollingBall:
 
 class TestAtwoodMachine:
     """Test Atwood machine with constraint"""
-    
+
     def test_atwood_machine(self):
         """Test Atwood machine (two masses connected by string)"""
         dsl_code = r"""
@@ -115,7 +119,7 @@ class TestAtwoodMachine:
         
         \initial{x1=2.0, x1_dot=0.0}
         """
-        
+
         compiler = get_compiler()
         try:
             result = compiler.compile_dsl(dsl_code, use_constraints=True)
@@ -123,24 +127,24 @@ class TestAtwoodMachine:
             # If constraint system fails to compile, that's acceptable for now
             pytest.skip(f"Constraint compilation not fully supported: {e}")
             return
-        
-        if not result['success']:
+
+        if not result["success"]:
             pytest.skip("Constraint compilation failed")
             return
-        
+
         try:
             solution = compiler.simulate(t_span=(0, 3), num_points=300)
         except Exception as e:
             pytest.skip(f"Simulation with constraints not fully supported: {e}")
             return
-        
-        if not solution['success']:
+
+        if not solution["success"]:
             pytest.skip("Simulation failed - constraint engine needs update")
             return
-        
+
         # Heavier mass should fall
-        x1 = solution['y'][0]
-        if len(solution['coordinates']) > 0:
+        x1 = solution["y"][0]
+        if len(solution["coordinates"]) > 0:
             # Check that mass moves (either up or down, but significantly)
             # Or if constraint engine doesn't work properly, at least verify something ran
             movement = abs(x1[-1] - x1[0])
@@ -150,7 +154,7 @@ class TestAtwoodMachine:
 
 class TestPendulumWithConstraint:
     """Test pendulum with additional constraints"""
-    
+
     def test_constrained_pendulum(self):
         """Test pendulum with length constraint"""
         dsl_code = r"""
@@ -174,7 +178,7 @@ class TestPendulumWithConstraint:
         
         \initial{x=0.0, x_dot=0.0, y=-1.0, y_dot=0.0}
         """
-        
+
         compiler = get_compiler()
         try:
             result = compiler.compile_dsl(dsl_code, use_constraints=True)
@@ -182,26 +186,26 @@ class TestPendulumWithConstraint:
             # If constraint system fails to compile, that's acceptable for now
             pytest.skip(f"Constraint compilation not fully supported: {e}")
             return
-        
-        if not result['success']:
+
+        if not result["success"]:
             pytest.skip("Constraint compilation failed")
             return
-        
+
         try:
             solution = compiler.simulate(t_span=(0, 5), num_points=500)
         except Exception as e:
             pytest.skip(f"Simulation with constraints not fully supported: {e}")
             return
-        
-        if not solution['success']:
+
+        if not solution["success"]:
             pytest.skip("Simulation failed - constraint engine needs update")
             return
-        
+
         # Verify constraint is approximately satisfied or that simulation at least ran
-        x = solution['y'][0]
-        y = solution['y'][2] if solution['y'].shape[0] > 2 else solution['y'][1]
+        x = solution["y"][0]
+        y = solution["y"][2] if solution["y"].shape[0] > 2 else solution["y"][1]
         r = np.sqrt(x**2 + y**2)
-        
+
         # Constraint: r should be approximately l
         # The constraint engine may have significant drift, so be very lenient
         constraint_error = np.abs(r - 1.0)
@@ -210,10 +214,11 @@ class TestPendulumWithConstraint:
         # Don't fail - just warn if constraint is badly violated
         if np.max(constraint_error) >= tolerance:
             import warnings
+
             warnings.warn(f"Constraint drift: max error {np.max(constraint_error):.6f}")
         # Always pass if we got here - simulation at least ran
-        assert solution['success'], "Simulation should have completed"
+        assert solution["success"], "Simulation should have completed"
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

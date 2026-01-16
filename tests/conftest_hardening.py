@@ -5,20 +5,21 @@ Test Helpers for Hardened Tests
 Common fixtures, utilities, and helper functions for testing.
 """
 
+import functools
 import os
 import sys
 import tempfile
-import pytest
-import numpy as np
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Dict, Generator, Optional
-from contextlib import contextmanager
-import functools
 
+import numpy as np
+import pytest
 
 # =============================================================================
 # Test Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def temp_dir() -> Generator[Path, None, None]:
@@ -49,7 +50,7 @@ def sample_dsl_code() -> str:
 def malicious_dsl_codes() -> list:
     """Collection of malicious DSL codes for security testing."""
     return [
-        "eval('__import__(\"os\").system(\"whoami\")')",
+        'eval(\'__import__("os").system("whoami")\')',
         "__import__('subprocess').call(['ls'])",
         "exec(open('/etc/passwd').read())",
         "os.system('rm -rf /')",
@@ -61,18 +62,19 @@ def malicious_dsl_codes() -> list:
 @pytest.fixture
 def valid_identifiers() -> list:
     """Valid Python identifiers."""
-    return ['x', 'y1', 'theta', '_private', 'CamelCase', 'snake_case', 'x123']
+    return ["x", "y1", "theta", "_private", "CamelCase", "snake_case", "x123"]
 
 
 @pytest.fixture
 def invalid_identifiers() -> list:
     """Invalid Python identifiers."""
-    return ['1x', 'my-var', 'my.var', 'import', 'class', 'def', '']
+    return ["1x", "my-var", "my.var", "import", "class", "def", ""]
 
 
 # =============================================================================
 # Test Utilities
 # =============================================================================
+
 
 def assert_finite(value: Any, name: str = "value"):
     """Assert that a value is finite (not NaN or Inf)."""
@@ -84,16 +86,16 @@ def assert_finite(value: Any, name: str = "value"):
 
 def assert_in_range(value: float, min_val: float, max_val: float, name: str = "value"):
     """Assert that a value is within a specified range."""
-    assert min_val <= value <= max_val, \
-        f"{name}={value} not in range [{min_val}, {max_val}]"
+    assert min_val <= value <= max_val, f"{name}={value} not in range [{min_val}, {max_val}]"
 
 
-def assert_close(actual: float, expected: float, 
-                 rtol: float = 1e-5, atol: float = 1e-8,
-                 name: str = "value"):
+def assert_close(
+    actual: float, expected: float, rtol: float = 1e-5, atol: float = 1e-8, name: str = "value"
+):
     """Assert that two values are close within tolerance."""
-    assert np.allclose(actual, expected, rtol=rtol, atol=atol), \
-        f"{name}: {actual} not close to {expected} (rtol={rtol}, atol={atol})"
+    assert np.allclose(
+        actual, expected, rtol=rtol, atol=atol
+    ), f"{name}: {actual} not close to {expected} (rtol={rtol}, atol={atol})"
 
 
 def assert_monotonic(sequence, increasing: bool = True, name: str = "sequence"):
@@ -101,10 +103,10 @@ def assert_monotonic(sequence, increasing: bool = True, name: str = "sequence"):
     seq = list(sequence)
     if increasing:
         for i in range(1, len(seq)):
-            assert seq[i] >= seq[i-1], f"{name} not monotonically increasing at index {i}"
+            assert seq[i] >= seq[i - 1], f"{name} not monotonically increasing at index {i}"
     else:
         for i in range(1, len(seq)):
-            assert seq[i] <= seq[i-1], f"{name} not monotonically decreasing at index {i}"
+            assert seq[i] <= seq[i - 1], f"{name} not monotonically decreasing at index {i}"
 
 
 def assert_energy_conserved(energies: list, rtol: float = 0.01, name: str = "energy"):
@@ -112,28 +114,28 @@ def assert_energy_conserved(energies: list, rtol: float = 0.01, name: str = "ene
     initial = energies[0]
     for i, e in enumerate(energies):
         rel_error = abs(e - initial) / abs(initial) if initial != 0 else abs(e)
-        assert rel_error < rtol, \
-            f"{name} not conserved: step {i}, error = {rel_error:.2%}"
+        assert rel_error < rtol, f"{name} not conserved: step {i}, error = {rel_error:.2%}"
 
 
 # =============================================================================
 # Context Managers
 # =============================================================================
 
+
 @contextmanager
 def capture_logs():
     """Capture log output for testing."""
     import logging
     from io import StringIO
-    
+
     log_capture = StringIO()
     handler = logging.StreamHandler(log_capture)
     handler.setLevel(logging.DEBUG)
-    
-    logger = logging.getLogger('MechanicsDSL')
+
+    logger = logging.getLogger("MechanicsDSL")
     original_handlers = logger.handlers[:]
     logger.handlers = [handler]
-    
+
     try:
         yield log_capture
     finally:
@@ -144,11 +146,11 @@ def capture_logs():
 def timeout(seconds: float):
     """Context manager for timeout (Unix only)."""
     import signal
-    
+
     def handler(signum, frame):
         raise TimeoutError(f"Operation timed out after {seconds}s")
-    
-    if sys.platform != 'win32':
+
+    if sys.platform != "win32":
         old_handler = signal.signal(signal.SIGALRM, handler)
         signal.alarm(int(seconds))
         try:
@@ -170,7 +172,7 @@ def environment(**env_vars):
             os.environ.pop(key, None)
         else:
             os.environ[key] = value
-    
+
     try:
         yield
     finally:
@@ -185,11 +187,11 @@ def environment(**env_vars):
 # Decorators
 # =============================================================================
 
+
 def skip_on_ci(reason: str = "Skipped on CI"):
     """Skip test when running on CI."""
     return pytest.mark.skipif(
-        os.environ.get('CI') == 'true' or os.environ.get('GITHUB_ACTIONS') == 'true',
-        reason=reason
+        os.environ.get("CI") == "true" or os.environ.get("GITHUB_ACTIONS") == "true", reason=reason
     )
 
 
@@ -197,10 +199,11 @@ def require_gpu(reason: str = "GPU required"):
     """Skip test if GPU is not available."""
     try:
         import jax
-        gpu_available = len(jax.devices('gpu')) > 0
+
+        gpu_available = len(jax.devices("gpu")) > 0
     except:
         gpu_available = False
-    
+
     return pytest.mark.skipif(not gpu_available, reason=reason)
 
 
@@ -211,18 +214,22 @@ def slow_test(func):
 
 def repeat(count: int):
     """Repeat a test multiple times."""
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             for i in range(count):
                 func(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
 # =============================================================================
 # Data Generators
 # =============================================================================
+
 
 def random_state(dim: int, scale: float = 1.0) -> np.ndarray:
     """Generate a random state vector."""
@@ -231,7 +238,7 @@ def random_state(dim: int, scale: float = 1.0) -> np.ndarray:
 
 def random_parameters(n: int = 5) -> Dict[str, float]:
     """Generate random parameters."""
-    names = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']
+    names = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]
     return {names[i]: np.random.uniform(0.1, 10.0) for i in range(n)}
 
 

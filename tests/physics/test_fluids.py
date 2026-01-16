@@ -4,10 +4,10 @@ Tests for MechanicsDSL fluids domain.
 Tests SPHFluid and BoundaryConditions classes for fluid simulation.
 """
 
-import pytest
 import numpy as np
+import pytest
 
-from mechanics_dsl.domains.fluids import SPHFluid, BoundaryConditions
+from mechanics_dsl.domains.fluids import BoundaryConditions, SPHFluid
 
 
 class TestSPHFluidInit:
@@ -78,26 +78,26 @@ class TestSPHFluidAddParticle:
         """Test that particle position is set correctly."""
         fluid = SPHFluid()
         fluid.add_particle(0.7, 0.3)
-        assert fluid.particles[0]['x'] == 0.7
-        assert fluid.particles[0]['y'] == 0.3
+        assert fluid.particles[0]["x"] == 0.7
+        assert fluid.particles[0]["y"] == 0.3
 
     def test_add_particle_velocity(self):
         """Test adding particle with custom velocity."""
         fluid = SPHFluid()
         fluid.add_particle(0.5, 0.5, vx=1.0, vy=-0.5)
-        assert fluid.particles[0]['vx'] == 1.0
-        assert fluid.particles[0]['vy'] == -0.5
+        assert fluid.particles[0]["vx"] == 1.0
+        assert fluid.particles[0]["vy"] == -0.5
 
     def test_add_particle_mass(self):
         """Test adding particle with custom mass."""
         fluid = SPHFluid()
         fluid.add_particle(0.5, 0.5, mass=2.5)
-        assert fluid.particles[0]['mass'] == 2.5
+        assert fluid.particles[0]["mass"] == 2.5
 
     def test_add_boundary_particle(self):
         """Test adding boundary particle."""
         fluid = SPHFluid()
-        fluid.add_particle(0.0, 0.0, particle_type='boundary')
+        fluid.add_particle(0.0, 0.0, particle_type="boundary")
         assert len(fluid.boundary_particles) == 1
         assert len(fluid.particles) == 0
 
@@ -140,7 +140,7 @@ class TestSPHFluidSimulation:
         fluid.add_particle(0.55, 0.5)
         fluid.compute_density_pressure()
         # Particles should have non-zero density
-        assert fluid.particles[0]['density'] > 0
+        assert fluid.particles[0]["density"] > 0
 
     def test_compute_forces(self):
         """Test force computation."""
@@ -155,10 +155,10 @@ class TestSPHFluidSimulation:
         """Test that step updates particle positions."""
         fluid = SPHFluid(smoothing_length=0.1)
         fluid.add_particle(0.5, 0.5, vy=1.0)
-        initial_y = fluid.particles[0]['y']
+        initial_y = fluid.particles[0]["y"]
         fluid.step(0.01)
         # Position should change due to velocity
-        assert fluid.particles[0]['y'] != initial_y
+        assert fluid.particles[0]["y"] != initial_y
 
     def test_get_positions(self):
         """Test getting particle positions."""
@@ -220,8 +220,8 @@ class TestBoundaryConditionsWalls:
         """Test that wall has computed normal."""
         bc = BoundaryConditions()
         bc.add_wall(0.0, 0.0, 1.0, 0.0)
-        assert 'normal' in bc.walls[0]
-        assert len(bc.walls[0]['normal']) == 2
+        assert "normal" in bc.walls[0]
+        assert len(bc.walls[0]["normal"]) == 2
 
 
 class TestBoundaryConditionsEnforce:
@@ -295,8 +295,8 @@ class TestBoundaryParticleGeneration:
         bc.add_wall(0.0, 0.0, 1.0, 0.0)
         particles = bc.generate_boundary_particles(spacing=0.1)
         for p in particles:
-            assert 'x' in p
-            assert 'y' in p
+            assert "x" in p
+            assert "y" in p
 
     def test_boundary_particles_type(self):
         """Test that boundary particles have correct type."""
@@ -304,4 +304,4 @@ class TestBoundaryParticleGeneration:
         bc.add_wall(0.0, 0.0, 1.0, 0.0)
         particles = bc.generate_boundary_particles(spacing=0.1)
         for p in particles:
-            assert p['type'] == 'boundary'
+            assert p["type"] == "boundary"

@@ -7,10 +7,19 @@ Tests the tokenizer, AST nodes, and parser functionality.
 import pytest
 
 from mechanics_dsl.parser import (
-    tokenize, Token,
-    NumberExpr, IdentExpr, GreekLetterExpr, DerivativeVarExpr,
-    BinaryOpExpr, UnaryOpExpr, VectorExpr,
-    SystemDef, VarDef, ConstraintDef, MechanicsParser
+    BinaryOpExpr,
+    ConstraintDef,
+    DerivativeVarExpr,
+    GreekLetterExpr,
+    IdentExpr,
+    MechanicsParser,
+    NumberExpr,
+    SystemDef,
+    Token,
+    UnaryOpExpr,
+    VarDef,
+    VectorExpr,
+    tokenize,
 )
 
 

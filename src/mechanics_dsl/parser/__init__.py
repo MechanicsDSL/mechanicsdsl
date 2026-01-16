@@ -26,82 +26,92 @@ for expressions. It handles:
 - SPH fluid definitions
 """
 
-# Re-export from submodules for backward compatibility
-from .tokens import Token, tokenize, TOKEN_TYPES, token_pattern
-from .ast_nodes import (
-    # Base classes
-    ASTNode, Expression,
-    # Basic expressions
-    NumberExpr, IdentExpr, GreekLetterExpr, DerivativeVarExpr,
-    # Operations
-    BinaryOpExpr, UnaryOpExpr,
-    # Vectors
-    VectorExpr, VectorOpExpr,
-    # Calculus
-    DerivativeExpr, IntegralExpr,
-    # Functions
-    FunctionCallExpr, FractionExpr,
-    # Statements
-    SystemDef, VarDef, ParameterDef, DefineDef,
-    LagrangianDef, HamiltonianDef, TransformDef,
-    ConstraintDef, NonHolonomicConstraintDef, ForceDef, DampingDef, RayleighDef,
-    InitialCondition, SolveDef, AnimateDef, ExportDef, ImportDef,
-    # SPH
-    RegionDef, FluidDef, BoundaryDef,
+from .ast_nodes import (  # Base classes; Basic expressions; Operations; Vectors; Calculus; Functions; Statements; SPH
+    AnimateDef,
+    ASTNode,
+    BinaryOpExpr,
+    BoundaryDef,
+    ConstraintDef,
+    DampingDef,
+    DefineDef,
+    DerivativeExpr,
+    DerivativeVarExpr,
+    ExportDef,
+    Expression,
+    FluidDef,
+    ForceDef,
+    FractionExpr,
+    FunctionCallExpr,
+    GreekLetterExpr,
+    HamiltonianDef,
+    IdentExpr,
+    ImportDef,
+    InitialCondition,
+    IntegralExpr,
+    LagrangianDef,
+    NonHolonomicConstraintDef,
+    NumberExpr,
+    ParameterDef,
+    RayleighDef,
+    RegionDef,
+    SolveDef,
+    SystemDef,
+    TransformDef,
+    UnaryOpExpr,
+    VarDef,
+    VectorExpr,
+    VectorOpExpr,
 )
 from .core import MechanicsParser, ParserError
 
+# Re-export from submodules for backward compatibility
+from .tokens import TOKEN_TYPES, Token, token_pattern, tokenize
 
 __all__ = [
     # Tokenization
-    'Token',
-    'tokenize',
-    'TOKEN_TYPES',
-    'token_pattern',
-    
+    "Token",
+    "tokenize",
+    "TOKEN_TYPES",
+    "token_pattern",
     # Parser
-    'MechanicsParser',
-    'ParserError',
-    
+    "MechanicsParser",
+    "ParserError",
     # Base classes
-    'ASTNode',
-    'Expression',
-    
+    "ASTNode",
+    "Expression",
     # Expression nodes
-    'NumberExpr',
-    'IdentExpr',
-    'GreekLetterExpr',
-    'DerivativeVarExpr',
-    'BinaryOpExpr',
-    'UnaryOpExpr',
-    'VectorExpr',
-    'VectorOpExpr',
-    'DerivativeExpr',
-    'IntegralExpr',
-    'FunctionCallExpr',
-    'FractionExpr',
-    
+    "NumberExpr",
+    "IdentExpr",
+    "GreekLetterExpr",
+    "DerivativeVarExpr",
+    "BinaryOpExpr",
+    "UnaryOpExpr",
+    "VectorExpr",
+    "VectorOpExpr",
+    "DerivativeExpr",
+    "IntegralExpr",
+    "FunctionCallExpr",
+    "FractionExpr",
     # Statement nodes
-    'SystemDef',
-    'VarDef',
-    'ParameterDef',
-    'DefineDef',
-    'LagrangianDef',
-    'HamiltonianDef',
-    'TransformDef',
-    'ConstraintDef',
-    'NonHolonomicConstraintDef',
-    'ForceDef',
-    'DampingDef',
-    'RayleighDef',
-    'InitialCondition',
-    'SolveDef',
-    'AnimateDef',
-    'ExportDef',
-    'ImportDef',
-    
+    "SystemDef",
+    "VarDef",
+    "ParameterDef",
+    "DefineDef",
+    "LagrangianDef",
+    "HamiltonianDef",
+    "TransformDef",
+    "ConstraintDef",
+    "NonHolonomicConstraintDef",
+    "ForceDef",
+    "DampingDef",
+    "RayleighDef",
+    "InitialCondition",
+    "SolveDef",
+    "AnimateDef",
+    "ExportDef",
+    "ImportDef",
     # SPH
-    'RegionDef',
-    'FluidDef',
-    'BoundaryDef',
+    "RegionDef",
+    "FluidDef",
+    "BoundaryDef",
 ]

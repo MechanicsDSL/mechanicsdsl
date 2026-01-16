@@ -3,51 +3,52 @@ Modelica integration for MechanicsDSL.
 
 Export to and import from Modelica models for standards-based simulation.
 """
-from typing import Dict, List, Optional, Any
-from pathlib import Path
+
 import re
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
 class ModelicaGenerator:
     """
     Generate Modelica model files from MechanicsDSL.
-    
+
     Creates standard Modelica text files (.mo) compatible with
     OpenModelica, Dymola, and other Modelica tools.
-    
+
     Example:
         gen = ModelicaGenerator(compiler)
         gen.generate('Pendulum.mo')
     """
-    
+
     @property
     def target_name(self) -> str:
         return "modelica"
-    
+
     @property
     def file_extension(self) -> str:
         return ".mo"
-    
+
     def __init__(self, compiler=None):
         self.compiler = compiler
         if compiler:
-            self.system_name = getattr(compiler, 'system_name', 'PhysicsSystem')
-            self.coordinates = getattr(compiler.simulator, 'coordinates', [])
-            self.parameters = dict(getattr(compiler.simulator, 'parameters', {}))
-            self.accelerations = getattr(compiler, 'accelerations', {})
-            self.initial_conditions = dict(getattr(compiler.simulator, 'initial_conditions', {}))
+            self.system_name = getattr(compiler, "system_name", "PhysicsSystem")
+            self.coordinates = getattr(compiler.simulator, "coordinates", [])
+            self.parameters = dict(getattr(compiler.simulator, "parameters", {}))
+            self.accelerations = getattr(compiler, "accelerations", {})
+            self.initial_conditions = dict(getattr(compiler.simulator, "initial_conditions", {}))
         else:
-            self.system_name = 'PhysicsSystem'
+            self.system_name = "PhysicsSystem"
             self.coordinates = []
             self.parameters = {}
             self.accelerations = {}
             self.initial_conditions = {}
-    
+
     def generate(self, output_file: Optional[str] = None) -> str:
         """Generate Modelica model."""
         model_name = self._to_modelica_name(self.system_name)
-        
-        code = f'''model {model_name}
+
+        code = f"""model {model_name}
   "Generated from MechanicsDSL"
   
   // Parameters
@@ -79,90 +80,92 @@ equation
   );
 
 end {model_name};
-'''
-        
+"""
+
         if output_file:
-            with open(output_file, 'w') as f:
+            with open(output_file, "w") as f:
                 f.write(code)
-        
+
         return code
-    
+
     def _to_modelica_name(self, name: str) -> str:
         """Convert to valid Modelica identifier."""
         # CamelCase
-        return ''.join(word.capitalize() for word in name.split('_'))
-    
+        return "".join(word.capitalize() for word in name.split("_"))
+
     def _generate_parameters(self) -> str:
         """Generate Modelica parameter declarations."""
         lines = []
         for name, value in self.parameters.items():
             unit = self._infer_unit(name)
             if unit:
-                lines.append(f'  parameter Real {name}(unit="{unit}") = {value} "Parameter {name}";')
+                lines.append(
+                    f'  parameter Real {name}(unit="{unit}") = {value} "Parameter {name}";'
+                )
             else:
                 lines.append(f'  parameter Real {name} = {value} "Parameter {name}";')
-        return '\n'.join(lines) if lines else '  // No parameters'
-    
+        return "\n".join(lines) if lines else "  // No parameters"
+
     def _generate_state_variables(self) -> str:
         """Generate Modelica state variable declarations."""
         lines = []
         for coord in self.coordinates:
             ic = self.initial_conditions.get(coord, 0)
-            ic_dot = self.initial_conditions.get(f'{coord}_dot', 0)
-            
+            ic_dot = self.initial_conditions.get(f"{coord}_dot", 0)
+
             lines.append(f'  Real {coord}(start={ic}, fixed=true) "Coordinate {coord}";')
             lines.append(f'  Real {coord}_dot(start={ic_dot}, fixed=true) "Velocity of {coord}";')
             lines.append(f'  Real {coord}_ddot "Acceleration of {coord}";')
-            lines.append('')
-        return '\n'.join(lines) if lines else '  // No state variables'
-    
+            lines.append("")
+        return "\n".join(lines) if lines else "  // No state variables"
+
     def _generate_kinematic_relations(self) -> str:
         """Generate kinematic relations (velocity = derivative of position)."""
         lines = []
         for coord in self.coordinates:
-            lines.append(f'  // Kinematic relation for {coord}')
-        return '\n'.join(lines) if lines else ''
-    
+            lines.append(f"  // Kinematic relation for {coord}")
+        return "\n".join(lines) if lines else ""
+
     def _generate_equations(self) -> str:
         """Generate Modelica equations."""
         lines = []
-        
+
         for coord in self.coordinates:
             # Kinematic equations
-            lines.append(f'  der({coord}) = {coord}_dot;')
-            lines.append(f'  der({coord}_dot) = {coord}_ddot;')
-            
+            lines.append(f"  der({coord}) = {coord}_dot;")
+            lines.append(f"  der({coord}_dot) = {coord}_ddot;")
+
             # Dynamic equation (acceleration)
             # In a real implementation, would convert sympy to Modelica syntax
-            lines.append(f'  {coord}_ddot = 0 /* TODO: Generated from equations */;')
-            lines.append('')
-        
-        return '\n'.join(lines) if lines else '  // No equations'
-    
+            lines.append(f"  {coord}_ddot = 0 /* TODO: Generated from equations */;")
+            lines.append("")
+
+        return "\n".join(lines) if lines else "  // No equations"
+
     def _generate_doc_coords(self) -> str:
         """Generate documentation for coordinates."""
         lines = []
         for coord in self.coordinates:
-            lines.append(f'        <li>{coord}</li>')
-        return '\n'.join(lines) if lines else '        <li>None</li>'
-    
+            lines.append(f"        <li>{coord}</li>")
+        return "\n".join(lines) if lines else "        <li>None</li>"
+
     def _generate_doc_params(self) -> str:
         """Generate documentation for parameters."""
         lines = []
         for name, value in self.parameters.items():
-            lines.append(f'        <li>{name} = {value}</li>')
-        return '\n'.join(lines) if lines else '        <li>None</li>'
-    
+            lines.append(f"        <li>{name} = {value}</li>")
+        return "\n".join(lines) if lines else "        <li>None</li>"
+
     def _infer_unit(self, name: str) -> Optional[str]:
         """Infer Modelica unit from parameter name."""
         unit_map = {
-            'm': 'kg',
-            'l': 'm',
-            'g': 'm/s2',
-            'k': 'N/m',
-            'b': 'N.s/m',
-            'omega': 'rad/s',
-            'theta': 'rad',
+            "m": "kg",
+            "l": "m",
+            "g": "m/s2",
+            "k": "N/m",
+            "b": "N.s/m",
+            "omega": "rad/s",
+            "theta": "rad",
         }
         return unit_map.get(name.lower())
 
@@ -170,97 +173,99 @@ end {model_name};
 class ModelicaImporter:
     """
     Import Modelica models to MechanicsDSL.
-    
+
     Parses Modelica .mo files and converts to MDSL syntax.
-    
+
     Example:
         importer = ModelicaImporter()
         mdsl_code = importer.import_file('Pendulum.mo')
     """
-    
+
     def __init__(self):
-        self.model_name = ''
+        self.model_name = ""
         self.parameters = {}
         self.variables = {}
         self.equations = []
-    
+
     def import_file(self, file_path: str) -> str:
         """
         Import Modelica file and convert to MDSL.
-        
+
         Args:
             file_path: Path to .mo file
-            
+
         Returns:
             MechanicsDSL code string
-            
+
         Raises:
             ValueError: If file path is invalid or has wrong extension
         """
         # Validate file path
         resolved = Path(file_path).resolve()
-        
+
         # Only allow .mo extension
-        if resolved.suffix.lower() != '.mo':
+        if resolved.suffix.lower() != ".mo":
             raise ValueError(f"Invalid file extension: {resolved.suffix}. Expected .mo")
-        
+
         if not resolved.exists():
             raise FileNotFoundError(f"Modelica file not found: {file_path}")
-        
-        with open(resolved, 'r', encoding='utf-8') as f:
+
+        with open(resolved, "r", encoding="utf-8") as f:
             content = f.read()
-        
+
         return self.parse(content)
-    
+
     def parse(self, modelica_code: str) -> str:
         """
         Parse Modelica code and convert to MDSL.
-        
+
         Args:
             modelica_code: Modelica source code
-            
+
         Returns:
             MechanicsDSL code string
         """
         # Extract model name
-        model_match = re.search(r'model\s+(\w+)', modelica_code)
+        model_match = re.search(r"model\s+(\w+)", modelica_code)
         if model_match:
             self.model_name = model_match.group(1)
-        
+
         # Extract parameters
-        for match in re.finditer(r'parameter\s+Real\s+(\w+)(?:\([^)]*\))?\s*=\s*([0-9.eE+-]+)', modelica_code):
+        for match in re.finditer(
+            r"parameter\s+Real\s+(\w+)(?:\([^)]*\))?\s*=\s*([0-9.eE+-]+)", modelica_code
+        ):
             name, value = match.groups()
             self.parameters[name] = float(value)
-        
+
         # Extract Real variables (potential coordinates)
-        for match in re.finditer(r'Real\s+(\w+)(?:\([^)]*\))?', modelica_code):
+        for match in re.finditer(r"Real\s+(\w+)(?:\([^)]*\))?", modelica_code):
             var_name = match.group(1)
-            if not var_name.endswith('_dot') and not var_name.endswith('_ddot'):
+            if not var_name.endswith("_dot") and not var_name.endswith("_ddot"):
                 if var_name not in self.parameters:
-                    self.variables[var_name] = 'Position'
-        
+                    self.variables[var_name] = "Position"
+
         # Build MDSL code
         mdsl_lines = []
-        
+
         # System
         mdsl_lines.append(f"\\system{{{self.model_name.lower()}}}")
         mdsl_lines.append("")
-        
+
         # Define variables
         for var_name, var_type in self.variables.items():
             mdsl_lines.append(f"\\defvar{{{var_name}}}{{{var_type}}}{{m}}")
-        
+
         if self.variables:
             mdsl_lines.append("")
-        
+
         # Parameters
         for name, value in self.parameters.items():
             unit = self._infer_unit_from_name(name)
             mdsl_lines.append(f"\\parameter{{{name}}}{{{value}}}{{{unit}}}")
-        
+
         if self.parameters:
             mdsl_lines.append("")
-        
+
         # Placeholder for Lagrangian (would need equation analysis)
         coords = list(self.variables.keys())
         if coords:
@@ -269,28 +274,28 @@ class ModelicaImporter:
             mdsl_lines.append(f"    % T - V")
             mdsl_lines.append(f"}}")
             mdsl_lines.append("")
-            
+
             # Initial conditions
             ic_parts = [f"{c}=0.0, {c}_dot=0.0" for c in coords]
             mdsl_lines.append(f"\\initial{{{', '.join(ic_parts)}}}")
-        
-        return '\n'.join(mdsl_lines)
-    
+
+        return "\n".join(mdsl_lines)
+
     def _infer_unit_from_name(self, name: str) -> str:
         """Infer unit from parameter name."""
-        if name.lower() in ('m', 'mass'):
-            return 'kg'
-        elif name.lower() in ('l', 'length', 'r', 'radius'):
-            return 'm'
-        elif name.lower() in ('g', 'gravity'):
-            return 'm/s^2'
-        elif name.lower() in ('k', 'stiffness'):
-            return 'N/m'
+        if name.lower() in ("m", "mass"):
+            return "kg"
+        elif name.lower() in ("l", "length", "r", "radius"):
+            return "m"
+        elif name.lower() in ("g", "gravity"):
+            return "m/s^2"
+        elif name.lower() in ("k", "stiffness"):
+            return "N/m"
         else:
-            return '1'
+            return "1"
 
 
 __all__ = [
-    'ModelicaGenerator',
-    'ModelicaImporter',
+    "ModelicaGenerator",
+    "ModelicaImporter",
 ]

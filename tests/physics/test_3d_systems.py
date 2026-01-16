@@ -2,26 +2,30 @@
 3D system tests - Gyroscope, rigid body, spherical pendulum, 3D elastic pendulum
 Tests both new package structure and original core.py
 """
-import pytest
-import numpy as np
-import sys
+
 import os
+import sys
 from pathlib import Path
 
+import numpy as np
+import pytest
+
 # Detect CI environment and adjust tolerances
-IS_CI = os.getenv('CI') == 'true' or os.getenv('GITHUB_ACTIONS') == 'true'
+IS_CI = os.getenv("CI") == "true" or os.getenv("GITHUB_ACTIONS") == "true"
 # 3D systems can accumulate more numerical errors
 ENERGY_TOL_MULTIPLIER = 3.0 if IS_CI else 1.0
 
 try:
     from mechanics_dsl import PhysicsCompiler
+
     NEW_PACKAGE = True
 except ImportError:
     NEW_PACKAGE = False
 
 try:
-    sys.path.insert(0, str(Path(__file__).parent.parent / 'reference'))
+    sys.path.insert(0, str(Path(__file__).parent.parent / "reference"))
     from core import PhysicsCompiler as CorePhysicsCompiler
+
     CORE_AVAILABLE = True
 except ImportError:
     CORE_AVAILABLE = False
@@ -39,7 +43,7 @@ def get_compiler():
 
 class TestGyroscope:
     """Test gyroscope (3D rotation with Euler angles)"""
-    
+
     def test_gyroscope(self):
         """Test gyroscope with Euler angles"""
         dsl_code = r"""
@@ -62,26 +66,26 @@ class TestGyroscope:
         
         \initial{theta=0.1, theta_dot=0.0, phi=0.0, phi_dot=0.0, psi=0.0, psi_dot=omega}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code)
-        
-        assert result['success']
-        assert len(result['coordinates']) == 3
-        assert 'theta' in result['coordinates']
-        assert 'phi' in result['coordinates']
-        assert 'psi' in result['coordinates']
-        
+
+        assert result["success"]
+        assert len(result["coordinates"]) == 3
+        assert "theta" in result["coordinates"]
+        assert "phi" in result["coordinates"]
+        assert "psi" in result["coordinates"]
+
         solution = compiler.simulate(t_span=(0, 5), num_points=500)
-        
-        assert solution['success']
-        assert solution['y'].shape[0] == 6  # 3 angles * 2 states
-        
+
+        assert solution["success"]
+        assert solution["y"].shape[0] == 6  # 3 angles * 2 states
+
         # Gyroscope should show precession
-        theta = solution['y'][0]
-        phi = solution['y'][2]
-        psi = solution['y'][4]
-        
+        theta = solution["y"][0]
+        phi = solution["y"][2]
+        psi = solution["y"][4]
+
         assert np.all(np.isfinite(theta))
         assert np.all(np.isfinite(phi))
         assert np.all(np.isfinite(psi))
@@ -89,7 +93,7 @@ class TestGyroscope:
 
 class TestRigidBody3D:
     """Test rigid body 3D rotation"""
-    
+
     def test_rigid_body_3d(self):
         """Test rigid body with three different moments of inertia"""
         dsl_code = r"""
@@ -113,28 +117,28 @@ class TestRigidBody3D:
         
         \initial{theta=0.1, theta_dot=0.0, phi=0.0, phi_dot=1.0, psi=0.0, psi_dot=0.0}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code)
-        
-        assert result['success']
-        
+
+        assert result["success"]
+
         solution = compiler.simulate(t_span=(0, 5), num_points=500)
-        
-        assert solution['success']
-        
+
+        assert solution["success"]
+
         # All angles should evolve
-        theta = solution['y'][0]
-        phi = solution['y'][2]
-        psi = solution['y'][4]
-        
+        theta = solution["y"][0]
+        phi = solution["y"][2]
+        psi = solution["y"][4]
+
         assert np.max(np.abs(theta)) > 0.01
         assert np.max(np.abs(phi)) > 0.01
 
 
 class TestSphericalPendulum:
     """Test spherical pendulum (2D motion in 3D space)"""
-    
+
     def test_spherical_pendulum(self):
         """Test spherical pendulum with two angular coordinates"""
         dsl_code = r"""
@@ -156,44 +160,51 @@ class TestSphericalPendulum:
         
         \initial{theta=0.3, theta_dot=0.0, phi=0.0, phi_dot=0.5}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code)
-        
-        assert result['success']
-        assert len(result['coordinates']) == 2
-        
-        solution = compiler.simulate(t_span=(0, 10), num_points=1000, method='LSODA')
-        
-        assert solution['success']
-        
+
+        assert result["success"]
+        assert len(result["coordinates"]) == 2
+
+        solution = compiler.simulate(t_span=(0, 10), num_points=1000, method="LSODA")
+
+        assert solution["success"]
+
         # Both angles should evolve (allow for small initial conditions)
-        theta = solution['y'][0]
-        phi = solution['y'][2]
-        
+        theta = solution["y"][0]
+        phi = solution["y"][2]
+
         # Check that angles change from initial values (more lenient in CI)
         min_change = 0.005 if IS_CI else 0.01
-        assert np.max(np.abs(theta - theta[0])) > min_change or np.max(np.abs(theta)) > min_change, \
-            f"Theta should evolve: max change = {np.max(np.abs(theta - theta[0])):.6f}"
-        assert np.max(np.abs(phi - phi[0])) > min_change or np.max(np.abs(phi)) > min_change, \
-            f"Phi should evolve: max change = {np.max(np.abs(phi - phi[0])):.6f}"
-        
+        assert (
+            np.max(np.abs(theta - theta[0])) > min_change or np.max(np.abs(theta)) > min_change
+        ), f"Theta should evolve: max change = {np.max(np.abs(theta - theta[0])):.6f}"
+        assert (
+            np.max(np.abs(phi - phi[0])) > min_change or np.max(np.abs(phi)) > min_change
+        ), f"Phi should evolve: max change = {np.max(np.abs(phi - phi[0])):.6f}"
+
         # Check energy conservation
         from mechanics_dsl.energy import PotentialEnergyCalculator
+
         params = compiler.simulator.parameters
         KE = PotentialEnergyCalculator.compute_kinetic_energy(solution, params)
-        PE = PotentialEnergyCalculator.compute_potential_energy(solution, params, 'spherical_pendulum')
+        PE = PotentialEnergyCalculator.compute_potential_energy(
+            solution, params, "spherical_pendulum"
+        )
         E_total = KE + PE
-        
+
         if E_total[0] != 0 and np.abs(E_total[0]) > 1e-10:
             energy_error = np.abs((E_total - E_total[0]) / E_total[0])
             # Spherical pendulum can have significant energy drift in CI due to numerical instability
             tolerance = 50.0  # Spherical pendulum accumulates significant energy drift
-            assert np.max(energy_error) < tolerance, f"Energy error: {np.max(energy_error):.6f} (tolerance: {tolerance:.6f})"
+            assert (
+                np.max(energy_error) < tolerance
+            ), f"Energy error: {np.max(energy_error):.6f} (tolerance: {tolerance:.6f})"
         else:
             # If initial energy is zero or very small, just check that energy stays small
             assert np.all(np.abs(E_total) < 1e-5), "Energy should remain near zero"
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
 
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

@@ -1,13 +1,15 @@
 """
 FastAPI application for MechanicsDSL server.
 """
-from typing import Optional
+
 import os
+from typing import Optional
 
 try:
     from fastapi import FastAPI
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.staticfiles import StaticFiles
+
     FASTAPI_AVAILABLE = True
 except ImportError:
     FASTAPI_AVAILABLE = False
@@ -19,24 +21,22 @@ def create_app(
     version: str = "1.0.0",
     enable_cors: bool = True,
     cors_origins: Optional[list] = None,
-) -> 'FastAPI':
+) -> "FastAPI":
     """
     Create FastAPI application.
-    
+
     Args:
         title: API title
         version: API version
         enable_cors: Enable CORS middleware
         cors_origins: Allowed origins (default: all)
-        
+
     Returns:
         FastAPI application
     """
     if not FASTAPI_AVAILABLE:
-        raise ImportError(
-            "FastAPI is not installed. Install with: pip install fastapi uvicorn"
-        )
-    
+        raise ImportError("FastAPI is not installed. Install with: pip install fastapi uvicorn")
+
     app = FastAPI(
         title=title,
         version=version,
@@ -44,7 +44,7 @@ def create_app(
         docs_url="/docs",
         redoc_url="/redoc",
     )
-    
+
     # CORS
     if enable_cors:
         origins = cors_origins or ["*"]
@@ -55,20 +55,22 @@ def create_app(
             allow_methods=["*"],
             allow_headers=["*"],
         )
-    
+
     # Import and include routes
     from .routes import router
+
     app.include_router(router, prefix="/api")
-    
+
     # WebSocket endpoint
     from .websocket import websocket_router
+
     app.include_router(websocket_router)
-    
+
     # Health check
     @app.get("/health")
     async def health():
         return {"status": "healthy", "service": "mechanics_dsl"}
-    
+
     return app
 
 
@@ -86,10 +88,10 @@ def main():
     except ImportError:
         print("uvicorn not installed. Run: pip install uvicorn")
         return
-    
+
     uvicorn.run(
         "mechanics_dsl.server:app",
-        host="0.0.0.0",
+        host="0.0.0.0",  # nosec B104 - intentional for Docker
         port=8000,
         reload=True,
     )
@@ -99,4 +101,4 @@ if __name__ == "__main__":
     main()
 
 
-__all__ = ['create_app', 'app', 'main']
+__all__ = ["create_app", "app", "main"]

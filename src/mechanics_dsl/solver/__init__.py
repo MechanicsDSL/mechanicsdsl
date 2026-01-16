@@ -30,42 +30,39 @@ from .core import NumericalSimulator
 
 # Symplectic integrators
 from .symplectic import (
-    SymplecticIntegrator,
-    StormerVerlet,
     Leapfrog,
-    Yoshida4,
-    Ruth3,
     McLachlan4,
+    Ruth3,
+    StormerVerlet,
+    SymplecticIntegrator,
+    Yoshida4,
     get_symplectic_integrator,
 )
 
 # Variational integrators
 from .variational import (
-    VariationalIntegrator,
+    GalerkinVariational,
     MidpointVariational,
     TrapezoidalVariational,
-    GalerkinVariational,
+    VariationalIntegrator,
     get_variational_integrator,
 )
 
 __all__ = [
     # Core
-    'NumericalSimulator',
-    
+    "NumericalSimulator",
     # Symplectic integrators
-    'SymplecticIntegrator',
-    'StormerVerlet',
-    'Leapfrog',
-    'Yoshida4',
-    'Ruth3',
-    'McLachlan4',
-    'get_symplectic_integrator',
-    
+    "SymplecticIntegrator",
+    "StormerVerlet",
+    "Leapfrog",
+    "Yoshida4",
+    "Ruth3",
+    "McLachlan4",
+    "get_symplectic_integrator",
     # Variational integrators
-    'VariationalIntegrator',
-    'MidpointVariational',
-    'TrapezoidalVariational',
-    'GalerkinVariational',
-    'get_variational_integrator',
+    "VariationalIntegrator",
+    "MidpointVariational",
+    "TrapezoidalVariational",
+    "GalerkinVariational",
+    "get_variational_integrator",
 ]
-

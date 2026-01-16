@@ -4,11 +4,12 @@ Unit tests for MechanicsDSL compiler module.
 Tests the PhysicsCompiler and SystemSerializer classes.
 """
 
-import pytest
 import json
 import os
 import tempfile
+
 import numpy as np
+import pytest
 
 from mechanics_dsl.compiler import PhysicsCompiler, SystemSerializer
 
@@ -24,7 +25,7 @@ class TestPhysicsCompilerInit:
     def test_init_has_ast_attribute(self):
         """Test that compiler has ast attribute."""
         compiler = PhysicsCompiler()
-        assert hasattr(compiler, 'ast')
+        assert hasattr(compiler, "ast")
 
     def test_init_symbolic_engine(self):
         """Test that compiler has symbolic engine."""
@@ -86,7 +87,7 @@ class TestCompileDSL:
         \initial{theta=0.5, theta_dot=0.0}
         """
         result = compiler.compile_dsl(dsl)
-        assert result['success'] is True
+        assert result["success"] is True
 
     def test_compile_harmonic_oscillator(self):
         """Test compiling harmonic oscillator DSL."""
@@ -104,7 +105,7 @@ class TestCompileDSL:
         \initial{x=1.0, x_dot=0.0}
         """
         result = compiler.compile_dsl(dsl)
-        assert result['success'] is True
+        assert result["success"] is True
 
     def test_compile_returns_dict(self):
         """Test that compile_dsl returns a dictionary."""
@@ -142,7 +143,7 @@ class TestCompileDSL:
         \initial{x=0.0, x_dot=1.0}
         """
         result = compiler.compile_dsl(dsl)
-        assert 'success' in result
+        assert "success" in result
 
 
 class TestSimulate:
@@ -161,8 +162,8 @@ class TestSimulate:
         \initial{theta=0.3, theta_dot=0.0}
         """
         result = compiler.compile_dsl(dsl)
-        assert result['success']
-        
+        assert result["success"]
+
         solution = compiler.simulate((0, 5), num_points=100)
         assert solution is not None
 
@@ -178,7 +179,7 @@ class TestSimulate:
         \initial{x=1.0, x_dot=0.0}
         """
         result = compiler.compile_dsl(dsl)
-        if result['success']:
+        if result["success"]:
             solution = compiler.simulate((0, 2), num_points=50)
             assert isinstance(solution, dict)
 
@@ -194,9 +195,9 @@ class TestSimulate:
         \initial{x=1.0, x_dot=0.0}
         """
         result = compiler.compile_dsl(dsl)
-        if result['success']:
+        if result["success"]:
             solution = compiler.simulate((0, 20), num_points=200)
-            assert solution['t'][-1] == pytest.approx(20.0)
+            assert solution["t"][-1] == pytest.approx(20.0)
 
 
 class TestGetCoordinates:
@@ -213,7 +214,7 @@ class TestGetCoordinates:
         \initial{x=0.0, x_dot=1.0}
         """
         result = compiler.compile_dsl(dsl)
-        if result['success']:
+        if result["success"]:
             coords = compiler.get_coordinates()
             assert len(coords) >= 1
 
@@ -228,7 +229,7 @@ class TestGetCoordinates:
         \initial{x=0.0, x_dot=1.0}
         """
         result = compiler.compile_dsl(dsl)
-        if result['success']:
+        if result["success"]:
             coords = compiler.get_coordinates()
             assert isinstance(coords, list)
 
@@ -247,14 +248,14 @@ class TestSystemSerializer:
         \initial{x=1.0, x_dot=0.0}
         """
         result = compiler.compile_dsl(dsl)
-        if not result['success']:
+        if not result["success"]:
             pytest.skip("Compilation failed")
-        
-        with tempfile.NamedTemporaryFile(suffix='.json', delete=False) as f:
+
+        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             filename = f.name
-        
+
         try:
-            result = SystemSerializer.export_system(compiler, filename, format='json')
+            result = SystemSerializer.export_system(compiler, filename, format="json")
             assert result is True
             assert os.path.exists(filename)
         finally:
@@ -272,12 +273,12 @@ class TestSystemSerializer:
         \initial{x=1.0, x_dot=0.0}
         """
         result = compiler.compile_dsl(dsl)
-        if not result['success']:
+        if not result["success"]:
             pytest.skip("Compilation failed")
-        
-        with tempfile.NamedTemporaryFile(suffix='.json', delete=False) as f:
+
+        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             filename = f.name
-        
+
         try:
             SystemSerializer.export_system(compiler, filename)
             assert os.path.exists(filename)

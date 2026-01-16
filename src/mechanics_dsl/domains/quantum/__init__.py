@@ -3,7 +3,7 @@ Quantum Mechanics Domain for MechanicsDSL
 
 This package provides tools for semiclassical quantum mechanics, including:
 - WKB approximation
-- Bohr-Sommerfeld quantization  
+- Bohr-Sommerfeld quantization
 - Ehrenfest theorem (quantum-classical correspondence)
 - Quantum harmonic oscillator
 - Quantum wells and barriers

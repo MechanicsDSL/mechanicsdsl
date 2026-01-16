@@ -3,41 +3,43 @@ Python Code Generator for MechanicsDSL
 
 Generates standalone Python simulation scripts.
 """
+
 from typing import Dict, List
+
 import sympy as sp
 from sympy.printing import pycode
 
-from .base import CodeGenerator
 from ..utils import logger
+from .base import CodeGenerator
 
 
 class PythonGenerator(CodeGenerator):
     """
     Generates Python simulation code with NumPy/SciPy.
-    
+
     Produces standalone scripts that can run without MechanicsDSL installed.
     """
-    
+
     @property
     def target_name(self) -> str:
         return "python"
-    
+
     @property
     def file_extension(self) -> str:
         return ".py"
-    
+
     def generate(self, output_file: str = "simulation.py") -> str:
         """Generate Python simulation code."""
         logger.info(f"Generating Python code for {self.system_name}")
-        
+
         code = self._generate_code()
-        
-        with open(output_file, 'w') as f:
+
+        with open(output_file, "w") as f:
             f.write(code)
-        
+
         logger.info(f"Successfully wrote {output_file}")
         return output_file
-    
+
     def generate_equations(self) -> str:
         """Generate Python code for equations."""
         lines = []
@@ -53,12 +55,12 @@ class PythonGenerator(CodeGenerator):
                 lines.append(f"    dydt[{idx+1}] = 0.0")
             idx += 2
         return "\n".join(lines)
-    
+
     def _generate_code(self) -> str:
         """Generate complete Python simulation script."""
         # Parameter definitions
         param_str = "\n".join(f"{name} = {val}" for name, val in self.parameters.items())
-        
+
         # State variable unpacking
         unpack_lines = []
         idx = 0
@@ -67,13 +69,13 @@ class PythonGenerator(CodeGenerator):
             unpack_lines.append(f"    {coord}_dot = y[{idx+1}]")
             idx += 2
         unpack_str = "\n".join(unpack_lines)
-        
+
         # Equations
         eq_str = self.generate_equations()
-        
+
         # Initial conditions
         init_str = self.generate_initial_conditions()
-        
+
         # Full template
         template = f'''"""
 Auto-generated simulation: {self.system_name}

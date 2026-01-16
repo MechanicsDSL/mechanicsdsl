@@ -1,8 +1,9 @@
 """
 Configuration management for MechanicsDSL
 """
+
 import logging
-from typing import Dict, Any, Tuple
+from typing import Any, Dict, Tuple
 
 from .logging import logger
 
@@ -51,7 +52,7 @@ MAX_SOLVER_ITERATIONS = 1000
 # Infinity approximation for numerical comparisons
 NUMERICAL_INFINITY = 1e10
 
-# Near-zero threshold for singularity detection  
+# Near-zero threshold for singularity detection
 SINGULARITY_THRESHOLD = 1e-12
 
 # ============================================================================
@@ -70,12 +71,12 @@ MAX_DPI = 1000
 TRAIL_ALPHA = 0.4
 
 # Default color scheme (professional palette)
-PRIMARY_COLOR = '#E63946'    # Red-orange
-SECONDARY_COLOR = '#457B9D'  # Steel blue
-TERTIARY_COLOR = '#F1FAEE'   # Off-white
-ACCENT_COLOR = '#A8DADC'     # Light cyan
-WARNING_COLOR = '#FFB703'    # Amber
-SUCCESS_COLOR = '#2A9D8F'    # Teal
+PRIMARY_COLOR = "#E63946"  # Red-orange
+SECONDARY_COLOR = "#457B9D"  # Steel blue
+TERTIARY_COLOR = "#F1FAEE"  # Off-white
+ACCENT_COLOR = "#A8DADC"  # Light cyan
+WARNING_COLOR = "#FFB703"  # Amber
+SUCCESS_COLOR = "#2A9D8F"  # Teal
 
 # Marker sizes
 DEFAULT_MARKER_SIZE = 10
@@ -105,22 +106,22 @@ DEFAULT_CACHE_MEMORY_MB = 100.0
 
 # Log level mappings
 LOG_LEVELS = {
-    'DEBUG': logging.DEBUG,
-    'INFO': logging.INFO,
-    'WARNING': logging.WARNING,
-    'ERROR': logging.ERROR,
-    'CRITICAL': logging.CRITICAL,
+    "DEBUG": logging.DEBUG,
+    "INFO": logging.INFO,
+    "WARNING": logging.WARNING,
+    "ERROR": logging.ERROR,
+    "CRITICAL": logging.CRITICAL,
 }
 
 
 class Config:
     """
     Global configuration for MechanicsDSL with validation.
-    
+
     All configuration values are validated on assignment to ensure
     they are within reasonable bounds and of correct types.
     """
-    
+
     def __init__(self) -> None:
         """Initialize configuration with default values."""
         self._enable_profiling: bool = False
@@ -145,34 +146,34 @@ class Config:
         self._enable_type_checking: bool = True
         self._error_recovery_enabled: bool = True
         self._max_retry_attempts: int = 3
-    
+
     @property
     def enable_profiling(self) -> bool:
         """Whether to enable performance profiling."""
         return self._enable_profiling
-    
+
     @enable_profiling.setter
     def enable_profiling(self, value: bool) -> None:
         if not isinstance(value, bool):
             raise TypeError(f"enable_profiling must be bool, got {type(value).__name__}")
         self._enable_profiling = value
-    
+
     @property
     def enable_debug_logging(self) -> bool:
         """Whether to enable debug-level logging."""
         return self._enable_debug_logging
-    
+
     @enable_debug_logging.setter
     def enable_debug_logging(self, value: bool) -> None:
         if not isinstance(value, bool):
             raise TypeError(f"enable_debug_logging must be bool, got {type(value).__name__}")
         self._enable_debug_logging = value
-    
+
     @property
     def simplification_timeout(self) -> float:
         """Timeout for symbolic simplification operations in seconds."""
         return self._simplification_timeout
-    
+
     @simplification_timeout.setter
     def simplification_timeout(self, value: float) -> None:
         if not isinstance(value, (int, float)):
@@ -182,12 +183,12 @@ class Config:
         if value > 3600:
             raise ValueError(f"simplification_timeout too large (>{3600}s), got {value}")
         self._simplification_timeout = float(value)
-    
+
     @property
     def max_parser_errors(self) -> int:
         """Maximum parser errors before giving up."""
         return self._max_parser_errors
-    
+
     @max_parser_errors.setter
     def max_parser_errors(self, value: int) -> None:
         if not isinstance(value, int):
@@ -197,12 +198,12 @@ class Config:
         if value > 1000:
             raise ValueError(f"max_parser_errors too large (>{1000}), got {value}")
         self._max_parser_errors = value
-    
+
     @property
     def default_rtol(self) -> float:
         """Default relative tolerance for numerical integration."""
         return self._default_rtol
-    
+
     @default_rtol.setter
     def default_rtol(self, value: float) -> None:
         if not isinstance(value, (int, float)):
@@ -210,12 +211,12 @@ class Config:
         if value <= 0 or value >= 1:
             raise ValueError(f"default_rtol must be in (0, 1), got {value}")
         self._default_rtol = float(value)
-    
+
     @property
     def default_atol(self) -> float:
         """Default absolute tolerance for numerical integration."""
         return self._default_atol
-    
+
     @default_atol.setter
     def default_atol(self, value: float) -> None:
         if not isinstance(value, (int, float)):
@@ -223,12 +224,12 @@ class Config:
         if value <= 0:
             raise ValueError(f"default_atol must be positive, got {value}")
         self._default_atol = float(value)
-    
+
     @property
     def trail_length(self) -> int:
         """Maximum length of animation trails."""
         return self._trail_length
-    
+
     @trail_length.setter
     def trail_length(self, value: int) -> None:
         if not isinstance(value, int):
@@ -238,12 +239,12 @@ class Config:
         if value > 100000:
             raise ValueError(f"trail_length too large (>{100000}), got {value}")
         self._trail_length = value
-    
+
     @property
     def animation_fps(self) -> int:
         """Animation frames per second."""
         return self._animation_fps
-    
+
     @animation_fps.setter
     def animation_fps(self, value: int) -> None:
         if not isinstance(value, int):
@@ -253,56 +254,58 @@ class Config:
         if value > 120:
             raise ValueError(f"animation_fps too large (>{120}), got {value}")
         self._animation_fps = value
-    
+
     @property
     def save_intermediate_results(self) -> bool:
         """Whether to save intermediate computation results."""
         return self._save_intermediate_results
-    
+
     @save_intermediate_results.setter
     def save_intermediate_results(self, value: bool) -> None:
         if not isinstance(value, bool):
             raise TypeError(f"save_intermediate_results must be bool, got {type(value).__name__}")
         self._save_intermediate_results = value
-    
+
     @property
     def cache_symbolic_results(self) -> bool:
         """Whether to cache symbolic computation results."""
         return self._cache_symbolic_results
-    
+
     @cache_symbolic_results.setter
     def cache_symbolic_results(self, value: bool) -> None:
         if not isinstance(value, bool):
             raise TypeError(f"cache_symbolic_results must be bool, got {type(value).__name__}")
         self._cache_symbolic_results = value
-    
+
     @property
     def enable_performance_monitoring(self) -> bool:
         """Whether to enable performance monitoring."""
         return self._enable_performance_monitoring
-    
+
     @enable_performance_monitoring.setter
     def enable_performance_monitoring(self, value: bool) -> None:
         if not isinstance(value, bool):
-            raise TypeError(f"enable_performance_monitoring must be bool, got {type(value).__name__}")
+            raise TypeError(
+                f"enable_performance_monitoring must be bool, got {type(value).__name__}"
+            )
         self._enable_performance_monitoring = value
-    
+
     @property
     def enable_memory_monitoring(self) -> bool:
         """Whether to enable additional memory monitoring."""
         return self._enable_memory_monitoring
-    
+
     @enable_memory_monitoring.setter
     def enable_memory_monitoring(self, value: bool) -> None:
         if not isinstance(value, bool):
             raise TypeError(f"enable_memory_monitoring must be bool, got {type(value).__name__}")
         self._enable_memory_monitoring = value
-    
+
     @property
     def cache_max_size(self) -> int:
         """Maximum cache size."""
         return self._cache_max_size
-    
+
     @cache_max_size.setter
     def cache_max_size(self, value: int) -> None:
         if not isinstance(value, int):
@@ -312,12 +315,12 @@ class Config:
         if value > 10000:
             raise ValueError(f"cache_max_size too large (>{10000}), got {value}")
         self._cache_max_size = value
-    
+
     @property
     def cache_max_memory_mb(self) -> float:
         """Maximum cache memory in MB."""
         return self._cache_max_memory_mb
-    
+
     @cache_max_memory_mb.setter
     def cache_max_memory_mb(self, value: float) -> None:
         if not isinstance(value, (int, float)):
@@ -327,90 +330,92 @@ class Config:
         if value > 10000:
             raise ValueError(f"cache_max_memory_mb too large (>{10000} MB), got {value}")
         self._cache_max_memory_mb = float(value)
-    
+
     @property
     def enable_adaptive_solver(self) -> bool:
         """Whether to enable adaptive solver selection."""
         return self._enable_adaptive_solver
-    
+
     @enable_adaptive_solver.setter
     def enable_adaptive_solver(self, value: bool) -> None:
         if not isinstance(value, bool):
             raise TypeError(f"enable_adaptive_solver must be bool, got {type(value).__name__}")
         self._enable_adaptive_solver = value
-    
+
     @property
     def error_recovery_enabled(self) -> bool:
         """Whether error recovery is enabled."""
         return self._error_recovery_enabled
-    
+
     @error_recovery_enabled.setter
     def error_recovery_enabled(self, value: bool) -> None:
         if not isinstance(value, bool):
             raise TypeError(f"error_recovery_enabled must be bool, got {type(value).__name__}")
         self._error_recovery_enabled = value
-        
+
     def to_dict(self) -> Dict[str, Any]:
         """
         Convert configuration to dictionary.
-        
+
         Returns:
             Dictionary containing all configuration values
         """
         return {
             # Core settings
-            'enable_profiling': self._enable_profiling,
-            'enable_debug_logging': self._enable_debug_logging,
-            'simplification_timeout': self._simplification_timeout,
-            'max_parser_errors': self._max_parser_errors,
-            'default_rtol': self._default_rtol,
-            'default_atol': self._default_atol,
-            'trail_length': self._trail_length,
-            'animation_fps': self._animation_fps,
-            'save_intermediate_results': self._save_intermediate_results,
-            'cache_symbolic_results': self._cache_symbolic_results,
+            "enable_profiling": self._enable_profiling,
+            "enable_debug_logging": self._enable_debug_logging,
+            "simplification_timeout": self._simplification_timeout,
+            "max_parser_errors": self._max_parser_errors,
+            "default_rtol": self._default_rtol,
+            "default_atol": self._default_atol,
+            "trail_length": self._trail_length,
+            "animation_fps": self._animation_fps,
+            "save_intermediate_results": self._save_intermediate_results,
+            "cache_symbolic_results": self._cache_symbolic_results,
             # v6.0 Advanced features
-            'enable_performance_monitoring': self._enable_performance_monitoring,
-            'cache_max_size': self._cache_max_size,
-            'cache_max_memory_mb': self._cache_max_memory_mb,
-            'enable_adaptive_solver': self._enable_adaptive_solver,
-            'enable_parallel_processing': self._enable_parallel_processing,
-            'max_workers': self._max_workers,
-            'enable_memory_monitoring': self._enable_memory_monitoring,
-            'gc_threshold': self._gc_threshold,
-            'enable_type_checking': self._enable_type_checking,
-            'error_recovery_enabled': self._error_recovery_enabled,
-            'max_retry_attempts': self._max_retry_attempts,
+            "enable_performance_monitoring": self._enable_performance_monitoring,
+            "cache_max_size": self._cache_max_size,
+            "cache_max_memory_mb": self._cache_max_memory_mb,
+            "enable_adaptive_solver": self._enable_adaptive_solver,
+            "enable_parallel_processing": self._enable_parallel_processing,
+            "max_workers": self._max_workers,
+            "enable_memory_monitoring": self._enable_memory_monitoring,
+            "gc_threshold": self._gc_threshold,
+            "enable_type_checking": self._enable_type_checking,
+            "error_recovery_enabled": self._error_recovery_enabled,
+            "max_retry_attempts": self._max_retry_attempts,
         }
-    
+
     def from_dict(self, data: Dict[str, Any]) -> None:
         """
         Load configuration from dictionary with validation.
-        
+
         Uses property setters to ensure all values are validated.
-        
+
         Args:
             data: Dictionary containing configuration values
-            
+
         Raises:
             TypeError: If data is not a dictionary
             ValueError: If any value is invalid
         """
         if not isinstance(data, dict):
             raise TypeError(f"data must be dict, got {type(data).__name__}")
-        
+
         # Map property names (some internal names differ from property names)
         property_mapping = {
-            'gc_threshold': '_gc_threshold',
-            'max_workers': '_max_workers',
-            'enable_parallel_processing': '_enable_parallel_processing',
-            'enable_type_checking': '_enable_type_checking',
-            'max_retry_attempts': '_max_retry_attempts',
+            "gc_threshold": "_gc_threshold",
+            "max_workers": "_max_workers",
+            "enable_parallel_processing": "_enable_parallel_processing",
+            "enable_type_checking": "_enable_type_checking",
+            "max_retry_attempts": "_max_retry_attempts",
         }
-        
+
         for key, value in data.items():
             # Try to use property setter first (provides validation)
-            if hasattr(self.__class__, key) and isinstance(getattr(self.__class__, key, None), property):
+            if hasattr(self.__class__, key) and isinstance(
+                getattr(self.__class__, key, None), property
+            ):
                 try:
                     setattr(self, key, value)
                 except (TypeError, ValueError) as e:
@@ -419,7 +424,7 @@ class Config:
             elif key in property_mapping:
                 internal_name = property_mapping[key]
                 setattr(self, internal_name, value)
-            elif key.startswith('_') and hasattr(self, key):
+            elif key.startswith("_") and hasattr(self, key):
                 setattr(self, key, value)
             else:
                 logger.warning(f"Unknown configuration key: {key}")
@@ -427,4 +432,3 @@ class Config:
 
 # Global config instance
 config = Config()
-

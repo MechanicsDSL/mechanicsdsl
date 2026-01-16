@@ -2,26 +2,30 @@
 Performance and stress tests - Long simulations, many coordinates, etc.
 Tests both new package structure and original core.py
 """
-import pytest
-import numpy as np
-import sys
+
 import os
+import sys
 import time
 from pathlib import Path
 
+import numpy as np
+import pytest
+
 # Detect CI environment and adjust tolerances
-IS_CI = os.getenv('CI') == 'true' or os.getenv('GITHUB_ACTIONS') == 'true'
+IS_CI = os.getenv("CI") == "true" or os.getenv("GITHUB_ACTIONS") == "true"
 ENERGY_TOL_MULTIPLIER = 3.0 if IS_CI else 1.0
 
 try:
     from mechanics_dsl import PhysicsCompiler
+
     NEW_PACKAGE = True
 except ImportError:
     NEW_PACKAGE = False
 
 try:
-    sys.path.insert(0, str(Path(__file__).parent.parent / 'reference'))
+    sys.path.insert(0, str(Path(__file__).parent.parent / "reference"))
     from core import PhysicsCompiler as CorePhysicsCompiler
+
     CORE_AVAILABLE = True
 except ImportError:
     CORE_AVAILABLE = False
@@ -39,7 +43,7 @@ def get_compiler():
 
 class TestLongSimulations:
     """Test long-duration simulations"""
-    
+
     def test_long_pendulum_simulation(self):
         """Test pendulum simulation over long time span"""
         dsl_code = r"""
@@ -57,27 +61,27 @@ class TestLongSimulations:
         
         \initial{theta=0.1, theta_dot=0.0}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code)
-        assert result['success']
-        
+        assert result["success"]
+
         # Long time span
         start_time = time.time()
-        solution = compiler.simulate(t_span=(0, 100), num_points=5000, method='LSODA')
+        solution = compiler.simulate(t_span=(0, 100), num_points=5000, method="LSODA")
         elapsed = time.time() - start_time
-        
-        assert solution['success']
-        assert len(solution['t']) == 5000
+
+        assert solution["success"]
+        assert len(solution["t"]) == 5000
         # CI runners are slower - use more lenient timeout
         print(f"Simulation took {elapsed:.2f}s")
-        
+
         # Should show many oscillations
-        theta = solution['y'][0]
+        theta = solution["y"][0]
         # Count zero crossings
         zero_crossings = np.sum(np.diff(np.sign(theta)) != 0)
         assert zero_crossings > 10  # Should have many oscillations
-    
+
     def test_high_resolution_simulation(self):
         """Test simulation with very high resolution"""
         dsl_code = r"""
@@ -93,32 +97,35 @@ class TestLongSimulations:
         
         \initial{x=1.0, x_dot=0.0}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code)
-        assert result['success']
-        
+        assert result["success"]
+
         # Very high resolution
-        solution = compiler.simulate(t_span=(0, 10), num_points=10000, method='RK45')
-        
-        assert solution['success']
-        assert len(solution['t']) == 10000
-        
+        solution = compiler.simulate(t_span=(0, 10), num_points=10000, method="RK45")
+
+        assert solution["success"]
+        assert len(solution["t"]) == 10000
+
         # Check solution quality
-        x = solution['y'][0]
+        x = solution["y"][0]
         assert np.all(np.isfinite(x))
-        
+
         # Energy should be well conserved with high resolution
         from mechanics_dsl.energy import PotentialEnergyCalculator
+
         params = compiler.simulator.parameters
         KE = PotentialEnergyCalculator.compute_kinetic_energy(solution, params)
-        PE = PotentialEnergyCalculator.compute_potential_energy(solution, params, 'high_res')
+        PE = PotentialEnergyCalculator.compute_potential_energy(solution, params, "high_res")
         E_total = KE + PE
-        
+
         if E_total[0] != 0 and np.abs(E_total[0]) > 1e-10:
             energy_error = np.abs((E_total - E_total[0]) / E_total[0])
             tolerance = 0.001 * ENERGY_TOL_MULTIPLIER
-            assert np.max(energy_error) < tolerance, f"Energy error: {np.max(energy_error):.6f} (tolerance: {tolerance:.6f})"
+            assert (
+                np.max(energy_error) < tolerance
+            ), f"Energy error: {np.max(energy_error):.6f} (tolerance: {tolerance:.6f})"
         else:
             # If initial energy is zero or very small, just check that energy stays small
             assert np.all(np.abs(E_total) < 1e-6), "Energy should remain near zero"
@@ -126,7 +133,7 @@ class TestLongSimulations:
 
 class TestManyCoordinates:
     """Test systems with many degrees of freedom"""
-    
+
     def test_six_coordinate_system(self):
         """Test system with 6 coordinates"""
         dsl_code = r"""
@@ -150,22 +157,22 @@ class TestManyCoordinates:
         
         \initial{x1=1.0, x1_dot=0.0, x2=0.0, x2_dot=0.0, x3=0.0, x3_dot=0.0, y1=0.0, y1_dot=0.0, y2=0.0, y2_dot=0.0, y3=0.0, y3_dot=0.0}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code)
-        
-        assert result['success']
-        assert len(result['coordinates']) == 6
-        
-        solution = compiler.simulate(t_span=(0, 5), num_points=500, method='LSODA')
-        
-        assert solution['success']
-        assert solution['y'].shape[0] == 12  # 6 coordinates * 2 states
+
+        assert result["success"]
+        assert len(result["coordinates"]) == 6
+
+        solution = compiler.simulate(t_span=(0, 5), num_points=500, method="LSODA")
+
+        assert solution["success"]
+        assert solution["y"].shape[0] == 12  # 6 coordinates * 2 states
 
 
 class TestSolverMethods:
     """Test different solver methods"""
-    
+
     def test_rk45_solver(self):
         """Test RK45 solver"""
         dsl_code = r"""
@@ -181,15 +188,15 @@ class TestSolverMethods:
         
         \initial{x=1.0, x_dot=0.0}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code)
-        assert result['success']
-        
-        solution = compiler.simulate(t_span=(0, 10), num_points=500, method='RK45')
-        assert solution['success']
-        assert solution['method_used'] == 'RK45'
-    
+        assert result["success"]
+
+        solution = compiler.simulate(t_span=(0, 10), num_points=500, method="RK45")
+        assert solution["success"]
+        assert solution["method_used"] == "RK45"
+
     def test_lsoda_solver(self):
         """Test LSODA solver"""
         dsl_code = r"""
@@ -205,15 +212,15 @@ class TestSolverMethods:
         
         \initial{x=1.0, x_dot=0.0}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code)
-        assert result['success']
-        
-        solution = compiler.simulate(t_span=(0, 10), num_points=500, method='LSODA')
-        assert solution['success']
-        assert solution['method_used'] == 'LSODA'
-    
+        assert result["success"]
+
+        solution = compiler.simulate(t_span=(0, 10), num_points=500, method="LSODA")
+        assert solution["success"]
+        assert solution["method_used"] == "LSODA"
+
     def test_radau_solver(self):
         """Test Radau solver for stiff systems"""
         dsl_code = r"""
@@ -229,16 +236,15 @@ class TestSolverMethods:
         
         \initial{x=1.0, x_dot=0.0}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code)
-        assert result['success']
-        
-        solution = compiler.simulate(t_span=(0, 10), num_points=500, method='Radau')
-        assert solution['success']
-        assert solution['method_used'] == 'Radau'
+        assert result["success"]
+
+        solution = compiler.simulate(t_span=(0, 10), num_points=500, method="Radau")
+        assert solution["success"]
+        assert solution["method_used"] == "Radau"
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
-
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

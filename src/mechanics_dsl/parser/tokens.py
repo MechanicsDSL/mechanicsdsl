@@ -16,9 +16,10 @@ Example:
     >>> print(tokens[0])
     SYSTEM:\\system@1:1
 """
+
 import re
-from typing import List
 from dataclasses import dataclass
+from typing import List
 
 from ..utils import logger
 
@@ -49,12 +50,10 @@ TOKEN_TYPES = [
     ("IMPORT", r"\\import"),
     ("EULER_ANGLES", r"\\euler"),
     ("QUATERNION", r"\\quaternion"),
-    
     # Vector operations
     ("VEC", r"\\vec"),
     ("HAT", r"\\hat"),
     ("MAGNITUDE", r"\\mag|\\norm"),
-    
     # Advanced math operators
     ("VECTOR_DOT", r"\\cdot"),
     ("VECTOR_CROSS", r"\\times|\\cross"),
@@ -62,7 +61,6 @@ TOKEN_TYPES = [
     ("DIVERGENCE", r"\\div"),
     ("CURL", r"\\curl"),
     ("LAPLACIAN", r"\\laplacian|\\Delta"),
-    
     # Calculus
     ("PARTIAL", r"\\partial"),
     ("INTEGRAL", r"\\int"),
@@ -70,20 +68,19 @@ TOKEN_TYPES = [
     ("SUM", r"\\sum"),
     ("LIMIT", r"\\lim"),
     ("FRAC", r"\\frac"),
-    
     # Greek letters (comprehensive)
-    ("GREEK_LETTER", r"\\alpha|\\beta|\\gamma|\\delta|\\epsilon|\\varepsilon|\\zeta|\\eta|\\theta|\\vartheta|\\iota|\\kappa|\\lambda|\\mu|\\nu|\\xi|\\omicron|\\pi|\\varpi|\\rho|\\varrho|\\sigma|\\varsigma|\\tau|\\upsilon|\\phi|\\varphi|\\chi|\\psi|\\omega"),
-
+    (
+        "GREEK_LETTER",
+        r"\\alpha|\\beta|\\gamma|\\delta|\\epsilon|\\varepsilon|\\zeta|\\eta|\\theta|\\vartheta|\\iota|\\kappa|\\lambda|\\mu|\\nu|\\xi|\\omicron|\\pi|\\varpi|\\rho|\\varrho|\\sigma|\\varsigma|\\tau|\\upsilon|\\phi|\\varphi|\\chi|\\psi|\\omega",
+    ),
     ("FLUID", r"\\fluid"),
     ("BOUNDARY", r"\\boundary"),
     ("REGION", r"\\region"),
     ("PARTICLE_MASS", r"\\particle_mass"),
     ("EOS", r"\\equation_of_state"),
     ("RANGE_OP", r"\.\."),
-    
     # General commands
     ("COMMAND", r"\\[a-zA-Z_][a-zA-Z0-9_]*"),
-    
     # Brackets and grouping
     ("LBRACE", r"\{"),
     ("RBRACE", r"\}"),
@@ -91,7 +88,6 @@ TOKEN_TYPES = [
     ("RPAREN", r"\)"),
     ("LBRACKET", r"\["),
     ("RBRACKET", r"\]"),
-    
     # Mathematical operators
     ("PLUS", r"\+"),
     ("MINUS", r"-"),
@@ -105,7 +101,6 @@ TOKEN_TYPES = [
     ("DOT", r"\."),
     ("UNDERSCORE", r"_"),
     ("PIPE", r"\|"),
-    
     # Basic tokens
     ("NUMBER", r"\d+\.?\d*([eE][+-]?\d+)?"),
     ("IDENT", r"[a-zA-Z_][a-zA-Z0-9_]*"),
@@ -123,23 +118,25 @@ token_pattern = re.compile(token_regex)
 # TOKEN CLASS
 # ============================================================================
 
+
 @dataclass
 class Token:
     """
     Token with position tracking for better error messages.
-    
+
     Attributes:
         type: The token type (e.g., 'IDENT', 'NUMBER', 'LAGRANGIAN').
         value: The raw string value matched from source.
         position: Character position in source (0-indexed).
         line: Line number (1-indexed).
         column: Column number (1-indexed).
-    
+
     Example:
         >>> token = Token('IDENT', 'theta', position=10, line=2, column=5)
         >>> print(token)
         IDENT:theta@2:5
     """
+
     type: str
     value: str
     position: int = 0
@@ -154,23 +151,24 @@ class Token:
 # TOKENIZER FUNCTION
 # ============================================================================
 
+
 def tokenize(source: str) -> List[Token]:
     """
     Tokenize DSL source code with position tracking.
-    
+
     Converts a string of MechanicsDSL code into a list of tokens,
     excluding whitespace and comments.
-    
+
     Args:
         source: DSL source code string.
-        
+
     Returns:
         List of Token objects (excluding whitespace and comments).
-        
+
     Raises:
         No explicit exceptions, but malformed input may produce
         unexpected token sequences.
-        
+
     Example:
         >>> tokens = tokenize(r"\\lagrangian{T - V}")
         >>> [t.type for t in tokens]
@@ -179,33 +177,33 @@ def tokenize(source: str) -> List[Token]:
     tokens = []
     line = 1
     line_start = 0
-    
+
     for match in token_pattern.finditer(source):
         kind = match.lastgroup
         value = match.group()
         position = match.start()
-        
+
         # Update line tracking
-        while line_start < position and '\n' in source[line_start:position]:
-            newline_pos = source.find('\n', line_start)
+        while line_start < position and "\n" in source[line_start:position]:
+            newline_pos = source.find("\n", line_start)
             if newline_pos != -1 and newline_pos < position:
                 line += 1
                 line_start = newline_pos + 1
             else:
                 break
-                
+
         column = position - line_start + 1
-        
+
         if kind not in ["WHITESPACE", "COMMENT"]:
             tokens.append(Token(kind, value, position, line, column))
-    
+
     logger.debug(f"Tokenized {len(tokens)} tokens from {line} lines")
     return tokens
 
 
 __all__ = [
-    'TOKEN_TYPES',
-    'token_pattern',
-    'Token',
-    'tokenize',
+    "TOKEN_TYPES",
+    "token_pattern",
+    "Token",
+    "tokenize",
 ]

@@ -3,12 +3,14 @@ Rust Code Generator for MechanicsDSL
 
 Generates standalone Rust simulation code using ode_solvers crate.
 """
+
 from typing import Dict, List
+
 import sympy as sp
 from sympy.printing.rust import RustCodePrinter
 
-from .base import CodeGenerator
 from ..utils import logger
+from .base import CodeGenerator
 
 
 def rust_code(expr):
@@ -20,43 +22,44 @@ def rust_code(expr):
 class RustGenerator(CodeGenerator):
     """
     Generates Rust simulation code with ode_solvers crate.
-    
+
     Produces standalone binaries with CSV output.
     """
-    
+
     @property
     def target_name(self) -> str:
         return "rust"
-    
+
     @property
     def file_extension(self) -> str:
         return ".rs"
-    
+
     def generate(self, output_file: str = "simulation.rs") -> str:
         """Generate Rust simulation code."""
         logger.info(f"Generating Rust code for {self.system_name}")
-        
+
         code = self._generate_code()
-        
-        with open(output_file, 'w') as f:
+
+        with open(output_file, "w") as f:
             f.write(code)
-        
+
         logger.info(f"Successfully wrote {output_file}")
         return output_file
 
     def generate_cargo_toml(self, output_dir: str = ".", embedded: bool = False) -> str:
         """Generate Cargo.toml for the Rust project.
-        
+
         Args:
             output_dir: Directory to write Cargo.toml
             embedded: If True, generate no_std compatible config
         """
         import os
+
         cargo_path = os.path.join(output_dir, "Cargo.toml")
-        
+
         if embedded:
             # Embedded/no_std configuration
-            cargo_content = f'''[package]
+            cargo_content = f"""[package]
 name = "{self.system_name.replace("-", "_")}"
 version = "0.1.0"
 edition = "2021"
@@ -75,10 +78,10 @@ panic = "abort"
 
 # ARM Cortex-M targets
 # Build with: cargo build --target thumbv7em-none-eabihf --release
-'''
+"""
         else:
             # Standard configuration
-            cargo_content = f'''[package]
+            cargo_content = f"""[package]
 name = "{self.system_name.replace("-", "_")}"
 version = "0.1.0"
 edition = "2021"
@@ -97,41 +100,41 @@ lto = true
 inherits = "release"
 # ARM-specific optimizations
 # Build with: cargo build --profile release-arm --target aarch64-unknown-linux-gnu
-'''
-        
-        with open(cargo_path, 'w') as f:
+"""
+
+        with open(cargo_path, "w") as f:
             f.write(cargo_content)
-        
+
         logger.info(f"Generated Cargo.toml at {cargo_path}")
         return cargo_path
 
     def generate_project(self, output_dir: str = ".", embedded: bool = False) -> dict:
         """Generate complete Rust project with Cargo structure.
-        
+
         Args:
             output_dir: Root directory for the project
             embedded: If True, generate no_std compatible project
-            
+
         Returns:
             dict of generated file paths
         """
         import os
-        
+
         # Create project structure
         src_dir = os.path.join(output_dir, "src")
         os.makedirs(src_dir, exist_ok=True)
-        
+
         # Generate main.rs
         main_rs = os.path.join(src_dir, "main.rs")
         self.generate(main_rs)
-        
+
         # Generate Cargo.toml
         cargo_toml = self.generate_cargo_toml(output_dir, embedded)
-        
+
         # Generate README
         readme_path = os.path.join(output_dir, "README.md")
         target_note = "ARM Cortex-M embedded target" if embedded else "standard targets"
-        readme_content = f'''# {self.system_name}
+        readme_content = f"""# {self.system_name}
 
 Auto-generated Rust physics simulation by MechanicsDSL.
 
@@ -159,17 +162,13 @@ cargo build --release --target thumbv7em-none-eabihf
 Results are saved to `{self.system_name}.csv`.
 
 ## Generated for: {target_note}
-'''
-        with open(readme_path, 'w') as f:
+"""
+        with open(readme_path, "w") as f:
             f.write(readme_content)
-        
+
         logger.info(f"Generated complete Rust project in {output_dir}")
-        return {
-            'main': main_rs,
-            'cargo': cargo_toml,
-            'readme': readme_path
-        }
-    
+        return {"main": main_rs, "cargo": cargo_toml, "readme": readme_path}
+
     def generate_equations(self) -> str:
         """Generate Rust code for equations."""
         lines = []
@@ -185,7 +184,7 @@ Results are saved to `{self.system_name}.csv`.
                 lines.append(f"        dydt[{idx+1}] = 0.0;")
             idx += 2
         return "\n".join(lines)
-    
+
     def _generate_code(self) -> str:
         """Generate complete Rust simulation code."""
         # Parameter definitions
@@ -193,7 +192,7 @@ Results are saved to `{self.system_name}.csv`.
         for name, val in self.parameters.items():
             param_lines.append(f"const {name.upper()}: f64 = {val};")
         param_str = "\n".join(param_lines)
-        
+
         # State variable unpacking
         unpack_lines = []
         idx = 0
@@ -202,10 +201,10 @@ Results are saved to `{self.system_name}.csv`.
             unpack_lines.append(f"        let {coord}_dot = y[{idx+1}];")
             idx += 2
         unpack_str = "\n".join(unpack_lines)
-        
+
         # Equations
         eq_str = self.generate_equations()
-        
+
         # Initial conditions
         init_vals = []
         for coord in self.coordinates:
@@ -213,15 +212,15 @@ Results are saved to `{self.system_name}.csv`.
             vel = self.initial_conditions.get(f"{coord}_dot", 0.0)
             init_vals.extend([str(pos), str(vel)])
         init_str = ", ".join(init_vals)
-        
+
         state_dim = len(self.coordinates) * 2
-        
+
         # Pre-compute CSV format strings to avoid f-string escaping issues
-        csv_header = ','.join(self.coordinates)
-        csv_format = ','.join(f'y[{i*2}]' for i in range(len(self.coordinates)))
-        csv_placeholders = ','.join(['{}' for _ in self.coordinates])
-        
-        template = f'''//! Auto-generated simulation: {self.system_name}
+        csv_header = ",".join(self.coordinates)
+        csv_format = ",".join(f"y[{i*2}]" for i in range(len(self.coordinates)))
+        csv_placeholders = ",".join(["{}" for _ in self.coordinates])
+
+        template = f"""//! Auto-generated simulation: {self.system_name}
 //! Generated by MechanicsDSL
 //! 
 //! Build with: cargo build --release
@@ -293,6 +292,5 @@ fn main() {{
     
     println!("Simulation complete. Results saved to {self.system_name}.csv");
 }}
-'''
+"""
         return template
-

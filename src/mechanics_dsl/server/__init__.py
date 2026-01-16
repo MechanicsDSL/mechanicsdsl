@@ -8,13 +8,13 @@ Usage:
     uvicorn mechanics_dsl.server:app --reload
 """
 
-from .app import create_app, app
+from .app import app, create_app
 from .routes import router
 from .websocket import simulation_stream
 
 __all__ = [
-    'create_app',
-    'app',
-    'router',
-    'simulation_stream',
+    "create_app",
+    "app",
+    "router",
+    "simulation_stream",
 ]

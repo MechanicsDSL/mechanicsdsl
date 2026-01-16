@@ -4,13 +4,14 @@ Unit tests for MechanicsDSL visualization module.
 Tests the MechanicsVisualizer (Animator) class and related visualization functionality.
 """
 
-import pytest
-import numpy as np
 import matplotlib
-matplotlib.use('Agg')  # Use non-interactive backend for testing
+import numpy as np
+import pytest
+
+matplotlib.use("Agg")  # Use non-interactive backend for testing
 import matplotlib.pyplot as plt
 
-from mechanics_dsl.visualization import MechanicsVisualizer, Animator, Plotter, PhaseSpaceVisualizer
+from mechanics_dsl.visualization import Animator, MechanicsVisualizer, PhaseSpaceVisualizer, Plotter
 
 
 @pytest.fixture
@@ -29,13 +30,10 @@ def animator():
 def simple_solution():
     """Create a simple solution dictionary for testing."""
     return {
-        'success': True,
-        't': np.linspace(0, 10, 100),
-        'y': np.vstack([
-            np.sin(np.linspace(0, 10, 100)),
-            np.cos(np.linspace(0, 10, 100))
-        ]),
-        'coordinates': ['theta']
+        "success": True,
+        "t": np.linspace(0, 10, 100),
+        "y": np.vstack([np.sin(np.linspace(0, 10, 100)), np.cos(np.linspace(0, 10, 100))]),
+        "coordinates": ["theta"],
     }
 
 
@@ -77,11 +75,11 @@ class TestAnimatorInit:
     def test_animator_has_required_attrs(self):
         """Test animator has required attributes."""
         anim = Animator()
-        assert hasattr(anim, 'trail_length')
-        assert hasattr(anim, 'fps')
-        assert hasattr(anim, 'fig')
-        assert hasattr(anim, 'ax')
-        assert hasattr(anim, 'animation')
+        assert hasattr(anim, "trail_length")
+        assert hasattr(anim, "fps")
+        assert hasattr(anim, "fig")
+        assert hasattr(anim, "ax")
+        assert hasattr(anim, "animation")
 
 
 class TestSetupFigure:
@@ -92,31 +90,31 @@ class TestSetupFigure:
         result = animator.setup_figure()
         assert isinstance(result, tuple)
         assert len(result) == 2
-        plt.close('all')
+        plt.close("all")
 
     def test_setup_figure_sets_fig(self, animator):
         """Test that setup_figure sets self.fig."""
         animator.setup_figure()
         assert animator.fig is not None
-        plt.close('all')
+        plt.close("all")
 
     def test_setup_figure_sets_ax(self, animator):
         """Test that setup_figure sets self.ax."""
         animator.setup_figure()
         assert animator.ax is not None
-        plt.close('all')
+        plt.close("all")
 
     def test_setup_figure_custom_title(self, animator):
         """Test setup_figure with custom title."""
         animator.setup_figure(title="Custom Title")
         assert animator.fig is not None
-        plt.close('all')
+        plt.close("all")
 
     def test_setup_figure_custom_limits(self, animator):
         """Test setup_figure with custom limits."""
         animator.setup_figure(xlim=(-5, 5), ylim=(-3, 3))
         assert animator.ax is not None
-        plt.close('all')
+        plt.close("all")
 
 
 class TestAnimatePendulum:
@@ -126,19 +124,19 @@ class TestAnimatePendulum:
         """Test that animate_pendulum returns an animation object."""
         anim = animator.animate_pendulum(simple_solution, length=1.0)
         assert anim is not None
-        plt.close('all')
+        plt.close("all")
 
     def test_animate_pendulum_custom_length(self, animator, simple_solution):
         """Test animate_pendulum with custom length."""
         anim = animator.animate_pendulum(simple_solution, length=2.0)
         assert anim is not None
-        plt.close('all')
+        plt.close("all")
 
     def test_animate_pendulum_custom_title(self, animator, simple_solution):
         """Test animate_pendulum with custom title."""
         anim = animator.animate_pendulum(simple_solution, title="My Pendulum")
         assert anim is not None
-        plt.close('all')
+        plt.close("all")
 
 
 class TestAnimate:
@@ -146,14 +144,14 @@ class TestAnimate:
 
     def test_animate_pendulum_system(self, animator, simple_solution):
         """Test animate with pendulum system."""
-        params = {'l': 1.0}
+        params = {"l": 1.0}
         anim = animator.animate(simple_solution, params, system_name="simple_pendulum")
         assert anim is not None
-        plt.close('all')
+        plt.close("all")
 
     def test_animate_returns_none_for_failed_solution(self, animator):
         """Test animate returns None for failed solution."""
-        anim = animator.animate({'success': False}, {}, "test")
+        anim = animator.animate({"success": False}, {}, "test")
         assert anim is None
 
     def test_animate_returns_none_for_none_solution(self, animator):
@@ -167,23 +165,17 @@ class TestAnimateParticles:
 
     def test_animate_particles_returns_animation(self, animator):
         """Test animate_particles returns an animation."""
-        positions = [
-            (np.random.rand(10), np.random.rand(10))
-            for _ in range(20)
-        ]
+        positions = [(np.random.rand(10), np.random.rand(10)) for _ in range(20)]
         anim = animator.animate_particles(positions)
         assert anim is not None
-        plt.close('all')
+        plt.close("all")
 
     def test_animate_particles_custom_title(self, animator):
         """Test animate_particles with custom title."""
-        positions = [
-            (np.array([0.5, 1.0]), np.array([0.5, 1.0]))
-            for _ in range(5)
-        ]
+        positions = [(np.array([0.5, 1.0]), np.array([0.5, 1.0])) for _ in range(5)]
         anim = animator.animate_particles(positions, title="Fluid Particles")
         assert anim is not None
-        plt.close('all')
+        plt.close("all")
 
 
 class TestSaveAnimation:
@@ -206,7 +198,7 @@ class TestPlotter:
     def test_plotter_has_plot_energy(self):
         """Test Plotter has plot_energy method."""
         plotter = Plotter()
-        assert hasattr(plotter, 'plot_energy')
+        assert hasattr(plotter, "plot_energy")
 
 
 class TestPhaseSpaceVisualizer:
@@ -220,4 +212,4 @@ class TestPhaseSpaceVisualizer:
     def test_phase_space_has_plot_phase_portrait(self):
         """Test PhaseSpaceVisualizer has plot_phase_portrait method."""
         vis = PhaseSpaceVisualizer()
-        assert hasattr(vis, 'plot_phase_portrait')
+        assert hasattr(vis, "plot_phase_portrait")

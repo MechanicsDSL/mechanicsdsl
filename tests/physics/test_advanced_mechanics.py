@@ -2,20 +2,24 @@
 Advanced mechanics tests - Coupled systems, parametric resonance, etc.
 Tests both new package structure and original core.py
 """
-import pytest
-import numpy as np
+
 import sys
 from pathlib import Path
 
+import numpy as np
+import pytest
+
 try:
     from mechanics_dsl import PhysicsCompiler
+
     NEW_PACKAGE = True
 except ImportError:
     NEW_PACKAGE = False
 
 try:
-    sys.path.insert(0, str(Path(__file__).parent.parent / 'reference'))
+    sys.path.insert(0, str(Path(__file__).parent.parent / "reference"))
     from core import PhysicsCompiler as CorePhysicsCompiler
+
     CORE_AVAILABLE = True
 except ImportError:
     CORE_AVAILABLE = False
@@ -33,7 +37,7 @@ def get_compiler():
 
 class TestCoupledOscillators:
     """Test coupled oscillator systems"""
-    
+
     def test_three_coupled_oscillators(self):
         """Test three coupled oscillators"""
         dsl_code = r"""
@@ -57,21 +61,21 @@ class TestCoupledOscillators:
         
         \initial{x1=1.0, x1_dot=0.0, x2=0.0, x2_dot=0.0, x3=0.0, x3_dot=0.0}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code)
-        
-        assert result['success']
-        assert len(result['coordinates']) == 3
-        
+
+        assert result["success"]
+        assert len(result["coordinates"]) == 3
+
         solution = compiler.simulate(t_span=(0, 10), num_points=500)
-        assert solution['success']
-        assert solution['y'].shape[0] == 6
+        assert solution["success"]
+        assert solution["y"].shape[0] == 6
 
 
 class TestParametricResonance:
     """Test parametric resonance systems"""
-    
+
     def test_parametric_pendulum(self):
         """Test parametrically driven pendulum"""
         dsl_code = r"""
@@ -96,23 +100,23 @@ class TestParametricResonance:
         
         \initial{theta=0.1, theta_dot=0.0}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code)
-        
-        assert result['success']
-        
+
+        assert result["success"]
+
         solution = compiler.simulate(t_span=(0, 20), num_points=1000)
-        assert solution['success']
-        
+        assert solution["success"]
+
         # Parametric resonance can cause growth
-        theta = solution['y'][0]
+        theta = solution["y"][0]
         assert np.all(np.isfinite(theta))
 
 
 class TestKeplerProblem:
     """Test Kepler problem (planetary motion)"""
-    
+
     def test_kepler_problem(self):
         """Test Kepler problem with energy and angular momentum"""
         dsl_code = r"""
@@ -134,23 +138,22 @@ class TestKeplerProblem:
         
         \initial{r=10.0, r_dot=0.0, phi=0.0, phi_dot=0.1}
         """
-        
+
         compiler = get_compiler()
         result = compiler.compile_dsl(dsl_code)
-        
-        assert result['success']
-        
-        solution = compiler.simulate(t_span=(0, 50), num_points=2000, method='LSODA')
-        assert solution['success']
-        
+
+        assert result["success"]
+
+        solution = compiler.simulate(t_span=(0, 50), num_points=2000, method="LSODA")
+        assert solution["success"]
+
         # Check orbital motion
-        r = solution['y'][0]
-        phi = solution['y'][2]
-        
+        r = solution["y"][0]
+        phi = solution["y"][2]
+
         assert np.all(r > 0)  # Radius should stay positive
         assert np.max(phi) > 0.1  # Should orbit
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
-
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

@@ -17,12 +17,12 @@ With VS Code:
 
 from .server import (
     MechanicsDSLLanguageServer,
-    start_tcp_server,
     start_io_server,
+    start_tcp_server,
 )
 
 __all__ = [
-    'MechanicsDSLLanguageServer',
-    'start_tcp_server',
-    'start_io_server',
+    "MechanicsDSLLanguageServer",
+    "start_tcp_server",
+    "start_io_server",
 ]
