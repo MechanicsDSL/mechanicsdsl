@@ -199,17 +199,25 @@ def profile_function(func: Callable) -> Callable:
             from io import StringIO
 
             profiler = cProfile.Profile()
-            profiler.enable()
-            result = func(*args, **kwargs)
-            profiler.disable()
+            try:
+                profiler.enable()
+            except ValueError:
+                # Another profiler is already active, skip profiling for this call
+                logger.debug(f"Skipping profiling for {func.__name__}: another profiler is active")
+                return func(*args, **kwargs)
+            
+            try:
+                result = func(*args, **kwargs)
+                
+                s = StringIO()
+                stats = pstats.Stats(profiler, stream=s)
+                stats.sort_stats("cumulative")
+                stats.print_stats(20)  # Top 20 functions
 
-            s = StringIO()
-            stats = pstats.Stats(profiler, stream=s)
-            stats.sort_stats("cumulative")
-            stats.print_stats(20)  # Top 20 functions
-
-            logger.debug(f"\n{'='*70}\nProfile for {func.__name__}:\n{s.getvalue()}\n{'='*70}")
-            return result
+                logger.debug(f"\n{'='*70}\nProfile for {func.__name__}:\n{s.getvalue()}\n{'='*70}")
+                return result
+            finally:
+                profiler.disable()
         else:
             return func(*args, **kwargs)
 

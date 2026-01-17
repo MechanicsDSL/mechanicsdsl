@@ -287,7 +287,13 @@ class MechanicsVisualizer:
         Animate SPH particle data from CSV.
         Expected CSV Format: t, id, x, y, rho
         """
-        import pandas as pd
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError(
+                "pandas is required for animate_fluid_from_csv. "
+                "Install it with: pip install pandas"
+            ) from None
 
         try:
             validate_file_path(csv_filename, must_exist=True)
