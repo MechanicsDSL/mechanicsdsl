@@ -13,7 +13,11 @@ All classes and functions are re-exported from the core module.
 """
 
 from .core import (
+    HBAR,
+    PLANCK_H,
+    EhrenfestDynamics,
     EnergyLevel,
+    FiniteSquareWell,
     HydrogenAtom,
     InfiniteSquareWell,
     QuantumHarmonicOscillator,
@@ -23,9 +27,13 @@ from .core import (
 )
 
 __all__ = [
+    "EhrenfestDynamics",
     "EnergyLevel",
+    "FiniteSquareWell",
+    "HBAR",
     "HydrogenAtom",
     "InfiniteSquareWell",
+    "PLANCK_H",
     "QuantumHarmonicOscillator",
     "QuantumState",
     "QuantumTunneling",
