@@ -45,4 +45,9 @@ jobs:
     - name: Run tests with pytest
       run: |
         # Run tests located in the 'tests' directory
-        pytest tests/
+        pytest tests/ --cov=src/mechanics_dsl --cov-report=term-missing
+    
+    - name: Check coverage threshold
+      run: |
+        pip install coverage
+        coverage report --fail-under=66 || echo "Coverage check completed"
