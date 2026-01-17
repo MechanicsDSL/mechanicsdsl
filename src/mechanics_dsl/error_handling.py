@@ -11,13 +11,12 @@ Provides comprehensive error handling with:
 
 import json
 import logging
-import sys
 import traceback
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union
+from typing import Any, Callable, Dict, List, Optional, Type, TypeVar
 
 from .utils import logger
 

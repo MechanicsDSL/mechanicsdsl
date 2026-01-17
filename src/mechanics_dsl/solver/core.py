@@ -721,9 +721,9 @@ class NumericalSimulator:
             logger.info(f"Adaptive solver selected: {method}")
         elif method == "RK45" and config.enable_adaptive_solver:
             # Check if we should switch to a more stable method
-            adaptive_method = True
+            pass
         else:
-            adaptive_method = False
+            pass
         t_eval = np.linspace(t_span[0], t_span[1], num_points)
 
         # Validate initial conditions

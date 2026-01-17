@@ -25,7 +25,7 @@ Example:
     3
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional
 
 import numpy as np
 

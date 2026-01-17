@@ -17,13 +17,13 @@ The eigenvalues determine stability:
     - Any positive real part → unstable
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import sympy as sp
-from numpy.linalg import eig, eigvals
+from numpy.linalg import eig
 
 from ...utils import logger
 

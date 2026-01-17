@@ -7,7 +7,7 @@ including Lorentz force, electromagnetic potentials, and radiation.
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 import numpy as np
 import sympy as sp

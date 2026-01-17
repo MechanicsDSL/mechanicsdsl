@@ -3,7 +3,7 @@ Symbolic computation engine for MechanicsDSL
 """
 
 import weakref
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 import sympy as sp
 
@@ -376,7 +376,7 @@ class SymbolicEngine:
 
             q_func = coord_funcs[q]
             dq_dt = sp.diff(q_func, self.time_symbol)
-            d2q_dt2 = sp.diff(q_func, self.time_symbol, 2)
+            sp.diff(q_func, self.time_symbol, 2)
 
             # Euler-Lagrange: d/dt(∂L/∂q̇) - ∂L/∂q = 0
             dL_dq_dot = sp.diff(L_with_funcs, dq_dt)

@@ -17,13 +17,13 @@ The effective potential is:
 where L = mr²φ̇ is the conserved angular momentum.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, Optional, Tuple
 
 import numpy as np
 import sympy as sp
-from scipy.optimize import brentq, minimize_scalar
+from scipy.optimize import brentq
 
 from ...utils import logger
 
@@ -612,7 +612,7 @@ class KeplerProblem:
             Tuple of (radial_velocity, tangential_velocity)
         """
         a = elements.semi_major_axis
-        e = elements.eccentricity
+        elements.eccentricity
         L = elements.angular_momentum
 
         # Radial velocity from vis-viva

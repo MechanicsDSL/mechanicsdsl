@@ -4,14 +4,13 @@ Animation tools for MechanicsDSL
 Provides animation capabilities for mechanical systems and fluid simulations.
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 
 try:
     import matplotlib.animation as animation
     import matplotlib.pyplot as plt
-    from matplotlib.patches import Circle
 
     HAS_MATPLOTLIB = True
 except ImportError:

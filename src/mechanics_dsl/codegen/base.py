@@ -5,7 +5,7 @@ Provides abstract interface for all code generation backends.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Dict, List
 
 import sympy as sp
 
@@ -42,13 +42,11 @@ class CodeGenerator(ABC):
     @abstractmethod
     def target_name(self) -> str:
         """Name of the target platform (e.g., 'cpp', 'python', 'wasm')."""
-        pass
 
     @property
     @abstractmethod
     def file_extension(self) -> str:
         """File extension for generated code (e.g., '.cpp', '.py')."""
-        pass
 
     @abstractmethod
     def generate(self, output_file: str) -> str:
@@ -61,7 +59,6 @@ class CodeGenerator(ABC):
         Returns:
             Path to generated file
         """
-        pass
 
     @abstractmethod
     def generate_equations(self) -> str:
@@ -71,7 +68,6 @@ class CodeGenerator(ABC):
         Returns:
             String containing equation code
         """
-        pass
 
     def generate_parameters(self) -> str:
         """

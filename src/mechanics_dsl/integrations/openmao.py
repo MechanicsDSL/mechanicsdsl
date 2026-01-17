@@ -18,7 +18,7 @@ Example:
     ))
 """
 
-from typing import Any, Callable, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import numpy as np
 
@@ -33,7 +33,7 @@ except ImportError:
 try:
     from mechanics_dsl import PhysicsCompiler
 except ImportError:
-    PhysicsCompiler = None
+    PhysicsCompiler = None  # type: ignore[misc]
 
 
 class OpenMDAOMechanicsComponent:

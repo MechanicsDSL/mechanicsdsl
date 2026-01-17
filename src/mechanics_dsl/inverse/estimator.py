@@ -5,16 +5,16 @@ Fit model parameters to observed data using optimization.
 """
 
 import warnings
-from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
-from scipy.optimize import curve_fit, differential_evolution, minimize
+from scipy.optimize import differential_evolution, minimize
 
 try:
     from mechanics_dsl import PhysicsCompiler
 except ImportError:
-    PhysicsCompiler = None
+    PhysicsCompiler = None  # type: ignore[misc]
 
 
 @dataclass
@@ -129,7 +129,9 @@ class ParameterEstimator:
             # Run simulation
             try:
                 self.compiler.simulator.set_parameters(params)
-                result = self.compiler.simulate(t_span=(t_obs[0], t_obs[-1]), num_points=len(t_obs))
+                result = self.compiler.simulate(
+                    t_span=(float(t_obs[0]), float(t_obs[-1])), num_points=len(t_obs)
+                )
 
                 if not result["success"]:
                     return 1e10  # Penalty for failed simulation
@@ -241,7 +243,9 @@ class ParameterEstimator:
             # Update and simulate
             self.compiler.simulator.set_parameters(params)
             try:
-                result = self.compiler.simulate(t_span=(t_obs[0], t_obs[-1]), num_points=len(t_obs))
+                result = self.compiler.simulate(
+                    t_span=(float(t_obs[0]), float(t_obs[-1])), num_points=len(t_obs)
+                )
 
                 if result["success"]:
                     from scipy.interpolate import interp1d

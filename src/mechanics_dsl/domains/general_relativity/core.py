@@ -10,10 +10,9 @@ Provides tools for general relativistic calculations, including:
 """
 
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Dict, Tuple
 
 import numpy as np
-import sympy as sp
 from scipy.integrate import solve_ivp
 
 # Physical constants
@@ -400,7 +399,7 @@ class KerrMetric:
         a = self.a
 
         Sigma2 = r**2 + a**2 * np.cos(theta) ** 2
-        Delta = r**2 - 2 * M * r + a**2
+        r**2 - 2 * M * r + a**2
 
         return 2 * M * a * r / (Sigma2**2 + 2 * M * r * a**2 * np.sin(theta) ** 2) * self.c
 

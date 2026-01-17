@@ -22,9 +22,6 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import sympy as sp
-from scipy.integrate import solve_ivp
-
-from ...utils import logger
 
 
 class FieldType(Enum):

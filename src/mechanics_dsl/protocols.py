@@ -7,8 +7,6 @@ duck-typing with full type-checker support.
 
 from typing import Any, Dict, List, Optional, Protocol, Tuple, runtime_checkable
 
-import numpy as np
-
 
 @runtime_checkable
 class SymbolicExpressionProtocol(Protocol):

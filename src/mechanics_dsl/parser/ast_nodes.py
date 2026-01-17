@@ -64,8 +64,6 @@ class Expression(ASTNode):
     as opposed to statements which perform actions.
     """
 
-    pass
-
 
 # ============================================================================
 # BASIC EXPRESSIONS

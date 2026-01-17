@@ -14,7 +14,7 @@ where F is the Rayleigh dissipation function and Qᵢ are generalized forces.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Dict, List, Optional
 
 import numpy as np
 import sympy as sp

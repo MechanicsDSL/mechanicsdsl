@@ -10,12 +10,11 @@ Example:
 """
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 import numpy as np
 
 try:
-    import rclpy
     from rclpy.node import Node
     from sensor_msgs.msg import JointState
     from std_msgs.msg import Float64MultiArray
@@ -28,7 +27,7 @@ except ImportError:
 try:
     from mechanics_dsl import PhysicsCompiler
 except ImportError:
-    PhysicsCompiler = None
+    PhysicsCompiler = None  # type: ignore[misc]
 
 
 class MechanicsDSLNode:

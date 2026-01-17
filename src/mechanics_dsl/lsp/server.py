@@ -6,12 +6,11 @@ Implements the Language Server Protocol for MechanicsDSL files.
 
 import logging
 import re
-from typing import Any, Dict, List, Optional
+from typing import Dict, Optional
 
 try:
     from pygls.lsp.types import (
         TEXT_DOCUMENT_COMPLETION,
-        TEXT_DOCUMENT_DEFINITION,
         TEXT_DOCUMENT_DID_CHANGE,
         TEXT_DOCUMENT_DID_OPEN,
         TEXT_DOCUMENT_HOVER,
@@ -23,7 +22,6 @@ try:
         DidChangeTextDocumentParams,
         DidOpenTextDocumentParams,
         Hover,
-        Location,
         MarkupContent,
         MarkupKind,
         Position,

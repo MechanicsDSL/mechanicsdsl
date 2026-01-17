@@ -6,7 +6,7 @@ Export to and import from Modelica models for standards-based simulation.
 
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 
 class ModelicaGenerator:

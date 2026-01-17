@@ -17,9 +17,9 @@ Key symmetries and their conserved quantities:
 - Galilean boost → Center of mass motion
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional
 
 import sympy as sp
 

@@ -4,11 +4,10 @@ Hamiltonian Mechanics Implementation
 Provides tools for deriving Hamilton's equations of motion.
 """
 
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 import sympy as sp
 
-from ...utils import logger
 from ..base import PhysicsDomain
 
 

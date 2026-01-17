@@ -17,15 +17,13 @@ License: MIT
 
 import functools
 import hashlib
-import os
 import re
 import secrets
-import sys
 import threading
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set, TypeVar, Union
+from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 
 from .utils import logger
 
@@ -74,37 +72,25 @@ PATH_TRAVERSAL_PATTERNS = [
 class SecurityError(Exception):
     """Base exception for security violations."""
 
-    pass
-
 
 class InputValidationError(SecurityError):
     """Raised when input validation fails."""
-
-    pass
 
 
 class PathTraversalError(SecurityError):
     """Raised when path traversal attack is detected."""
 
-    pass
-
 
 class InjectionError(SecurityError):
     """Raised when code injection is detected."""
-
-    pass
 
 
 class SandboxViolationError(SecurityError):
     """Raised when sandbox restrictions are violated."""
 
-    pass
-
 
 class ResourceLimitError(SecurityError):
     """Raised when resource limits are exceeded."""
-
-    pass
 
 
 # =============================================================================
@@ -440,7 +426,6 @@ class Sandbox:
 
     def execute(self, func: Callable, *args, **kwargs) -> Any:
         """Execute a function within the sandbox with timeout."""
-        import signal
 
         result = [None]
         exception = [None]

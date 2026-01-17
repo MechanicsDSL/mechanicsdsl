@@ -7,7 +7,6 @@ Provides energy calculation and conservation analysis for mechanical systems.
 from typing import Callable, Dict, List, Optional
 
 import numpy as np
-import sympy as sp
 
 from ..utils import logger
 

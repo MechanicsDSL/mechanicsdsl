@@ -17,7 +17,7 @@ Normal modes satisfy the generalized eigenvalue problem:
     K * φ = ω² * M * φ
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np

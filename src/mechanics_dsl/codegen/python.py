@@ -4,9 +4,6 @@ Python Code Generator for MechanicsDSL
 Generates standalone Python simulation scripts.
 """
 
-from typing import Dict, List
-
-import sympy as sp
 from sympy.printing import pycode
 
 from ..utils import logger

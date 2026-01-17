@@ -9,8 +9,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
 try:
-    from fastapi import APIRouter, BackgroundTasks, HTTPException
-    from fastapi.responses import FileResponse, JSONResponse
+    from fastapi import APIRouter, HTTPException
 
     FASTAPI_AVAILABLE = True
 except ImportError:
@@ -20,11 +19,11 @@ except ImportError:
 try:
     from mechanics_dsl import PhysicsCompiler
 except ImportError:
-    PhysicsCompiler = None
+    PhysicsCompiler = None  # type: ignore[misc]
 
 # Rate limiting
 try:
-    from ..utils.rate_limit import RateLimiter, SimulationRateLimiter
+    from ..utils.rate_limit import SimulationRateLimiter
 
     rate_limiter = SimulationRateLimiter(simulations_per_minute=60, burst_limit=10)
 except ImportError:

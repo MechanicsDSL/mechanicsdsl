@@ -12,10 +12,9 @@ Provides tools for statistical mechanics calculations, including:
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Optional, Tuple
 
 import numpy as np
-from scipy.special import factorial
 
 # Physical constants
 BOLTZMANN_CONSTANT = 1.380649e-23  # J/K

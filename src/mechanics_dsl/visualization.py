@@ -3,13 +3,11 @@ Visualization engine for MechanicsDSL
 """
 
 from collections import deque
-from typing import Dict, Optional
 
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import numpy as np
 import sympy as sp
-from mpl_toolkits.mplot3d import Axes3D
 
 from .energy import PotentialEnergyCalculator
 from .utils import (

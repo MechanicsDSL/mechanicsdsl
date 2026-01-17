@@ -2,13 +2,11 @@
 FastAPI application for MechanicsDSL server.
 """
 
-import os
 from typing import Optional
 
 try:
     from fastapi import FastAPI
     from fastapi.middleware.cors import CORSMiddleware
-    from fastapi.staticfiles import StaticFiles
 
     FASTAPI_AVAILABLE = True
 except ImportError:

@@ -25,11 +25,10 @@ References:
     - Serway & Jewett - Physics for Scientists and Engineers
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
-import numpy as np
 import sympy as sp
 
 # ============================================================================
@@ -422,11 +421,10 @@ class KinematicEquations:
         Returns:
             A suitable KinematicEquation, or None if none found
         """
-        all_vars = {"x", "x0", "v", "v0", "a", "t"}
 
         for eq in cls.all_equations():
             # Check how many of this equation's variables we know
-            known_in_eq = knowns & eq.variables
+            knowns & eq.variables
             unknown_in_eq = eq.variables - knowns
 
             # If we know all but one variable in this equation, we can solve

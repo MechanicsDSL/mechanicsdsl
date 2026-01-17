@@ -22,10 +22,8 @@ Example:
 
 import math
 from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
-import numpy as np
 import sympy as sp
 
 from .equations import (

@@ -42,10 +42,9 @@ Theory References:
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, Optional, Tuple
 
 import numpy as np
-import sympy as sp
 
 
 @dataclass
@@ -77,13 +76,11 @@ class VariationalIntegrator(ABC):
     @abstractmethod
     def order(self) -> int:
         """Order of accuracy."""
-        pass
 
     @property
     @abstractmethod
     def name(self) -> str:
         """Human-readable name."""
-        pass
 
     @abstractmethod
     def discrete_lagrangian(
@@ -105,7 +102,6 @@ class VariationalIntegrator(ABC):
         Returns:
             Approximation to ∫_{t_k}^{t_{k+1}} L(q, q̇) dt
         """
-        pass
 
     def discrete_equations(
         self,

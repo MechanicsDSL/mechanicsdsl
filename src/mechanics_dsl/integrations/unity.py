@@ -4,9 +4,8 @@ Unity game engine code generator for MechanicsDSL.
 Generates C# MonoBehaviour scripts for Unity physics simulation.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
-import sympy as sp
 
 try:
     from mechanics_dsl.codegen.base import CodeGenerator
@@ -274,7 +273,7 @@ public class {class_name}Simulator : MonoBehaviour
         if not self.coordinates:
             return "        // No coordinates"
 
-        coord = self.coordinates[0]
+        self.coordinates[0]
         return f"""        // Example: rotate based on first coordinate
         float angle = state[0] * Mathf.Rad2Deg;
         transform.localRotation = Quaternion.Euler(0, 0, -angle);"""

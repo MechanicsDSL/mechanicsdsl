@@ -5,7 +5,6 @@ Generates Arduino-compatible C++ code for embedded physics simulations.
 Optimized for microcontroller constraints (limited RAM/ROM).
 """
 
-import os
 from typing import Dict, List
 
 import sympy as sp

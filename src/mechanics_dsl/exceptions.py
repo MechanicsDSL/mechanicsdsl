@@ -77,8 +77,6 @@ class TokenizationError(MechanicsDSLError):
 class SemanticError(MechanicsDSLError):
     """Raised when DSL has semantic errors (valid syntax but invalid meaning)."""
 
-    pass
-
 
 class NoLagrangianError(SemanticError):
     """Raised when Lagrangian is required but not defined."""
@@ -129,8 +127,6 @@ class ConstraintError(SemanticError):
 
 class SimulationError(MechanicsDSLError):
     """Base class for simulation-related errors."""
-
-    pass
 
 
 class IntegrationError(SimulationError):

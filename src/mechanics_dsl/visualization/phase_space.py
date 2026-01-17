@@ -4,13 +4,11 @@ Phase space visualization for MechanicsDSL
 Specialized tools for phase space and Poincaré section analysis.
 """
 
-from typing import Dict, List, Optional, Tuple
+from typing import Tuple
 
-import numpy as np
 
 try:
     import matplotlib.pyplot as plt
-    from mpl_toolkits.mplot3d import Axes3D
 
     HAS_MATPLOTLIB = True
 except ImportError:

@@ -4,16 +4,15 @@ Uncertainty quantification for MechanicsDSL.
 Bayesian inference and bootstrap methods for parameter uncertainty.
 """
 
-import warnings
-from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
 try:
     from mechanics_dsl import PhysicsCompiler
 except ImportError:
-    PhysicsCompiler = None
+    PhysicsCompiler = None  # type: ignore[misc]
 
 
 @dataclass
@@ -148,8 +147,8 @@ class UncertaintyQuantifier:
         # Compute statistics
         alpha = 1 - confidence_level
 
-        mean = {name: np.mean(estimates[:, i]) for i, name in enumerate(params_to_fit)}
-        std = {name: np.std(estimates[:, i]) for i, name in enumerate(params_to_fit)}
+        mean = {name: float(np.mean(estimates[:, i])) for i, name in enumerate(params_to_fit)}
+        std = {name: float(np.std(estimates[:, i])) for i, name in enumerate(params_to_fit)}
 
         ci = {}
         percentiles = {}
@@ -248,7 +247,9 @@ class UncertaintyQuantifier:
             self.compiler.simulator.set_parameters(params)
 
             try:
-                result = self.compiler.simulate(t_span=(t_obs[0], t_obs[-1]), num_points=len(t_obs))
+                result = self.compiler.simulate(
+                    t_span=(float(t_obs[0]), float(t_obs[-1])), num_points=len(t_obs)
+                )
 
                 if not result["success"]:
                     return -np.inf
@@ -265,7 +266,7 @@ class UncertaintyQuantifier:
                 log_lik = -0.5 * np.sum((residuals / noise_std) ** 2)
                 log_lik -= len(residuals) * np.log(noise_std * np.sqrt(2 * np.pi))
 
-                return log_lik
+                return float(log_lik)
             except:
                 return -np.inf
 
@@ -314,8 +315,8 @@ class UncertaintyQuantifier:
         log_likes = log_likes[n_burn:]
 
         # Compute statistics
-        mean = {name: np.mean(samples[:, i]) for i, name in enumerate(params_to_fit)}
-        std = {name: np.std(samples[:, i]) for i, name in enumerate(params_to_fit)}
+        mean = {name: float(np.mean(samples[:, i])) for i, name in enumerate(params_to_fit)}
+        std = {name: float(np.std(samples[:, i])) for i, name in enumerate(params_to_fit)}
         ci = {
             name: (np.percentile(samples[:, i], 2.5), np.percentile(samples[:, i], 97.5))
             for i, name in enumerate(params_to_fit)

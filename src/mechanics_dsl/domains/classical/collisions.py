@@ -14,14 +14,12 @@ For two-body collisions:
 - Perfectly inelastic: bodies stick together
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, Optional, Tuple
 
 import numpy as np
 import sympy as sp
-
-from ...utils import logger
 
 
 class CollisionType(Enum):

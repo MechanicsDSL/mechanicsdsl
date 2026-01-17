@@ -34,15 +34,12 @@ class Plugin(ABC):
     @abstractmethod
     def metadata(self) -> PluginMetadata:
         """Return plugin metadata."""
-        pass
 
     def activate(self) -> None:
         """Called when plugin is activated. Override for initialization."""
-        pass
 
     def deactivate(self) -> None:
         """Called when plugin is deactivated. Override for cleanup."""
-        pass
 
     def validate(self) -> bool:
         """Validate plugin configuration. Return False to prevent loading."""
@@ -79,12 +76,10 @@ class PhysicsDomainPlugin(Plugin):
 
         The class should inherit from PhysicsDomain (domains.base).
         """
-        pass
 
     @abstractmethod
     def get_domain_name(self) -> str:
         """Return unique identifier for this domain."""
-        pass
 
     def get_default_parameters(self) -> Dict[str, float]:
         """Return default parameters for this domain."""
@@ -120,17 +115,14 @@ class CodeGeneratorPlugin(Plugin):
 
         The class should inherit from CodeGenerator (codegen.base).
         """
-        pass
 
     @abstractmethod
     def get_target_name(self) -> str:
         """Return target platform name (e.g., 'swift', 'kotlin')."""
-        pass
 
     @abstractmethod
     def get_file_extension(self) -> str:
         """Return file extension for generated code (e.g., '.swift')."""
-        pass
 
     def get_template_path(self) -> Optional[str]:
         """Return path to code template file, if any."""
@@ -168,7 +160,6 @@ class VisualizationPlugin(Plugin):
         Returns:
             Visualization object (figure, widget, HTML, etc.)
         """
-        pass
 
     def get_visualization_name(self) -> str:
         """Return unique identifier for this visualization type."""
@@ -212,7 +203,6 @@ class SolverPlugin(Plugin):
         Returns:
             Solution dictionary with 't', 'y', 'success' keys
         """
-        pass
 
     def get_solver_name(self) -> str:
         """Return unique identifier for this solver."""
@@ -250,7 +240,6 @@ class TransformPlugin(Plugin):
         Returns:
             Transformed expression
         """
-        pass
 
     def get_transform_name(self) -> str:
         """Return unique identifier for this transform."""
@@ -279,7 +268,6 @@ class ImporterPlugin(Plugin):
         Returns:
             Equivalent MechanicsDSL code string
         """
-        pass
 
     def get_supported_extensions(self) -> List[str]:
         """Return list of supported file extensions."""

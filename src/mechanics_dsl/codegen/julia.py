@@ -4,9 +4,6 @@ Julia Code Generator for MechanicsDSL
 Generates standalone Julia simulation scripts using DifferentialEquations.jl.
 """
 
-from typing import Dict, List
-
-import sympy as sp
 from sympy.printing.julia import julia_code
 
 from ..utils import logger
@@ -84,7 +81,7 @@ class JuliaGenerator(CodeGenerator):
             init_vals.extend([str(pos), str(vel)])
         init_str = ", ".join(init_vals)
 
-        state_dim = len(self.coordinates) * 2
+        len(self.coordinates) * 2
 
         template = f"""#=
 Auto-generated simulation: {self.system_name}

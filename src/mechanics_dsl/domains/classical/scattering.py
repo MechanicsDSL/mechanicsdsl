@@ -13,8 +13,8 @@ interacts with a potential, and escapes to infinity at
 a deflection angle θ.
 """
 
-from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from typing import Callable, Dict, Optional
 
 import numpy as np
 import sympy as sp

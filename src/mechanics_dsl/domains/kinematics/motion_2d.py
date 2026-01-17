@@ -23,11 +23,11 @@ Example:
 
 import math
 from dataclasses import dataclass
-from typing import List, Optional, Tuple, Union
+from typing import List, Tuple, Union
 
 import numpy as np
 
-from .motion_1d import Motion1DState, UniformlyAcceleratedMotion
+from .motion_1d import UniformlyAcceleratedMotion
 
 # ============================================================================
 # VECTOR2D CLASS

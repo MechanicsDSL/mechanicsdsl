@@ -5,7 +5,7 @@ This module provides the abstract interface that all physics domains must implem
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 import sympy as sp
 
@@ -43,7 +43,6 @@ class PhysicsDomain(ABC):
         Returns:
             SymPy expression for L = T - V
         """
-        pass
 
     @abstractmethod
     def define_hamiltonian(self) -> sp.Expr:
@@ -53,7 +52,6 @@ class PhysicsDomain(ABC):
         Returns:
             SymPy expression for H = T + V (in generalized coordinates)
         """
-        pass
 
     @abstractmethod
     def derive_equations_of_motion(self) -> Dict[str, sp.Expr]:
@@ -63,7 +61,6 @@ class PhysicsDomain(ABC):
         Returns:
             Dictionary mapping acceleration variables to their expressions
         """
-        pass
 
     @abstractmethod
     def get_state_variables(self) -> List[str]:
@@ -73,7 +70,6 @@ class PhysicsDomain(ABC):
         Returns:
             List of variable names (positions and velocities)
         """
-        pass
 
     def set_parameter(self, name: str, value: float) -> None:
         """Set a physical parameter value."""

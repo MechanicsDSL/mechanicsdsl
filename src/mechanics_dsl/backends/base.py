@@ -5,7 +5,7 @@ Defines the abstract interface that all simulation backends must implement.
 """
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -53,7 +53,6 @@ class Backend(ABC):
     @abstractmethod
     def capabilities(self) -> BackendCapabilities:
         """Return backend capabilities."""
-        pass
 
     @abstractmethod
     def compile_equations(
@@ -73,7 +72,6 @@ class Backend(ABC):
         Returns:
             Callable that computes derivatives: (t, y) -> dydt
         """
-        pass
 
     @abstractmethod
     def simulate(
@@ -97,7 +95,6 @@ class Backend(ABC):
         Returns:
             Dictionary with 't', 'y', 'success' keys
         """
-        pass
 
     def simulate_batch(
         self,
@@ -147,7 +144,6 @@ class Backend(ABC):
 
     def cleanup(self) -> None:
         """Release resources. Override for cleanup logic."""
-        pass
 
 
 class ScipyBackend(Backend):

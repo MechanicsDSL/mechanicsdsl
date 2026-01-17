@@ -4,9 +4,6 @@ MATLAB/Octave Code Generator for MechanicsDSL
 Generates MATLAB/GNU Octave simulation scripts.
 """
 
-from typing import Dict, List
-
-import sympy as sp
 from sympy.printing.octave import octave_code
 
 from ..utils import logger

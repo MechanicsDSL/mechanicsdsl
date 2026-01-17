@@ -4,7 +4,7 @@ Sensitivity analysis for MechanicsDSL.
 Determine how sensitive simulation outputs are to parameter changes.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from itertools import combinations
 from typing import Callable, Dict, List, Optional, Tuple
 
@@ -13,7 +13,7 @@ import numpy as np
 try:
     from mechanics_dsl import PhysicsCompiler
 except ImportError:
-    PhysicsCompiler = None
+    PhysicsCompiler = None  # type: ignore[misc]
 
 
 @dataclass
@@ -104,7 +104,7 @@ class SensitivityAnalyzer:
 
         for i, name in enumerate(param_names):
             # First-order: V[E[Y|Xi]] / V[Y]
-            f0 = np.mean(y_a)
+            np.mean(y_a)
             first_order[name] = (np.mean(y_b * (y_ab[name] - y_a)) / var_y) if var_y > 0 else 0.0
 
             # Total-order: E[V[Y|X~i]] / V[Y]

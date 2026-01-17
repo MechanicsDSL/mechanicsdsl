@@ -6,7 +6,7 @@ replacing the hardcoded lists scattered throughout the codebase.
 """
 
 from enum import Enum, auto
-from typing import FrozenSet, Set
+from typing import FrozenSet
 
 
 class VariableCategory(Enum):

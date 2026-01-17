@@ -4,11 +4,9 @@ Smoothed Particle Hydrodynamics (SPH) Implementation
 Provides particle-based fluid simulation using SPH methods.
 """
 
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 import numpy as np
-
-from ...utils import logger
 
 
 class SPHFluid:

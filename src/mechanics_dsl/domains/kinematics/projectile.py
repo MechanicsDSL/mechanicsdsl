@@ -36,12 +36,11 @@ Example:
 
 import math
 from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, List, Optional, Tuple, Union
 
 import numpy as np
 import sympy as sp
 
-from .equations import KINEMATIC_SYMBOLS, KinematicEquation, KinematicEquations
 
 # ============================================================================
 # CONSTANTS

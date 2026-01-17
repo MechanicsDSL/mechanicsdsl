@@ -6,7 +6,7 @@ Includes CPU fallback code for systems without NVIDIA GPUs.
 """
 
 import os
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import sympy as sp
 from sympy.printing.cxx import cxxcode

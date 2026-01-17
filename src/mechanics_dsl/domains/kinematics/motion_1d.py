@@ -22,9 +22,8 @@ Example:
 
 import math
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple, Union
+from typing import List, Optional
 
-from .equations import KinematicEquations
 
 # ============================================================================
 # DATA CLASSES

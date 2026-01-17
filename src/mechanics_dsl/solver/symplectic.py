@@ -39,7 +39,7 @@ References:
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, Optional, Tuple
 
 import numpy as np
 
@@ -72,13 +72,11 @@ class SymplecticIntegrator(ABC):
     @abstractmethod
     def order(self) -> int:
         """Order of accuracy of the integrator."""
-        pass
 
     @property
     @abstractmethod
     def name(self) -> str:
         """Human-readable name of the integrator."""
-        pass
 
     @abstractmethod
     def step(
@@ -104,7 +102,6 @@ class SymplecticIntegrator(ABC):
         Returns:
             Tuple of (new_q, new_p) after one step
         """
-        pass
 
     def integrate(
         self,

@@ -4,9 +4,6 @@ JavaScript Code Generator for MechanicsDSL
 Generates standalone JavaScript simulation code for Node.js or browsers.
 """
 
-from typing import Dict, List
-
-import sympy as sp
 from sympy.printing.jscode import jscode
 
 from ..utils import logger

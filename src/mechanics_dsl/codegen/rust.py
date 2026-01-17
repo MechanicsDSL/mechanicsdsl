@@ -4,9 +4,6 @@ Rust Code Generator for MechanicsDSL
 Generates standalone Rust simulation code using ode_solvers crate.
 """
 
-from typing import Dict, List
-
-import sympy as sp
 from sympy.printing.rust import RustCodePrinter
 
 from ..utils import logger

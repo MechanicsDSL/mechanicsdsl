@@ -4,7 +4,7 @@ Plotting tools for MechanicsDSL
 Provides plotting utilities for simulation results, trajectories, and energy.
 """
 
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional
 
 import numpy as np
 

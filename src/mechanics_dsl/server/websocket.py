@@ -3,10 +3,8 @@ WebSocket streaming for real-time simulation.
 """
 
 import asyncio
-import json
-from typing import Any, Dict, Optional
+from typing import Dict
 
-import numpy as np
 
 try:
     from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -20,7 +18,7 @@ except ImportError:
 try:
     from mechanics_dsl import PhysicsCompiler
 except ImportError:
-    PhysicsCompiler = None
+    PhysicsCompiler = None  # type: ignore[misc]
 
 
 if FASTAPI_AVAILABLE:

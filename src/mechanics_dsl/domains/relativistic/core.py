@@ -9,8 +9,7 @@ Provides tools for relativistic particle dynamics, including:
 """
 
 from dataclasses import dataclass
-from enum import Enum
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import sympy as sp
@@ -162,7 +161,7 @@ class RelativisticParticle(PhysicsDomain):
 
         # Relativistic momentum components
         v_squared = self.vx**2 + self.vy**2 + self.vz**2
-        gamma = 1 / sp.sqrt(1 - v_squared / self.c**2)
+        1 / sp.sqrt(1 - v_squared / self.c**2)
 
         # d(γmv)/dt = F leads to complicated acceleration expressions
         # For numerical work, it's better to evolve momentum directly
@@ -181,7 +180,7 @@ class RelativisticParticle(PhysicsDomain):
 
     def get_conserved_quantities(self) -> Dict[str, sp.Expr]:
         """Total energy and momentum (if no external forces)."""
-        p_squared = (self.m * self.vx) ** 2 + (self.m * self.vy) ** 2 + (self.m * self.vz) ** 2
+        (self.m * self.vx) ** 2 + (self.m * self.vy) ** 2 + (self.m * self.vz) ** 2
         v_squared = self.vx**2 + self.vy**2 + self.vz**2
         gamma = 1 / sp.sqrt(1 - v_squared / self.c**2)
 
@@ -208,7 +207,6 @@ class FourVector:
 
     def __post_init__(self):
         """Convert to float if numeric."""
-        pass
 
     def invariant(self) -> Union[float, sp.Expr]:
         """

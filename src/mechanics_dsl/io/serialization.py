@@ -6,7 +6,6 @@ Provides serialization and deserialization of physics systems and solutions.
 
 import json
 import pickle
-from pathlib import Path
 from typing import Any, Dict, Optional
 
 from ..utils import logger, validate_file_path

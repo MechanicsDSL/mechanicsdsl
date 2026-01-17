@@ -13,7 +13,7 @@ import importlib.util
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type
+from typing import Dict, List, Optional, Type
 
 from .base import (
     CodeGeneratorPlugin,
@@ -22,7 +22,7 @@ from .base import (
     SolverPlugin,
     VisualizationPlugin,
 )
-from .registry import PluginRegistry, PluginType, registry
+from .registry import PluginRegistry, PluginType
 
 logger = logging.getLogger("MechanicsDSL")
 

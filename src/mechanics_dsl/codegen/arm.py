@@ -15,7 +15,7 @@ Features:
 """
 
 import os
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import sympy as sp
 from sympy.printing.c import ccode

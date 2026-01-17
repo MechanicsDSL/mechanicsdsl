@@ -25,8 +25,6 @@ except ImportError:
 class TimeoutError(Exception):
     """Raised when an operation times out"""
 
-    pass
-
 
 class PerformanceMonitor:
     """Advanced performance monitoring with memory and timing tracking"""

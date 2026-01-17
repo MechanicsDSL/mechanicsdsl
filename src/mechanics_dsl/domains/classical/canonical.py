@@ -21,9 +21,9 @@ Generating Functions:
 - F4(p, P, t): q = -∂F4/∂p, Q = ∂F4/∂P
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 import sympy as sp
 
@@ -223,16 +223,16 @@ class CanonicalTransformation:
         Returns:
             CanonicalTransformationResult with new Hamiltonian
         """
-        relations = gen_func.get_transformation_relations()
+        gen_func.get_transformation_relations()
 
         # Build substitution mappings
         coord_map = {}
         mom_map = {}
 
         for q, Q in zip(gen_func.old_coords, gen_func.new_coords):
-            q_sym = self.get_symbol(q)
+            self.get_symbol(q)
             Q_sym = self.get_symbol(Q)
-            p_sym = self.get_symbol(f"p_{q}")
+            self.get_symbol(f"p_{q}")
             P_sym = self.get_symbol(f"P_{Q}")
 
             # Depending on generating function type, solve for old variables
@@ -622,7 +622,7 @@ class HamiltonJacobi:
         terms = sp.Add.make_args(hamiltonian)
 
         W_functions = {}
-        remaining_H = sp.S.Zero
+        sp.S.Zero
 
         for q in coordinates:
             q_sym = self.get_symbol(q)

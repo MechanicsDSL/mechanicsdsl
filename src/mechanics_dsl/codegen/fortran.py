@@ -4,9 +4,6 @@ Fortran Code Generator for MechanicsDSL
 Generates Fortran 90+ simulation code.
 """
 
-from typing import Dict, List
-
-import sympy as sp
 from sympy.printing.fortran import fcode
 
 from ..utils import logger

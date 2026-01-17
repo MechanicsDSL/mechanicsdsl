@@ -4,7 +4,6 @@ OpenMP Code Generator for MechanicsDSL
 Generates OpenMP-parallel C++ code for multi-core CPU simulations.
 """
 
-import os
 from typing import Dict, List
 
 import sympy as sp

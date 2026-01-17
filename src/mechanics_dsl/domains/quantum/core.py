@@ -11,13 +11,11 @@ Provides tools for semiclassical quantum mechanics, including:
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple
 
 import numpy as np
-import sympy as sp
 from scipy import integrate
 
-from ..base import PhysicsDomain
 
 # Physical constants (SI units)
 HBAR = 1.054571817e-34  # Reduced Planck constant (J·s)

@@ -6,7 +6,6 @@ Prevents path traversal attacks (CWE-22) by validating file paths.
 
 import os
 import re
-from pathlib import Path
 from typing import List, Optional
 
 # Characters not allowed in filenames
@@ -25,8 +24,6 @@ TRAVERSAL_PATTERNS = [
 
 class PathValidationError(ValueError):
     """Raised when a path fails validation."""
-
-    pass
 
 
 def is_safe_filename(filename: str) -> bool:

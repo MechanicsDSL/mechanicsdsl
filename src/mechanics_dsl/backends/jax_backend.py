@@ -243,7 +243,7 @@ class JAXBackend(Backend):
         for q in coordinates:
             state_vars.extend([q, f"{q}_dot"])
 
-        n_state = len(state_vars)
+        len(state_vars)
 
         # Create numpy lambdified versions first
         t_sym = sp.Symbol("t")

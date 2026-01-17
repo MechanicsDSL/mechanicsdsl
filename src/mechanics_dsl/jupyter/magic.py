@@ -5,10 +5,9 @@ Provides %%mechanicsdsl cell magic and line magics for interactive use.
 """
 
 import warnings
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 try:
-    from IPython import get_ipython
     from IPython.core.magic import Magics, cell_magic, line_magic, magics_class
     from IPython.core.magic_arguments import argument, magic_arguments, parse_argstring
 
@@ -26,7 +25,7 @@ except ImportError:
 try:
     from mechanics_dsl import PhysicsCompiler
 except ImportError:
-    PhysicsCompiler = None
+    PhysicsCompiler = None  # type: ignore[misc]
 
 
 # Global state for the magic commands

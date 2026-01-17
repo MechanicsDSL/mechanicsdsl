@@ -5,11 +5,9 @@ Implements holonomic and non-holonomic constraint handling
 using Lagrange multipliers.
 """
 
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 import sympy as sp
-
-from ...utils import logger
 
 
 class ConstraintHandler:
@@ -304,11 +302,11 @@ class ConstrainedLagrangianSystem:
         for q in coordinates:
             q_sym = self.get_symbol(q)
             q_dot = self.get_symbol(f"{q}_dot")
-            q_ddot = self.get_symbol(f"{q}_ddot")
+            self.get_symbol(f"{q}_ddot")
 
             # Standard E-L terms
             dL_dq = sp.diff(L, q_sym)
-            dL_dq_dot = sp.diff(L, q_dot)
+            sp.diff(L, q_dot)
 
             # For d/dt(∂L/∂q̇), need to handle time derivatives
             # Simplified: extract coefficients

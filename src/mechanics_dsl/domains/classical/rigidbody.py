@@ -16,7 +16,7 @@ The Lagrangian for a symmetric top is:
     L = (1/2)*I₁*(θ̇² + φ̇²sin²θ) + (1/2)*I₃*(ψ̇ + φ̇cosθ)² - Mgl*cosθ
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
@@ -27,7 +27,7 @@ from ..base import PhysicsDomain
 
 # Try to import RigidBody3D utilities from package root
 try:
-    from ...rigidbody import InertiaTensor, RigidBody3D
+    pass
 
     HAS_RIGIDBODY3D = True
 except ImportError:
@@ -313,10 +313,10 @@ class RigidBodyDynamics(PhysicsDomain):
         g_sym = self.get_symbol(g, positive=True)
         l_sym = self.get_symbol(l, positive=True)
 
-        q0 = self.get_symbol("q0")
+        self.get_symbol("q0")
         q1 = self.get_symbol("q1")
         q2 = self.get_symbol("q2")
-        q3 = self.get_symbol("q3")
+        self.get_symbol("q3")
 
         # cos(θ) = 2*(q0² + q3²) - 1 = 1 - 2*(q1² + q2²)
         cos_theta = 1 - 2 * (q1**2 + q2**2)
@@ -335,7 +335,7 @@ class RigidBodyDynamics(PhysicsDomain):
         Returns:
             Tuple of (ω₁, ω₂, ω₃) in body frame
         """
-        phi = self.get_symbol("phi")
+        self.get_symbol("phi")
         theta = self.get_symbol("theta")
         psi = self.get_symbol("psi")
         phi_dot = self.get_symbol("phi_dot")

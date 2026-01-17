@@ -4,7 +4,7 @@ Unreal Engine code generator for MechanicsDSL.
 Generates C++ ActorComponent for Unreal Engine physics simulation.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
 
 class UnrealGenerator:

@@ -14,11 +14,10 @@ Non-holonomic constraints have the form:
 These cannot be integrated to position-only constraints.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
-import numpy as np
 import sympy as sp
 
 from ...utils import logger
@@ -215,8 +214,8 @@ class NonholonomicSystem:
             q_dot = self.get_symbol(f"{q}_dot")
 
             # Standard Euler-Lagrange terms
-            dL_dq = sp.diff(L, q_sym)
-            dL_dq_dot = sp.diff(L, q_dot)
+            sp.diff(L, q_sym)
+            sp.diff(L, q_dot)
 
             # Constraint forces
             constraint_force = sp.S.Zero

@@ -4,7 +4,7 @@ Stability Analysis Tools
 Provides linearization and stability analysis for dynamical systems.
 """
 
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List
 
 import numpy as np
 

@@ -15,7 +15,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 import numpy as np
 import sympy as sp
 
-from .utils import config, logger
+from .utils import logger
 
 # Try to import numba, fallback to pure Python if not available
 try:
@@ -202,7 +202,7 @@ def create_numba_ode_function(
             accel_funcs.append(lambda *args: 0.0)
 
     n_coords = len(coordinates)
-    n_params = len(parameter_names)
+    len(parameter_names)
 
     # This wrapper cannot be JIT-compiled directly due to closure limitations
     # but we can use it with Numba's objmode for hybrid compilation

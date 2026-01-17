@@ -14,15 +14,13 @@ F_ext = d(mv)/dt = m(dv/dt) + v_rel(dm/dt)
 where v_rel is the velocity of mass entering/leaving the system.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, Optional, Tuple
 
 import numpy as np
 import sympy as sp
 from scipy.integrate import solve_ivp
-
-from ...utils import logger
 
 
 class MassFlowType(Enum):

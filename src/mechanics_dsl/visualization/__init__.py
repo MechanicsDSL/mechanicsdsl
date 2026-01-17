@@ -39,14 +39,10 @@ if os.path.exists(_viz_module_path):
         class MechanicsVisualizer(Animator):
             """Backward-compatible wrapper for MechanicsVisualizer."""
 
-            pass
-
 else:
     # Fallback: create a stub
     class MechanicsVisualizer(Animator):
         """Backward-compatible wrapper for MechanicsVisualizer."""
-
-        pass
 
 
 __all__ = ["Animator", "Plotter", "PhaseSpaceVisualizer", "MechanicsVisualizer"]

@@ -14,12 +14,9 @@ expansion gives corrections to frequencies and trajectories.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
-import numpy as np
 import sympy as sp
-
-from ...utils import logger
 
 
 class PerturbationType(Enum):
@@ -166,8 +163,8 @@ class PerturbationExpander:
         Returns:
             Dictionary with frequency corrections and solutions
         """
-        x = self.get_symbol(coordinate)
-        t = self.get_symbol("t")
+        self.get_symbol(coordinate)
+        self.get_symbol("t")
 
         # Expand frequency
         omega = omega0
