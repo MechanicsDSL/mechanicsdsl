@@ -145,7 +145,7 @@ if PYDANTIC_AVAILABLE:
             try:
                 socket.inet_aton(v)
             except socket.error:
-                if v not in ["localhost", "0.0.0.0"]:
+                if v not in ["localhost", "0.0.0.0"]:  # nosec B104
                     raise ValueError(f"Invalid host: {v}")
             return v
 
