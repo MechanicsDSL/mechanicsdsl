@@ -1,0 +1,148 @@
+.\" Manpage for mechanicsdsl
+.\" Contact nomapa223@gmail.com for corrections.
+.TH MECHANICSDSL 1 "January 2026" "v2.0.1" "MechanicsDSL Manual"
+
+.SH NAME
+mechanicsdsl \- domain-specific language compiler for computational physics
+
+.SH SYNOPSIS
+.B mechanicsdsl
+.I command
+.RI [ options ]
+.RI [ arguments ]
+
+.SH DESCRIPTION
+.B MechanicsDSL
+is a domain-specific language and compiler framework for computational physics. 
+It allows you to write physics in natural LaTeX-inspired notation and 
+automatically generates working simulations and production code in 11 languages.
+
+The DSL supports 9 physics domains: classical mechanics, quantum mechanics, 
+electromagnetism, special relativity, general relativity, fluid dynamics (SPH), 
+statistical mechanics, thermodynamics, and orbital mechanics.
+
+.SH COMMANDS
+
+.TP
+.B compile \fIinput\fR \-\-target \fItarget\fR [\-\-output \fIpath\fR]
+Compile DSL file to target language.
+
+Available targets: cpp, cuda, rust, julia, fortran, matlab, javascript, 
+wasm/webassembly, python, arduino, openmp.
+
+.TP
+.B run \fIinput\fR [\-\-t\-span \fIstart,end\fR] [\-\-points \fIn\fR] [\-\-animate] [\-\-output \fIfile\fR]
+Run a simulation from DSL file.
+
+Options:
+  \-\-t\-span    Time span as start,end (default: 0,10)
+  \-\-points    Number of time points (default: 1000)
+  \-\-animate   Show animation
+  \-\-output    Save results to JSON file
+
+.TP
+.B export \fIinput\fR \-\-format \fIfmt\fR [\-\-output \fIfile\fR]
+Export simulation results.
+
+Available formats: json, csv, numpy/npz.
+
+.TP
+.B validate \fIinput\fR
+Validate a DSL file without running the simulation. Reports syntax errors 
+and displays system information if valid.
+
+.TP
+.B info
+Show version, available physics domains, code generation targets, 
+and optional feature availability.
+
+.SH OPTIONS
+
+.TP
+.B \-\-version, \-v
+Print version information and exit.
+
+.TP
+.B \-\-help, \-h
+Print help message and exit.
+
+.SH EXAMPLES
+
+.TP
+Compile a pendulum to C++:
+.B mechanicsdsl compile pendulum.mdsl \-\-target cpp
+
+.TP
+Run simulation with animation:
+.B mechanicsdsl run double_pendulum.mdsl \-\-t\-span 0,30 \-\-animate
+
+.TP
+Export results to CSV:
+.B mechanicsdsl export orbit.mdsl \-\-format csv \-\-output trajectory.csv
+
+.TP
+Validate DSL syntax:
+.B mechanicsdsl validate myfile.mdsl
+
+.SH DSL SYNTAX
+
+The MechanicsDSL language uses LaTeX-inspired commands:
+
+.nf
+\\system{name}           Define system name
+\\defvar{q}{desc}        Define generalized coordinate
+\\parameter{p}{val}{u}   Define physical parameter
+\\lagrangian{expr}       Specify Lagrangian L = T - V
+\\hamiltonian{expr}      Specify Hamiltonian H
+\\constraint{expr}       Add holonomic constraint
+\\force{expr}            Add non-conservative force
+\\initial{q=val}         Set initial conditions
+.fi
+
+Derivative notation:
+  \\dot{q}   First time derivative (dq/dt)
+  \\ddot{q}  Second time derivative (d²q/dt²)
+  \\frac{a}{b}  Fraction
+
+.SH PHYSICS DOMAINS
+
+Classical Mechanics (17 modules), Quantum Mechanics, Electromagnetism,
+Special Relativity, General Relativity, Fluid Dynamics (SPH),
+Statistical Mechanics, Thermodynamics, Orbital Mechanics.
+
+.SH CODE GENERATION TARGETS
+
+C++, CUDA, Rust, Julia, Fortran, MATLAB, JavaScript, WebAssembly,
+Python, Arduino, OpenMP.
+
+.SH FILES
+
+.TP
+.I ~/.mechanicsdsl/
+User configuration directory
+
+.TP
+.I *.mdsl
+MechanicsDSL source files
+
+.SH ENVIRONMENT
+
+.TP
+.B MECHANICSDSL_DEBUG
+Set to any value to enable debug output and full stack traces on errors.
+
+.SH AUTHOR
+Noah Parsons <nomapa223@gmail.com>
+
+.SH BUGS
+Report bugs at https://github.com/MechanicsDSL/mechanicsdsl/issues
+
+.SH COPYRIGHT
+MIT License. 
+See https://github.com/MechanicsDSL/mechanicsdsl/blob/main/LICENSE
+
+.SH SEE ALSO
+.BR python3 (1),
+.BR pip (1)
+
+Full documentation at: https://mechanicsdsl.readthedocs.io

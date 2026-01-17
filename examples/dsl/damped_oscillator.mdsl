@@ -1,0 +1,24 @@
+% Damped Harmonic Oscillator
+% MechanicsDSL Example
+% Run with: mechanicsdsl run damped_oscillator.mdsl --t-span 0,20 --animate
+
+\system{damped_oscillator}
+
+% Generalized coordinate
+\defvar{x}{Displacement from equilibrium}{m}
+
+% Physical parameters
+\parameter{m}{1.0}{kg}         % Mass
+\parameter{k}{10.0}{N/m}       % Spring constant
+\parameter{b}{0.5}{N*s/m}      % Damping coefficient
+
+% Lagrangian (conservative part)
+\lagrangian{
+    \frac{1}{2} * m * \dot{x}^2 - \frac{1}{2} * k * x^2
+}
+
+% Non-conservative damping force
+\force{-b * \dot{x}}
+
+% Initial conditions: displaced and released
+\initial{x = 1.0, x_dot = 0.0}

@@ -1,0 +1,26 @@
+% Kepler Orbit - Central Force Problem
+% MechanicsDSL Example
+% Run with: mechanicsdsl run kepler_orbit.mdsl --t-span 0,50 --animate
+
+\system{kepler_orbit}
+
+% Polar coordinates
+\defvar{r}{Radial distance from central body}{m}
+\defvar{phi}{Azimuthal angle}{rad}
+
+% Physical parameters
+\parameter{m}{1.0}{kg}              % Orbiting mass
+\parameter{M}{1.989e30}{kg}         % Central mass (Sun)
+\parameter{G}{6.674e-11}{N*m^2/kg^2}% Gravitational constant
+
+% Lagrangian in polar coordinates
+% T = (1/2) * m * (r_dot^2 + r^2 * phi_dot^2)
+% V = -G * M * m / r
+\lagrangian{
+    \frac{1}{2} * m * (\dot{r}^2 + r^2 * \dot{phi}^2)
+    + G * M * m / r
+}
+
+% Initial conditions: elliptical orbit
+\initial{r = 1.496e11, r_dot = 0}           % 1 AU, stationary radially
+\initial{phi = 0, phi_dot = 1.991e-7}       % Angular velocity for Earth orbit

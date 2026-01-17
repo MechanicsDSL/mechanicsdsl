@@ -5,6 +5,59 @@ All notable changes to MechanicsDSL will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-01-17
+
+### 🛠️ Developer Experience & Documentation Release
+
+This release adds a command-line interface, expanded tutorials, internationalization infrastructure, and quality-of-life improvements following the v2.0.0 enterprise release.
+
+### Added
+
+#### Command-Line Interface
+- **`mechanicsdsl` CLI** (`src/mechanics_dsl/cli.py`)
+  - `mechanicsdsl compile <input> --target <lang>` — Generate code in 11 languages
+  - `mechanicsdsl run <input> --t-span 0,10 --animate` — Run simulations
+  - `mechanicsdsl export <input> --format csv` — Export results (JSON, CSV, NumPy)
+  - `mechanicsdsl validate <input>` — Validate DSL files without running
+  - `mechanicsdsl info` — Show version and system capabilities
+- **Shell Completion** — Bash, Zsh, and Fish autocomplete scripts
+
+#### New Tutorials
+- **Quantum Mechanics** (`tutorials/04_quantum_mechanics.ipynb`) — Tunneling, wavefunctions, hydrogen atom, WKB approximation
+- **General Relativity** (`tutorials/05_general_relativity.ipynb`) — Schwarzschild geodesics, light bending, Einstein rings
+- **Statistical Mechanics** (`tutorials/06_statistical_mechanics.ipynb`) — Ensembles, partition functions, Fermi-Dirac/Bose-Einstein, Ising model
+
+#### Documentation
+- **Examples Gallery** (`GALLERY.md`) — Curated showcase of all 9 physics domains with code examples
+- **DEMO.md** — Quick one-liner examples for demos and presentations
+- **Internationalization** (`docs/translations/`) — README stubs in Chinese, Japanese, German, Russian
+
+#### Example Files
+- **Standalone DSL files** (`examples/dsl/`) — Ready-to-run `.mdsl` files for CLI
+  - `pendulum.mdsl`, `double_pendulum.mdsl`, `kepler_orbit.mdsl`, `damped_oscillator.mdsl`
+
+#### Developer Tools
+- **Benchmark Script** (`benchmarks/quick_benchmark.py`) — One-liner performance demonstration
+- **CLI Unit Tests** (`tests/test_cli.py`) — Comprehensive CLI test coverage
+- **VS Code Snippets** — New snippets for quantum, GR, fluids, statistical mechanics
+- **Progress Bar** — tqdm integration for long simulations
+
+### Changed
+
+- Bumped version to 2.0.1
+- Added Python 3.14 classifier to `pyproject.toml`
+- Updated web demo stats to reflect 19 countries adoption
+- Updated tutorials README with new tutorials
+
+### Adoption Metrics
+
+First 3 hours after v2.0.0 release:
+- **17 countries** downloading (9 new countries)
+- **6 enterprise mirrors** syncing (including new Philippine organization)
+- **Real pip installs** on Debian and Ubuntu workstations
+
+---
+
 ## [2.0.0] - 2026-01-16
 
 ### 🚀 Major Release: Enterprise & Embedded Support

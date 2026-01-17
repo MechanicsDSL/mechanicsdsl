@@ -1,0 +1,31 @@
+% Coupled Oscillators
+% MechanicsDSL Example
+% Run with: mechanicsdsl run coupled_oscillators.mdsl --t-span 0,30 --animate
+
+\system{coupled_oscillators}
+
+% Generalized coordinates: positions of two masses
+\defvar{x1}{Position of mass 1}{m}
+\defvar{x2}{Position of mass 2}{m}
+
+% Physical parameters
+\parameter{m1}{1.0}{kg}        % Mass 1
+\parameter{m2}{1.0}{kg}        % Mass 2
+\parameter{k1}{10.0}{N/m}      % Spring 1 (wall to m1)
+\parameter{k2}{5.0}{N/m}       % Spring 2 (m1 to m2) - coupling spring
+\parameter{k3}{10.0}{N/m}      % Spring 3 (m2 to wall)
+
+% Lagrangian
+% T = (1/2)*m1*x1_dot^2 + (1/2)*m2*x2_dot^2
+% V = (1/2)*k1*x1^2 + (1/2)*k2*(x2-x1)^2 + (1/2)*k3*x2^2
+\lagrangian{
+    \frac{1}{2} * m1 * \dot{x1}^2 
+    + \frac{1}{2} * m2 * \dot{x2}^2
+    - \frac{1}{2} * k1 * x1^2
+    - \frac{1}{2} * k2 * (x2 - x1)^2
+    - \frac{1}{2} * k3 * x2^2
+}
+
+% Initial conditions: displace first mass only
+\initial{x1 = 1.0, x1_dot = 0.0}
+\initial{x2 = 0.0, x2_dot = 0.0}

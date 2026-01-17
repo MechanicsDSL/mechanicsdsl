@@ -1,0 +1,30 @@
+% Double Pendulum - Chaotic System
+% MechanicsDSL Example
+% Run with: mechanicsdsl run double_pendulum.mdsl --t-span 0,30 --animate
+
+\system{double_pendulum}
+
+% Generalized coordinates
+\defvar{theta1}{Angle of upper arm}{rad}
+\defvar{theta2}{Angle of lower arm}{rad}
+
+% Physical parameters
+\parameter{m1}{1.0}{kg}        % Mass of upper bob
+\parameter{m2}{1.0}{kg}        % Mass of lower bob
+\parameter{l1}{1.0}{m}         % Length of upper arm
+\parameter{l2}{1.0}{m}         % Length of lower arm
+\parameter{g}{9.81}{m/s^2}     % Gravitational acceleration
+
+% Lagrangian for double pendulum
+% This is the full nonlinear Lagrangian including coupling between the two angles
+\lagrangian{
+    \frac{1}{2} * (m1 + m2) * l1^2 * \dot{theta1}^2
+    + \frac{1}{2} * m2 * l2^2 * \dot{theta2}^2
+    + m2 * l1 * l2 * \dot{theta1} * \dot{theta2} * \cos{theta1 - theta2}
+    - (m1 + m2) * g * l1 * (1 - \cos{theta1})
+    - m2 * g * l2 * (1 - \cos{theta2})
+}
+
+% Initial conditions: both arms displaced
+\initial{theta1 = 2.5, theta1_dot = 0.0}
+\initial{theta2 = 2.0, theta2_dot = 0.0}

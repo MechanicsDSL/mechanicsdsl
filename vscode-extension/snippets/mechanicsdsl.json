@@ -181,5 +181,136 @@
             "    \\\\smoothing{${7:0.02}}"
         ],
         "description": "SPH fluid simulation setup"
+    },
+    "Quantum Barrier": {
+        "prefix": "quantum-barrier",
+        "body": [
+            "\\\\system{${1:quantum_tunneling}}",
+            "",
+            "% Quantum tunneling through rectangular barrier",
+            "\\\\parameter{V0}{${2:5.0}}{eV}      % Barrier height",
+            "\\\\parameter{L}{${3:1.0}}{nm}       % Barrier width",
+            "\\\\parameter{E}{${4:3.0}}{eV}       % Particle energy",
+            "\\\\parameter{m}{electron_mass}",
+            "",
+            "\\\\potential{rectangular_barrier}{V0, L}",
+            "\\\\incident_energy{E}"
+        ],
+        "description": "Quantum tunneling through barrier"
+    },
+    "Schwarzschild Orbit": {
+        "prefix": "schwarzschild",
+        "body": [
+            "\\\\system{${1:schwarzschild_orbit}}",
+            "",
+            "% Geodesic around non-rotating black hole",
+            "\\\\parameter{M}{${2:1.0}}{solar_mass}",
+            "\\\\parameter{rs}{2*G*M/c^2}",
+            "",
+            "\\\\defvar{r}{radial coordinate}{m}",
+            "\\\\defvar{phi}{azimuthal angle}{rad}",
+            "",
+            "\\\\metric{schwarzschild}",
+            "\\\\geodesic{${3|timelike,null|}}",
+            "",
+            "\\\\initial{r=${4:10}*rs, phi=0}",
+            "\\\\initial{E=${5:0.95}, L=${6:4.0}}"
+        ],
+        "description": "Schwarzschild black hole geodesic"
+    },
+    "Kepler Orbit": {
+        "prefix": "kepler",
+        "body": [
+            "\\\\system{${1:kepler_orbit}}",
+            "",
+            "% Central force problem in polar coordinates",
+            "\\\\defvar{r}{radial distance}{m}",
+            "\\\\defvar{phi}{azimuthal angle}{rad}",
+            "",
+            "\\\\parameter{m}{${2:1.0}}{kg}",
+            "\\\\parameter{M}{${3:1.989e30}}{kg}      % Central mass",
+            "\\\\parameter{G}{6.674e-11}{N*m^2/kg^2}",
+            "",
+            "\\\\lagrangian{",
+            "    \\\\frac{1}{2}*m*(\\\\dot{r}^2 + r^2*\\\\dot{phi}^2)",
+            "    + G*M*m/r",
+            "}",
+            "",
+            "\\\\initial{r=${4:1e11}, phi=0}"
+        ],
+        "description": "Kepler orbit (central force)"
+    },
+    "Canonical Ensemble": {
+        "prefix": "ensemble",
+        "body": [
+            "\\\\system{${1:quantum_ensemble}}",
+            "",
+            "% Statistical mechanics canonical ensemble",
+            "\\\\parameter{hbar_omega}{${2:0.05}}{eV}",
+            "\\\\parameter{T}{${3:300}}{K}",
+            "\\\\parameter{N}{${4:1e23}}{1}",
+            "",
+            "\\\\ensemble{canonical}",
+            "\\\\hamiltonian{(n + 0.5)*hbar_omega}"
+        ],
+        "description": "Canonical ensemble for quantum system"
+    },
+    "Cyclotron Motion": {
+        "prefix": "cyclotron",
+        "body": [
+            "\\\\system{${1:cyclotron_motion}}",
+            "",
+            "% Charged particle in magnetic field",
+            "\\\\parameter{B}{${2:1.0}}{T}",
+            "\\\\parameter{q}{${3:1.602e-19}}{C}",
+            "\\\\parameter{m}{${4:9.109e-31}}{kg}",
+            "",
+            "\\\\defvar{x}{m}",
+            "\\\\defvar{y}{m}",
+            "\\\\defvar{z}{m}",
+            "",
+            "\\\\magnetic_field{uniform}{B, direction=z}",
+            "",
+            "\\\\initial{x=0, y=0, z=0}",
+            "\\\\initial{vx=${5:1e6}, vy=0, vz=${6:1e5}}"
+        ],
+        "description": "Cyclotron motion in magnetic field"
+    },
+    "Three-Body Problem": {
+        "prefix": "three-body",
+        "body": [
+            "\\\\system{${1:three_body}}",
+            "",
+            "% Gravitational three-body problem",
+            "\\\\defvar{x1}{m}  \\\\defvar{y1}{m}",
+            "\\\\defvar{x2}{m}  \\\\defvar{y2}{m}",
+            "\\\\defvar{x3}{m}  \\\\defvar{y3}{m}",
+            "",
+            "\\\\parameter{m}{${2:1.0}}{kg}",
+            "\\\\parameter{G}{${3:1.0}}{N*m^2/kg^2}",
+            "",
+            "\\\\lagrangian{",
+            "    0.5*m*(\\\\dot{x1}^2 + \\\\dot{y1}^2 + \\\\dot{x2}^2 + \\\\dot{y2}^2 + \\\\dot{x3}^2 + \\\\dot{y3}^2)",
+            "    + G*m^2/\\\\sqrt{(x1-x2)^2 + (y1-y2)^2}",
+            "    + G*m^2/\\\\sqrt{(x2-x3)^2 + (y2-y3)^2}",
+            "    + G*m^2/\\\\sqrt{(x1-x3)^2 + (y1-y3)^2}",
+            "}"
+        ],
+        "description": "Gravitational three-body problem"
+    },
+    "Carnot Engine": {
+        "prefix": "carnot",
+        "body": [
+            "\\\\system{${1:carnot_engine}}",
+            "",
+            "% Thermodynamic Carnot cycle",
+            "\\\\parameter{T_hot}{${2:600}}{K}",
+            "\\\\parameter{T_cold}{${3:300}}{K}",
+            "\\\\parameter{n}{${4:1.0}}{mol}",
+            "",
+            "\\\\working_fluid{ideal_gas}",
+            "\\\\cycle{carnot}"
+        ],
+        "description": "Carnot engine thermodynamic cycle"
     }
 }

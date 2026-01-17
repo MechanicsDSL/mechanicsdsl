@@ -1,0 +1,24 @@
+% Simple Pendulum
+% MechanicsDSL Example
+% Run with: mechanicsdsl run pendulum.mdsl --animate
+
+\system{simple_pendulum}
+
+% Generalized coordinate
+\defvar{theta}{Angle from vertical}{rad}
+
+% Physical parameters
+\parameter{m}{1.0}{kg}         % Mass of bob
+\parameter{l}{1.0}{m}          % Length of string
+\parameter{g}{9.81}{m/s^2}     % Gravitational acceleration
+
+% Lagrangian: L = T - V
+% T = (1/2) * m * l^2 * theta_dot^2  (kinetic energy)
+% V = m * g * l * (1 - cos(theta))   (potential energy, zero at bottom)
+\lagrangian{
+    \frac{1}{2} * m * l^2 * \dot{theta}^2 
+    - m * g * l * (1 - \cos{theta})
+}
+
+% Initial conditions: released from 2.5 radians (~143 degrees)
+\initial{theta = 2.5, theta_dot = 0.0}
