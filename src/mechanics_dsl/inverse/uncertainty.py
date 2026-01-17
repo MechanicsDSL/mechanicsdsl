@@ -5,14 +5,14 @@ Bayesian inference and bootstrap methods for parameter uncertainty.
 """
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
 try:
     from mechanics_dsl import PhysicsCompiler
 except ImportError:
-    PhysicsCompiler = None  # type: ignore[misc]
+    PhysicsCompiler: Any = None
 
 
 @dataclass

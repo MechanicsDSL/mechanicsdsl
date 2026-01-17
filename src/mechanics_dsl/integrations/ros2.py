@@ -10,7 +10,7 @@ Example:
 """
 
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 
@@ -27,7 +27,7 @@ except ImportError:
 try:
     from mechanics_dsl import PhysicsCompiler
 except ImportError:
-    PhysicsCompiler = None  # type: ignore[misc]
+    PhysicsCompiler: Any = None
 
 
 class MechanicsDSLNode:

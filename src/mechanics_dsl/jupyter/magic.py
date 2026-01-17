@@ -25,7 +25,7 @@ except ImportError:
 try:
     from mechanics_dsl import PhysicsCompiler
 except ImportError:
-    PhysicsCompiler = None  # type: ignore[misc]
+    PhysicsCompiler: Any = None
 
 
 # Global state for the magic commands

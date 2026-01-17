@@ -6,14 +6,14 @@ Determine how sensitive simulation outputs are to parameter changes.
 
 from dataclasses import dataclass
 from itertools import combinations
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 
 try:
     from mechanics_dsl import PhysicsCompiler
 except ImportError:
-    PhysicsCompiler = None  # type: ignore[misc]
+    PhysicsCompiler: Any = None
 
 
 @dataclass

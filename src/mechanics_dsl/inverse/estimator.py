@@ -6,7 +6,7 @@ Fit model parameters to observed data using optimization.
 
 import warnings
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 import numpy as np
 from scipy.optimize import differential_evolution, minimize
@@ -14,7 +14,7 @@ from scipy.optimize import differential_evolution, minimize
 try:
     from mechanics_dsl import PhysicsCompiler
 except ImportError:
-    PhysicsCompiler = None  # type: ignore[misc]
+    PhysicsCompiler: Any = None
 
 
 @dataclass

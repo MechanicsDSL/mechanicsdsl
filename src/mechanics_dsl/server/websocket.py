@@ -3,7 +3,7 @@ WebSocket streaming for real-time simulation.
 """
 
 import asyncio
-from typing import Dict
+from typing import Any, Dict
 
 
 try:
@@ -18,7 +18,7 @@ except ImportError:
 try:
     from mechanics_dsl import PhysicsCompiler
 except ImportError:
-    PhysicsCompiler = None  # type: ignore[misc]
+    PhysicsCompiler: Any = None
 
 
 if FASTAPI_AVAILABLE:

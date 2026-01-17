@@ -19,7 +19,7 @@ except ImportError:
 try:
     from mechanics_dsl import PhysicsCompiler
 except ImportError:
-    PhysicsCompiler = None  # type: ignore[misc]
+    PhysicsCompiler: Any = None
 
 # Rate limiting
 try:
