@@ -60,15 +60,14 @@ class TestCLIValidate:
     @pytest.fixture
     def valid_dsl_file(self, tmp_path):
         """Create a valid DSL file."""
-        content = r"""
-        \system{test_pendulum}
-        \defvar{theta}{rad}
-        \parameter{m}{1.0}{kg}
-        \parameter{l}{1.0}{m}
-        \parameter{g}{9.81}{m/s^2}
-        \lagrangian{\frac{1}{2}*m*l^2*\dot{theta}^2 - m*g*l*(1-\cos{theta})}
-        \initial{theta=0.5}
-        """
+        content = r"""\system{test_pendulum}
+\defvar{theta}{Angle}{rad}
+\parameter{m}{1.0}{kg}
+\parameter{l}{1.0}{m}
+\parameter{g}{9.81}{m/s^2}
+\lagrangian{\frac{1}{2}*m*l^2*\dot{theta}^2 - m*g*l*(1-\cos{theta})}
+\initial{theta=0.5}
+"""
         file_path = tmp_path / "test.mdsl"
         file_path.write_text(content)
         return file_path
@@ -109,14 +108,13 @@ class TestCLICompile:
     @pytest.fixture
     def simple_dsl_file(self, tmp_path):
         """Create a simple DSL file for compilation tests."""
-        content = r"""
-        \system{compile_test}
-        \defvar{x}{m}
-        \parameter{m}{1.0}{kg}
-        \parameter{k}{10.0}{N/m}
-        \lagrangian{\frac{1}{2}*m*\dot{x}^2 - \frac{1}{2}*k*x^2}
-        \initial{x=1.0}
-        """
+        content = r"""\system{compile_test}
+\defvar{x}{Position}{m}
+\parameter{m}{1.0}{kg}
+\parameter{k}{10.0}{N/m}
+\lagrangian{\frac{1}{2}*m*\dot{x}^2 - \frac{1}{2}*k*x^2}
+\initial{x=1.0}
+"""
         file_path = tmp_path / "compile_test.mdsl"
         file_path.write_text(content)
         return file_path
@@ -174,14 +172,13 @@ class TestCLIRun:
     @pytest.fixture
     def runnable_dsl_file(self, tmp_path):
         """Create a DSL file for simulation tests."""
-        content = r"""
-        \system{run_test}
-        \defvar{x}{m}
-        \parameter{m}{1.0}{kg}
-        \parameter{k}{10.0}{N/m}
-        \lagrangian{\frac{1}{2}*m*\dot{x}^2 - \frac{1}{2}*k*x^2}
-        \initial{x=1.0, x_dot=0}
-        """
+        content = r"""\system{run_test}
+\defvar{x}{Position}{m}
+\parameter{m}{1.0}{kg}
+\parameter{k}{10.0}{N/m}
+\lagrangian{\frac{1}{2}*m*\dot{x}^2 - \frac{1}{2}*k*x^2}
+\initial{x=1.0, x_dot=0}
+"""
         file_path = tmp_path / "run_test.mdsl"
         file_path.write_text(content)
         return file_path
@@ -217,15 +214,14 @@ class TestCLIExport:
     @pytest.fixture
     def export_dsl_file(self, tmp_path):
         """Create a DSL file for export tests."""
-        content = r"""
-        \system{export_test}
-        \defvar{theta}{rad}
-        \parameter{m}{1.0}{kg}
-        \parameter{l}{1.0}{m}
-        \parameter{g}{9.81}{m/s^2}
-        \lagrangian{\frac{1}{2}*m*l^2*\dot{theta}^2 - m*g*l*(1-\cos{theta})}
-        \initial{theta=0.5}
-        """
+        content = r"""\system{export_test}
+\defvar{theta}{Angle}{rad}
+\parameter{m}{1.0}{kg}
+\parameter{l}{1.0}{m}
+\parameter{g}{9.81}{m/s^2}
+\lagrangian{\frac{1}{2}*m*l^2*\dot{theta}^2 - m*g*l*(1-\cos{theta})}
+\initial{theta=0.5}
+"""
         file_path = tmp_path / "export_test.mdsl"
         file_path.write_text(content)
         return file_path
