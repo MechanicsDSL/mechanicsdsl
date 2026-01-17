@@ -31,7 +31,7 @@ jobs:
         python -m pip install --upgrade pip
         
         # Install testing tools
-        pip install pytest pytest-cov
+        pip install pytest pytest-cov hypothesis
         
         # Install ALL project dependencies manually (matplotlib, sympy, scipy)
         pip install matplotlib sympy scipy
