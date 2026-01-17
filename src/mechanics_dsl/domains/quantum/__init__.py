@@ -12,6 +12,6 @@ This package provides tools for semiclassical quantum mechanics, including:
 All classes and functions are re-exported from the core module.
 """
 
-from .core import InfiniteSquareWell, QuantumTunneling
+from .core import HydrogenAtom, InfiniteSquareWell, QuantumTunneling
 
-__all__ = ["InfiniteSquareWell", "QuantumTunneling"]
+__all__ = ["HydrogenAtom", "InfiniteSquareWell", "QuantumTunneling"]

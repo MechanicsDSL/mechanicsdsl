@@ -4,6 +4,6 @@ Statistical Mechanics Domain for MechanicsDSL
 Provides tools for statistical mechanics and thermodynamic ensembles.
 """
 
-from .core import IdealGas
+from .core import IdealGas, IsingModel
 
-__all__ = ["IdealGas"]
+__all__ = ["IdealGas", "IsingModel"]
