@@ -39,14 +39,15 @@
         </nav>
 
         <div class="hero-content">
-            <div class="hero-badge">v1.3.0 — Now with 12 Code Generators</div>
+            <div class="hero-badge">v2.0.0 — Enterprise & Embedded Ready</div>
             <h1 class="hero-title">
                 <span class="gradient-text">Physics Simulation</span>
                 <br>Made Simple
             </h1>
             <p class="hero-subtitle">
-                A domain-specific language for classical mechanics. Write physics in natural notation,
-                simulate in real-time, export to C++, CUDA, Rust, and more.
+                A domain-specific language for computational physics. From pendulums to black holes—write physics in
+                natural notation,
+                simulate in real-time, export to C++, CUDA, Rust, and 8 more platforms.
             </p>
             <div class="hero-cta">
                 <a href="#playground" class="btn btn-primary">Try It Now</a>
@@ -58,54 +59,54 @@
             <canvas id="hero-canvas"></canvas>
         </div>
 
-    <!-- Stats Bar -->
-    <section class="stats-bar">
-        <div class="stat">
-            <span class="stat-number">12</span>
-            <span class="stat-label">Code Generators</span>
-        </div>
-        <div class="stat">
-            <span class="stat-number">73+</span>
-            <span class="stat-label">Test Coverage</span>
-        </div>
-        <div class="stat">
-            <span class="stat-number">10x</span>
-            <span class="stat-label">Numba Speedup</span>
-        </div>
-        <div class="stat">
-            <span class="stat-number">GPU</span>
-            <span class="stat-label">CUDA Support</span>
-        </div>
-    </section>
+        <!-- Stats Bar -->
+        <section class="stats-bar">
+            <div class="stat">
+                <span class="stat-number">9</span>
+                <span class="stat-label">Physics Domains</span>
+            </div>
+            <div class="stat">
+                <span class="stat-number">11</span>
+                <span class="stat-label">Code Generators</span>
+            </div>
+            <div class="stat">
+                <span class="stat-number">19</span>
+                <span class="stat-label">Countries</span>
+            </div>
+            <div class="stat">
+                <span class="stat-number">70×</span>
+                <span class="stat-label">GPU Speedup</span>
+            </div>
+        </section>
 
-    <!-- Interactive Playground -->
-    <section id="playground" class="playground-section">
-        <div class="section-header">
-            <h2>Interactive Playground</h2>
-            <p>Write physics equations and watch them come to life</p>
-        </div>
+        <!-- Interactive Playground -->
+        <section id="playground" class="playground-section">
+            <div class="section-header">
+                <h2>Interactive Playground</h2>
+                <p>Write physics equations and watch them come to life</p>
+            </div>
 
-        <div class="playground-container">
-            <div class="editor-panel">
-                <div class="panel-header">
-                    <div class="panel-title">
-                        <span class="file-icon">📝</span>
-                        simulation.mdsl
+            <div class="playground-container">
+                <div class="editor-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span class="file-icon">📝</span>
+                            simulation.mdsl
+                        </div>
+                        <div class="panel-actions">
+                            <button class="action-btn mode-toggle" id="python-mode-btn"
+                                title="Toggle Python Mode (uses real SciPy)">
+                                <span>🐍</span> Python
+                            </button>
+                            <button class="action-btn" id="run-btn" title="Run Simulation">
+                                <span class="play-icon">▶</span> Run
+                            </button>
+                            <button class="action-btn" id="reset-btn" title="Reset">↻</button>
+                        </div>
                     </div>
-                    <div class="panel-actions">
-                        <button class="action-btn mode-toggle" id="python-mode-btn"
-                            title="Toggle Python Mode (uses real SciPy)">
-                            <span>🐍</span> Python
-                        </button>
-                        <button class="action-btn" id="run-btn" title="Run Simulation">
-                            <span class="play-icon">▶</span> Run
-                        </button>
-                        <button class="action-btn" id="reset-btn" title="Reset">↻</button>
-                    </div>
-                </div>
-                <div class="code-editor">
-                    <div class="line-numbers" id="line-numbers"></div>
-                    <textarea id="code-input" spellcheck="false">\system{double_pendulum}
+                    <div class="code-editor">
+                        <div class="line-numbers" id="line-numbers"></div>
+                        <textarea id="code-input" spellcheck="false">\system{double_pendulum}
 
 % Physical parameters
 \parameter{m1}{1.0}{kg}
@@ -130,236 +131,249 @@
 % Initial conditions
 \initial{theta1=2.5, theta2=2.0}
 \initial{theta1_dot=0, theta2_dot=0}</textarea>
-                </div>
+                    </div>
 
-                <!-- Parameter Sliders -->
-                <div class="parameter-panel">
-                    <div class="panel-header">
-                        <div class="panel-title">
-                            <span class="file-icon">🎚️</span>
-                            Parameters
+                    <!-- Parameter Sliders -->
+                    <div class="parameter-panel">
+                        <div class="panel-header">
+                            <div class="panel-title">
+                                <span class="file-icon">🎚️</span>
+                                Parameters
+                            </div>
                         </div>
-                    </div>
-                    <div class="sliders-container">
-                        <div class="slider-group">
-                            <label>Gravity: <span id="gravity-value">9.81</span> m/s²</label>
-                            <input type="range" id="gravity-slider" min="0" max="20" step="0.1" value="9.81">
-                        </div>
-                        <div class="slider-group">
-                            <label>Mass 1: <span id="m1-value">1.0</span> kg</label>
-                            <input type="range" id="m1-slider" min="0.1" max="5" step="0.1" value="1.0">
-                        </div>
-                        <div class="slider-group">
-                            <label>Mass 2: <span id="m2-value">1.0</span> kg</label>
-                            <input type="range" id="m2-slider" min="0.1" max="5" step="0.1" value="1.0">
-                        </div>
-                        <div class="slider-group">
-                            <label>Length 1: <span id="l1-value">1.0</span> m</label>
-                            <input type="range" id="l1-slider" min="0.5" max="2" step="0.1" value="1.0">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="visualization-column">
-                <div class="visualization-panel">
-                    <div class="panel-header">
-                        <div class="panel-title">
-                            <span class="file-icon">🎬</span>
-                            Visualization
-                        </div>
-                        <div class="sim-controls">
-                            <button class="control-btn" id="compare-btn" title="Compare Mode">⚖️</button>
-                            <button class="control-btn" id="3d-btn" title="3D View">🎮</button>
-                            <button class="control-btn" id="pause-btn" title="Pause">⏸</button>
-                            <button class="control-btn" id="slow-btn" title="Slow Motion">🐢</button>
-                            <button class="control-btn active" id="normal-btn" title="Normal Speed">1x</button>
-                            <button class="control-btn" id="fast-btn" title="Fast">🐇</button>
-                        </div>
-                    </div>
-                    <div class="canvas-wrapper">
-                        <canvas id="sim-canvas"></canvas>
-                        <div id="three-container" class="three-container hidden"></div>
-                        <div class="canvas-overlay" id="canvas-overlay">
-                            <span>Click Run to start simulation</span>
-                        </div>
-                    </div>
-                    <div class="sim-info">
-                        <div class="info-item">
-                            <span class="info-label">Time</span>
-                            <span class="info-value" id="sim-time">0.00 s</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Energy</span>
-                            <span class="info-value" id="sim-energy">0.00 J</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">FPS</span>
-                            <span class="info-value" id="sim-fps">60</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Energy Error</span>
-                            <span class="info-value" id="energy-error">0.00%</span>
+                        <div class="sliders-container">
+                            <div class="slider-group">
+                                <label>Gravity: <span id="gravity-value">9.81</span> m/s²</label>
+                                <input type="range" id="gravity-slider" min="0" max="20" step="0.1" value="9.81">
+                            </div>
+                            <div class="slider-group">
+                                <label>Mass 1: <span id="m1-value">1.0</span> kg</label>
+                                <input type="range" id="m1-slider" min="0.1" max="5" step="0.1" value="1.0">
+                            </div>
+                            <div class="slider-group">
+                                <label>Mass 2: <span id="m2-value">1.0</span> kg</label>
+                                <input type="range" id="m2-slider" min="0.1" max="5" step="0.1" value="1.0">
+                            </div>
+                            <div class="slider-group">
+                                <label>Length 1: <span id="l1-value">1.0</span> m</label>
+                                <input type="range" id="l1-slider" min="0.5" max="2" step="0.1" value="1.0">
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Phase Portrait -->
-                <div class="phase-panel">
-                    <div class="panel-header">
-                        <div class="panel-title">
-                            <span class="file-icon">📊</span>
-                            Phase Portrait
+                <div class="visualization-column">
+                    <div class="visualization-panel">
+                        <div class="panel-header">
+                            <div class="panel-title">
+                                <span class="file-icon">🎬</span>
+                                Visualization
+                            </div>
+                            <div class="sim-controls">
+                                <button class="control-btn" id="compare-btn" title="Compare Mode">⚖️</button>
+                                <button class="control-btn" id="3d-btn" title="3D View">🎮</button>
+                                <button class="control-btn" id="pause-btn" title="Pause">⏸</button>
+                                <button class="control-btn" id="slow-btn" title="Slow Motion">🐢</button>
+                                <button class="control-btn active" id="normal-btn" title="Normal Speed">1x</button>
+                                <button class="control-btn" id="fast-btn" title="Fast">🐇</button>
+                            </div>
+                        </div>
+                        <div class="canvas-wrapper">
+                            <canvas id="sim-canvas"></canvas>
+                            <div id="three-container" class="three-container hidden"></div>
+                            <div class="canvas-overlay" id="canvas-overlay">
+                                <span>Click Run to start simulation</span>
+                            </div>
+                        </div>
+                        <div class="sim-info">
+                            <div class="info-item">
+                                <span class="info-label">Time</span>
+                                <span class="info-value" id="sim-time">0.00 s</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Energy</span>
+                                <span class="info-value" id="sim-energy">0.00 J</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">FPS</span>
+                                <span class="info-value" id="sim-fps">60</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Energy Error</span>
+                                <span class="info-value" id="energy-error">0.00%</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="phase-wrapper">
-                        <canvas id="phase-canvas"></canvas>
+
+                    <!-- Phase Portrait -->
+                    <div class="phase-panel">
+                        <div class="panel-header">
+                            <div class="panel-title">
+                                <span class="file-icon">📊</span>
+                                Phase Portrait
+                            </div>
+                        </div>
+                        <div class="phase-wrapper">
+                            <canvas id="phase-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="action-bar">
+                        <button class="action-btn secondary" id="share-btn">
+                            <span>🔗</span> Share
+                        </button>
+                        <button class="action-btn secondary" id="download-csv-btn">
+                            <span>📊</span> CSV
+                        </button>
+                        <button class="action-btn secondary" id="download-gif-btn">
+                            <span>🎬</span> GIF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Examples Gallery -->
+        <section id="examples" class="examples-section">
+            <div class="section-header">
+                <h2>Example Gallery</h2>
+                <p>Click any example to load it into the playground</p>
+            </div>
+
+            <div class="examples-grid">
+                <div class="example-card" data-example="pendulum">
+                    <div class="example-preview" id="preview-pendulum"></div>
+                    <div class="example-info">
+                        <h3>Simple Pendulum</h3>
+                        <p>Classic harmonic motion</p>
+                        <span class="difficulty easy">Beginner</span>
                     </div>
                 </div>
 
-                <!-- Action Buttons -->
-                <div class="action-bar">
-                    <button class="action-btn secondary" id="share-btn">
-                        <span>🔗</span> Share
-                    </button>
-                    <button class="action-btn secondary" id="download-csv-btn">
-                        <span>📊</span> CSV
-                    </button>
-                    <button class="action-btn secondary" id="download-gif-btn">
-                        <span>🎬</span> GIF
-                    </button>
+                <div class="example-card active" data-example="double-pendulum">
+                    <div class="example-preview" id="preview-double"></div>
+                    <div class="example-info">
+                        <h3>Double Pendulum</h3>
+                        <p>Chaotic dynamics</p>
+                        <span class="difficulty medium">Intermediate</span>
+                    </div>
+                </div>
+
+                <div class="example-card" data-example="spring">
+                    <div class="example-preview" id="preview-spring"></div>
+                    <div class="example-info">
+                        <h3>Spring Oscillator</h3>
+                        <p>Damped harmonic motion</p>
+                        <span class="difficulty easy">Beginner</span>
+                    </div>
+                </div>
+
+                <div class="example-card" data-example="orbital">
+                    <div class="example-preview" id="preview-orbital"></div>
+                    <div class="example-info">
+                        <h3>Orbital Mechanics</h3>
+                        <p>Kepler orbits</p>
+                        <span class="difficulty hard">Advanced</span>
+                    </div>
+                </div>
+
+                <div class="example-card" data-example="rigid-body">
+                    <div class="example-preview" id="preview-rigid"></div>
+                    <div class="example-info">
+                        <h3>Rigid Body</h3>
+                        <p>Quaternion dynamics</p>
+                        <span class="difficulty hard">Advanced</span>
+                    </div>
+                </div>
+
+                <div class="example-card" data-example="sph">
+                    <div class="example-preview" id="preview-sph"></div>
+                    <div class="example-info">
+                        <h3>Fluid (SPH)</h3>
+                        <p>Dam break simulation</p>
+                        <span class="difficulty hard">Advanced</span>
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Examples Gallery -->
-    <section id="examples" class="examples-section">
-        <div class="section-header">
-            <h2>Example Gallery</h2>
-            <p>Click any example to load it into the playground</p>
-        </div>
+        <!-- Features Section -->
+        <section id="features" class="features-section">
+            <div class="section-header">
+                <h2>Powerful Features</h2>
+                <p>Everything you need for computational mechanics</p>
+            </div>
 
-        <div class="examples-grid">
-            <div class="example-card" data-example="pendulum">
-                <div class="example-preview" id="preview-pendulum"></div>
-                <div class="example-info">
-                    <h3>Simple Pendulum</h3>
-                    <p>Classic harmonic motion</p>
-                    <span class="difficulty easy">Beginner</span>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📐</div>
+                    <h3>Symbolic Derivation</h3>
+                    <p>Automatic Euler-Lagrange and Hamilton's equations from your Lagrangian or Hamiltonian.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>GPU Acceleration</h3>
+                    <p>Generate CUDA kernels for massive parallelism. 50x speedup on particle simulations.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
+                    <h3>12 Backends</h3>
+                    <p>Export to C++, Python, Rust, Julia, MATLAB, Fortran, JavaScript, CUDA, OpenMP, WASM, and Arduino.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">💧</div>
+                    <h3>Fluid Dynamics</h3>
+                    <p>SPH implementation with viscosity, pressure, surface tension, and boundary conditions.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Quaternion Mechanics</h3>
+                    <p>Singularity-free rigid body dynamics for spacecraft, robotics, and games.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Visualization</h3>
+                    <p>Phase portraits, Poincaré sections, energy plots, and 3D animations.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🐳</div>
+                    <h3>Docker Ready</h3>
+                    <p>Production containers for CPU and GPU. Deploy to Kubernetes with docker-compose.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔌</div>
+                    <h3>Embedded Support</h3>
+                    <p>Run on Raspberry Pi and ARM devices. Generate Arduino code for hardware projects.</p>
                 </div>
             </div>
+        </section>
 
-            <div class="example-card active" data-example="double-pendulum">
-                <div class="example-preview" id="preview-double"></div>
-                <div class="example-info">
-                    <h3>Double Pendulum</h3>
-                    <p>Chaotic dynamics</p>
-                    <span class="difficulty medium">Intermediate</span>
-                </div>
+        <!-- Code Export Section -->
+        <section class="export-section">
+            <div class="section-header">
+                <h2>Export Anywhere</h2>
+                <p>Generate production-ready code for any platform</p>
             </div>
 
-            <div class="example-card" data-example="spring">
-                <div class="example-preview" id="preview-spring"></div>
-                <div class="example-info">
-                    <h3>Spring Oscillator</h3>
-                    <p>Damped harmonic motion</p>
-                    <span class="difficulty easy">Beginner</span>
-                </div>
+            <div class="export-tabs">
+                <button class="export-tab active" data-lang="cpp">C++</button>
+                <button class="export-tab" data-lang="python">Python</button>
+                <button class="export-tab" data-lang="cuda">CUDA</button>
+                <button class="export-tab" data-lang="rust">Rust</button>
+                <button class="export-tab" data-lang="julia">Julia</button>
             </div>
 
-            <div class="example-card" data-example="orbital">
-                <div class="example-preview" id="preview-orbital"></div>
-                <div class="example-info">
-                    <h3>Orbital Mechanics</h3>
-                    <p>Kepler orbits</p>
-                    <span class="difficulty hard">Advanced</span>
-                </div>
-            </div>
-
-            <div class="example-card" data-example="rigid-body">
-                <div class="example-preview" id="preview-rigid"></div>
-                <div class="example-info">
-                    <h3>Rigid Body</h3>
-                    <p>Quaternion dynamics</p>
-                    <span class="difficulty hard">Advanced</span>
-                </div>
-            </div>
-
-            <div class="example-card" data-example="sph">
-                <div class="example-preview" id="preview-sph"></div>
-                <div class="example-info">
-                    <h3>Fluid (SPH)</h3>
-                    <p>Dam break simulation</p>
-                    <span class="difficulty hard">Advanced</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section id="features" class="features-section">
-        <div class="section-header">
-            <h2>Powerful Features</h2>
-            <p>Everything you need for computational mechanics</p>
-        </div>
-
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon">📐</div>
-                <h3>Symbolic Derivation</h3>
-                <p>Automatic Euler-Lagrange and Hamilton's equations from your Lagrangian or Hamiltonian.</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">⚡</div>
-                <h3>GPU Acceleration</h3>
-                <p>Generate CUDA kernels for massive parallelism. 50x speedup on particle simulations.</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">🔄</div>
-                <h3>12 Backends</h3>
-                <p>Export to C++, Python, Rust, Julia, MATLAB, Fortran, JavaScript, CUDA, OpenMP, WASM, and Arduino.</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">💧</div>
-                <h3>Fluid Dynamics</h3>
-                <p>SPH implementation with viscosity, pressure, surface tension, and boundary conditions.</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">🎯</div>
-                <h3>Quaternion Mechanics</h3>
-                <p>Singularity-free rigid body dynamics for spacecraft, robotics, and games.</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">📊</div>
-                <h3>Visualization</h3>
-                <p>Phase portraits, Poincaré sections, energy plots, and 3D animations.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Code Export Section -->
-    <section class="export-section">
-        <div class="section-header">
-            <h2>Export Anywhere</h2>
-            <p>Generate production-ready code for any platform</p>
-        </div>
-
-        <div class="export-tabs">
-            <button class="export-tab active" data-lang="cpp">C++</button>
-            <button class="export-tab" data-lang="python">Python</button>
-            <button class="export-tab" data-lang="cuda">CUDA</button>
-            <button class="export-tab" data-lang="rust">Rust</button>
-            <button class="export-tab" data-lang="julia">Julia</button>
-        </div>
-
-        <div class="export-code">
-            <pre id="export-preview"><code>// Generated C++ code for simple pendulum
+            <div class="export-code">
+                <pre id="export-preview"><code>// Generated C++ code for simple pendulum
 #include &lt;cmath&gt;
 #include &lt;vector&gt;
 
@@ -377,72 +391,71 @@ void compute_derivatives(const double* y, double* dydt, double t) {
 void rk4_step(double* y, double t, double dt) {
     // ... RK4 integration
 }</code></pre>
-            <button class="copy-btn" id="copy-code">
-                <span>📋</span> Copy Code
-            </button>
-        </div>
-    </section>
+                <button class="copy-btn" id="copy-code">
+                    <span>📋</span> Copy Code
+                </button>
+            </div>
+        </section>
 
-    <!-- CTA Section -->
-    <section class="cta-section">
-        <div class="cta-content">
-            <h2>Ready to simulate physics?</h2>
-            <p>Install MechanicsDSL and start building simulations in minutes.</p>
-            <div class="install-command">
-                <code>pip install mechanicsdsl-core</code>
-                <button class="copy-btn" id="copy-install"></button>
+        <!-- CTA Section -->
+        <section class="cta-section">
+            <div class="cta-content">
+                <h2>Ready to simulate physics?</h2>
+                <p>Install MechanicsDSL and start building simulations in minutes.</p>
+                <div class="install-command">
+                    <code>pip install mechanicsdsl-core</code>
+                    <button class="copy-btn" id="copy-install"></button>
+                </div>
+                <div class="cta-buttons">
+                    <a href="https://github.com/MechanicsDSL/mechanicsdsl" class="btn btn-primary">View on GitHub</a>
+                    <a href="https://mechanicsdsl.readthedocs.io" class="btn btn-secondary">Documentation</a>
+                </div>
             </div>
-            <div class="cta-buttons">
-                <a href="https://github.com/MechanicsDSL/mechanicsdsl" class="btn btn-primary">View on GitHub</a>
-                <a href="https://mechanicsdsl.readthedocs.io" class="btn btn-secondary">Documentation</a>
-            </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-content">
-            <div class="footer-brand">
-                <span class="logo-icon">⚛️</span>
-                <span>MechanicsDSL</span>
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <span class="logo-icon">⚛️</span>
+                    <span>MechanicsDSL</span>
+                </div>
+                <div class="footer-links">
+                    <a href="https://github.com/MechanicsDSL/mechanicsdsl">GitHub</a>
+                    <a href="https://mechanicsdsl.readthedocs.io">Docs</a>
+                    <a href="https://github.com/MechanicsDSL/mechanicsdsl/issues">Issues</a>
+                </div>
+                <div class="footer-copyright">
+                    MIT License • Made with ❤️ for physics
+                </div>
             </div>
-            <div class="footer-links">
-                <a href="https://github.com/MechanicsDSL/mechanicsdsl">GitHub</a>
-                <a href="https://mechanicsdsl.readthedocs.io">Docs</a>
-                <a href="https://github.com/MechanicsDSL/mechanicsdsl/issues">Issues</a>
-            </div>
-            <div class="footer-copyright">
-                MIT License • Made with ❤️ for physics
-            </div>
-        </div>
-    </footer>
+        </footer>
 
-    <!-- Share Modal -->
-    <div class="modal" id="share-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Share Simulation</h3>
-                <button class="modal-close" id="close-modal">×</button>
-            </div>
-            <div class="modal-body">
-                <p>Copy this URL to share your simulation:</p>
-                <div class="share-url-container">
-                    <input type="text" id="share-url" readonly>
-                    <button class="copy-btn" id="copy-share-url">📋</button>
+        <!-- Share Modal -->
+        <div class="modal" id="share-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Share Simulation</h3>
+                    <button class="modal-close" id="close-modal">×</button>
+                </div>
+                <div class="modal-body">
+                    <p>Copy this URL to share your simulation:</p>
+                    <div class="share-url-container">
+                        <input type="text" id="share-url" readonly>
+                        <button class="copy-btn" id="copy-share-url">📋</button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Toast Container -->
-    <div id="toast-container"></div>
+        <!-- Toast Container -->
+        <div id="toast-container"></div>
 
-    <script src="./js/physics.js"></script>
-    <script src="./js/pyodide-bridge.js"></script>
-    <script src="./js/examples.js"></script>
-    <script src="./js/app.js"></script>
+        <script src="./js/physics.js"></script>
+        <script src="./js/pyodide-bridge.js"></script>
+        <script src="./js/examples.js"></script>
+        <script src="./js/app.js"></script>
 </body>
 
 
 </html>
-

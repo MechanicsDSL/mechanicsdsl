@@ -83,8 +83,13 @@ all = [
     "pygls>=1.0.0",
 ]
 
+[project.scripts]
+mechanicsdsl = "mechanics_dsl.cli:main"
+
 [project.urls]
 "Repository" = "https://github.com/MechanicsDSL/mechanicsdsl"
+"Documentation" = "https://mechanicsdsl.readthedocs.io"
+"Bug Tracker" = "https://github.com/MechanicsDSL/mechanicsdsl/issues"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -103,6 +108,15 @@ markers = [
 filterwarnings = [
     "ignore::DeprecationWarning",
     "ignore::PendingDeprecationWarning",
+]
+
+[tool.coverage.run]
+omit = [
+    "*/jupyter/*",
+    "*/lsp/*",
+    "*/server/*",
+    "*/protocols.py",
+    "*/validators.py",
 ]
 
 [tool.black]

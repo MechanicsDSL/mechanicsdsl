@@ -71,9 +71,30 @@ docker pull ghcr.io/mechanicsdsl/mechanicsdsl:gpu
 docker run --gpus all -it ghcr.io/mechanicsdsl/mechanicsdsl:gpu
 ```
 
-**Requirements:** Python 3.8+ with NumPy, SciPy, SymPy, and Matplotlib (installed automatically).
+**Requirements:** Python 3.9+ with NumPy, SciPy, SymPy, and Matplotlib (installed automatically).
 
-**Requirements:** Python 3.8+ with NumPy, SciPy, SymPy, and Matplotlib (installed automatically).
+---
+
+## 🚀 What's New in v2.0.0
+
+**Released January 17, 2026** — Now deployed in **19 countries** across enterprise, research, and embedded platforms.
+
+### Enterprise Deployment
+- **Docker Support** — Production-ready multi-stage containers for CPU and GPU
+- **docker-compose** — API server, Jupyter, and worker service orchestration
+- **Kubernetes Ready** — Enterprise deployment guide with security best practices
+
+### ARM & Embedded Platforms
+- **Raspberry Pi Examples** — Real-time pendulum simulation with C++ export
+- **IMU Integration** — MPU6050 sensor fusion examples
+- **ARM Optimization** — NEON detection and cross-compilation support
+
+### Enhanced Code Generation
+- **C++ CMake Projects** — `generate_cmake()` and `generate_project()` methods
+- **Rust Cargo Projects** — Full project scaffolding with `no_std` embedded option
+- **11 Target Platforms** — C++, CUDA, Rust, Julia, Fortran, MATLAB, JavaScript, WebAssembly, Python, Arduino, OpenMP
+
+📖 See [RELEASE_NOTES_v2.0.0.md](RELEASE_NOTES_v2.0.0.md) for full details.
 
 ---
 
