@@ -22,7 +22,7 @@ from .base import (
     SolverPlugin,
     VisualizationPlugin,
 )
-from .registry import PluginRegistry, PluginType
+from .registry import PluginRegistry, PluginType, registry as default_registry
 
 logger = logging.getLogger("MechanicsDSL")
 
@@ -65,9 +65,9 @@ class PluginLoader:
         Initialize loader.
 
         Args:
-            registry: Plugin registry to load into. Uses global registry if None.
+            registry: Plugin registry to load into. Uses default global registry if None.
         """
-        self._registry = registry or globals()["registry"]
+        self._registry = registry or default_registry
         self._loaded_sources: List[str] = []
 
     def load_entry_points(self) -> Dict[PluginType, List[str]]:
