@@ -240,6 +240,17 @@ class TestSystemSerializerPrepareForJson:
 
         assert result == data
 
+    def test_prepare_object_with_dict(self):
+        """Test that objects with __dict__ are converted to str (SymPy, etc.)."""
+        class CustomObj:
+            def __init__(self):
+                self.x = 1
+
+        obj = CustomObj()
+        data = {"obj": obj}
+        result = SystemSerializer._prepare_for_json(data)
+        assert result["obj"] == str(obj)
+
 
 class TestSerializeSolution:
     """Tests for serialize_solution function."""

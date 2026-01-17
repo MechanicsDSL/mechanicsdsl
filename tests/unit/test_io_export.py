@@ -190,6 +190,16 @@ class TestCSVExporterExportTable:
         finally:
             os.unlink(temp_path)
 
+    def test_export_table_returns_false_on_error(self):
+        """Test that export_table returns False when data causes exception (e.g. empty dict)."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
+            temp_path = f.name
+        try:
+            result = CSVExporter.export_table({}, temp_path)
+            assert result is False
+        finally:
+            os.unlink(temp_path)
+
 
 class TestJSONExporterExportSolution:
     """Tests for JSONExporter.export_solution method."""
@@ -274,6 +284,22 @@ class TestJSONExporterExportSolution:
         finally:
             os.unlink(temp_path)
 
+    def test_export_solution_returns_false_on_error(self):
+        """Test that export_solution returns False when serialization fails (e.g. circular ref)."""
+        solution = {
+            "t": np.array([1.0]),
+            "y": np.array([[1.0]]),
+            "coordinates": ["x"],
+        }
+        solution["self"] = solution  # Circular reference
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            temp_path = f.name
+        try:
+            result = JSONExporter.export_solution(solution, temp_path)
+            assert result is False
+        finally:
+            os.unlink(temp_path)
+
 
 class TestJSONExporterExportParameters:
     """Tests for JSONExporter.export_parameters method."""
@@ -306,6 +332,16 @@ class TestJSONExporterExportParameters:
                 data = json.load(f)
                 assert data["m"] == 1.5
                 assert data["k"] == 10.0
+        finally:
+            os.unlink(temp_path)
+
+    def test_export_parameters_returns_false_on_error(self):
+        """Test that export_parameters returns False when json.dump fails (e.g. non-serializable)."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            temp_path = f.name
+        try:
+            result = JSONExporter.export_parameters({"k": object()}, temp_path)
+            assert result is False
         finally:
             os.unlink(temp_path)
 
