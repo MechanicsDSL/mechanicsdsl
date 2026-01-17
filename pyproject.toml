@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mechanicsdsl-core"
-version = "2.0.1"
+version = "2.0.5"
 description = "A Domain-Specific Language and Transpiler for Classical Mechanics"
 authors = [
   { name="Noah Parsons", email="nomapa223@gmail.com" },

@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import Optional, Tuple
 
 # Version info
-__version__ = "2.0.1"
+__version__ = "2.0.5"
 
 
 def parse_t_span(t_span_str: str) -> Tuple[float, float]:
@@ -374,6 +374,12 @@ Examples:
     # info command
     info_parser = subparsers.add_parser('info', help='Show version and system info')
     
+    # repl command
+    repl_parser = subparsers.add_parser('repl', help='Start interactive REPL')
+    
+    # presets command
+    presets_parser = subparsers.add_parser('presets', help='List available presets')
+    
     args = parser.parse_args()
     
     if args.command is None:
@@ -387,6 +393,8 @@ Examples:
         'export': cmd_export,
         'validate': cmd_validate,
         'info': cmd_info,
+        'repl': cmd_repl,
+        'presets': cmd_presets,
     }
     
     handler = commands.get(args.command)
@@ -400,6 +408,35 @@ Examples:
             return 1
     else:
         parser.print_help()
+        return 1
+
+
+def cmd_repl(args):
+    """Start interactive REPL."""
+    try:
+        from .repl import run_repl
+        run_repl()
+        return 0
+    except ImportError as e:
+        print(f"REPL not available: {e}", file=sys.stderr)
+        return 1
+
+
+def cmd_presets(args):
+    """List available presets."""
+    try:
+        from .presets import list_presets, PRESETS
+        print("Available presets:")
+        print()
+        for name in sorted(set(PRESETS.keys())):
+            # Get first line of preset as description
+            first_line = PRESETS[name].strip().split('\n')[0]
+            print(f"  {name:20s} {first_line}")
+        print()
+        print("Use: mechanicsdsl repl, then :preset <name>")
+        return 0
+    except ImportError as e:
+        print(f"Presets not available: {e}", file=sys.stderr)
         return 1
 
 

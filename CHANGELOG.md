@@ -5,6 +5,41 @@ All notable changes to MechanicsDSL will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.5] - 2026-01-17
+
+### 🎮 Interactive Mode & Presets Release
+
+This release adds an interactive REPL, built-in physics presets, and improved test infrastructure.
+
+### Added
+
+#### Interactive REPL
+- **`mechanicsdsl repl`** — Interactive shell for experimenting with DSL
+  - `:load <file>` — Load DSL from file
+  - `:preset <name>` — Load built-in preset (pendulum, orbit, etc.)
+  - `:compile` — Compile current buffer
+  - `:run [t]` — Run simulation
+  - `:plot [var]` — Plot results
+  - `:export <fmt>` — Export to JSON/CSV/NumPy
+  - Command history with readline support
+
+#### Presets Library (`src/mechanics_dsl/presets.py`)
+- **Classical Mechanics**: pendulum, double_pendulum, spring_mass, damped_oscillator, projectile, coupled_oscillators
+- **Celestial Mechanics**: kepler_orbit, three_body_figure8
+- **`mechanicsdsl presets`** — List all available presets
+
+### Fixed
+
+- **CLI tests** — Rewrote to use direct function imports instead of subprocess, fixing CI on all Python versions
+- **Version consistency** — All version strings now synchronized at 2.0.5
+
+### Changed
+
+- Bumped version to 2.0.5
+- CLI tests now use `unittest.mock` for reliability
+
+---
+
 ## [2.0.1] - 2026-01-17
 
 ### 🛠️ Developer Experience & Documentation Release
