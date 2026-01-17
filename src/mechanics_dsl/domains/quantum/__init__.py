@@ -12,9 +12,12 @@ This package provides tools for semiclassical quantum mechanics, including:
 All classes and functions are re-exported from the core module.
 """
 
-from .core import (
+# Import all symbols from core module
+try:
+    from .core import (
     HBAR,
     PLANCK_H,
+    DeltaFunctionBarrier,
     EhrenfestDynamics,
     EnergyLevel,
     FiniteSquareWell,
@@ -23,10 +26,20 @@ from .core import (
     QuantumHarmonicOscillator,
     QuantumState,
     QuantumTunneling,
+    StepPotential,
     WKBApproximation,
-)
+    alpha_decay_rate,
+    compton_wavelength,
+    de_broglie_wavelength,
+    heisenberg_minimum,
+    tunneling_probability_rectangular,
+    )
+except ImportError as e:
+    # Re-raise with more context
+    raise ImportError(f"Failed to import from quantum.core: {e}") from e
 
 __all__ = [
+    "DeltaFunctionBarrier",
     "EhrenfestDynamics",
     "EnergyLevel",
     "FiniteSquareWell",
@@ -37,5 +50,11 @@ __all__ = [
     "QuantumHarmonicOscillator",
     "QuantumState",
     "QuantumTunneling",
+    "StepPotential",
     "WKBApproximation",
+    "alpha_decay_rate",
+    "compton_wavelength",
+    "de_broglie_wavelength",
+    "heisenberg_minimum",
+    "tunneling_probability_rectangular",
 ]
