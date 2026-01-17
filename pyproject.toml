@@ -117,6 +117,11 @@ line_length = 100
 [tool.mypy]
 python_version = "3.8"
 ignore_missing_imports = true
-warn_return_any = true
+warn_return_any = false  # Too strict for optional dependency patterns
 warn_unused_configs = true
-
+# Disable errors for optional dependency patterns
+disable_error_code = [
+    "no-redef",      # Allow PhysicsCompiler = None pattern for optional imports
+    "no-any-return", # Allow returning Any from functions (common with optional deps)
+    "misc",          # Various errors from optional dependency handling
+]

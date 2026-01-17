@@ -6,7 +6,6 @@ Specialized tools for phase space and Poincaré section analysis.
 
 from typing import Tuple
 
-
 try:
     import matplotlib.pyplot as plt
 

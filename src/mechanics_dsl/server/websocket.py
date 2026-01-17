@@ -5,7 +5,6 @@ WebSocket streaming for real-time simulation.
 import asyncio
 from typing import Any, Dict
 
-
 try:
     from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 

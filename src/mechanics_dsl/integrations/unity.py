@@ -6,7 +6,6 @@ Generates C# MonoBehaviour scripts for Unity physics simulation.
 
 from typing import Optional
 
-
 try:
     from mechanics_dsl.codegen.base import CodeGenerator
 except ImportError:

@@ -16,7 +16,6 @@ from typing import Callable, Dict, List, Optional, Tuple
 import numpy as np
 from scipy import integrate
 
-
 # Physical constants (SI units)
 HBAR = 1.054571817e-34  # Reduced Planck constant (J·s)
 PLANCK_H = 6.62607015e-34  # Planck constant (J·s)

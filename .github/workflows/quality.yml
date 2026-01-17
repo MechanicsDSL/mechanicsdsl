@@ -84,11 +84,7 @@ jobs:
       
       - name: Run mypy
         run: |
-          mypy src/mechanics_dsl \
-            --ignore-missing-imports \
-            --no-strict-optional \
-            --show-error-codes \
-            --pretty
+          mypy src/mechanics_dsl --show-error-codes --pretty
 
   # Linting
   lint:
