@@ -24,7 +24,7 @@ class TestARMGenerator:
     def simple_pendulum(self):
         """Create a simple pendulum generator."""
         theta = sp.Symbol("theta")
-        theta_dot = sp.Symbol("theta_dot")
+        sp.Symbol("theta_dot")
         g, l = sp.symbols("g l")
 
         return ARMGenerator(

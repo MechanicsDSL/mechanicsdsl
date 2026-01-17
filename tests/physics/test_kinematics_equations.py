@@ -4,8 +4,6 @@ Tests for Kinematic Equations Module
 Comprehensive tests for the 5 kinematic equations and related utilities.
 """
 
-import math
-
 import numpy as np
 import pytest
 import sympy as sp
@@ -13,7 +11,6 @@ import sympy as sp
 from mechanics_dsl.domains.kinematics.equations import (
     KINEMATIC_SYMBOLS,
     EquationSelector,
-    KinematicEquation,
     KinematicEquations,
     format_equation_table,
     get_equation_by_name,

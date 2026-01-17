@@ -2,16 +2,13 @@
 Tests for Perturbation Theory Module
 """
 
-import numpy as np
 import pytest
 import sympy as sp
 
 from mechanics_dsl.domains.classical import (
-    AveragingMethod,
     MultiScaleAnalysis,
     PerturbationExpander,
     PerturbationResult,
-    PerturbationType,
     average_over_angle,
     perturbation_expand,
 )

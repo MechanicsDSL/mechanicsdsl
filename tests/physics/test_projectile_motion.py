@@ -14,14 +14,12 @@ import numpy as np
 import pytest
 
 from mechanics_dsl.domains.kinematics.projectile import (
-    DEFAULT_GRAVITY,
     ProjectileMotion,
     ProjectileParameters,
     ProjectileResult,
     SymbolicProjectile,
     analyze_projectile,
     max_range_angle,
-    optimal_angle_for_range,
 )
 
 

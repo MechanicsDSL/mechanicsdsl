@@ -2,14 +2,11 @@
 Tests for Non-Holonomic Constraints Module
 """
 
-import numpy as np
 import pytest
 import sympy as sp
 
 from mechanics_dsl.domains.classical import (
     AppellEquations,
-    ConstraintType,
-    MaggiEquations,
     NonholonomicConstraint,
     NonholonomicSystem,
     knife_edge_constraint,
@@ -67,7 +64,7 @@ class TestNonholonomicSystem:
         """Test adding knife-edge constraint."""
         system = NonholonomicSystem()
 
-        lam = system.add_knife_edge_constraint("x", "y", "theta")
+        system.add_knife_edge_constraint("x", "y", "theta")
 
         assert len(system._constraints) == 1
         constraint = system._constraints[0]

@@ -7,12 +7,10 @@ Validates:
 - Energy conservation for time-independent systems
 """
 
-import numpy as np
 import pytest
 import sympy as sp
 
 from mechanics_dsl.domains.classical import (
-    ConservedQuantity,
     NoetherAnalyzer,
     SymmetryType,
     detect_cyclic_coordinates,
@@ -60,7 +58,7 @@ class TestCyclicCoordinates:
         # Get symbols from the analyzer (this ensures consistency)
         m = sp.Symbol("m", positive=True)
         r = analyzer.get_symbol("r")
-        phi = analyzer.get_symbol("phi")
+        analyzer.get_symbol("phi")
         r_dot = analyzer.get_symbol("r_dot")
         phi_dot = analyzer.get_symbol("phi_dot")
         k = sp.Symbol("k", positive=True)

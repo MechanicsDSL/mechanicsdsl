@@ -4,7 +4,7 @@ Display utilities for Jupyter notebooks.
 Provides interactive visualizations of simulation results.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 
@@ -213,7 +213,7 @@ def display_energy_plot(
 
 
 def create_parameter_sliders(
-    compiler, param_names: Optional[List[str]] = None, on_change: Optional[callable] = None
+    compiler, param_names: Optional[List[str]] = None, on_change: Optional[Callable] = None
 ):
     """
     Create interactive parameter sliders.

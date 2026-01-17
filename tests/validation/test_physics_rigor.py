@@ -5,8 +5,6 @@ Tests mathematical correctness against analytical solutions and conservation law
 Every test includes the physics derivation as documentation.
 """
 
-from typing import Dict, Tuple
-
 import numpy as np
 import pytest
 

@@ -3,7 +3,6 @@ Comprehensive tests for Thermodynamics domain.
 """
 
 import numpy as np
-import pytest
 
 
 class TestCarnotEngine:

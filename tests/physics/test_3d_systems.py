@@ -130,7 +130,7 @@ class TestRigidBody3D:
         # All angles should evolve
         theta = solution["y"][0]
         phi = solution["y"][2]
-        psi = solution["y"][4]
+        solution["y"][4]
 
         assert np.max(np.abs(theta)) > 0.01
         assert np.max(np.abs(phi)) > 0.01

@@ -135,7 +135,7 @@ class TestPlotterPlotEnergy:
     def test_plot_energy(self, oscillator_solution):
         plotter = Plotter()
 
-        t = oscillator_solution["t"]
+        oscillator_solution["t"]
         kinetic = 0.5 * (oscillator_solution["y"][1]) ** 2
         potential = 0.5 * (oscillator_solution["y"][0]) ** 2
 

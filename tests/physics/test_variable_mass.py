@@ -8,7 +8,6 @@ import pytest
 from mechanics_dsl.domains.classical import (
     RocketEquation,
     RocketParameters,
-    RocketState,
     SymbolicVariableMass,
     VariableMassSystem,
     required_mass_ratio,

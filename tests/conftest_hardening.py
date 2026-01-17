@@ -11,7 +11,7 @@ import sys
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Dict, Generator, Optional
+from typing import Any, Dict, Generator
 
 import numpy as np
 import pytest

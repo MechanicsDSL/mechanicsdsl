@@ -8,12 +8,10 @@ Validates:
 - Point and exchange transformations
 """
 
-import numpy as np
 import pytest
 import sympy as sp
 
 from mechanics_dsl.domains.classical import (
-    ActionAngleVariables,
     CanonicalTransformation,
     GeneratingFunction,
     GeneratingFunctionType,

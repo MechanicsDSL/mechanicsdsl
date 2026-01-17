@@ -7,7 +7,6 @@ Validates:
 - Energy loss in damped systems
 """
 
-import numpy as np
 import pytest
 import sympy as sp
 
@@ -15,7 +14,6 @@ from mechanics_dsl.domains.classical import (
     DissipativeLagrangianMechanics,
     FrictionModel,
     FrictionType,
-    GeneralizedForce,
     RayleighDissipation,
 )
 
@@ -180,7 +178,6 @@ class TestEnergyDissipation:
 
     def test_damped_oscillator_energy_loss(self):
         """Verify energy decreases monotonically in damped oscillator."""
-        from mechanics_dsl import PhysicsCompiler
 
         dsl_code = r"""
         \system{damped_oscillator}

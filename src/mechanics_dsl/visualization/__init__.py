@@ -27,16 +27,23 @@ if os.path.exists(_viz_module_path):
     import importlib.util
 
     _spec = importlib.util.spec_from_file_location(_MODULE_NAME, _viz_module_path)
-    _viz_module = importlib.util.module_from_spec(_spec)
-    # Register in sys.modules BEFORE loading so relative imports work
-    _viz_module.__package__ = "mechanics_dsl"
-    sys.modules[_MODULE_NAME] = _viz_module
-    try:
-        _spec.loader.exec_module(_viz_module)
-        MechanicsVisualizer = _viz_module.MechanicsVisualizer
-    except Exception:
-        # Fallback: create a stub that redirects to Animator
-        class MechanicsVisualizer(Animator):
+    if _spec is not None:
+        _viz_module = importlib.util.module_from_spec(_spec)
+        # Register in sys.modules BEFORE loading so relative imports work
+        _viz_module.__package__ = "mechanics_dsl"
+        sys.modules[_MODULE_NAME] = _viz_module
+        try:
+            if _spec.loader is not None:
+                _spec.loader.exec_module(_viz_module)
+            MechanicsVisualizer = _viz_module.MechanicsVisualizer
+        except Exception:
+            # Fallback: create a stub that redirects to Animator
+            class MechanicsVisualizer(Animator):  # type: ignore[no-redef]
+                """Backward-compatible wrapper for MechanicsVisualizer."""
+
+    else:
+        # Fallback: create a stub
+        class MechanicsVisualizer(Animator):  # type: ignore[no-redef]
             """Backward-compatible wrapper for MechanicsVisualizer."""
 
 else:

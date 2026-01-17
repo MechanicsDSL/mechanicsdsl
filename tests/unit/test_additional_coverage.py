@@ -168,7 +168,6 @@ class TestSolverCoreCoverage:
 
     def test_simulator_hamiltonian_mode(self):
         """Test simulator with Hamiltonian mode"""
-        import sympy as sp
 
         from mechanics_dsl.solver.core import NumericalSimulator
         from mechanics_dsl.symbolic import SymbolicEngine
@@ -258,7 +257,7 @@ class TestSymbolicEngineCoverage:
             pytest.skip("compute_momentum method not implemented")
 
         m = sp.Symbol("m")
-        x = engine.get_symbol("x")
+        engine.get_symbol("x")
         x_dot = engine.get_symbol("x_dot")
 
         L = sp.Rational(1, 2) * m * x_dot**2
@@ -343,7 +342,7 @@ class TestProfilingModule:
         monitor.snapshot_memory("before")
 
         # Allocate some memory
-        data = [i for i in range(10000)]
+        [i for i in range(10000)]
 
         monitor.snapshot_memory("after")
         assert True  # Just test it doesn't crash
@@ -370,7 +369,6 @@ class TestPathValidationModule:
 
     def test_safe_path_join(self):
         """Test safe_path_join function"""
-        import os
 
         from mechanics_dsl.utils.path_validation import safe_path_join
 
@@ -379,7 +377,6 @@ class TestPathValidationModule:
 
     def test_validate_path_within_base(self):
         """Test validate_path_within_base function"""
-        import os
         import tempfile
 
         from mechanics_dsl.utils.path_validation import validate_path_within_base

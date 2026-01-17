@@ -3,7 +3,6 @@ Comprehensive tests for enhanced electromagnetic domain.
 """
 
 import numpy as np
-import pytest
 
 
 class TestElectromagneticWave:

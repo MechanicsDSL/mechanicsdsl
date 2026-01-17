@@ -3,7 +3,6 @@ Comprehensive tests for Statistical Mechanics domain.
 """
 
 import numpy as np
-import pytest
 
 
 class TestBoltzmannDistribution:
@@ -71,7 +70,7 @@ class TestIdealGas:
 
     def test_ideal_gas_law(self):
         """PV = nRT."""
-        from mechanics_dsl.domains.statistical import GAS_CONSTANT, IdealGas
+        from mechanics_dsl.domains.statistical import IdealGas
 
         gas = IdealGas(n_moles=1.0, temperature=273.15, volume=0.0224)
         P = gas.pressure()

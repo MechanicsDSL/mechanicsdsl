@@ -3,7 +3,6 @@ Tests for quantum tunneling implementations.
 """
 
 import numpy as np
-import pytest
 
 
 class TestQuantumTunneling:

@@ -4,9 +4,7 @@ Extended unit tests for the compiler module.
 Tests the PhysicsCompiler class with more coverage.
 """
 
-import numpy as np
 import pytest
-import sympy as sp
 
 from mechanics_dsl.compiler import PhysicsCompiler
 
@@ -55,7 +53,7 @@ class TestCompileMethod:
 
     def test_compile_empty_code(self, compiler):
         try:
-            result = compiler.compile("")
+            compiler.compile("")
         except Exception:
             pass
 

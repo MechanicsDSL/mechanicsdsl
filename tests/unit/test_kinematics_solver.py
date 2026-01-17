@@ -4,16 +4,12 @@ Tests for Kinematics Solver Module
 Comprehensive unit tests for the analytical kinematics solver.
 """
 
-import math
-
 import numpy as np
 import pytest
 
 from mechanics_dsl.domains.kinematics.solver import (
-    KinematicSolution,
     KinematicsSolver,
     KinematicState,
-    SolutionStep,
     SymbolicKinematicsSolver,
     solve_kinematics,
     verify_kinematics,
@@ -264,7 +260,6 @@ class TestSymbolicKinematicsSolver:
         formula = solver.derive_formula("x", knowns=["x0", "v0", "a", "t"])
 
         # Should be x = x0 + v0*t + 0.5*a*t²
-        import sympy as sp
 
         assert formula is not None
 

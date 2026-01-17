@@ -3,7 +3,6 @@ Additional solver and symbolic coverage tests
 """
 
 import numpy as np
-import pytest
 import sympy as sp
 
 from mechanics_dsl.solver.core import NumericalSimulator
@@ -67,9 +66,9 @@ class TestSymbolicEngineCoverage:
         """Test deriving EOM for coupled coordinates"""
         engine = SymbolicEngine()
         m, g = sp.symbols("m g")
-        theta1 = engine.get_symbol("theta1")
+        engine.get_symbol("theta1")
         theta1_dot = engine.get_symbol("theta1_dot")
-        theta2 = engine.get_symbol("theta2")
+        engine.get_symbol("theta2")
         theta2_dot = engine.get_symbol("theta2_dot")
 
         L = sp.Rational(1, 2) * m * (theta1_dot**2 + theta2_dot**2)
@@ -140,7 +139,7 @@ class TestNumericalSimulatorCoverage:
 
         m, k = sp.symbols("m k")
         x = engine.get_symbol("x")
-        x_dot = engine.get_symbol("x_dot")
+        engine.get_symbol("x_dot")
 
         accels = {"x_ddot": -k / m * x}
         sim.compile_equations(accels, ["x"])

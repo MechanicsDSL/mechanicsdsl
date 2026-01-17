@@ -2,8 +2,6 @@
 Additional parser coverage tests for core.py
 """
 
-import pytest
-
 from mechanics_dsl.parser import MechanicsParser, tokenize
 from mechanics_dsl.parser.ast_nodes import *
 
@@ -130,7 +128,7 @@ class TestParserEdgeCases:
         tokens = tokenize(r"\system{test}\lagrangian{")
         parser = MechanicsParser(tokens)
         try:
-            ast = parser.parse()
+            parser.parse()
         except Exception:
             pass  # Expected to fail
 

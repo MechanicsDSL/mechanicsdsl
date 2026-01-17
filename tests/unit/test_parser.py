@@ -4,20 +4,15 @@ Unit tests for MechanicsDSL parser module.
 Tests the tokenizer, AST nodes, and parser functionality.
 """
 
-import pytest
-
 from mechanics_dsl.parser import (
     BinaryOpExpr,
-    ConstraintDef,
     DerivativeVarExpr,
     GreekLetterExpr,
     IdentExpr,
     MechanicsParser,
     NumberExpr,
-    SystemDef,
     Token,
     UnaryOpExpr,
-    VarDef,
     VectorExpr,
     tokenize,
 )

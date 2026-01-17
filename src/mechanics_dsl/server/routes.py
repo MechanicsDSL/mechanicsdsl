@@ -25,7 +25,7 @@ except ImportError:
 try:
     from ..utils.rate_limit import SimulationRateLimiter
 
-    rate_limiter = SimulationRateLimiter(simulations_per_minute=60, burst_limit=10)
+    rate_limiter: Optional[Any] = SimulationRateLimiter(simulations_per_minute=60, burst_limit=10)
 except ImportError:
     rate_limiter = None
 

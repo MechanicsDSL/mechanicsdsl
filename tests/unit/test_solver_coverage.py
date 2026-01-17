@@ -9,8 +9,6 @@ Tests NumericalSimulator methods including:
 - simulate with various inputs and error conditions
 """
 
-from unittest.mock import MagicMock, patch
-
 import numpy as np
 import pytest
 import sympy as sp

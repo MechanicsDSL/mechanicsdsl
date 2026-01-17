@@ -8,7 +8,6 @@ Or without pytest-benchmark: pytest tests/performance/test_benchmarks.py -v
 import time
 
 import numpy as np
-import pytest
 
 
 class TestPhysicsBenchmarks:
@@ -114,7 +113,7 @@ class TestPhysicsBenchmarks:
 
         start = time.perf_counter()
         for v in np.linspace(0.1, 0.99, 100):
-            g = gamma(v * 299792458)
+            gamma(v * 299792458)
             vec = FourVector(ct=1.0, x=1.0, y=0.0, z=0.0)
             _ = vec.invariant()
         elapsed = time.perf_counter() - start

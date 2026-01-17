@@ -6,7 +6,6 @@ and quantum tunneling with rigorous physics verification.
 """
 
 import numpy as np
-import pytest
 
 
 class TestFiniteSquareWell:

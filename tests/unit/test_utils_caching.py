@@ -4,10 +4,7 @@ Unit tests for MechanicsDSL utils/caching module.
 Tests the LRUCache class for caching functionality.
 """
 
-import sys
-
 import numpy as np
-import pytest
 import sympy as sp
 
 from mechanics_dsl.utils.caching import LRUCache

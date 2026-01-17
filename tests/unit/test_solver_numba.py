@@ -8,8 +8,6 @@ Validates:
 - Graceful fallback when Numba unavailable
 """
 
-import time
-
 import numpy as np
 import pytest
 import sympy as sp

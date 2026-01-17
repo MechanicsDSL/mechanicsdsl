@@ -8,7 +8,6 @@ Validates:
 - Conserved quantities (angular momentum)
 """
 
-import numpy as np
 import pytest
 import sympy as sp
 

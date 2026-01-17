@@ -10,7 +10,7 @@ import pytest
 matplotlib.use("Agg")  # Use non-interactive backend for testing
 import os
 import tempfile
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
@@ -297,7 +297,7 @@ class TestMechanicsVisualizer:
     def test_animate_pendulum(self, visualizer, basic_solution, cleanup_plots):
         """Test pendulum animation using correct API with parameters dict"""
         parameters = {"l": 1.0, "m": 1.0, "g": 9.81}
-        anim = visualizer.animate_pendulum(basic_solution, parameters)
+        visualizer.animate_pendulum(basic_solution, parameters)
         # Animation may be None if simulation data doesn't match expectations
         # but it shouldn't raise an error
 

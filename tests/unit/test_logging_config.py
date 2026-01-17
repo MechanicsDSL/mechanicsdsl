@@ -5,7 +5,6 @@ Tests for Logging Configuration Module
 
 import json
 import logging
-from io import StringIO
 
 import pytest
 
@@ -17,9 +16,7 @@ from mechanics_dsl.logging_config import (
     correlation_context,
     get_correlation_id,
     get_logger,
-    log_metrics,
     log_operation,
-    log_security_event,
     set_correlation_id,
 )
 

@@ -15,7 +15,6 @@ import sympy as sp
 from mechanics_dsl.domains.classical import (
     CoupledOscillatorSystem,
     ModalAnalysisResult,
-    NormalMode,
     NormalModeAnalyzer,
     compute_normal_modes,
     extract_mass_matrix,

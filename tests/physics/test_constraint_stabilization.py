@@ -7,7 +7,6 @@ Validates:
 - ConstrainedLagrangianSystem
 """
 
-import numpy as np
 import pytest
 import sympy as sp
 

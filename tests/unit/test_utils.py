@@ -3,11 +3,8 @@ Comprehensive tests for utils.py
 """
 
 import os
-import platform
-import sys
 import tempfile
 import time
-from pathlib import Path
 
 import numpy as np
 import pytest
@@ -17,15 +14,12 @@ from mechanics_dsl.utils import (
     Config,
     LRUCache,
     PerformanceMonitor,
-    TimeoutError,
     config,
-    logger,
     profile_function,
     resource_manager,
     runtime_type_check,
     safe_array_access,
     safe_float_conversion,
-    setup_logging,
     timeout,
     validate_array_safe,
     validate_file_path,

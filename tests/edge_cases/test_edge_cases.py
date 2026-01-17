@@ -5,7 +5,6 @@ Edge Case Tests
 Tests for boundary conditions, corner cases, and unusual inputs.
 """
 
-import math
 import os
 import sys
 import tempfile

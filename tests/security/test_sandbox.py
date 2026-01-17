@@ -16,7 +16,6 @@ from mechanics_dsl.security import (
     ResourceLimitError,
     Sandbox,
     SandboxConfig,
-    SandboxViolationError,
     sandboxed,
 )
 

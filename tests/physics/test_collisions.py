@@ -6,10 +6,7 @@ import numpy as np
 import pytest
 
 from mechanics_dsl.domains.classical import (
-    CollisionResult,
     CollisionSolver,
-    CollisionType,
-    ImpulseCalculator,
     Particle,
     SymbolicCollisionSolver,
     elastic_collision_1d,

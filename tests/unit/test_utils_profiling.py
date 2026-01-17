@@ -4,10 +4,8 @@ Unit tests for MechanicsDSL utils/profiling module.
 Tests the PerformanceMonitor class and profiling utilities.
 """
 
-import platform
 import time
 
-import numpy as np
 import pytest
 
 from mechanics_dsl.utils.profiling import (

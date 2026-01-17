@@ -4,9 +4,6 @@ Extended unit tests for MechanicsDSL parser module.
 Tests tokenization and parser AST nodes.
 """
 
-import numpy as np
-import pytest
-
 from mechanics_dsl.parser import (
     BinaryOpExpr,
     DerivativeVarExpr,
@@ -54,7 +51,7 @@ class TestTokenize:
     def test_tokenize_operators(self):
         """Test tokenizing operators."""
         tokens = tokenize("+ - * / ^")
-        types = [t.type for t in tokens]
+        [t.type for t in tokens]
         # Just verify we get tokens for operators
         assert len(tokens) >= 3
 
@@ -99,7 +96,7 @@ class TestTokenize:
     def test_tokenize_trig(self):
         """Test tokenizing trig functions."""
         tokens = tokenize("\\sin \\cos")
-        types = [t.type for t in tokens]
+        [t.type for t in tokens]
         # Trig functions tokenized as FUNCTION
         assert len(tokens) > 0
 

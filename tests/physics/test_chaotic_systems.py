@@ -150,8 +150,8 @@ class TestRosslerAttractor:
 
         # Rössler attractor should show bounded chaotic motion
         x = solution["y"][0]
-        y = solution["y"][2]
-        z = solution["y"][4]
+        solution["y"][2]
+        solution["y"][4]
 
         # Check that at least initial portion is finite (chaotic systems can diverge)
         finite_count = np.sum(np.isfinite(x))

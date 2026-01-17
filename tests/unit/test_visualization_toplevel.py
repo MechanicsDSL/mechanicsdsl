@@ -12,7 +12,7 @@ import os
 import shutil
 import sys
 import tempfile
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import matplotlib
 import numpy as np
@@ -513,7 +513,7 @@ class TestAnimateDoublePendulumPrivate:
 
 # Check if pandas is available for fluid tests
 try:
-    import pandas as pd
+    pass
 
     HAS_PANDAS = True
 except ImportError:

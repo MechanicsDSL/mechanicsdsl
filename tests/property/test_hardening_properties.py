@@ -260,7 +260,7 @@ class TestEdgeCases:
         """Valid identifier patterns should be accepted."""
         import keyword
 
-        from mechanics_dsl.security import InputValidationError, validate_identifier
+        from mechanics_dsl.security import validate_identifier
 
         # Skip Python keywords
         if keyword.iskeyword(s):

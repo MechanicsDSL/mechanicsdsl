@@ -172,7 +172,7 @@ class TestCheckConservation:
         t = np.linspace(0, 10, 100)
 
         # Harmonic oscillator: T + V = constant
-        x = np.cos(t)
+        np.cos(t)
         kinetic = 0.5 * np.sin(t) ** 2
         potential = 0.5 * np.cos(t) ** 2
         # Total energy is constant = 0.5

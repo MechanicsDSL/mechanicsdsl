@@ -4,11 +4,9 @@ Unit tests for MechanicsDSL compiler module.
 Tests the PhysicsCompiler and SystemSerializer classes.
 """
 
-import json
 import os
 import tempfile
 
-import numpy as np
 import pytest
 
 from mechanics_dsl.compiler import PhysicsCompiler, SystemSerializer
@@ -316,5 +314,5 @@ class TestCleanup:
         \lagrangian{\frac{1}{2} * m * \dot{x}^2}
         \initial{x=1.0, x_dot=0.0}
         """
-        result = compiler.compile_dsl(dsl)
+        compiler.compile_dsl(dsl)
         compiler.cleanup()  # Should not raise

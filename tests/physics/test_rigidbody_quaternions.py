@@ -15,10 +15,8 @@ import sympy as sp
 
 from mechanics_dsl.domains.classical.rigidbody import (
     EulerAngles,
-    Gyroscope,
     Quaternion,
     RigidBodyDynamics,
-    SymmetricTop,
 )
 
 

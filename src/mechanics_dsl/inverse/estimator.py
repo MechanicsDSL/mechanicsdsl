@@ -6,7 +6,7 @@ Fit model parameters to observed data using optimization.
 
 import warnings
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from scipy.optimize import differential_evolution, minimize

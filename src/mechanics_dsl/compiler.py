@@ -60,7 +60,7 @@ try:
     SECURITY_AVAILABLE = True
 except ImportError:
     SECURITY_AVAILABLE = False
-    InjectionError = ValueError
+    InjectionError = ValueError  # type: ignore[misc]
 
 # Version imported from package root for single source of truth
 try:
@@ -409,7 +409,7 @@ class PhysicsCompiler:
 
                 if self.fluid_particles and self.lagrangian is None:
                     logger.info("Fluid system detected: Skipping symbolic derivation")
-                    equations = {}  # No symbolic equations needed for SPH
+                    equations: Any = {}  # No symbolic equations needed for SPH
                     self.use_hamiltonian_formulation = False
 
                 elif use_hamiltonian:

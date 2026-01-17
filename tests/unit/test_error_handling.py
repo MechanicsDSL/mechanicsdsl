@@ -3,9 +3,6 @@ Tests for Error Handling Module
 ==============================
 """
 
-import logging
-from unittest.mock import MagicMock
-
 import pytest
 
 from mechanics_dsl.error_handling import (
@@ -23,7 +20,6 @@ from mechanics_dsl.error_handling import (
     error_boundary,
     fallback,
     handle_errors,
-    report_error,
     retry,
 )
 

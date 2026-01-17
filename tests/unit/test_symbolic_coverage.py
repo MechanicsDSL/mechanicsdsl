@@ -10,8 +10,6 @@ Tests all SymbolicEngine methods including:
 - solve_for_accelerations
 """
 
-from unittest.mock import MagicMock, patch
-
 import pytest
 import sympy as sp
 
@@ -516,8 +514,8 @@ class TestDeriveHamiltonianEquations:
         assert p_dots[0] == -k * q
 
     def test_multiple_coordinates(self, engine):
-        q1 = engine.get_symbol("q1")
-        q2 = engine.get_symbol("q2")
+        engine.get_symbol("q1")
+        engine.get_symbol("q2")
         p_q1 = engine.get_symbol("p_q1")
         p_q2 = engine.get_symbol("p_q2")
         m = engine.get_symbol("m")
@@ -588,8 +586,8 @@ class TestSolveForAccelerations:
 
     def test_multiple_coordinates(self, engine):
         m = engine.get_symbol("m")
-        x = engine.get_symbol("x")
-        y = engine.get_symbol("y")
+        engine.get_symbol("x")
+        engine.get_symbol("y")
         x_ddot = engine.get_symbol("x_ddot")
         y_ddot = engine.get_symbol("y_ddot")
 
@@ -674,7 +672,7 @@ class TestTimeoutHandling:
         config.simplification_timeout = 0
 
         m = engine.get_symbol("m")
-        theta = engine.get_symbol("theta")
+        engine.get_symbol("theta")
         theta_dot = engine.get_symbol("theta_dot")
 
         L = sp.Rational(1, 2) * m * theta_dot**2

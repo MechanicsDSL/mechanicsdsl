@@ -6,13 +6,11 @@ Tests all code generation backends: C++, Python, Julia, Rust, MATLAB, Fortran, J
 
 import os
 import tempfile
-from pathlib import Path
 
 import pytest
 
 from mechanics_dsl.codegen import (
     CodeGenerator,
-    CppGenerator,
     FortranGenerator,
     JavaScriptGenerator,
     JuliaGenerator,

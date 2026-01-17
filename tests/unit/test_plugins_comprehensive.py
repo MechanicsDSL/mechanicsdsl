@@ -4,7 +4,7 @@ Comprehensive tests for plugins system with mocking.
 
 import os
 import tempfile
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -404,7 +404,7 @@ class TestPluginRegistry:
 
     def test_registry_list_all(self):
         """Test listing all plugins"""
-        from mechanics_dsl.plugins.registry import PluginRegistry, PluginType
+        from mechanics_dsl.plugins.registry import PluginRegistry
 
         registry = PluginRegistry()
         registry.clear()
@@ -478,7 +478,7 @@ class TestPluginLoader:
 
     def test_classify_plugin(self):
         """Test plugin classification"""
-        from mechanics_dsl.plugins.base import CodeGeneratorPlugin, PhysicsDomainPlugin
+        from mechanics_dsl.plugins.base import PhysicsDomainPlugin
         from mechanics_dsl.plugins.loader import PluginLoader
         from mechanics_dsl.plugins.registry import PluginType
 

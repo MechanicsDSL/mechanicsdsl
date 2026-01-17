@@ -234,7 +234,7 @@ class TestCodegenIntegration:
 
     def test_all_generators_produce_output(self):
         """Test that all generators successfully produce files."""
-        from mechanics_dsl.codegen import ARMGenerator, CppGenerator, CudaGenerator, RustGenerator
+        from mechanics_dsl.codegen import ARMGenerator, CppGenerator, RustGenerator
 
         theta = sp.Symbol("theta")
         g, l = sp.symbols("g l")

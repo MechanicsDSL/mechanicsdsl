@@ -7,10 +7,8 @@ import pytest
 import sympy as sp
 
 from mechanics_dsl.domains.classical import (
-    FieldConfiguration,
     FieldEulerLagrange,
     LagrangianDensity,
-    StressEnergyTensor,
     VibratingMembrane,
     VibratingString,
     WaveMode,
@@ -154,7 +152,7 @@ class TestVibratingMembrane:
         """Test membrane mode frequencies."""
         membrane = VibratingMembrane(length_x=1.0, length_y=1.0, wave_speed=100.0)
 
-        f11 = membrane.mode_frequency(1, 1)
+        membrane.mode_frequency(1, 1)
         f12 = membrane.mode_frequency(1, 2)
         f21 = membrane.mode_frequency(2, 1)
 

@@ -3,7 +3,6 @@ Comprehensive tests for General Relativity domain.
 """
 
 import numpy as np
-import pytest
 
 
 class TestSchwarzschildMetric:

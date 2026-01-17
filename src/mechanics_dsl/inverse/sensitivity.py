@@ -272,7 +272,7 @@ class SensitivityAnalyzer:
             def output_fn(result):
                 return np.sqrt(np.mean(result["y"][0] ** 2))
 
-        effects = {name: [] for name in param_names}
+        effects: Dict[str, List[float]] = {name: [] for name in param_names}
 
         for _ in range(n_trajectories):
             # Random starting point

@@ -2,8 +2,6 @@
 Tests for symplectic and variational integrators
 """
 
-from unittest.mock import Mock
-
 import numpy as np
 import pytest
 
@@ -18,9 +16,7 @@ class TestSymplecticIntegrators:
             McLachlan4,
             Ruth3,
             StormerVerlet,
-            SymplecticIntegrator,
             Yoshida4,
-            get_symplectic_integrator,
         )
 
         assert StormerVerlet is not None
@@ -240,8 +236,6 @@ class TestVariationalIntegrators:
             GalerkinVariational,
             MidpointVariational,
             TrapezoidalVariational,
-            VariationalIntegrator,
-            get_variational_integrator,
         )
 
         assert MidpointVariational is not None

@@ -16,9 +16,7 @@ from mechanics_dsl.domains.classical import (
     CentralForceAnalyzer,
     EffectivePotential,
     KeplerProblem,
-    OrbitalElements,
     OrbitType,
-    TurningPoints,
 )
 
 

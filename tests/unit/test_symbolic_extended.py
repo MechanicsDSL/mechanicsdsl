@@ -5,7 +5,6 @@ Tests the SymbolicEngine class with more coverage for edge cases
 and different symbolic computation scenarios.
 """
 
-import numpy as np
 import pytest
 import sympy as sp
 

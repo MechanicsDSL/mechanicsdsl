@@ -3,7 +3,6 @@ Comprehensive tests for enhanced relativistic domain.
 """
 
 import numpy as np
-import pytest
 
 
 class TestSynchrotronRadiation:
@@ -49,7 +48,6 @@ class TestThomasPrecession:
         from mechanics_dsl.domains.relativistic import ThomasPrecession
 
         thomas = ThomasPrecession()
-        c = 299792458.0
 
         omega_T = thomas.precession_frequency(v=1000, a=10, theta_av=np.pi / 2)
 

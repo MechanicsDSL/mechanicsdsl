@@ -14,7 +14,6 @@ import sympy as sp
 from mechanics_dsl.domains.classical import (
     EquilibriumPoint,
     StabilityAnalyzer,
-    StabilityResult,
     StabilityType,
     analyze_stability,
     find_equilibria,
