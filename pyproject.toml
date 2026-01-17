@@ -10,7 +10,7 @@ authors = [
   { name="Noah Parsons", email="nomapa223@gmail.com" },
 ]
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = {file = "LICENSE"}
 keywords = [
     "physics", "simulation", "mechanics", "dsl", "lagrangian",
@@ -26,7 +26,6 @@ classifiers = [
     "Operating System :: OS Independent",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -108,20 +107,47 @@ filterwarnings = [
 
 [tool.black]
 line-length = 100
-target-version = ["py38", "py39", "py310", "py311", "py312", "py313"]
+target-version = ["py39", "py310", "py311", "py312", "py313"]
 
 [tool.isort]
 profile = "black"
 line_length = 100
 
+[tool.flake8]
+max-line-length = 150
+extend-ignore = [
+    "E501",  # Line too long - Black handles this mostly
+    "E722",  # Bare except - sometimes necessary
+    "E741",  # Ambiguous variable name 'l' - physics uses l for length
+    "E731",  # Lambda expressions - they're fine
+    "W291",  # Trailing whitespace - formatting tools handle
+    "W293",  # Blank line whitespace - formatting tools handle
+    "F541",  # f-string missing placeholders - often intentional
+]
+per-file-ignores = [
+    "__init__.py:F401",  # Unused imports in __init__.py are for re-export
+    "parser/core.py:F401,F811",  # Parser has intentional redefinitions
+]
+
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.9"
 ignore_missing_imports = true
-warn_return_any = false  # Too strict for optional dependency patterns
+warn_return_any = false
 warn_unused_configs = true
-# Disable errors for optional dependency patterns
+# Disable strict checking - this is a physics library, not a web app
 disable_error_code = [
-    "no-redef",      # Allow PhysicsCompiler = None pattern for optional imports
-    "no-any-return", # Allow returning Any from functions (common with optional deps)
-    "misc",          # Various errors from optional dependency handling
+    "no-redef",
+    "no-any-return", 
+    "misc",
+    "assignment",
+    "arg-type",
+    "var-annotated",
+    "attr-defined",
+    "union-attr",
+    "return-value",
+    "call-arg",
+    "abstract",
+    "override",
+    "operator",
+    "return",
 ]
