@@ -514,6 +514,7 @@ class TestAnimateDoublePendulumPrivate:
 # Check if pandas is available for fluid tests
 try:
     import pandas
+
     HAS_PANDAS = True
 except ImportError:
     HAS_PANDAS = False

@@ -53,7 +53,10 @@ class TestLoadEntryPointsPython39Fallback:
                 raise TypeError("entry_points() got an unexpected keyword argument 'group'")
             return {}
 
-        with patch("mechanics_dsl.plugins.loader.importlib.metadata.entry_points", side_effect=mock_entry_points):
+        with patch(
+            "mechanics_dsl.plugins.loader.importlib.metadata.entry_points",
+            side_effect=mock_entry_points,
+        ):
             loader = PluginLoader(registry=custom_registry)
             loaded = loader.load_entry_points()
             assert isinstance(loaded, dict)
@@ -110,7 +113,8 @@ class TestLoadFile:
 
     def test_load_file_with_plugin_class(self, custom_registry):
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            f.write("""
+            f.write(
+                """
 from mechanics_dsl.plugins.base import PhysicsDomainPlugin
 
 class TestDomainPlugin(PhysicsDomainPlugin):
@@ -121,7 +125,8 @@ class TestDomainPlugin(PhysicsDomainPlugin):
 
     def get_domain_class(self):
         return None
-""")
+"""
+            )
             f.flush()
             path = f.name
         try:
@@ -153,7 +158,8 @@ class TestClassifyPlugin:
 
     def test_classify_physics_domain(self, custom_registry):
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            f.write("""
+            f.write(
+                """
 from mechanics_dsl.plugins.base import PhysicsDomainPlugin
 
 class MyDomain(PhysicsDomainPlugin):
@@ -162,7 +168,8 @@ class MyDomain(PhysicsDomainPlugin):
         from mechanics_dsl.plugins.base import PluginMetadata
         return PluginMetadata(name="mydomain", version="0.1")
     def get_domain_class(self): return None
-""")
+"""
+            )
             f.flush()
             path = f.name
         try:

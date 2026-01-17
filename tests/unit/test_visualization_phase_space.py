@@ -24,10 +24,12 @@ def solution_1d():
     """Solution with one coordinate (x, x_dot)."""
     return {
         "t": np.linspace(0, 10, 100),
-        "y": np.vstack([
-            np.cos(np.linspace(0, 10, 100)),
-            -np.sin(np.linspace(0, 10, 100)),
-        ]),
+        "y": np.vstack(
+            [
+                np.cos(np.linspace(0, 10, 100)),
+                -np.sin(np.linspace(0, 10, 100)),
+            ]
+        ),
         "coordinates": ["x"],
     }
 
@@ -38,12 +40,14 @@ def solution_2d():
     t = np.linspace(0, 20, 500)
     return {
         "t": t,
-        "y": np.vstack([
-            np.cos(t),
-            -np.sin(t),
-            np.cos(0.7 * t),
-            -0.7 * np.sin(0.7 * t),
-        ]),
+        "y": np.vstack(
+            [
+                np.cos(t),
+                -np.sin(t),
+                np.cos(0.7 * t),
+                -0.7 * np.sin(0.7 * t),
+            ]
+        ),
         "coordinates": ["x", "y"],
     }
 
@@ -60,9 +64,7 @@ class TestPlotPhasePortrait:
     """Test plot_phase_portrait."""
 
     def test_plot_phase_portrait(self, phase_visualizer, solution_1d):
-        fig = phase_visualizer.plot_phase_portrait(
-            solution_1d, coordinate_index=0, title="Test"
-        )
+        fig = phase_visualizer.plot_phase_portrait(solution_1d, coordinate_index=0, title="Test")
         assert fig is not None
 
     def test_plot_phase_portrait_coord_index_out_of_range(self, phase_visualizer, solution_1d):
@@ -102,7 +104,5 @@ class TestPlotPoincareSection:
             "y": np.ones((2, 10)),  # No crossings
             "coordinates": ["x"],
         }
-        fig = phase_visualizer.plot_poincare_section(
-            solution, section_var=0, section_value=0.5
-        )
+        fig = phase_visualizer.plot_poincare_section(solution, section_var=0, section_value=0.5)
         assert fig is not None

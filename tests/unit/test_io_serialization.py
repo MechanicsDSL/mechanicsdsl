@@ -242,6 +242,7 @@ class TestSystemSerializerPrepareForJson:
 
     def test_prepare_object_with_dict(self):
         """Test that objects with __dict__ are converted to str (SymPy, etc.)."""
+
         class CustomObj:
             def __init__(self):
                 self.x = 1

@@ -205,10 +205,10 @@ def profile_function(func: Callable) -> Callable:
                 # Another profiler is already active, skip profiling for this call
                 logger.debug(f"Skipping profiling for {func.__name__}: another profiler is active")
                 return func(*args, **kwargs)
-            
+
             try:
                 result = func(*args, **kwargs)
-                
+
                 s = StringIO()
                 stats = pstats.Stats(profiler, stream=s)
                 stats.sort_stats("cumulative")
