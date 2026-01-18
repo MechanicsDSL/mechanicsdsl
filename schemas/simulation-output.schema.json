@@ -1,0 +1,135 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://mechanicsdsl.io/schemas/simulation-output.json",
+    "title": "MechanicsDSL Simulation Output",
+    "description": "Schema for simulation result files",
+    "type": "object",
+    "properties": {
+        "metadata": {
+            "type": "object",
+            "properties": {
+                "version": {
+                    "type": "string",
+                    "description": "MechanicsDSL version used"
+                },
+                "system_name": {
+                    "type": "string",
+                    "description": "Name of the physics system"
+                },
+                "generated_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp of generation"
+                },
+                "coordinates": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Names of generalized coordinates"
+                },
+                "parameters": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number"
+                    },
+                    "description": "Parameter values used"
+                }
+            },
+            "required": [
+                "version",
+                "system_name"
+            ]
+        },
+        "simulation": {
+            "type": "object",
+            "properties": {
+                "t_span": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "minItems": 2,
+                    "maxItems": 2,
+                    "description": "Time span [t_start, t_end]"
+                },
+                "num_points": {
+                    "type": "integer",
+                    "description": "Number of time points"
+                },
+                "solver": {
+                    "type": "string",
+                    "description": "ODE solver used"
+                }
+            }
+        },
+        "data": {
+            "type": "object",
+            "properties": {
+                "t": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "description": "Time values"
+                },
+                "y": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "number"
+                        }
+                    },
+                    "description": "State values (y[i][j] = state variable i at time j)"
+                }
+            },
+            "required": [
+                "t",
+                "y"
+            ]
+        },
+        "analysis": {
+            "type": "object",
+            "properties": {
+                "energy_conservation": {
+                    "type": "object",
+                    "properties": {
+                        "initial": {
+                            "type": "number"
+                        },
+                        "final": {
+                            "type": "number"
+                        },
+                        "max_error": {
+                            "type": "number"
+                        },
+                        "relative_error": {
+                            "type": "number"
+                        }
+                    }
+                },
+                "conservation_laws": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "conserved": {
+                                "type": "boolean"
+                            },
+                            "max_deviation": {
+                                "type": "number"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "required": [
+        "data"
+    ]
+}

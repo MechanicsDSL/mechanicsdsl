@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mechanicsdsl-server
+  labels:
+    app: mechanicsdsl
+    component: server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mechanicsdsl
+      component: server
+  template:
+    metadata:
+      labels:
+        app: mechanicsdsl
+        component: server
+    spec:
+      containers:
+      - name: mechanicsdsl
+        image: ghcr.io/mechanicsdsl/mechanicsdsl:2.0.5
+        ports:
+        - containerPort: 8000
+          name: http
+        env:
+        - name: MECHANICSDSL_LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: mechanicsdsl-config
+              key: log_level
+        - name: MECHANICSDSL_WORKERS
+          valueFrom:
+            configMapKeyRef:
+              name: mechanicsdsl-config
+              key: workers
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10

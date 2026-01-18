@@ -1,0 +1,7 @@
+\system{my_system}
+\defvar{theta}{Angle}{rad}
+\parameter{m}{1.0}{kg}
+\parameter{l}{1.0}{m}
+\parameter{g}{9.81}{m/s^2}
+\lagrangian{\frac{1}{2}*m*l^2*\dot{theta}^2 - m*g*l*(1-\cos{theta})}
+\initial{theta=0.5, theta_dot=0}

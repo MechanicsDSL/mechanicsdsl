@@ -1,0 +1,168 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://mechanicsdsl.io/schemas/config.json",
+    "title": "MechanicsDSL Configuration",
+    "description": "Configuration file schema for MechanicsDSL projects",
+    "type": "object",
+    "properties": {
+        "version": {
+            "type": "string",
+            "description": "Configuration schema version",
+            "enum": [
+                "1.0"
+            ]
+        },
+        "project": {
+            "type": "object",
+            "description": "Project metadata",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Project name"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Project description"
+                },
+                "author": {
+                    "type": "string",
+                    "description": "Project author"
+                }
+            },
+            "required": [
+                "name"
+            ]
+        },
+        "simulation": {
+            "type": "object",
+            "description": "Default simulation parameters",
+            "properties": {
+                "t_start": {
+                    "type": "number",
+                    "default": 0,
+                    "description": "Simulation start time"
+                },
+                "t_end": {
+                    "type": "number",
+                    "default": 10,
+                    "description": "Simulation end time"
+                },
+                "num_points": {
+                    "type": "integer",
+                    "default": 1000,
+                    "minimum": 10,
+                    "description": "Number of time points"
+                },
+                "solver": {
+                    "type": "string",
+                    "enum": [
+                        "RK45",
+                        "RK23",
+                        "DOP853",
+                        "Radau",
+                        "BDF",
+                        "LSODA"
+                    ],
+                    "default": "RK45",
+                    "description": "ODE solver to use"
+                },
+                "rtol": {
+                    "type": "number",
+                    "default": 1e-6,
+                    "description": "Relative tolerance"
+                },
+                "atol": {
+                    "type": "number",
+                    "default": 1e-9,
+                    "description": "Absolute tolerance"
+                }
+            }
+        },
+        "output": {
+            "type": "object",
+            "description": "Output configuration",
+            "properties": {
+                "format": {
+                    "type": "string",
+                    "enum": [
+                        "json",
+                        "csv",
+                        "numpy",
+                        "hdf5"
+                    ],
+                    "default": "json",
+                    "description": "Default output format"
+                },
+                "directory": {
+                    "type": "string",
+                    "default": "./output",
+                    "description": "Output directory"
+                },
+                "include_metadata": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Include simulation metadata in output"
+                }
+            }
+        },
+        "codegen": {
+            "type": "object",
+            "description": "Code generation settings",
+            "properties": {
+                "default_target": {
+                    "type": "string",
+                    "enum": [
+                        "cpp",
+                        "cuda",
+                        "rust",
+                        "julia",
+                        "python",
+                        "javascript"
+                    ],
+                    "default": "python",
+                    "description": "Default code generation target"
+                },
+                "output_directory": {
+                    "type": "string",
+                    "default": "./generated",
+                    "description": "Code generation output directory"
+                },
+                "optimize": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable optimizations in generated code"
+                }
+            }
+        },
+        "visualization": {
+            "type": "object",
+            "description": "Visualization settings",
+            "properties": {
+                "backend": {
+                    "type": "string",
+                    "enum": [
+                        "matplotlib",
+                        "plotly",
+                        "bokeh"
+                    ],
+                    "default": "matplotlib"
+                },
+                "theme": {
+                    "type": "string",
+                    "enum": [
+                        "default",
+                        "dark",
+                        "scientific"
+                    ],
+                    "default": "default"
+                },
+                "dpi": {
+                    "type": "integer",
+                    "default": 100,
+                    "minimum": 72,
+                    "maximum": 600
+                }
+            }
+        }
+    }
+}

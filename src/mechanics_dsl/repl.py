@@ -5,10 +5,17 @@ An interactive shell for experimenting with the DSL.
 """
 
 import sys
-import readline
 import atexit
 from pathlib import Path
 from typing import Optional
+
+# readline is optional (not available on Windows)
+try:
+    import readline
+    HAS_READLINE = True
+except ImportError:
+    readline = None
+    HAS_READLINE = False
 
 try:
     from .compiler import PhysicsCompiler
@@ -53,6 +60,8 @@ class REPL:
     
     def _setup_readline(self):
         """Setup readline for history and completion."""
+        if not HAS_READLINE:
+            return
         try:
             if self.history_file.exists():
                 readline.read_history_file(str(self.history_file))
@@ -63,6 +72,8 @@ class REPL:
     
     def _save_history(self):
         """Save command history."""
+        if not HAS_READLINE:
+            return
         try:
             readline.write_history_file(str(self.history_file))
         except Exception:

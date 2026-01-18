@@ -1,0 +1,26 @@
+{
+    "version": "1.0",
+    "project": {
+        "name": "my-physics-project",
+        "description": "A MechanicsDSL physics simulation",
+        "author": "Your Name"
+    },
+    "simulation": {
+        "t_start": 0,
+        "t_end": 10,
+        "num_points": 1000,
+        "solver": "RK45",
+        "rtol": 1e-6,
+        "atol": 1e-9
+    },
+    "output": {
+        "format": "json",
+        "directory": "./output",
+        "include_metadata": true
+    },
+    "codegen": {
+        "default_target": "python",
+        "output_directory": "./generated",
+        "optimize": true
+    }
+}
