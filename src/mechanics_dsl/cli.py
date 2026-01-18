@@ -103,8 +103,15 @@ def cmd_compile(args):
 def cmd_run(args):
     """Run a simulation from DSL file."""
     from mechanics_dsl import PhysicsCompiler
-    from tqdm import tqdm
     import matplotlib.pyplot as plt
+    
+    # tqdm is optional
+    try:
+        from tqdm import tqdm
+        HAS_TQDM = True
+    except ImportError:
+        tqdm = None
+        HAS_TQDM = False
     
     # Read input file
     input_path = Path(args.input)
@@ -114,12 +121,33 @@ def cmd_run(args):
     
     dsl_code = input_path.read_text(encoding='utf-8')
     
-    # Compile with progress bar
-    with tqdm(total=3, desc="MechanicsDSL", bar_format='{desc}: {bar} {percentage:3.0f}%') as pbar:
-        pbar.set_description("Compiling")
+    # Compile with optional progress bar
+    if HAS_TQDM:
+        with tqdm(total=3, desc="MechanicsDSL", bar_format='{desc}: {bar} {percentage:3.0f}%') as pbar:
+            pbar.set_description("Compiling")
+            compiler = PhysicsCompiler()
+            result = compiler.compile_dsl(dsl_code)
+            pbar.update(1)
+            
+            if not result.get('success', False):
+                print(f"Compilation failed: {result.get('error', 'Unknown error')}", file=sys.stderr)
+                return 1
+            
+            # Parse t-span
+            t_span = parse_t_span(args.t_span) if args.t_span else (0, 10)
+            num_points = args.points
+            
+            pbar.set_description("Simulating")
+            solution = compiler.simulate(t_span=t_span, num_points=num_points)
+            pbar.update(1)
+            
+            pbar.set_description("Finalizing")
+            pbar.update(1)
+    else:
+        # Fallback without tqdm
+        print("Compiling...")
         compiler = PhysicsCompiler()
         result = compiler.compile_dsl(dsl_code)
-        pbar.update(1)
         
         if not result.get('success', False):
             print(f"Compilation failed: {result.get('error', 'Unknown error')}", file=sys.stderr)
@@ -129,12 +157,8 @@ def cmd_run(args):
         t_span = parse_t_span(args.t_span) if args.t_span else (0, 10)
         num_points = args.points
         
-        pbar.set_description("Simulating")
+        print("Simulating...")
         solution = compiler.simulate(t_span=t_span, num_points=num_points)
-        pbar.update(1)
-        
-        pbar.set_description("Finalizing")
-        pbar.update(1)
     
     print(f"✓ Simulation complete")
     print(f"  System: {result.get('system_name', 'unknown')}")
