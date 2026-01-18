@@ -113,7 +113,8 @@ jobs:
     name: Test Docker Image
     needs: build-cpu
     runs-on: ubuntu-latest
-    permissions: read
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout repository
