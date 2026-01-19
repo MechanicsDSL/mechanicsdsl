@@ -73,7 +73,9 @@ CMD ["python", "-c", "import mechanics_dsl; print(f'MechanicsDSL v{mechanics_dsl
 # ============================================================================
 # Stage 3: Runtime (GPU/CUDA)
 # ============================================================================
-FROM nvidia/cuda:12.2-runtime-ubuntu22.04 AS runtime-gpu
+# Note: NVIDIA images use format: cuda:{version}-runtime-ubuntu{version}
+# Available tags: https://hub.docker.com/r/nvidia/cuda/tags
+FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04 AS runtime-gpu
 
 # Install Python and dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
