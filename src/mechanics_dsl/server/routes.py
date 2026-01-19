@@ -185,6 +185,27 @@ if FASTAPI_AVAILABLE:
         """
         Export compiled system to target language.
         """
+        # SECURITY: Validate target against allowlist to prevent path traversal
+        ALLOWED_TARGETS = {
+            "cpp", "python", "rust", "julia", "matlab", 
+            "fortran", "javascript", "cuda", "openmp", "wasm", "arduino"
+        }
+        target = request.target.lower().strip()
+        if target not in ALLOWED_TARGETS:
+            return ExportResponse(
+                success=False, 
+                error=f"Invalid target '{request.target}'. Allowed: {', '.join(sorted(ALLOWED_TARGETS))}",
+                language=request.target
+            )
+        
+        # Map target to safe file extension
+        EXTENSION_MAP = {
+            "cpp": "cpp", "python": "py", "rust": "rs", "julia": "jl",
+            "matlab": "m", "fortran": "f90", "javascript": "js",
+            "cuda": "cu", "openmp": "cpp", "wasm": "wat", "arduino": "ino"
+        }
+        safe_extension = EXTENSION_MAP.get(target, "txt")
+        
         try:
             compiler = get_or_create_compiler(session_id)
 
@@ -192,16 +213,16 @@ if FASTAPI_AVAILABLE:
             result = compiler.compile_dsl(request.code)
             if not result["success"]:
                 return ExportResponse(
-                    success=False, error=result.get("error"), language=request.target
+                    success=False, error=result.get("error"), language=target
                 )
 
-            # Export to temp file
+            # Export to temp file with safe extension
             with tempfile.NamedTemporaryFile(
-                mode="w", suffix=f".{request.target}", delete=False
+                mode="w", suffix=f".{safe_extension}", delete=False
             ) as f:
                 temp_path = f.name
 
-            compiler.export(request.target, temp_path)
+            compiler.export(target, temp_path)
 
             # Read generated code
             with open(temp_path, "r") as f:
@@ -209,9 +230,9 @@ if FASTAPI_AVAILABLE:
 
             os.unlink(temp_path)
 
-            return ExportResponse(success=True, code=generated_code, language=request.target)
+            return ExportResponse(success=True, code=generated_code, language=target)
         except Exception as e:
-            return ExportResponse(success=False, error=str(e), language=request.target)
+            return ExportResponse(success=False, error=str(e), language=target)
 
     @router.get("/generators")
     async def list_generators():
