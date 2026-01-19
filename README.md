@@ -96,8 +96,6 @@ docker run --gpus all -it ghcr.io/mechanicsdsl/mechanicsdsl:gpu
 - **Rust Cargo Projects** — Full project scaffolding with `no_std` embedded option
 - **11 Target Platforms** — C++, CUDA, Rust, Julia, Fortran, MATLAB, JavaScript, WebAssembly, Python, Arduino, OpenMP
 
-📖 See [RELEASE_NOTES_v2.0.0.md](RELEASE_NOTES_v2.0.0.md) for full details.
-
 ---
 
 ## Quick Start
