@@ -17,7 +17,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  # Docker image names must be lowercase
+  IMAGE_NAME: mechanicsdsl/mechanicsdsl
 
 jobs:
   build-cpu:
@@ -26,6 +27,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write  # Required for attestation
     
     steps:
       - name: Checkout repository
@@ -80,6 +82,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write  # Required for attestation
     
     steps:
       - name: Checkout repository

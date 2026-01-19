@@ -31,7 +31,7 @@ from .symbolic import SymbolicEngine
 # Utils imports
 from .utils import config, logger, setup_logging
 
-__version__ = "2.0.5"
+__version__ = "2.0.6"
 __author__ = "Noah Parsons"
 __license__ = "MIT"
 

@@ -27,6 +27,7 @@ from .parser import (
     FluidDef,
     ForceDef,
     HamiltonianDef,
+    ImportDef,
     InitialCondition,
     LagrangianDef,
     MechanicsParser,
@@ -544,6 +545,123 @@ class PhysicsCompiler:
             elif isinstance(node, InitialCondition):
                 self.initial_conditions.update(node.conditions)
                 logger.debug(f"Initial conditions: {node.conditions}")
+
+            elif isinstance(node, ImportDef):
+                # Process file import - recursively parse imported file
+                self._process_import(node.filename)
+
+    def _process_import(self, filename: str) -> None:
+        """
+        Process an import directive by parsing the imported file.
+        
+        Handles \\import{file.mdsl} by reading and parsing the referenced file,
+        then incorporating its definitions into the current compilation context.
+        
+        Args:
+            filename: Path to the file to import (relative or absolute)
+            
+        Security:
+            - Validates file path using validate_file_path
+            - Only allows .mdsl and .txt extensions
+            - Tracks imported files to prevent cycles
+        """
+        # Initialize import tracking if needed
+        if not hasattr(self, '_imported_files'):
+            self._imported_files: set = set()
+        
+        # Normalize and validate path
+        try:
+            # Handle relative paths
+            if not os.path.isabs(filename):
+                # Try current directory first
+                if os.path.exists(filename):
+                    filepath = os.path.abspath(filename)
+                else:
+                    # Log warning and skip
+                    logger.warning(f"Import file not found: {filename}")
+                    return
+            else:
+                filepath = filename
+            
+            # Validate file path security
+            validate_file_path(filepath, must_exist=True)
+            
+            # Check extension
+            if not filepath.endswith(('.mdsl', '.txt')):
+                logger.warning(f"Import file has unsupported extension: {filename}")
+                return
+            
+            # Cycle detection
+            abs_path = os.path.abspath(filepath)
+            if abs_path in self._imported_files:
+                logger.warning(f"Circular import detected, skipping: {filename}")
+                return
+            
+            self._imported_files.add(abs_path)
+            logger.info(f"Processing import: {filename}")
+            
+            # Read file
+            with open(filepath, 'r', encoding='utf-8') as f:
+                imported_source = f.read()
+            
+            # Tokenize and parse
+            tokens = tokenize(imported_source)
+            parser = MechanicsParser(tokens)
+            imported_ast = parser.parse()
+            
+            # Insert imported AST nodes for semantic analysis
+            # (but don't process ImportDefs from imported files to avoid deep recursion)
+            for node in imported_ast:
+                if isinstance(node, ImportDef):
+                    # Recursive import
+                    self._process_import(node.filename)
+                else:
+                    # Process directly (duplicates analyze_semantics logic)
+                    self._process_imported_node(node)
+            
+            logger.debug(f"Imported {len(imported_ast)} nodes from {filename}")
+            
+        except FileNotFoundError:
+            logger.warning(f"Import file not found: {filename}")
+        except (ValueError, PermissionError) as e:
+            logger.warning(f"Import file validation failed: {filename} - {e}")
+        except Exception as e:
+            logger.error(f"Failed to process import {filename}: {e}")
+    
+    def _process_imported_node(self, node: ASTNode) -> None:
+        """Process a single AST node from an imported file."""
+        if isinstance(node, SystemDef):
+            # Don't override main system name from imports
+            logger.debug(f"Skipping system def from import: {node.name}")
+        elif isinstance(node, VarDef):
+            self.variables[node.name] = {
+                "type": node.vartype,
+                "unit": node.unit,
+                "vector": node.vector,
+            }
+        elif isinstance(node, ParameterDef):
+            self.parameters_def[node.name] = {"value": node.value, "unit": node.unit}
+        elif isinstance(node, DefineDef):
+            self.definitions[node.name] = {"args": node.args, "body": node.body}
+        elif isinstance(node, LagrangianDef):
+            # Imported Lagrangians can extend/override (last one wins)
+            self.lagrangian = node.expr
+        elif isinstance(node, HamiltonianDef):
+            self.hamiltonian = node.expr
+        elif isinstance(node, TransformDef):
+            self.transforms[node.var] = {"type": node.coord_type, "expression": node.expr}
+        elif isinstance(node, ConstraintDef):
+            self.constraints.append(node.expr)
+        elif isinstance(node, NonHolonomicConstraintDef):
+            self.non_holonomic_constraints.append(node.expr)
+        elif isinstance(node, ForceDef):
+            self.forces.append(node.expr)
+        elif isinstance(node, DampingDef):
+            self.damping_forces.append(node.expr)
+        elif isinstance(node, RayleighDef):
+            self.rayleigh_dissipation = node.expr
+        elif isinstance(node, InitialCondition):
+            self.initial_conditions.update(node.conditions)
 
     def get_coordinates(self) -> List[str]:
         """

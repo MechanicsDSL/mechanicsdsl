@@ -149,7 +149,7 @@ def get_preset(name: str) -> str:
     return PRESETS[key]
 
 
-def list_presets() -> list:
+def list_presets() -> list[str]:
     """Return list of available preset names."""
     return sorted(set(PRESETS.keys()))
 

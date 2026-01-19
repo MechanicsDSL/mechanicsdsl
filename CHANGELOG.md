@@ -5,6 +5,37 @@ All notable changes to MechanicsDSL will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.6] - 2026-01-18
+
+### 🔧 Integration & Infrastructure Release
+
+This release fixes critical issues with code generation integrations and Docker builds.
+
+### Fixed
+
+#### Game Engine Integrations
+- **Unity Generator** — Now converts sympy equations to real C# code using `sympy_to_csharp()`
+- **Unreal Generator** — Now converts sympy equations to real C++ code with FMath functions
+- **Modelica Generator** — Now converts sympy equations to Modelica syntax
+
+#### Docker Build
+- Fixed `repository name must be lowercase` error in GPU image builds
+- Fixed `Unable to get ACTIONS_ID_TOKEN_REQUEST_URL` attestation error
+- Added `id-token: write` permission for provenance attestation
+
+### Added
+
+- **DSL File Imports** — `\import{filename}` directive for composable physics systems
+- **CPU SPH Fallback** — Full CPU implementation when CUDA is unavailable (~200 lines C++)
+- **Integration Tests** — New `tests/test_integrations.py` with 12 tests
+
+### Changed
+
+- Improved type hints in `repl.py` and `presets.py`
+- Version bumped to 2.0.6
+
+---
+
 ## [2.0.5] - 2026-01-17
 
 ### 🎮 Interactive Mode & Presets Release

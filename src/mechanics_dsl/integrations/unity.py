@@ -4,12 +4,82 @@ Unity game engine code generator for MechanicsDSL.
 Generates C# MonoBehaviour scripts for Unity physics simulation.
 """
 
-from typing import Optional
+from typing import Any, Dict, List, Optional
+
+try:
+    import sympy as sp
+    from sympy.printing import ccode
+    SYMPY_AVAILABLE = True
+except ImportError:
+    sp = None
+    ccode = None
+    SYMPY_AVAILABLE = False
 
 try:
     from mechanics_dsl.codegen.base import CodeGenerator
 except ImportError:
     CodeGenerator = object
+
+
+def sympy_to_csharp(expr: Any, coord_map: Dict[str, int] = None) -> str:
+    """
+    Convert a sympy expression to C# code.
+    
+    Args:
+        expr: Sympy expression to convert
+        coord_map: Mapping of coordinate names to state array indices
+        
+    Returns:
+        C# code string representing the expression
+    """
+    if expr is None:
+        return "0.0f"
+    
+    if not SYMPY_AVAILABLE:
+        return "0.0f /* sympy not available */"
+    
+    if coord_map is None:
+        coord_map = {}
+    
+    # Convert sympy expression to C code (close to C#)
+    try:
+        # First get the C code representation
+        c_code = ccode(expr)
+        
+        # Replace C math functions with C#/Unity equivalents
+        replacements = [
+            ('sin(', 'Mathf.Sin('),
+            ('cos(', 'Mathf.Cos('),
+            ('tan(', 'Mathf.Tan('),
+            ('asin(', 'Mathf.Asin('),
+            ('acos(', 'Mathf.Acos('),
+            ('atan(', 'Mathf.Atan('),
+            ('atan2(', 'Mathf.Atan2('),
+            ('sqrt(', 'Mathf.Sqrt('),
+            ('pow(', 'Mathf.Pow('),
+            ('exp(', 'Mathf.Exp('),
+            ('log(', 'Mathf.Log('),
+            ('abs(', 'Mathf.Abs('),
+            ('fabs(', 'Mathf.Abs('),
+            ('floor(', 'Mathf.Floor('),
+            ('ceil(', 'Mathf.Ceil('),
+            ('M_PI', 'Mathf.PI'),
+        ]
+        
+        for old, new in replacements:
+            c_code = c_code.replace(old, new)
+        
+        # Ensure floating point literals
+        # Add 'f' suffix to numeric literals that don't have it
+        import re
+        # Match numbers that are not already followed by 'f'
+        c_code = re.sub(r'(\d+\.\d+)(?!f)', r'\1f', c_code)
+        c_code = re.sub(r'(\d+)(?!\.\d)(?!f)(?![a-zA-Z_])', r'\1.0f', c_code)
+        
+        return c_code
+        
+    except Exception as e:
+        return f"0.0f /* Error: {str(e)[:50]} */"
 
 
 class UnityGenerator(CodeGenerator if CodeGenerator != object else object):
@@ -35,16 +105,56 @@ class UnityGenerator(CodeGenerator if CodeGenerator != object else object):
     def __init__(self, compiler=None):
         super().__init__()
         self.compiler = compiler
+        self.equations: Dict[str, Any] = {}  # Sympy equations for each coordinate
+        
         if compiler:
             self.system_name = getattr(compiler, "system_name", "Physics")
-            self.coordinates = getattr(compiler.simulator, "coordinates", [])
-            self.parameters = dict(getattr(compiler.simulator, "parameters", {}))
-            self.accelerations = getattr(compiler, "accelerations", {})
+            self.coordinates: List[str] = getattr(compiler.simulator, "coordinates", [])
+            self.parameters: Dict[str, float] = dict(getattr(compiler.simulator, "parameters", {}))
+            
+            # Extract acceleration equations from compiler
+            self._extract_equations(compiler)
         else:
             self.system_name = "Physics"
             self.coordinates = []
             self.parameters = {}
-            self.accelerations = {}
+    
+    def _extract_equations(self, compiler) -> None:
+        """
+        Extract acceleration equations from the compiler.
+        
+        Attempts to get equations from multiple sources:
+        1. compiler.accelerations (direct dict)
+        2. compiler.simulator.equations
+        3. compiler.equations_of_motion
+        """
+        # Try accelerations dict first
+        if hasattr(compiler, 'accelerations') and compiler.accelerations:
+            self.equations = dict(compiler.accelerations)
+            return
+            
+        # Try simulator equations
+        if hasattr(compiler, 'simulator') and hasattr(compiler.simulator, 'equations'):
+            eqs = compiler.simulator.equations
+            if isinstance(eqs, dict):
+                self.equations = eqs
+                return
+            elif isinstance(eqs, list) and SYMPY_AVAILABLE:
+                # Convert list of equations to dict keyed by coordinate
+                for i, eq in enumerate(eqs):
+                    if i < len(self.coordinates):
+                        self.equations[self.coordinates[i]] = eq
+                return
+        
+        # Try equations_of_motion
+        if hasattr(compiler, 'equations_of_motion') and compiler.equations_of_motion:
+            eom = compiler.equations_of_motion
+            if isinstance(eom, dict):
+                self.equations = eom
+            elif isinstance(eom, list) and SYMPY_AVAILABLE:
+                for i, eq in enumerate(eom):
+                    if i < len(self.coordinates):
+                        self.equations[self.coordinates[i]] = eq
 
     def generate(self, output_file: Optional[str] = None) -> str:
         """Generate Unity C# code."""
@@ -252,12 +362,31 @@ public class {class_name}Simulator : MonoBehaviour
         return "\n".join(lines) if lines else "        // No state to unpack"
 
     def _generate_accelerations(self) -> str:
-        """Generate acceleration computations."""
+        """
+        Generate acceleration computations from sympy equations.
+        
+        Converts symbolic acceleration equations to C# code using
+        the sympy_to_csharp converter function.
+        """
         lines = []
+        
         for coord in self.coordinates:
-            # Simplified - real implementation would convert sympy to C#
-            lines.append(f"        float {coord}_ddot = 0.0f; // TODO: Generated from symbolic")
-        return "\n".join(lines) if lines else "        // No accelerations"
+            # Check if we have a real equation for this coordinate
+            if coord in self.equations and self.equations[coord] is not None:
+                # Convert sympy expression to C# code
+                accel_expr = self.equations[coord]
+                csharp_code = sympy_to_csharp(accel_expr)
+                lines.append(f"        float {coord}_ddot = {csharp_code};")
+            elif f"{coord}_ddot" in self.equations:
+                # Try with _ddot suffix
+                accel_expr = self.equations[f"{coord}_ddot"]
+                csharp_code = sympy_to_csharp(accel_expr)
+                lines.append(f"        float {coord}_ddot = {csharp_code};")
+            else:
+                # No equation available - generate placeholder with warning
+                lines.append(f"        float {coord}_ddot = 0.0f; // Warning: No equation extracted for {coord}")
+        
+        return "\n".join(lines) if lines else "        // No accelerations defined"
 
     def _generate_derivatives_pack(self) -> str:
         """Generate derivative packing."""

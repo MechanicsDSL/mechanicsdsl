@@ -28,7 +28,7 @@ except ImportError:
 
 REPL_BANNER = """
 ╔══════════════════════════════════════════════════════════════╗
-║           MechanicsDSL Interactive REPL v2.0.5               ║
+║           MechanicsDSL Interactive REPL v2.0.6               ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  Commands:                                                   ║
 ║    :help          Show this help                             ║
@@ -49,16 +49,32 @@ REPL_BANNER = """
 
 
 class REPL:
-    """Interactive REPL for MechanicsDSL."""
+    """
+    Interactive REPL for MechanicsDSL.
     
-    def __init__(self):
-        self.buffer = []
-        self.compiler = None
-        self.solution = None
-        self.history_file = Path.home() / '.mechanicsdsl_history'
+    Provides an interactive shell for experimenting with physics DSL,
+    compiling systems, running simulations, and visualizing results.
+    
+    Attributes:
+        buffer: List of DSL lines accumulated for compilation
+        compiler: Currently active PhysicsCompiler instance
+        solution: Latest simulation results
+        history_file: Path to command history file
+    """
+    
+    buffer: list[str]
+    compiler: Optional['PhysicsCompiler']
+    solution: Optional[dict]
+    history_file: Path
+    
+    def __init__(self) -> None:
+        self.buffer: list[str] = []
+        self.compiler: Optional['PhysicsCompiler'] = None
+        self.solution: Optional[dict] = None
+        self.history_file: Path = Path.home() / '.mechanicsdsl_history'
         self._setup_readline()
     
-    def _setup_readline(self):
+    def _setup_readline(self) -> None:
         """Setup readline for history and completion."""
         if not HAS_READLINE:
             return
@@ -70,7 +86,7 @@ class REPL:
         except Exception:
             pass  # Readline not available on all platforms
     
-    def _save_history(self):
+    def _save_history(self) -> None:
         """Save command history."""
         if not HAS_READLINE:
             return
@@ -79,7 +95,7 @@ class REPL:
         except Exception:
             pass
     
-    def run(self):
+    def run(self) -> None:
         """Main REPL loop."""
         print(REPL_BANNER)
         
