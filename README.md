@@ -10,9 +10,7 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   <a href="https://doi.org/10.5281/zenodo.17771040"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.17771040.svg" alt="DOI"></a>
   <a href="https://mechanicsdsl.readthedocs.io/en/latest/?badge=latest"><img src="https://readthedocs.org/projects/mechanicsdsl/badge/?version=latest" alt="Documentation Status"></a>
-  <a href="https://pypi.org/project/mechanicsdsl-core/" target="_blank" rel="noopener noreferrer">
-  <img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dm/mechanicsdsl-core">
-</a>
+  <iframe src="https://clickhouse-analytics.metabaseapp.com/public/dashboard/8d516106-3a9f-4674-aafc-aa39d6380ee2?project_name=mechanicsdsl-core#&theme=night" frameborder="0" width="100%" height="600"></iframe>
 <a href="https://codecov.io/github/MechanicsDSL/mechanicsdsl" > 
  <img src="https://codecov.io/github/MechanicsDSL/mechanicsdsl/graph/badge.svg"/> 
 </a>
