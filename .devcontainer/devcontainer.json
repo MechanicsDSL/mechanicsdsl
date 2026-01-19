@@ -1,6 +1,6 @@
 {
     "name": "MechanicsDSL Development",
-    "image": "mcr.microsoft.com/devcontainers/python:3.11",
+    "image": "://mcr.microsoft.com",
     "features": {
         "ghcr.io/devcontainers/features/git:1": {},
         "ghcr.io/devcontainers/features/github-cli:1": {}
@@ -26,6 +26,7 @@
         }
     },
     "postCreateCommand": "pip install -e '.[dev,test]' && pip install pytest pytest-cov black flake8 mypy",
+    "postStartCommand": "nohup uvicorn mechanics_dsl.server.app:app --host 0.0.0.0 --port 8000 > /tmp/api.log 2>&1 & nohup jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --ServerApp.token='' --ServerApp.password='' > /tmp/jupyter.log 2>&1 &",
     "containerEnv": {
         "PYTHONPATH": "${containerWorkspaceFolder}/src"
     },
