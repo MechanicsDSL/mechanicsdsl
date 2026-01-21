@@ -21,7 +21,7 @@ from .utils import logger
 try:
     import warnings
 
-    from numba import jit, njit, prange
+    from numba import njit
     from numba.core.errors import NumbaWarning
 
     warnings.filterwarnings("ignore", category=NumbaWarning)
