@@ -269,7 +269,12 @@ def retry(
                     else:
                         logger.error(f"All {max_attempts} attempts failed for {func.__name__}")
 
-            raise last_exception
+            if last_exception is not None:
+                raise last_exception
+            raise RuntimeError(
+                f"Retry wrapper for {func.__name__} failed without capturing an exception; "
+                f"check max_attempts ({max_attempts}) and exceptions configuration."
+            )
 
         return wrapper
 
