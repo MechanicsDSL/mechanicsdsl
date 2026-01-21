@@ -6,6 +6,7 @@
 
 <p align="center">
   <a href="https://github.com/MechanicsDSL/mechanicsdsl/actions/workflows/python-app.yml"><img src="https://github.com/MechanicsDSL/mechanicsdsl/actions/workflows/python-app.yml/badge.svg" alt="Python CI"></a>
+  <a href="https://pepy.tech/projects/mechanicsdsl-core"><img src="https://static.pepy.tech/personalized-badge/mechanicsdsl-core?period=total&units=NONE&left_color=BLACK&right_color=BLUE&left_text=Downloads" alt="PyPI Downloads"></a>
   <img src="https://img.shields.io/badge/python-3.9%2B-blue" alt="Python 3.9+ Badge">
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   <a href="https://doi.org/10.5281/zenodo.17771040"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.17771040.svg" alt="DOI"></a>
