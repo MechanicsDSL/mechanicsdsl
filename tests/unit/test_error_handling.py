@@ -113,8 +113,8 @@ class TestErrorBoundary:
             with error_boundary("test_op", "test_comp"):
                 raise ValueError("Original")
 
-        assert exc_info.value.context.operation == "test_op"
-        assert exc_info.value.context.component == "test_comp"
+            assert exc_info.value.context.operation == "test_op"
+            assert exc_info.value.context.component == "test_comp"
 
     def test_mdsl_error_passthrough(self):
         """Test that MechanicsDSL errors are augmented."""
