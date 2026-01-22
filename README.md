@@ -19,6 +19,7 @@
 <a href="https://mybinder.org/v2/gh/MechanicsDSL/mechanicsdsl/main?filepath=tutorials">
  <img src="https://mybinder.org/badge_logo.svg" alt="Launch Binder">
 </a>
+<a href="https://joss.theoj.org/papers/6446749901d6ca136663f6e7216043fc"><img src="https://joss.theoj.org/papers/6446749901d6ca136663f6e7216043fc/status.svg"></a>
 
 </p>
 
