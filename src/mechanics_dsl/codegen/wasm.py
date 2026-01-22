@@ -2,11 +2,15 @@
 WebAssembly (WASM) Code Generator for MechanicsDSL
 
 Generates C code suitable for compilation to WebAssembly using Emscripten.
-Includes HTML wrapper for browser-based simulation.
+Features:
+- Emscripten-compatible C code
+- HTML canvas visualization with real-time animation
+- JavaScript interop functions for browser integration
+- Build scripts for easy compilation
 """
 
 import os
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import sympy as sp
 from sympy.printing.c import ccode
@@ -15,24 +19,48 @@ from ..utils import logger
 from .base import CodeGenerator
 
 
+def sympy_to_c_wasm(expr: sp.Expr) -> str:
+    """
+    Convert a sympy expression to C code for WASM.
+
+    Args:
+        expr: Sympy expression to convert
+
+    Returns:
+        C code string
+    """
+    if expr is None:
+        return "0.0"
+    try:
+        return ccode(expr)
+    except Exception as e:
+        logger.warning(f"Failed to convert expression to C: {e}")
+        return f"0.0 /* ERROR: {e} */"
+
+
 class WasmGenerator(CodeGenerator):
     """
     Generates WebAssembly-compatible C code for browser simulations.
 
     Features:
     - Emscripten-compatible C code
-    - HTML canvas visualization
-    - JavaScript interop functions
+    - HTML canvas visualization with real-time animation
+    - JavaScript interop functions (init, step, get_state)
+    - Responsive UI with modern CSS styling
+    - Build scripts for easy compilation
 
     Example:
+        >>> import sympy as sp
+        >>> theta, g, l = sp.symbols('theta g l')
         >>> gen = WasmGenerator(
         ...     system_name="pendulum",
         ...     coordinates=['theta'],
         ...     parameters={'g': 9.81, 'l': 1.0},
         ...     initial_conditions={'theta': 0.5, 'theta_dot': 0.0},
-        ...     equations={'theta_ddot': -g/l * sin(theta)}
+        ...     equations={'theta_ddot': -g/l * sp.sin(theta)}
         ... )
         >>> gen.generate("output/")
+        'output/pendulum.c'
     """
 
     def __init__(
@@ -42,20 +70,74 @@ class WasmGenerator(CodeGenerator):
         parameters: Dict[str, float],
         initial_conditions: Dict[str, float],
         equations: Dict[str, sp.Expr],
-    ):
+        lagrangian: Optional[sp.Expr] = None,
+        hamiltonian: Optional[sp.Expr] = None,
+        forces: Optional[List[sp.Expr]] = None,
+        constraints: Optional[List[sp.Expr]] = None,
+    ) -> None:
+        """
+        Initialize the WASM code generator.
 
-        super().__init__(system_name, coordinates, parameters, initial_conditions, equations)
+        Args:
+            system_name: Name of the physics system
+            coordinates: List of generalized coordinate names
+            parameters: Physical parameters
+            initial_conditions: Initial state values
+            equations: Acceleration equations
+            lagrangian: Optional Lagrangian
+            hamiltonian: Optional Hamiltonian
+            forces: Optional non-conservative forces
+            constraints: Optional holonomic constraints
+        """
+        super().__init__(
+            system_name=system_name,
+            coordinates=coordinates,
+            parameters=parameters,
+            initial_conditions=initial_conditions,
+            equations=equations,
+            lagrangian=lagrangian,
+            hamiltonian=hamiltonian,
+            forces=forces,
+            constraints=constraints,
+        )
 
     @property
     def target_name(self) -> str:
+        """Target platform identifier."""
         return "wasm"
 
     @property
     def file_extension(self) -> str:
+        """File extension for generated code."""
         return ".c"
 
+    def expr_to_code(self, expr: sp.Expr) -> str:
+        """
+        Convert sympy expression to C code.
+
+        Args:
+            expr: Sympy expression
+
+        Returns:
+            C code string
+        """
+        return sympy_to_c_wasm(expr)
+
     def generate(self, output_dir: str) -> str:
-        """Generate WASM project files."""
+        """
+        Generate WASM project files.
+
+        Args:
+            output_dir: Directory to write generated files
+
+        Returns:
+            Path to main C file
+
+        Raises:
+            ValueError: If validation fails
+        """
+        self.validate_or_raise()
+
         os.makedirs(output_dir, exist_ok=True)
 
         logger.info(f"Generating WASM code for {self.system_name}")
@@ -85,9 +167,9 @@ class WasmGenerator(CodeGenerator):
         for coord in self.coordinates:
             accel_key = f"{coord}_ddot"
             lines.append(f"    dydt[{idx}] = state[{idx+1}];")
-            if accel_key in self.equations:
+            if accel_key in self.equations and self.equations[accel_key] is not None:
                 expr = self.equations[accel_key]
-                c_expr = ccode(expr)
+                c_expr = self.expr_to_code(expr)
                 lines.append(f"    dydt[{idx+1}] = {c_expr};")
             else:
                 lines.append(f"    dydt[{idx+1}] = 0.0;")

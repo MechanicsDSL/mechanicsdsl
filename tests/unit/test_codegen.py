@@ -8,6 +8,7 @@ import os
 import tempfile
 
 import pytest
+import sympy as sp
 
 from mechanics_dsl.codegen import (
     CodeGenerator,
@@ -19,13 +20,14 @@ from mechanics_dsl.codegen import (
     RustGenerator,
 )
 
-# Sample system data for testing
+# Sample system data for testing - includes equations for validation
+theta, g, L = sp.symbols('theta g L')
 SAMPLE_SYSTEM = {
     "system_name": "test_pendulum",
     "coordinates": ["theta"],
     "parameters": {"m": 1.0, "L": 1.0, "g": 9.81},
     "initial_conditions": {"theta": 0.5, "theta_dot": 0.0},
-    "equations": {},  # Empty for basic tests
+    "equations": {"theta_ddot": -g / L * sp.sin(theta)},
 }
 
 

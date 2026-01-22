@@ -88,6 +88,10 @@ class CudaGenerator(CodeGenerator):
     def file_extension(self) -> str:
         return ".cu"
 
+    def expr_to_code(self, expr: sp.Expr) -> str:
+        """Convert sympy expression to CUDA C++ code."""
+        return self._sympy_to_cuda(expr)
+
     def generate(self, output_dir: str = ".") -> str:
         """
         Generate complete CUDA project with all necessary files.
@@ -137,9 +141,9 @@ class CudaGenerator(CodeGenerator):
             accel_key = f"{coord}_ddot"
             lines.append(f"    dydt[{idx}] = state[{idx+1}];  // d({coord})/dt")
 
-            if accel_key in self.equations:
+            if accel_key in self.equations and self.equations[accel_key] is not None:
                 expr = self.equations[accel_key]
-                cuda_expr = self._sympy_to_cuda(expr)
+                cuda_expr = self.expr_to_code(expr)
                 lines.append(f"    dydt[{idx+1}] = {cuda_expr};  // d({coord}_dot)/dt")
             else:
                 lines.append(f"    dydt[{idx+1}] = 0.0;")
@@ -149,6 +153,8 @@ class CudaGenerator(CodeGenerator):
 
     def _sympy_to_cuda(self, expr: sp.Expr) -> str:
         """Convert sympy expression to CUDA C++ code."""
+        if expr is None:
+            return "0.0"
         # Use C++17 compatible code generation
         cuda_code = cxxcode(expr, standard="c++17")
         return cuda_code

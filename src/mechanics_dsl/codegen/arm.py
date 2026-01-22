@@ -15,13 +15,32 @@ Features:
 """
 
 import os
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import sympy as sp
 from sympy.printing.c import ccode
 
 from ..utils import logger
 from .base import CodeGenerator
+
+
+def sympy_to_c_arm(expr: sp.Expr) -> str:
+    """
+    Convert a sympy expression to C code for ARM.
+
+    Args:
+        expr: Sympy expression to convert
+
+    Returns:
+        C code string
+    """
+    if expr is None:
+        return "0.0"
+    try:
+        return ccode(expr)
+    except Exception as e:
+        logger.warning(f"Failed to convert expression to C: {e}")
+        return f"0.0 /* ERROR: {e} */"
 
 
 class ARMGenerator(CodeGenerator):
@@ -32,6 +51,26 @@ class ARMGenerator(CodeGenerator):
     - Raspberry Pi 3/4/5 (aarch64)
     - Jetson Nano/Xavier (aarch64 + CUDA)
     - Cortex-M embedded (thumb)
+
+    Example:
+        >>> import sympy as sp
+        >>> theta, g, l = sp.symbols('theta g l')
+        >>> gen = ARMGenerator(
+        ...     system_name="pendulum",
+        ...     coordinates=['theta'],
+        ...     parameters={'g': 9.81, 'l': 1.0},
+        ...     initial_conditions={'theta': 0.5, 'theta_dot': 0.0},
+        ...     equations={'theta_ddot': -g/l * sp.sin(theta)},
+        ...     target='raspberry_pi',
+        ...     use_neon=True
+        ... )
+        >>> gen.generate("pendulum_arm.c")
+        'pendulum_arm.c'
+
+    Attributes:
+        target: Target platform identifier
+        use_neon: Enable NEON SIMD optimizations
+        embedded: Generate bare-metal code
     """
 
     # ARM NEON vector types
@@ -40,6 +79,8 @@ class ARMGenerator(CodeGenerator):
         "float64x2_t": 2,  # 2 x 64-bit doubles
     }
 
+    SUPPORTED_TARGETS = ["raspberry_pi", "jetson", "cortex_m", "generic"]
+
     def __init__(
         self,
         system_name: str,
@@ -47,10 +88,14 @@ class ARMGenerator(CodeGenerator):
         parameters: Dict[str, float],
         initial_conditions: Dict[str, float],
         equations: Dict[str, sp.Expr],
+        lagrangian: Optional[sp.Expr] = None,
+        hamiltonian: Optional[sp.Expr] = None,
+        forces: Optional[List[sp.Expr]] = None,
+        constraints: Optional[List[sp.Expr]] = None,
         target: str = "raspberry_pi",
         use_neon: bool = True,
         embedded: bool = False,
-    ):
+    ) -> None:
         """
         Initialize ARM code generator.
 
@@ -60,15 +105,30 @@ class ARMGenerator(CodeGenerator):
             parameters: Physical parameters
             initial_conditions: Initial state
             equations: SymPy equations of motion
-            target: Target platform ('raspberry_pi', 'jetson', 'cortex_m')
+            lagrangian: Optional Lagrangian
+            hamiltonian: Optional Hamiltonian
+            forces: Optional non-conservative forces
+            constraints: Optional holonomic constraints
+            target: Target platform ('raspberry_pi', 'jetson', 'cortex_m', 'generic')
             use_neon: Enable NEON SIMD optimizations
             embedded: Generate bare-metal code (no stdlib)
         """
-        self.system_name = system_name
-        self.coordinates = coordinates
-        self.parameters = parameters
-        self.initial_conditions = initial_conditions
-        self.equations = equations or {}
+        super().__init__(
+            system_name=system_name,
+            coordinates=coordinates,
+            parameters=parameters,
+            initial_conditions=initial_conditions,
+            equations=equations,
+            lagrangian=lagrangian,
+            hamiltonian=hamiltonian,
+            forces=forces,
+            constraints=constraints,
+        )
+
+        if target not in self.SUPPORTED_TARGETS:
+            logger.warning(f"Unknown target '{target}', using 'generic'")
+            target = "generic"
+
         self.target = target
         self.use_neon = use_neon
         self.embedded = embedded
@@ -76,7 +136,7 @@ class ARMGenerator(CodeGenerator):
         # Set compiler flags based on target
         self._set_target_flags()
 
-    def _set_target_flags(self):
+    def _set_target_flags(self) -> None:
         """Set compiler flags for target platform."""
         if self.target == "raspberry_pi":
             self.arch = "aarch64"
@@ -102,11 +162,25 @@ class ARMGenerator(CodeGenerator):
 
     @property
     def target_name(self) -> str:
+        """Target platform identifier."""
         return f"arm_{self.target}"
 
     @property
     def file_extension(self) -> str:
+        """File extension for generated code."""
         return ".c"
+
+    def expr_to_code(self, expr: sp.Expr) -> str:
+        """
+        Convert sympy expression to C code.
+
+        Args:
+            expr: Sympy expression
+
+        Returns:
+            C code string
+        """
+        return sympy_to_c_arm(expr)
 
     def generate_equations(self) -> str:
         """Generate C code for equations of motion."""
@@ -115,9 +189,9 @@ class ARMGenerator(CodeGenerator):
         for coord in self.coordinates:
             accel_key = f"{coord}_ddot"
             lines.append(f"    dydt[{idx}] = y[{idx+1}];  // d({coord})/dt")
-            if accel_key in self.equations:
+            if accel_key in self.equations and self.equations[accel_key] is not None:
                 expr = self.equations[accel_key]
-                c_expr = ccode(expr)
+                c_expr = self.expr_to_code(expr)
                 lines.append(f"    dydt[{idx+1}] = {c_expr};  // d({coord}_dot)/dt")
             else:
                 lines.append(f"    dydt[{idx+1}] = 0.0;")
@@ -133,7 +207,20 @@ class ARMGenerator(CodeGenerator):
         return ", ".join(init_vals)
 
     def generate(self, output_file: str = "simulation_arm.c") -> str:
-        """Generate ARM-optimized C code."""
+        """
+        Generate ARM-optimized C code.
+
+        Args:
+            output_file: Path to output file
+
+        Returns:
+            Path to generated file
+
+        Raises:
+            ValueError: If validation fails
+        """
+        self.validate_or_raise()
+
         logger.info(f"Generating ARM code for {self.system_name} (target: {self.target})")
 
         if self.embedded:

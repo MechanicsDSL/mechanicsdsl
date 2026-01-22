@@ -1,16 +1,39 @@
 """
 OpenMP Code Generator for MechanicsDSL
 
-Generates OpenMP-parallel C++ code for multi-core CPU simulations.
+Generates OpenMP-parallel C++ code for multi-core CPU simulations with:
+- Thread-parallel integration for parameter sweeps
+- OpenMP reduction for energy calculations
+- SIMD-friendly loop structures
+- Scalability benchmarking support
 """
 
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import sympy as sp
 from sympy.printing.cxx import cxxcode
 
 from ..utils import logger
 from .base import CodeGenerator
+
+
+def sympy_to_cpp_openmp(expr: sp.Expr) -> str:
+    """
+    Convert a sympy expression to C++ code for OpenMP.
+
+    Args:
+        expr: Sympy expression to convert
+
+    Returns:
+        C++ code string
+    """
+    if expr is None:
+        return "0.0"
+    try:
+        return cxxcode(expr, standard="c++17")
+    except Exception as e:
+        logger.warning(f"Failed to convert expression to C++: {e}")
+        return f"0.0 /* ERROR: {e} */"
 
 
 class OpenMPGenerator(CodeGenerator):
@@ -21,16 +44,27 @@ class OpenMPGenerator(CodeGenerator):
     - Thread-parallel integration for multi-body systems
     - OpenMP reduction for energy calculations
     - SIMD-friendly loop structures
+    - Automatic thread count detection
+    - Performance timing infrastructure
 
     Example:
+        >>> import sympy as sp
+        >>> theta, g, l = sp.symbols('theta g l')
         >>> gen = OpenMPGenerator(
         ...     system_name="pendulum",
         ...     coordinates=['theta'],
         ...     parameters={'g': 9.81, 'l': 1.0},
         ...     initial_conditions={'theta': 0.1, 'theta_dot': 0.0},
-        ...     equations={'theta_ddot': -g/l * sin(theta)}
+        ...     equations={'theta_ddot': -g/l * sp.sin(theta)},
+        ...     num_threads=4,
+        ...     num_systems=1000
         ... )
         >>> gen.generate("pendulum_openmp.cpp")
+        'pendulum_openmp.cpp'
+
+    Attributes:
+        num_threads: Number of OpenMP threads (0 = auto-detect)
+        num_systems: Number of parallel trajectories to simulate
     """
 
     def __init__(
@@ -40,22 +74,80 @@ class OpenMPGenerator(CodeGenerator):
         parameters: Dict[str, float],
         initial_conditions: Dict[str, float],
         equations: Dict[str, sp.Expr],
+        lagrangian: Optional[sp.Expr] = None,
+        hamiltonian: Optional[sp.Expr] = None,
+        forces: Optional[List[sp.Expr]] = None,
+        constraints: Optional[List[sp.Expr]] = None,
         num_threads: int = 0,
-    ):  # 0 = auto-detect
+        num_systems: int = 100,
+    ) -> None:
+        """
+        Initialize the OpenMP code generator.
 
-        super().__init__(system_name, coordinates, parameters, initial_conditions, equations)
+        Args:
+            system_name: Name of the physics system
+            coordinates: List of generalized coordinate names
+            parameters: Physical parameters
+            initial_conditions: Initial state values
+            equations: Acceleration equations
+            lagrangian: Optional Lagrangian
+            hamiltonian: Optional Hamiltonian
+            forces: Optional non-conservative forces
+            constraints: Optional holonomic constraints
+            num_threads: Number of threads (0 = auto-detect)
+            num_systems: Number of parallel trajectories
+        """
+        super().__init__(
+            system_name=system_name,
+            coordinates=coordinates,
+            parameters=parameters,
+            initial_conditions=initial_conditions,
+            equations=equations,
+            lagrangian=lagrangian,
+            hamiltonian=hamiltonian,
+            forces=forces,
+            constraints=constraints,
+        )
         self.num_threads = num_threads
+        self.num_systems = num_systems
 
     @property
     def target_name(self) -> str:
+        """Target platform identifier."""
         return "openmp"
 
     @property
     def file_extension(self) -> str:
+        """File extension for generated code."""
         return ".cpp"
 
+    def expr_to_code(self, expr: sp.Expr) -> str:
+        """
+        Convert sympy expression to C++ code.
+
+        Args:
+            expr: Sympy expression
+
+        Returns:
+            C++ code string
+        """
+        return sympy_to_cpp_openmp(expr)
+
     def generate(self, output_file: str) -> str:
-        """Generate OpenMP C++ code."""
+        """
+        Generate OpenMP C++ code.
+
+        Args:
+            output_file: Path to output file
+
+        Returns:
+            Path to generated file
+
+        Raises:
+            ValueError: If validation fails
+        """
+        self.validate_or_raise()
+
         logger.info(f"Generating OpenMP code for {self.system_name}")
 
         code = self._generate_source()
@@ -73,9 +165,9 @@ class OpenMPGenerator(CodeGenerator):
         for coord in self.coordinates:
             accel_key = f"{coord}_ddot"
             lines.append(f"        dydt[{idx}] = y[{idx+1}];")
-            if accel_key in self.equations:
+            if accel_key in self.equations and self.equations[accel_key] is not None:
                 expr = self.equations[accel_key]
-                cpp_expr = cxxcode(expr, standard="c++17")
+                cpp_expr = self.expr_to_code(expr)
                 lines.append(f"        dydt[{idx+1}] = {cpp_expr};")
             else:
                 lines.append(f"        dydt[{idx+1}] = 0.0;")
