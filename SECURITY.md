@@ -10,16 +10,6 @@ MechanicsDSL includes an exec()-free compiler architecture designed to prevent a
 
 ---
 
-## Supported Versions
-
-| Version | Supported          |
-|---------|--------------------|
-| 2.0.x   | :white_check_mark: |
-| 1.5.x   | :white_check_mark: |
-| < 1.5   | :x:                |
-
----
-
 ## Security Features
 
 ### Input Validation
