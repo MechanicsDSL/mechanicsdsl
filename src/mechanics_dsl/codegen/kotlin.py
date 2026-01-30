@@ -352,6 +352,7 @@ class {self.class_name} {{
             return ""
         
         energy_expr = self.expr_to_code(self.lagrangian)
+        state_unpacking = self._generate_state_unpacking()
         
         return f'''
     /**
@@ -359,7 +360,7 @@ class {self.class_name} {{
      */
     fun computeEnergy(): Double {{
         val y = state.toArray()
-{self._generate_state_unpacking()}
+{state_unpacking}
         
         return {energy_expr}
     }}
