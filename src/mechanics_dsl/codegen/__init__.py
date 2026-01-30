@@ -12,10 +12,12 @@ from .cuda import CudaGenerator
 from .fortran import FortranGenerator
 from .javascript import JavaScriptGenerator
 from .julia import JuliaGenerator
+from .kotlin import KotlinGenerator
 from .matlab import MatlabGenerator
 from .openmp import OpenMPGenerator
 from .python import PythonGenerator
 from .rust import RustGenerator
+from .swift import SwiftGenerator
 from .wasm import WasmGenerator
 
 __all__ = [
@@ -32,4 +34,7 @@ __all__ = [
     "WasmGenerator",
     "ArduinoGenerator",
     "ARMGenerator",
+    "SwiftGenerator",
+    "KotlinGenerator",
 ]
+

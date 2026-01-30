@@ -10,13 +10,16 @@ maintainability. All imports remain backward compatible.
 # Domain packages (reorganized from single files)
 # Physics domain packages
 from . import (
+    acoustics,
     classical,
     electromagnetic,
     fluids,
     general_relativity,
     kinematics,
+    optics,
     quantum,
     relativistic,
+    solid_mechanics,
     statistical,
     thermodynamics,
 )
@@ -32,6 +35,7 @@ __all__ = [
     "relativistic",
     "quantum",
     "general_relativity",
+    "solid_mechanics",
     "statistical",
     "thermodynamics",
 ]

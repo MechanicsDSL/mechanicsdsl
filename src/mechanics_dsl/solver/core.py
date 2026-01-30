@@ -183,7 +183,9 @@ class NumericalSimulator:
                 else:
                     try:
                         const_value = float(sp.N(eq))
-                        compiled_equations[accel_key] = lambda *args: const_value
+                        # IMPORTANT: Use default argument to capture const_value by value
+                        # Without this, all constant lambdas share the same value (closure bug)
+                        compiled_equations[accel_key] = lambda *args, _val=const_value: _val
                         logger.debug(f"{accel_key} is constant: {const_value}")
                     except (ValueError, TypeError) as e:
                         logger.warning(f"Could not evaluate constant for {accel_key}: {e}")
