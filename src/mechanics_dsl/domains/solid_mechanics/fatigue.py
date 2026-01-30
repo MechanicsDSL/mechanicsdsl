@@ -156,6 +156,29 @@ class FatigueLifePrediction:
         self.sn_curve = sn_curve
 
 
+class StressLifeMethod:
+    """Stress-life (S-N) fatigue analysis method."""
+    
+    def __init__(self, sn_curve: SNCurve):
+        self.sn_curve = sn_curve
+    
+    def predict_life(self, sigma_a: float) -> float:
+        """Predict fatigue life for given stress amplitude."""
+        return self.sn_curve.cycles_to_failure(sigma_a)
+
+
+class StrainLifeMethod:
+    """Strain-life (ε-N) fatigue analysis method."""
+    
+    def __init__(self, coffin_manson: CoffinManson):
+        self.cm = coffin_manson
+    
+    def strain_amplitude(self, Nf: float) -> float:
+        """Get total strain amplitude for given life."""
+        total, _, _ = self.cm.strain_amplitude(Nf)
+        return total
+
+
 @dataclass
 class FatigueNotchFactor:
     Kt: float
