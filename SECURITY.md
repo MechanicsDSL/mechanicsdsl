@@ -10,6 +10,18 @@ MechanicsDSL includes an exec()-free compiler architecture designed to prevent a
 
 ---
 
+## Supported Versions
+
+> **Note**: MechanicsDSL is in [maintenance mode](MAINTENANCE.md) as of January 2026.
+
+| Version | Status | Support Level |
+|---------|--------|---------------|
+| 2.0.x   | :white_check_mark: Maintained | Security + bug fixes |
+| 1.5.x   | :warning: Security only | Until June 2026 |
+| < 1.5   | :x: End of life | — |
+
+---
+
 ## Security Features
 
 ### Input Validation

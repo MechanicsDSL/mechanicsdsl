@@ -21,6 +21,9 @@
 </a>
 </p>
 
+> [!IMPORTANT]
+> **Maintenance Mode (January 2026)**: MechanicsDSL is now in maintenance mode. We will continue to provide security patches, critical bug fixes, and dependency updates. New features are not being actively developed. See [MAINTENANCE.md](MAINTENANCE.md) for details.
+
 ---
 
 **MechanicsDSL** is a computational physics framework that lets you define physical systems in a natural, LaTeX-inspired syntax and automatically generates high-performance simulations. From pendulums to planetary orbits, from Lagrangian mechanics to fluid dynamics—describe it once, simulate it anywhere.
