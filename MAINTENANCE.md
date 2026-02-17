@@ -74,8 +74,8 @@ Lower priority:
 
 ## Thank You
 
-MechanicsDSL has been used in **19 countries** for education and research. Thank you to all contributors, users, and the physics education community for making this project successful.
+Thank you to all contributors, users, and the physics education community for making this project successful.
 
 ---
 
-*Last updated: January 30, 2026*
+*Last updated: February 17, 2026*
