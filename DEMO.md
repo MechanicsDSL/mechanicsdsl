@@ -117,12 +117,4 @@ compiler.animate_fluid(compiler.simulate_fluid(t_span=(0, 2)))
 
 ---
 
-## 📈 Adoption Stats
-
-```
-19 countries | 11 code generators | 70× GPU speedup | 9 physics domains
-```
-
----
-
 **MechanicsDSL** — *Write physics like physics. Simulate anything.*
