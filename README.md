@@ -22,7 +22,7 @@
 </p>
 
 > [!NOTE]
-> **v2.0 Stable** — Active development resuming. Enterprise and academic support available — Parsons Scientific LLC coming
+> **v2.0 Stable** — Active development resuming. Enterprise and academic support available — Parsons Scientific LLC coming - 21/2/2026
 ---
 
 **MechanicsDSL** is a computational physics framework that lets you define physical systems in a natural, LaTeX-inspired syntax and automatically generates high-performance simulations. From pendulums to planetary orbits, from Lagrangian mechanics to fluid dynamics—describe it once, simulate it anywhere.
