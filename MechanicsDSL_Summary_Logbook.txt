@@ -1,0 +1,229 @@
+Date: 2026-02-17 12:44 | Change: Delete ARCHITECTURE.md
+Date: 2026-02-17 12:43 | Change: Revise maintenance document content
+Date: 2026-02-17 12:40 | Change: Add architecture overview diagram
+Date: 2026-02-17 12:39 | Change: Create ARCHITECTURE.md with architecture overview diagram
+Date: 2026-01-30 16:42 | Change: chore: remove Kotlin and Swift generators (not production-ready)
+Date: 2026-01-30 16:40 | Change: fix: Python 3.9-3.11 compatibility for Kotlin/Swift generators
+Date: 2026-01-30 16:26 | Change: fix: resolve f-string backslash syntax error in KotlinGenerator
+Date: 2026-01-30 16:23 | Change: Delete .github/workflows/quality.yml
+Date: 2026-01-30 16:21 | Change: fix: add missing StrainLifeMethod and StressLifeMethod classes
+Date: 2026-01-30 16:20 | Change: Delete .github/workflows/draft-pdf.yml
+Date: 2026-01-30 15:58 | Change: feat: add new physics domains and code generators
+Date: 2026-01-30 15:51 | Change: chore: transition to maintenance mode (v2.0.7)
+Date: 2026-01-23 15:09 | Change: Update README.md
+Date: 2026-01-23 10:45 | Change: Create Dockerfile
+Date: 2026-01-23 10:37 | Change: Create .devcontainer.json
+Date: 2026-01-23 10:31 | Change: Delete .devcontainer directory
+Date: 2026-01-22 17:51 | Change: Update SECURITY.md
+Date: 2026-01-22 13:19 | Change: Update README.md
+Date: 2026-01-22 12:12 | Change: Update README.md
+Date: 2026-01-21 20:52 | Change: feat(codegen): maximum rigor enhancement for all 14 code generators
+Date: 2026-01-21 17:17 | Change: Update README.md
+Date: 2026-01-21 14:59 | Change: Update test_cli.py
+Date: 2026-01-21 14:57 | Change: Update solver_numba.py
+Date: 2026-01-21 14:56 | Change: Update test_cli.py
+Date: 2026-01-21 14:55 | Change: Potential fix for code scanning alert no. 757: Unused import (#22)
+Date: 2026-01-21 14:49 | Change: Potential fix for code scanning alert no. 711: Illegal raise (#21)
+Date: 2026-01-21 14:48 | Change: Potential fix for code scanning alert no. 450: Unreachable code (#20)
+Date: 2026-01-21 13:58 | Change: Update README.md
+Date: 2026-01-21 12:50 | Change: Update environment.yml
+Date: 2026-01-21 09:22 | Change: Update README.md
+Date: 2026-01-19 15:00 | Change: Update README.md
+Date: 2026-01-19 14:45 | Change: Update README.md
+Date: 2026-01-19 14:26 | Change: Update README.md
+Date: 2026-01-19 13:05 | Change: Update devcontainer.json
+Date: 2026-01-19 13:03 | Change: Update devcontainer.json
+Date: 2026-01-19 09:26 | Change: Remove RELEASE_NOTES link from README
+Date: 2026-01-19 08:30 | Change: Update CITATION.cff
+Date: 2026-01-19 08:22 | Change: Update README.md
+Date: 2026-01-19 08:19 | Change: Update Python badge in README.md
+Date: 2026-01-19 08:17 | Change: Update README.md badges for Python version
+Date: 2026-01-19 08:15 | Change: Update Python badge in README.md
+Date: 2026-01-19 08:14 | Change: Update Python version badge in README.md
+Date: 2026-01-18 19:04 | Change: fix: CUDA image tag 12.2.0-runtime-ubuntu22.04
+Date: 2026-01-18 18:54 | Change: v2.0.6: Integration fixes, Docker build, DSL imports, type hints
+Date: 2026-01-18 17:13 | Change: fix: Correct permissions syntax in docker.yml workflow
+Date: 2026-01-18 17:11 | Change: security: Fix HIGH severity path traversal in export API (CVE-2026-XXXXX)
+Date: 2026-01-18 16:15 | Change: fix: Make tqdm import optional in CLI for CI compatibility
+Date: 2026-01-18 16:02 | Change: Update permissions for test-image job in Docker workflow
+Date: 2026-01-18 16:01 | Change: Update docker.yml
+Date: 2026-01-18 15:54 | Change: feat(v2.0.5): Add new directories, schemas, templates, K8s, DevContainer, and tests
+Date: 2026-01-17 16:55 | Change: feat(v2.0.5): Add interactive REPL, presets library, and fix CI tests
+Date: 2026-01-17 16:42 | Change: fix: Correct DSL syntax in CLI test fixtures (defvar requires 3 args)
+Date: 2026-01-17 16:30 | Change: feat(v2.0.1): Add CLI, tutorials, gallery, benchmarks, and developer tools
+Date: 2026-01-17 16:23 | Change: feat: Add CLI, tutorials, gallery, i18n infrastructure
+Date: 2026-01-17 12:13 | Change: Update README.md
+Date: 2026-01-17 12:09 | Change: chore: Update version to 2.0.0 in __init__.py to match pyproject.toml
+Date: 2026-01-17 12:04 | Change: Fix coverage threshold: Update quality.yml to use 66% instead of 85% and update ci-build-test.yml to include coverage reporting
+Date: 2026-01-17 11:57 | Change: Fix: Format code with black (line-length 100)
+Date: 2026-01-17 11:49 | Change: Fix CI: Add hypothesis to test dependencies in ci-build-test.yml
+Date: 2026-01-17 11:46 | Change: Add coverage tests: parser, solver, plugins loader, phase_space, io
+Date: 2026-01-17 11:09 | Change: Fix CI: Handle pandas import and profiling conflicts
+Date: 2026-01-17 11:03 | Change: Fix CI: Add missing BoseEinstein export and fix plugin loader registry access
+Date: 2026-01-17 10:58 | Change: Fix CI: Add missing exports to quantum and relativistic domains
+Date: 2026-01-17 09:43 | Change: fix(ci): complete exports for ALL domain __init__.py files
+Date: 2026-01-17 09:39 | Change: fix(ci): export ALL major classes from ALL domain __init__.py files
+Date: 2026-01-17 09:32 | Change: fix(ci): add missing exports and remove Python 3.8 from CI
+Date: 2026-01-17 09:29 | Change: fix(ci): configure linters and mypy to pass CI
+Date: 2026-01-17 09:25 | Change: fix(ci): comprehensive fixes for ALL CI failures
+Date: 2026-01-17 09:19 | Change: fix(ci): fix isort, add missing exports, configure mypy for optional deps
+Date: 2026-01-17 09:12 | Change: fix(types): use proper ar: Any = None pattern instead of # type: ignore
+Date: 2026-01-17 09:07 | Change: fix(quality): fix mypy type errors and remove unused imports
+Date: 2026-01-17 08:59 | Change: fix(security): add missing # nosec B104 to validators.py line 148
+Date: 2026-01-16 16:36 | Change: style: format entire codebase with Black, add # nosec security exemptions with justifications
+Date: 2026-01-16 16:29 | Change: fix(ci): make security and quality checks advisory, fix Flask test skip
+Date: 2026-01-16 16:20 | Change: feat!: v2.0.0 - Enterprise deployment, ARM support, security hardening
+Date: 2026-01-14 19:44 | Change: test: add comprehensive coverage tests for plugins, server, and utils
+Date: 2026-01-14 17:25 | Change: fix: add spherical pendulum energy calculations
+Date: 2026-01-14 17:20 | Change: fix: solve coupled accelerations SIMULTANEOUSLY
+Date: 2026-01-14 17:09 | Change: feat: add custom physics-aware ODE integrators
+Date: 2026-01-14 17:05 | Change: feat: add rayleigh DSL command for Rayleigh dissipation
+Date: 2026-01-14 16:53 | Change: fix: critical EOM derivation bug for coupled systems
+Date: 2026-01-14 14:39 | Change: Fix for Missing call to superclass `__init__` during object initialization (#19)
+Date: 2026-01-14 08:23 | Change: Bump version from 1.6.0 to 1.6.1
+Date: 2026-01-13 19:45 | Change: docs: update README for v1.6.0
+Date: 2026-01-13 19:43 | Change: Delete CODEBASE_COMPREHENSIVE_ANALYSIS.md
+Date: 2026-01-13 19:43 | Change: Delete RELEASE_NOTES_v1.6.0.md
+Date: 2026-01-13 19:42 | Change: security: fix path traversal vulnerability (CWE-22)
+Date: 2026-01-13 19:33 | Change: chore: v1.6.0 release prep
+Date: 2026-01-13 19:24 | Change: feat: major feature expansion - 13 new features
+Date: 2026-01-13 17:47 | Change: feat: async simulation, memory management, rate limiting
+Date: 2026-01-13 17:44 | Change: Update CODEBASE_COMPREHENSIVE_ANALYSIS.md
+Date: 2026-01-13 17:29 | Change: fix: registry variable classification for Length type
+Date: 2026-01-13 08:37 | Change: Update SECURITY.md
+Date: 2026-01-11 16:51 | Change: v1.5.1: Major codebase improvements - 28 enhancements
+Date: 2026-01-10 20:04 | Change: Split large files into packages and add comprehensive kinematics documentation
+Date: 2026-01-10 19:40 | Change: Reorganize codebase: convert domain files to packages, remove core/ duplication
+Date: 2026-01-10 18:22 | Change: Add kinematics module with projectile motion support (v1.5.0)
+Date: 2026-01-10 18:19 | Change: Add comprehensive kinematics module with tests docs and more.
+Date: 2026-01-04 17:39 | Change: chore: bump version to 1.4.0 and update changelog
+Date: 2026-01-04 17:35 | Change: Improve error handling in animate_fluid for file validation and missing columns
+Date: 2025-12-31 13:12 | Change: feat: complete physics enhancement sprint with 9 domains and 1465 tests
+Date: 2025-12-31 13:05 | Change: feat: add GR, stat mech, thermo domains with 1450 tests
+Date: 2025-12-31 12:23 | Change: feat: maximum rigor physics domains with 355 tests
+Date: 2025-12-31 12:12 | Change: feat(quantum): add tunneling, finite well, hydrogen atom with maximum rigor
+Date: 2025-12-31 11:49 | Change: fix: skip property tests gracefully if hypothesis not installed
+Date: 2025-12-31 11:46 | Change: fix: use correct DSL syntax in property tests (curly braces for functions)
+Date: 2025-12-31 11:39 | Change: fix: add hypothesis to CI test dependencies
+Date: 2025-12-31 11:37 | Change: feat: add electromagnetic, relativistic, quantum domains with docs
+Date: 2025-12-31 11:27 | Change: feat: add py.typed, mypy CI, Binder, property tests, 3 new physics domains, VS Code ext, Conda recipe
+Date: 2025-12-31 11:07 | Change: fix: remove unused nbsphinx to resolve CVE in nbconvert
+Date: 2025-12-31 11:03 | Change: Merge branch 'main' of https://github.com/MechanicsDSL/mechanicsdsl
+Date: 2025-12-31 11:03 | Change: chore: sync versions, expand CI, fix docs URL, fill changelog dates
+Date: 2025-12-15 08:21 | Change: Delete .github/workflows/sonarcloud-analysis.yml
+Date: 2025-12-13 13:12 | Change: Address review feedback: reframe education as proposal, expand kernel logic, focus codegen on software
+Date: 2025-12-13 13:10 | Change: Delete paper_figures_codegen directory
+Date: 2025-12-13 13:07 | Change: Delete paper_codegen_toms.tex
+Date: 2025-12-13 13:06 | Change: Delete paper_fluids_jcp.tex
+Date: 2025-12-13 13:05 | Change: Delete paper_education_ajp.tex
+Date: 2025-12-13 13:05 | Change: Delete paper_figures_fluids directory
+Date: 2025-12-13 13:05 | Change: Delete paper_figures_education directory
+Date: 2025-12-13 12:59 | Change: Merge branch 'main' of https://github.com/MechanicsDSL/mechanicsdsl
+Date: 2025-12-13 12:59 | Change: Add paper figures for education, fluids, and codegen papers
+Date: 2025-12-13 12:56 | Change: Delete paper_cpc.tex
+Date: 2025-12-13 12:56 | Change: Delete mechanicsdsl_source.zip
+Date: 2025-12-13 12:56 | Change: Delete validate_all_papers.py
+Date: 2025-12-13 12:54 | Change: Merge remote changes, keep local paper_cpc.tex
+Date: 2025-12-13 12:52 | Change: Add more paper submissions
+Date: 2025-12-12 16:39 | Change: Delete paper_figures/benchmarks.txt
+Date: 2025-12-12 16:38 | Change: Delete paper_cpc.tex
+Date: 2025-12-12 16:38 | Change: Delete generate_paper_figures.py
+Date: 2025-12-12 16:38 | Change: Delete cover_letter_cpc.tex
+Date: 2025-12-12 16:38 | Change: Delete paper_formalism.tex
+Date: 2025-12-12 16:38 | Change: Delete CPC_PROGRAM_SUMMARY.md
+Date: 2025-12-12 16:17 | Change: Update cover_letter_cpc.tex
+Date: 2025-12-12 15:37 | Change: Prepare submission to CPC
+Date: 2025-12-10 19:15 | Change: Add more coverage tests
+Date: 2025-12-10 18:01 | Change: Merge branch 'main' of https://github.com/MechanicsDSL/mechanicsdsl
+Date: 2025-12-10 18:01 | Change: Increase test coverage
+Date: 2025-12-10 09:32 | Change: Update README.md
+Date: 2025-12-09 19:32 | Change: Delete dead utils.py file
+Date: 2025-12-09 19:26 | Change: Fix tests
+Date: 2025-12-09 19:18 | Change: Add tests to improve coverage
+Date: 2025-12-09 18:37 | Change: Add more tests
+Date: 2025-12-09 18:34 | Change: Fix all visualization tests to match Animator API - 1069 tests passing
+Date: 2025-12-09 18:18 | Change: Add files via upload
+Date: 2025-12-09 18:09 | Change: Merge branch 'main' of https://github.com/MechanicsDSL/mechanicsdsl
+Date: 2025-12-09 18:09 | Change: Add 270+ unit tests to increase coverage for utils, solver, symbolic, compiler, visualization, and parser modules
+Date: 2025-12-09 18:05 | Change: Potential fix for code scanning alert no. 8: Workflow does not contain permissions (#18)
+Date: 2025-12-09 17:51 | Change: Add 137 more unit tests for utils.py, parser.py, and compiler.py
+Date: 2025-12-09 17:41 | Change: Add 130+ more tests for utils.py and parser.py to increase coverage
+Date: 2025-12-09 17:28 | Change: Merge branch 'main' of https://github.com/MechanicsDSL/mechanicsdsl
+Date: 2025-12-09 17:28 | Change: Add comprehensive unit tests for analysis, io, utils, visualization, modules
+Date: 2025-12-09 15:26 | Change: Update sonarcloud-analysis.yml
+Date: 2025-12-09 15:25 | Change: Update sonarcloud-analysis.yml
+Date: 2025-12-09 15:23 | Change: Update sonarcloud-analysis.yml
+Date: 2025-12-09 15:19 | Change: Update sonarcloud-analysis.yml (#17)
+Date: 2025-12-09 15:16 | Change: Update sonarcloud-analysis.yml
+Date: 2025-12-09 15:14 | Change: Update sonarcloud-analysis.yml
+Date: 2025-12-09 14:55 | Change: Update sonarcloud-analysis.yml
+Date: 2025-12-09 14:51 | Change: Create sonarcloud-analysis.yml
+Date: 2025-12-09 14:44 | Change: Update README.md
+Date: 2025-12-09 14:44 | Change: Update README.md
+Date: 2025-12-09 14:36 | Change: Update README.md
+Date: 2025-12-09 14:34 | Change: Update README.md
+Date: 2025-12-09 14:21 | Change: Update python-app.yml
+Date: 2025-12-09 14:15 | Change: Update python-app.yml
+Date: 2025-12-09 14:11 | Change: Update python-app.yml
+Date: 2025-12-09 14:10 | Change: Update README.md
+Date: 2025-12-09 14:07 | Change: Update README.md
+Date: 2025-12-09 13:48 | Change: Update python-app.yml (#16)
+Date: 2025-12-09 13:46 | Change: Update python-app.yml
+Date: 2025-12-09 13:45 | Change: Update python-app.yml (#15)
+Date: 2025-12-09 13:38 | Change: Update python-app.yml
+Date: 2025-12-09 13:34 | Change: Update python-app.yml
+Date: 2025-12-09 13:33 | Change: Update python-app.yml
+Date: 2025-12-09 13:18 | Change: Update README.md
+Date: 2025-12-09 13:15 | Change: Update README.md
+Date: 2025-12-09 13:14 | Change: Update README.md
+Date: 2025-12-09 13:13 | Change: Update README.md
+Date: 2025-12-09 13:12 | Change: Update README.md
+Date: 2025-12-08 13:07 | Change: Update index.html
+Date: 2025-12-08 13:05 | Change: Update index.html
+Date: 2025-12-08 12:18 | Change: Update README.md
+Date: 2025-12-08 12:15 | Change: Delete src/mechanics_dsl/rigidbody.py
+Date: 2025-12-08 11:55 | Change: Update app.js
+Date: 2025-12-08 09:57 | Change: Add files via upload
+Date: 2025-12-08 09:19 | Change: Delete web-demo/index.html
+Date: 2025-12-07 18:37 | Change: fix: Make numba optional for Pyodide/WebAssembly compatibility
+Date: 2025-12-07 18:03 | Change: feat: Integrate real mechanicsdsl-core package from PyPI in web demo
+Date: 2025-12-07 18:02 | Change: Update __init__.py
+Date: 2025-12-07 18:00 | Change: chore: Bump version to 1.3.0 for release
+Date: 2025-12-07 17:56 | Change: feat: Update info display to show Python energy/error
+Date: 2025-12-07 17:56 | Change: feat: Add Pyodide integration for real Python/SciPy physics
+Date: 2025-12-07 17:49 | Change: perf: Upgrade double pendulum to RK4 integrator for better energy conservation
+Date: 2025-12-07 17:45 | Change: fix: Add null checks to prevent JS errors
+Date: 2025-12-07 17:43 | Change: fix: Fix paths for GitHub Pages and remove workflow path filter
+Date: 2025-12-07 17:39 | Change: feat: Add advanced web demo features
+Date: 2025-12-07 17:27 | Change: feat: Add interactive web demo
+Date: 2025-12-07 17:18 | Change: ci: Add GitHub Pages deployment workflow
+Date: 2025-12-06 20:14 | Change: v1.2.3: Add HamiltonJacobi.solve() method
+Date: 2025-12-07 17:06 | Change: Update index.rst
+Date: 2025-12-07 16:59 | Change: v1.3.0: Add quaternions, Numba, CUDA, OpenMP, WASM, Arduino backends + 73 tests
+Date: 2025-12-06 20:06 | Change: Update CHANGELOG.md
+Date: 2025-12-06 20:04 | Change: Draft new release
+Date: 2025-12-06 19:59 | Change: Update 03_simple_pendulum.ipynb
+Date: 2025-12-06 19:58 | Change: Update 02_harmonic_oscillator.ipynb
+Date: 2025-12-06 19:56 | Change: Update 01_getting_started.ipynb
+Date: 2025-12-06 19:54 | Change: Update 01_getting_started.ipynb
+Date: 2025-12-06 19:28 | Change: Update README.md
+Date: 2025-12-06 19:25 | Change: Add comprehensive test suite - 534 passing tests
+Date: 2025-12-06 18:46 | Change: Update README.md
+Date: 2025-12-06 18:35 | Change: docs: Add comprehensive documentation for all 17 classical mechanics modules
+Date: 2025-12-06 18:19 | Change: feat(classical): Complete classical mechanics domain with 17 modules
+Date: 2025-12-06 11:23 | Change: Add 30 Jupyter notebooks and 5 new code generators (Julia, Rust, MATLAB, Fortran, JavaScript)
+Date: 2025-12-05 20:25 | Change: refactor: Reorganize docs, tests, and examples into subfolders
+Date: 2025-12-05 20:14 | Change: Merge branch 'main' of https://github.com/MechanicsDSL/mechanicsdsl
+Date: 2025-12-05 20:10 | Change: docs: Expand documentation with codegen, architecture, and advanced topics
+Date: 2025-12-05 20:00 | Change: Update README.md
+Date: 2025-12-05 20:00 | Change: Update README.md
+Date: 2025-12-05 19:59 | Change: Update README.md
+Date: 2025-12-05 19:57 | Change: Update README.md
+Date: 2025-12-05 19:56 | Change: Resolve merge conflict: keep improved README
+Date: 2025-12-05 19:52 | Change: feat: Expand examples to 30 tutorials with fluid dynamics and celestial mechanics
+Date: 2025-12-05 19:25 | Change: Update README.md
+Date: 2025-12-05 19:25 | Change: Update README.md
+Date: 2025-12-05 19:06 | Change: Add: MechanicsDSL logo for documentation
+Date: 2025-12-05 18:54 | Change: Fix: Add animate method to Animator for backward compatibility
+Date: 2025-12-05 18:46 | Change: Fix: Use correct Config attribute names in Animator
+Date: 2025-12-05 17:56 | Change: Refactor: Modular package structure with comprehensive documentation
