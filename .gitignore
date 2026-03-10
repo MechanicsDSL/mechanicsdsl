@@ -26,6 +26,8 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+node_modules/
+jspm_packages/
 
 # PyInstaller
 *.manifest
