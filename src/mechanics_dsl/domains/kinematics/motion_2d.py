@@ -101,7 +101,7 @@ class Vector2D:
     @property
     def magnitude(self) -> float:
         """Get magnitude (length) of vector."""
-        return math.sqrt(self.x**2 + self.y**2)
+        return math.hypot(self.x, self.y)
 
     @property
     def magnitude_squared(self) -> float:
