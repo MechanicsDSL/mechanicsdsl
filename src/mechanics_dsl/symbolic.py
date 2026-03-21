@@ -681,7 +681,7 @@ class SymbolicEngine:
                             eq_clean = eq_clean.subs(term, accel_sym)
                         elif f"Derivative({q}(t), t)" in term_str:
                             eq_clean = eq_clean.subs(term, vel_sym)
-                    except:
+                    except Exception:
                         pass
 
                 # Also clean up raw Function objects
@@ -689,7 +689,7 @@ class SymbolicEngine:
                     try:
                         if str(term.func) == q and term.args == (self.time_symbol,):
                             eq_clean = eq_clean.subs(term, pos_sym)
-                    except:
+                    except Exception:
                         pass
 
             processed_eqs.append(sp.expand(eq_clean))

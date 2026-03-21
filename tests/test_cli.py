@@ -34,7 +34,7 @@ class TestCLIBasics:
                     # --help causes SystemExit(0)
                     assert e.code == 0
                 output = mock_stdout.getvalue()
-                assert 'compile' in output or True  # argparse writes to stdout
+                assert 'compile' in output
     
     def test_cli_info(self):
         """Test info command."""

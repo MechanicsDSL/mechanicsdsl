@@ -550,14 +550,18 @@ def require_validation(func: Callable[..., T]) -> Callable[..., T]:
 
 
 def sandbox_aware(func: Callable[..., T]) -> Callable[..., T]:
-    """Decorator to check sandbox restrictions."""
+    """Decorator to check sandbox restrictions.
+
+    Note: Active enforcement is provided by Sandbox.execute()
+    and the sandboxed() context manager. This decorator logs
+    when sandboxed functions are called.
+    """
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         sandbox = Sandbox.current()
         if sandbox is not None:
-            # Apply sandbox checks
-            pass
+            logger.debug(f"sandbox_aware: executing {func.__name__} in sandbox context")
         return func(*args, **kwargs)
 
     return wrapper

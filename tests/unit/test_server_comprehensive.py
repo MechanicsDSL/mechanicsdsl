@@ -36,9 +36,9 @@ class TestServerApp:
     def test_server_init(self):
         """Test server __init__ module"""
         try:
-            pass
+            from mechanics_dsl.server import app
 
-            assert True
+            assert app is not None
         except ImportError:
             pytest.skip("Server module not available")
 
@@ -58,10 +58,9 @@ class TestServerRoutes:
     def test_routes_blueprint_mocked(self):
         """Test routes with mocked Blueprint"""
         try:
-            pass
+            from mechanics_dsl.server.routes import router
 
-            # Just verify import works with mocking
-            assert True
+            assert router is not None
         except ImportError:
             pytest.skip("Flask or routes module not available")
 
@@ -81,10 +80,9 @@ class TestServerWebSocket:
     def test_websocket_server_mocked(self):
         """Test websocket with mocked SocketIO"""
         try:
-            pass
+            from mechanics_dsl.server.websocket import websocket_router
 
-            # Just verify import works
-            assert True
+            assert websocket_router is not None
         except ImportError:
             pytest.skip("socketio or WebSocket module not available")
 

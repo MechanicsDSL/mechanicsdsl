@@ -25,14 +25,7 @@ import sympy as sp
 from ...utils import logger
 from ..base import PhysicsDomain
 
-# Try to import RigidBody3D utilities from package root
-try:
-    pass
-
-    HAS_RIGIDBODY3D = True
-except ImportError:
-    HAS_RIGIDBODY3D = False
-    logger.warning("RigidBody3D not available, using symbolic-only implementation")
+HAS_RIGIDBODY3D = True
 
 
 @dataclass

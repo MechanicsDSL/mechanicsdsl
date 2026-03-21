@@ -222,6 +222,36 @@ class CodeGenerator(ABC):
             idx += 2
         return "\n".join(lines)
 
+    def _extract_energy_expressions(self) -> Tuple[Optional[sp.Expr], Optional[sp.Expr]]:
+        """
+        Extract kinetic (T) and potential (V) energy from Lagrangian L = T - V.
+
+        Uses Euler's theorem for homogeneous functions: for T quadratic in
+        velocities, T = (1/2) * sum(q_dot_i * dL/dq_dot_i).
+
+        Returns:
+            Tuple of (T, V) as sympy expressions with parameters substituted,
+            or (None, None) if Lagrangian is not available.
+        """
+        if self.lagrangian is None:
+            return None, None
+
+        L = self.lagrangian
+        vel_syms = [self._symbols[f"{c}_dot"] for c in self.coordinates]
+
+        # Euler's theorem: T = sum(q_dot * dL/dq_dot) / 2
+        T = sum(v * sp.diff(L, v) for v in vel_syms) / 2
+        T = sp.simplify(T)
+        V = sp.simplify(T - L)
+
+        # Substitute numerical parameter values
+        param_subs = {self._symbols[k]: v for k, v in self.parameters.items()
+                      if k in self._symbols}
+        T = T.subs(param_subs)
+        V = V.subs(param_subs)
+
+        return T, V
+
     def generate_energy_computation(self) -> Optional[str]:
         """
         Generate code to compute total energy (kinetic + potential).
@@ -234,8 +264,7 @@ class CodeGenerator(ABC):
         if self.lagrangian is None:
             return None
 
-        # For L = T - V, compute H = T + V via Legendre transform
-        # This is a placeholder - subclasses should override with proper code
+        # Subclasses should override for language-specific output
         return "// Energy computation not implemented for this target"
 
     def generate_rk4_integrator(self) -> str:

@@ -177,7 +177,7 @@ class TestFullPipeline:
         except Exception as e:
             # If plotting fails due to display issues, that's okay
             # Just make sure it's not a logic error
-            assert "display" in str(e).lower() or "backend" in str(e).lower() or True
+            pass  # Display/backend errors are acceptable in CI environments
 
     def test_phase_space_plotting(self):
         """Test phase space plotting"""
@@ -206,8 +206,7 @@ class TestFullPipeline:
         try:
             compiler.plot_phase_space(solution, coordinate_index=0)
         except Exception as e:
-            # Display errors are acceptable
-            assert "display" in str(e).lower() or "backend" in str(e).lower() or True
+            pass  # Display/backend errors are acceptable in CI environments
 
 
 class TestContextManager:
@@ -236,8 +235,7 @@ class TestContextManager:
             solution = compiler.simulate(t_span=(0, 1), num_points=100)
             assert solution["success"]
 
-        # Context should exit cleanly
-        assert True
+        # No exception means context manager exit was clean
 
 
 if __name__ == "__main__":

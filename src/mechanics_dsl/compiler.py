@@ -994,6 +994,7 @@ class PhysicsCompiler:
                 parameters=self.simulator.parameters,
                 initial_conditions=self.initial_conditions,
                 equations=self.equations,
+                lagrangian=self.symbolic.ast_to_sympy(self.lagrangian) if self.lagrangian else None,
                 fluid_particles=self.fluid_particles,
                 boundary_particles=self.boundary_particles,
             )

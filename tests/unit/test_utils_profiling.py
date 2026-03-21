@@ -286,4 +286,4 @@ class TestTimeoutError:
         try:
             raise TimeoutError("Test timeout")
         except TimeoutError as e:
-            assert "Test timeout" in str(e) or True  # May have different format
+            assert "Test timeout" in str(e)

@@ -266,4 +266,4 @@ class TestProfilingCoverage:
         time.sleep(0.01)
         duration = monitor.stop_timer("test")
 
-        assert duration is not None or True  # May return None on error
+        assert duration is not None, "Timer should return a duration value"
