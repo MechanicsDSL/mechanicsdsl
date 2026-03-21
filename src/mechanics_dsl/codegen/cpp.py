@@ -273,17 +273,22 @@ class CppGenerator(CodeGenerator):
         if self.lagrangian is None:
             return None
 
-        # Compute kinetic and potential energy from Lagrangian
-        # L = T - V => T + V = 2T - L (if we can extract T)
+        # Extract T and V from Lagrangian using Euler's theorem
+        T, V = self._extract_energy_expressions()
+        if T is None or V is None:
+            return None
+
+        T_code = self.expr_to_code(T)
+        V_code = self.expr_to_code(V)
+
         return f"""
-    // Energy computation
+    // Energy computation (T + V extracted from Lagrangian)
     double compute_energy(const std::vector<double>& y) {{
         // Unpack state
 {self._generate_state_unpacking()}
 
-        // L = T - V, so we compute both separately
-        double kinetic = 0.0;  // TODO: Extract from Lagrangian
-        double potential = 0.0;  // TODO: Extract from Lagrangian
+        double kinetic = {T_code};
+        double potential = {V_code};
         return kinetic + potential;
     }}
 """

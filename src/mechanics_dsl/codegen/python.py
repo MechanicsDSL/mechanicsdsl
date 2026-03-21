@@ -230,15 +230,23 @@ class PythonGenerator(CodeGenerator):
         if self.lagrangian is None:
             return None
 
+        # Extract T and V from Lagrangian using Euler's theorem
+        T, V = self._extract_energy_expressions()
+        if T is None or V is None:
+            return None
+
+        T_code = self.expr_to_code(T)
+        V_code = self.expr_to_code(V)
+
         return f'''
 def compute_energy(y):
     """Compute total energy (kinetic + potential)."""
     # Unpack state
 {self._generate_unpack("y")}
 
-    # Energy from Lagrangian (L = T - V)
-    # TODO: Implement proper energy extraction
-    return 0.0
+    kinetic = {T_code}
+    potential = {V_code}
+    return kinetic + potential
 '''
 
     def _generate_code(self) -> str:

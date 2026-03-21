@@ -345,7 +345,7 @@ class TestProfilingModule:
         [i for i in range(10000)]
 
         monitor.snapshot_memory("after")
-        assert True  # Just test it doesn't crash
+        # No-crash test: verifies memory snapshot completes without exception
 
 
 class TestPathValidationModule:

@@ -196,9 +196,22 @@ class TestEnergyDissipation:
         \initial{x=1.0, x_dot=0.0}
         """
 
-        # This test uses the DSL's built-in damping if available
-        # For now, just verify the module loads correctly
-        assert True  # Placeholder for full integration test
+        # Compile and simulate the damped system
+        from mechanics_dsl import PhysicsCompiler
+
+        compiler = PhysicsCompiler()
+        result = compiler.compile_dsl(dsl_code)
+        assert result["success"], f"Damped oscillator compilation failed: {result}"
+
+        solution = compiler.simulate(t_span=(0, 5), num_points=200)
+        assert solution["success"]
+
+        # Damped system should show decaying amplitude
+        import numpy as np
+
+        y = np.array(solution["y"])
+        # Position amplitude at end should be less than at start
+        assert abs(y[0, -1]) < abs(y[0, 0]), "Damped oscillator should decay"
 
 
 if __name__ == "__main__":

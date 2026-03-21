@@ -476,10 +476,10 @@ class ActionAngleVariables:
         Returns:
             Angular frequency
         """
-        # This is a placeholder - full implementation requires
-        # computing the period from the action integral derivative
-        logger.warning("compute_frequency not fully implemented; use period-based method")
-        return 0.0
+        raise NotImplementedError(
+            "compute_frequency requires computing the period from the action integral "
+            "derivative dJ/dE. Use the period-based method: omega = 2*pi / T"
+        )
 
 
 class HamiltonJacobi:
