@@ -184,6 +184,6 @@ If you use MechanicsDSL in your research, please cite:
    @software{mechanicsdsl,
      title = {MechanicsDSL: A Domain-Specific Language for Classical Mechanics},
      author = {Parsons, Noah},
-     year = {2024},
+     year = {2026},
      url = {https://github.com/MechanicsDSL/mechanicsdsl}
    }
