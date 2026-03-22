@@ -59,7 +59,6 @@ IDENTIFIER_REGEX = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 # Path traversal patterns
 PATH_TRAVERSAL_PATTERNS = [
     "..",
-    "~",
     "\x00",  # Null byte
 ]
 
@@ -296,6 +295,11 @@ def validate_path(
     for pattern in PATH_TRAVERSAL_PATTERNS:
         if pattern in path_str:
             raise PathTraversalError(f"Path traversal pattern detected: '{pattern}'")
+
+    # Block tilde expansion at path start (home directory escape)
+    # but not tilde in the middle (e.g. Windows 8.3 short names like RUNNER~1)
+    if path_str.startswith("~"):
+        raise PathTraversalError("Path traversal pattern detected: '~'")
 
     # Check existence if required
     if must_exist and not resolved.exists():
