@@ -11,13 +11,19 @@ import pytest
 import sympy as sp
 
 from mechanics_dsl.codegen import (
+    ARMGenerator,
+    ArduinoGenerator,
     CodeGenerator,
+    CppGenerator,
+    CudaGenerator,
     FortranGenerator,
     JavaScriptGenerator,
     JuliaGenerator,
     MatlabGenerator,
+    OpenMPGenerator,
     PythonGenerator,
     RustGenerator,
+    WasmGenerator,
 )
 
 # Sample system data for testing - includes equations for validation
@@ -252,3 +258,80 @@ class TestAllGeneratorsValidate:
         repr_str = repr(gen)
         assert "test_pendulum" in repr_str
         assert GeneratorClass.__name__ in repr_str
+
+
+# ============================================================================
+# Energy computation tests for all backends
+# ============================================================================
+
+# Harmonic oscillator: L = 0.5*m*x_dot^2 - 0.5*k*x^2
+x, x_dot, m, k = sp.symbols("x x_dot m k")
+SAMPLE_SYSTEM_WITH_LAGRANGIAN = {
+    "system_name": "test_oscillator",
+    "coordinates": ["x"],
+    "parameters": {"m": 1.0, "k": 4.0},
+    "initial_conditions": {"x": 1.0, "x_dot": 0.0},
+    "equations": {"x_ddot": -k / m * x},
+    "lagrangian": sp.Rational(1, 2) * m * x_dot**2 - sp.Rational(1, 2) * k * x**2,
+}
+
+
+class TestEnergyComputationAllBackends:
+    """Test that all backends generate energy computation code from Lagrangian."""
+
+    @pytest.mark.parametrize(
+        "GeneratorClass,keyword",
+        [
+            (CppGenerator, "compute_energy"),
+            (PythonGenerator, "compute_energy"),
+            (RustGenerator, "compute_energy"),
+            (JuliaGenerator, "compute_energy"),
+            (FortranGenerator, "compute_energy"),
+            (MatlabGenerator, "compute_energy"),
+            (JavaScriptGenerator, "computeEnergy"),
+            (CudaGenerator, "compute_energy"),
+            (OpenMPGenerator, "compute_energy"),
+            (WasmGenerator, "compute_energy"),
+            (ArduinoGenerator, "compute_energy"),
+            (ARMGenerator, "compute_energy"),
+        ],
+    )
+    def test_energy_generation_with_lagrangian(self, GeneratorClass, keyword):
+        """Each backend should generate an energy function when given a Lagrangian."""
+        gen = GeneratorClass(**SAMPLE_SYSTEM_WITH_LAGRANGIAN)
+        result = gen.generate_energy_computation()
+        assert result is not None, f"{GeneratorClass.__name__} returned None"
+        assert keyword in result, f"{GeneratorClass.__name__} missing '{keyword}' in output"
+        # Should reference kinetic and potential energy
+        assert "kinetic" in result.lower() or "ke" in result.lower()
+
+    @pytest.mark.parametrize(
+        "GeneratorClass",
+        [
+            CppGenerator,
+            PythonGenerator,
+            RustGenerator,
+            FortranGenerator,
+            MatlabGenerator,
+            JavaScriptGenerator,
+            CudaGenerator,
+            OpenMPGenerator,
+            WasmGenerator,
+            ArduinoGenerator,
+            ARMGenerator,
+        ],
+    )
+    def test_energy_returns_none_without_lagrangian(self, GeneratorClass):
+        """Without a Lagrangian, generate_energy_computation() should return None."""
+        gen = GeneratorClass(**SAMPLE_SYSTEM)
+        result = gen.generate_energy_computation()
+        assert result is None
+
+    def test_julia_energy_uses_real_expressions(self):
+        """Julia should use actual sympy-derived expressions, not hardcoded approximation."""
+        gen = JuliaGenerator(**SAMPLE_SYSTEM_WITH_LAGRANGIAN)
+        result = gen.generate_energy_function()
+        assert result is not None
+        assert "compute_energy" in result
+        # Should NOT use the old hardcoded approximation
+        assert "0.5 * u[2*i]^2" not in result

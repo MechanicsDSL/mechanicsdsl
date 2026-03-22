@@ -182,6 +182,35 @@ class ARMGenerator(CodeGenerator):
         """
         return sympy_to_c_arm(expr)
 
+    def generate_energy_computation(self) -> Optional[str]:
+        """Generate ARM-optimized C code to compute total energy."""
+        T, V = self._extract_energy_expressions()
+        if T is None or V is None:
+            return None
+
+        T_code = self.expr_to_code(T)
+        V_code = self.expr_to_code(V)
+
+        # State unpacking (float for embedded)
+        unpack_lines = []
+        idx = 0
+        for coord in self.coordinates:
+            unpack_lines.append(f"    float {coord} = state[{idx}];")
+            unpack_lines.append(f"    float {coord}_dot = state[{idx + 1}];")
+            idx += 2
+        unpack = "\n".join(unpack_lines)
+
+        return f"""
+/* Compute total energy (kinetic + potential) from Lagrangian */
+float compute_energy(const float* state, int n) {{
+{unpack}
+
+    float kinetic = {T_code};
+    float potential = {V_code};
+    return kinetic + potential;
+}}
+"""
+
     def generate_equations(self) -> str:
         """Generate C code for equations of motion."""
         lines = []

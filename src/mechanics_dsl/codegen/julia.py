@@ -190,19 +190,46 @@ class JuliaGenerator(CodeGenerator):
             idx += 2
         return "\n".join(lines)
 
+    def generate_energy_computation(self) -> Optional[str]:
+        """Generate Julia code to compute total energy."""
+        return self.generate_energy_function() or None
+
     def generate_energy_function(self) -> str:
         """Generate Julia energy computation function."""
-        if self.hamiltonian is None and self.lagrangian is None:
-            return ""
-
-        return """
-# Compute total energy (for conservation checking)
+        T, V = self._extract_energy_expressions()
+        if T is None or V is None:
+            if self.hamiltonian is None and self.lagrangian is None:
+                return ""
+            # Fallback if extraction fails but Lagrangian/Hamiltonian exists
+            return """
+# Compute total energy (approximation)
 function compute_energy(u)
-    # Kinetic energy (approximation: 0.5 * v^2 for unit mass)
     n_coords = div(length(u), 2)
     KE = sum(0.5 * u[2*i]^2 for i in 1:n_coords)
-    # Potential energy would need to be added based on Lagrangian
     return KE
+end
+"""
+
+        T_code = self.expr_to_code(T)
+        V_code = self.expr_to_code(V)
+
+        # State unpacking (Julia is 1-indexed)
+        unpack_lines = []
+        idx = 1
+        for coord in self.coordinates:
+            unpack_lines.append(f"    {coord} = u[{idx}]")
+            unpack_lines.append(f"    {coord}_dot = u[{idx + 1}]")
+            idx += 2
+        unpack = "\n".join(unpack_lines)
+
+        return f"""
+# Compute total energy (kinetic + potential) from Lagrangian
+function compute_energy(u)
+{unpack}
+
+    kinetic = {T_code}
+    potential = {V_code}
+    return kinetic + potential
 end
 """
 

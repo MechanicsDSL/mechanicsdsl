@@ -1,10 +1,20 @@
 """
-Comprehensive tests for server module with mocking.
+Comprehensive tests for server module with mocking and real endpoints.
 """
 
 from unittest.mock import MagicMock, Mock
 
 import pytest
+
+# Check if FastAPI + TestClient are available for real endpoint tests
+try:
+    from fastapi.testclient import TestClient
+
+    from mechanics_dsl.server.app import create_app
+
+    FASTAPI_AVAILABLE = True
+except ImportError:
+    FASTAPI_AVAILABLE = False
 
 
 class TestServerApp:
@@ -285,4 +295,77 @@ class TestServerCORS:
         mock_client.options.return_value.status_code = 200
 
         response = mock_client.options("/api/compile")
+        assert response.status_code == 200
+
+
+@pytest.mark.skipif(not FASTAPI_AVAILABLE, reason="FastAPI not installed")
+class TestRealEndpoints:
+    """Tests that hit real FastAPI endpoints via TestClient."""
+
+    @pytest.fixture(autouse=True)
+    def setup_client(self):
+        self.app = create_app()
+        self.client = TestClient(self.app)
+
+    def test_health_endpoint(self):
+        """GET /health returns healthy status"""
+        response = self.client.get("/health")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "healthy"
+        assert data["service"] == "mechanics_dsl"
+
+    def test_compile_valid_dsl(self):
+        """POST /api/compile with valid DSL succeeds"""
+        dsl = r"\system{oscillator}\coordinates{x}\parameters{k=1.0, m=1.0}\lagrangian{0.5*m*x_dot^2 - 0.5*k*x^2}"
+        response = self.client.post("/api/compile", json={"code": dsl})
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert "x" in data.get("coordinates", [])
+
+    def test_compile_invalid_dsl(self):
+        """POST /api/compile with invalid DSL returns error"""
+        response = self.client.post("/api/compile", json={"code": "not valid dsl at all"})
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is False
+
+    def test_simulate_valid(self):
+        """POST /api/simulate compiles and runs simulation"""
+        dsl = r"\system{oscillator}\coordinates{x}\parameters{k=1.0, m=1.0}\lagrangian{0.5*m*x_dot^2 - 0.5*k*x^2}\initial{x=1.0, x_dot=0}"
+        response = self.client.post("/api/simulate", json={
+            "code": dsl,
+            "t_start": 0,
+            "t_end": 1,
+            "num_points": 50,
+        })
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert "t" in data
+        assert "y" in data
+
+    def test_export_invalid_target(self):
+        """POST /api/export with invalid target returns error"""
+        dsl = r"\system{test}\coordinates{x}\parameters{k=1.0}\lagrangian{0.5*x_dot^2 - 0.5*k*x^2}"
+        response = self.client.post("/api/export", json={
+            "code": dsl,
+            "target": "nonexistent_lang",
+        })
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is False
+        assert "Invalid target" in data.get("error", "")
+
+    def test_generators_list(self):
+        """GET /api/generators returns list of available targets"""
+        response = self.client.get("/api/generators")
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, (list, dict))
+
+    def test_session_delete(self):
+        """DELETE /api/session/{id} succeeds"""
+        response = self.client.delete("/api/session/test_session_123")
         assert response.status_code == 200

@@ -230,8 +230,8 @@ class PluginLoader:
                 plugin_name = instance.metadata.name
                 self._registry.register(plugin_type, plugin_name, obj)
                 loaded[plugin_type].append(plugin_name)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Failed to load plugin {obj.__name__}: {e}")
 
         return loaded
 

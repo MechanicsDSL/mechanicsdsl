@@ -133,6 +133,35 @@ class OpenMPGenerator(CodeGenerator):
         """
         return sympy_to_cpp_openmp(expr)
 
+    def generate_energy_computation(self) -> Optional[str]:
+        """Generate OpenMP C++ code to compute total energy."""
+        T, V = self._extract_energy_expressions()
+        if T is None or V is None:
+            return None
+
+        T_code = self.expr_to_code(T)
+        V_code = self.expr_to_code(V)
+
+        # State unpacking
+        unpack_lines = []
+        idx = 0
+        for coord in self.coordinates:
+            unpack_lines.append(f"    const double {coord} = state[{idx}];")
+            unpack_lines.append(f"    const double {coord}_dot = state[{idx + 1}];")
+            idx += 2
+        unpack = "\n".join(unpack_lines)
+
+        return f"""
+// Compute total energy (kinetic + potential) from Lagrangian
+double compute_energy(const double* state, int n) {{
+{unpack}
+
+    double kinetic = {T_code};
+    double potential = {V_code};
+    return kinetic + potential;
+}}
+"""
+
     def generate(self, output_file: str) -> str:
         """
         Generate OpenMP C++ code.

@@ -155,6 +155,35 @@ class MatlabGenerator(CodeGenerator):
         """
         return sympy_to_matlab(expr)
 
+    def generate_energy_computation(self) -> Optional[str]:
+        """Generate MATLAB code to compute total energy."""
+        T, V = self._extract_energy_expressions()
+        if T is None or V is None:
+            return None
+
+        T_code = self.expr_to_code(T)
+        V_code = self.expr_to_code(V)
+
+        # State unpacking (MATLAB is 1-indexed)
+        unpack_lines = []
+        idx = 1
+        for coord in self.coordinates:
+            unpack_lines.append(f"    {coord} = y({idx});")
+            unpack_lines.append(f"    {coord}_dot = y({idx + 1});")
+            idx += 2
+        unpack = "\n".join(unpack_lines)
+
+        return f"""
+%% Compute total energy (kinetic + potential) from Lagrangian
+function E = compute_energy(y)
+{unpack}
+
+    kinetic = {T_code};
+    potential = {V_code};
+    E = kinetic + potential;
+end
+"""
+
     def generate(self, output_file: str = "simulation.m") -> str:
         """
         Generate MATLAB/Octave simulation code.

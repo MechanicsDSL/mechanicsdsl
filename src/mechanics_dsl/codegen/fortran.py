@@ -155,6 +155,52 @@ class FortranGenerator(CodeGenerator):
         """
         return sympy_to_fortran(expr, str(self.precision))
 
+    def generate_energy_computation(self) -> Optional[str]:
+        """Generate Fortran code to compute total energy."""
+        T, V = self._extract_energy_expressions()
+        if T is None or V is None:
+            return None
+
+        T_code = self.expr_to_code(T)
+        V_code = self.expr_to_code(V)
+
+        prec = "real(8)" if str(self.precision) == "double" else "real(4)"
+        n = self.state_dim
+
+        # State unpacking
+        unpack_lines = []
+        idx = 1
+        for coord in self.coordinates:
+            unpack_lines.append(f"        {prec} :: {coord}, {coord}_dot")
+            idx += 2
+
+        assign_lines = []
+        idx = 1
+        for coord in self.coordinates:
+            assign_lines.append(f"        {coord} = state({idx})")
+            assign_lines.append(f"        {coord}_dot = state({idx + 1})")
+            idx += 2
+
+        decls = "\n".join(unpack_lines)
+        assigns = "\n".join(assign_lines)
+
+        return f"""
+    ! Compute total energy (kinetic + potential) from Lagrangian
+    function compute_energy(state, n) result(E)
+        implicit none
+        integer, intent(in) :: n
+        {prec}, intent(in) :: state(n)
+        {prec} :: E, kinetic, potential
+{decls}
+
+{assigns}
+
+        kinetic = {T_code}
+        potential = {V_code}
+        E = kinetic + potential
+    end function compute_energy
+"""
+
     def generate(self, output_file: str = "simulation.f90") -> str:
         """
         Generate Fortran simulation code.

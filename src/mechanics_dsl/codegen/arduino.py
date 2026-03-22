@@ -134,6 +134,35 @@ class ArduinoGenerator(CodeGenerator):
         """
         return sympy_to_c_arduino(expr)
 
+    def generate_energy_computation(self) -> Optional[str]:
+        """Generate Arduino C code to compute total energy."""
+        T, V = self._extract_energy_expressions()
+        if T is None or V is None:
+            return None
+
+        T_code = self.expr_to_code(T)
+        V_code = self.expr_to_code(V)
+
+        # State unpacking (float for Arduino)
+        unpack_lines = []
+        idx = 0
+        for coord in self.coordinates:
+            unpack_lines.append(f"    float {coord} = state[{idx}];")
+            unpack_lines.append(f"    float {coord}_dot = state[{idx + 1}];")
+            idx += 2
+        unpack = "\n".join(unpack_lines)
+
+        return f"""
+// Compute total energy (kinetic + potential) from Lagrangian
+float compute_energy(float* state, int n) {{
+{unpack}
+
+    float kinetic = {T_code};
+    float potential = {V_code};
+    return kinetic + potential;
+}}
+"""
+
     def generate(self, output_file: str) -> str:
         """
         Generate Arduino sketch file.

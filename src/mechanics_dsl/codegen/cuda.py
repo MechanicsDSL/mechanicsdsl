@@ -6,7 +6,7 @@ Includes CPU fallback code for systems without NVIDIA GPUs.
 """
 
 import os
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import sympy as sp
 from sympy.printing.cxx import cxxcode
@@ -48,6 +48,7 @@ class CudaGenerator(CodeGenerator):
         parameters: Dict[str, float],
         initial_conditions: Dict[str, float],
         equations: Dict[str, sp.Expr],
+        lagrangian: Optional[sp.Expr] = None,
         generate_cpu_fallback: bool = True,
         fluid_particles: List[dict] = None,
         boundary_particles: List[dict] = None,
@@ -71,7 +72,8 @@ class CudaGenerator(CodeGenerator):
             batch_size: Number of parallel simulations (for sweeps)
             compute_capability: CUDA compute capability (30, 50, 60, 70, 80)
         """
-        super().__init__(system_name, coordinates, parameters, initial_conditions, equations)
+        super().__init__(system_name, coordinates, parameters, initial_conditions, equations,
+                         lagrangian=lagrangian)
 
         self.generate_cpu_fallback = generate_cpu_fallback
         self.fluid_particles = fluid_particles or []
@@ -91,6 +93,35 @@ class CudaGenerator(CodeGenerator):
     def expr_to_code(self, expr: sp.Expr) -> str:
         """Convert sympy expression to CUDA C++ code."""
         return self._sympy_to_cuda(expr)
+
+    def generate_energy_computation(self) -> Optional[str]:
+        """Generate CUDA device code to compute total energy."""
+        T, V = self._extract_energy_expressions()
+        if T is None or V is None:
+            return None
+
+        T_code = self.expr_to_code(T)
+        V_code = self.expr_to_code(V)
+
+        # State unpacking
+        unpack_lines = []
+        idx = 0
+        for coord in self.coordinates:
+            unpack_lines.append(f"    double {coord} = state[{idx}];")
+            unpack_lines.append(f"    double {coord}_dot = state[{idx + 1}];")
+            idx += 2
+        unpack = "\n".join(unpack_lines)
+
+        return f"""
+// Compute total energy (kinetic + potential) from Lagrangian
+__device__ double compute_energy(const double* state) {{
+{unpack}
+
+    double kinetic = {T_code};
+    double potential = {V_code};
+    return kinetic + potential;
+}}
+"""
 
     def generate(self, output_dir: str = ".") -> str:
         """

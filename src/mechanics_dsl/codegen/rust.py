@@ -148,6 +148,35 @@ class RustGenerator(CodeGenerator):
         """
         return sympy_to_rust(expr)
 
+    def generate_energy_computation(self) -> Optional[str]:
+        """Generate Rust code to compute total energy."""
+        T, V = self._extract_energy_expressions()
+        if T is None or V is None:
+            return None
+
+        T_code = self.expr_to_code(T)
+        V_code = self.expr_to_code(V)
+
+        # State unpacking
+        unpack_lines = []
+        idx = 0
+        for coord in self.coordinates:
+            unpack_lines.append(f"    let {coord}: f64 = state[{idx}];")
+            unpack_lines.append(f"    let {coord}_dot: f64 = state[{idx + 1}];")
+            idx += 2
+        unpack = "\n".join(unpack_lines)
+
+        return f"""
+/// Compute total energy (kinetic + potential) from Lagrangian
+fn compute_energy(state: &[f64]) -> f64 {{
+{unpack}
+
+    let kinetic: f64 = {T_code};
+    let potential: f64 = {V_code};
+    kinetic + potential
+}}
+"""
+
     def generate(self, output_file: str = "simulation.rs") -> str:
         """Generate Rust simulation code."""
         self.validate_or_raise()

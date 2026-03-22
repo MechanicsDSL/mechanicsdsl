@@ -123,6 +123,36 @@ class WasmGenerator(CodeGenerator):
         """
         return sympy_to_c_wasm(expr)
 
+    def generate_energy_computation(self) -> Optional[str]:
+        """Generate C/WASM code to compute total energy."""
+        T, V = self._extract_energy_expressions()
+        if T is None or V is None:
+            return None
+
+        T_code = self.expr_to_code(T)
+        V_code = self.expr_to_code(V)
+
+        # State unpacking
+        unpack_lines = []
+        idx = 0
+        for coord in self.coordinates:
+            unpack_lines.append(f"    double {coord} = state[{idx}];")
+            unpack_lines.append(f"    double {coord}_dot = state[{idx + 1}];")
+            idx += 2
+        unpack = "\n".join(unpack_lines)
+
+        return f"""
+/* Compute total energy (kinetic + potential) from Lagrangian */
+EMSCRIPTEN_KEEPALIVE
+double compute_energy(double* state, int n) {{
+{unpack}
+
+    double kinetic = {T_code};
+    double potential = {V_code};
+    return kinetic + potential;
+}}
+"""
+
     def generate(self, output_dir: str) -> str:
         """
         Generate WASM project files.

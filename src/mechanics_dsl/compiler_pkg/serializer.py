@@ -23,7 +23,10 @@ from ..utils import logger, validate_file_path
 if TYPE_CHECKING:
     from .physics_compiler import PhysicsCompiler
 
-__version__ = "1.5.0"
+try:
+    from mechanics_dsl import __version__
+except ImportError:
+    __version__ = "2.0.7"
 
 
 class SystemSerializer:
