@@ -40,7 +40,7 @@ If you're using MechanicsDSL in research, education, industry, or a personal pro
 | Feature | Description |
 |---------|-------------|
 | **Symbolic Engine** | Automatically derives equations of motion from Lagrangians or Hamiltonians |
-| **12+ Code Generators** | C++, Rust, Julia, CUDA, WebAssembly, Unity, Unreal, Modelica, and more |
+| **15 Code Generators** | C++, Python, Rust, Julia, CUDA, Fortran, MATLAB, JavaScript, OpenMP, WebAssembly, Arduino, ARM, Unity, Unreal, Modelica |
 | **GPU Acceleration** | JAX backend with JIT compilation and automatic differentiation |
 | **Inverse Problems** | Parameter estimation, sensitivity analysis, MCMC uncertainty |
 | **Jupyter Native** | `%%mechanicsdsl` magic commands for notebooks |
@@ -100,7 +100,7 @@ docker run --gpus all -it ghcr.io/mechanicsdsl/mechanicsdsl:gpu
 ### Enhanced Code Generation
 - **C++ CMake Projects** — `generate_cmake()` and `generate_project()` methods
 - **Rust Cargo Projects** — Full project scaffolding with `no_std` embedded option
-- **11 Target Platforms** — C++, CUDA, Rust, Julia, Fortran, MATLAB, JavaScript, WebAssembly, Python, Arduino, OpenMP
+- **15 Target Platforms** — C++, Python, Rust, Julia, CUDA, Fortran, MATLAB, JavaScript, OpenMP, WebAssembly, Arduino, ARM, Unity, Unreal, Modelica
 
 ---
 
@@ -173,7 +173,7 @@ compiler.compile_to_cpp("dam_break.cpp", target="standard", compile_binary=True)
 
 ---
 
-## 🆕 New in v1.6.0
+## 🆕 Key Features
 
 ### Jupyter Magic Commands
 

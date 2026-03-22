@@ -1,7 +1,7 @@
 Installation
 ============
 
-MechanicsDSL supports Python 3.8 and newer. It relies on ``numpy``, ``scipy``, ``sympy``, and ``matplotlib``.
+MechanicsDSL supports Python 3.9 and newer. It relies on ``numpy``, ``scipy``, ``sympy``, and ``matplotlib``.
 
 Installing via pip
 ------------------

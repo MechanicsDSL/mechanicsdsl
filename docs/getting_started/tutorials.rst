@@ -49,7 +49,7 @@ A mass m attached to a spring with constant k:
    \initial{x=1.0, x_dot=0}
    '''
    
-   result = compiler.compile(source)
+   result = compiler.compile_dsl(source)
    solution = compiler.simulate((0, 10))
    
    # Plot
@@ -98,7 +98,7 @@ A classic physics problem with nonlinear dynamics.
    \initial{theta=2.0, theta_dot=0}  % Large angle
    '''
    
-   result = compiler.compile(source)
+   result = compiler.compile_dsl(source)
    solution = compiler.simulate((0, 20))
    
    # Phase space plot
@@ -156,11 +156,11 @@ A chaotic system demonstrating sensitive dependence on initial conditions.
    \initial{theta1=2.0, theta1_dot=0, theta2=2.0, theta2_dot=0}
    '''
    
-   result = compiler.compile(source)
+   result = compiler.compile_dsl(source)
    solution = compiler.simulate((0, 20), num_points=2000)
    
    # Create animation
-   compiler.visualize(solution)
+   compiler.animate(solution)
    plt.show()
 
 **Chaos Demonstration:**
@@ -211,7 +211,7 @@ Combining dissipation and periodic forcing.
    \initial{theta=0.1, theta_dot=0}
    '''
    
-   result = compiler.compile(source)
+   result = compiler.compile_dsl(source)
    solution = compiler.simulate((0, 100), num_points=5000)
 
 **Exploration:**
@@ -308,7 +308,7 @@ Create a dam break simulation using Smoothed Particle Hydrodynamics.
    \region{1.0, -0.1, 1.1, 0.6}   % Right
    '''
    
-   result = compiler.compile(source)
+   result = compiler.compile_dsl(source)
    
    # Run SPH simulation
    solution = compiler.simulate_fluid((0, 2.0))
@@ -378,7 +378,7 @@ Use Hamilton's equations instead of Lagrange's.
    \initial{q=1.0, p_q=0}
    '''
    
-   result = compiler.compile(source)
+   result = compiler.compile_dsl(source)
    solution = compiler.simulate((0, 10))
    
    # Plot in phase space (q, p)

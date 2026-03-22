@@ -7,6 +7,9 @@ enabling deployment beyond Python for production applications.
 Supported Targets
 -----------------
 
+MechanicsDSL supports 15 code generation targets across native, embedded,
+GPU, browser, and game engine platforms.
+
 .. list-table::
    :header-rows: 1
    :widths: 20 40 40
@@ -17,15 +20,48 @@ Supported Targets
    * - **C++**
      - Native applications, embedded systems
      - ~10-100x faster than Python
+   * - **Python**
+     - NumPy-accelerated standalone scripts
+     - Portable, easy to integrate
+   * - **Rust**
+     - Memory-safe native applications, ``no_std`` embedded
+     - ~10-100x faster than Python
+   * - **Julia**
+     - Scientific computing with DifferentialEquations.jl
+     - Near-C performance with high-level syntax
+   * - **Fortran**
+     - Legacy HPC and numerical computing
+     - Excellent vectorization
+   * - **MATLAB**
+     - MATLAB/Octave engineering workflows
+     - Familiar to engineers
+   * - **JavaScript**
+     - Browser and Node.js applications
+     - Web-native
+   * - **CUDA**
+     - GPU acceleration, batch parameter sweeps
+     - Massive parallelism
    * - **OpenMP**
      - Multi-core parallelization
      - Scales with CPU cores
    * - **WebAssembly**
      - Browser-based simulations
      - Near-native in browsers
-   * - **CUDA** (planned)
-     - GPU acceleration
-     - Massive parallelism
+   * - **Arduino**
+     - Microcontroller and IoT applications
+     - Minimal footprint
+   * - **ARM**
+     - Raspberry Pi, Jetson Nano, embedded Linux
+     - NEON-optimized
+   * - **Unity**
+     - Game engine integration (C#)
+     - Real-time physics in games
+   * - **Unreal**
+     - Game engine integration (C++)
+     - AAA game engine physics
+   * - **Modelica**
+     - Standards-based multi-domain simulation
+     - Interoperable with Simulink, OpenModelica
 
 Basic Usage
 -----------
@@ -129,5 +165,6 @@ See Also
 --------
 
 - :doc:`cpp` - Detailed C++ code generation
-- :doc:`wasm` - WebAssembly for browsers
 - :doc:`python` - NumPy-accelerated Python
+- :doc:`cuda` - CUDA GPU acceleration
+- :doc:`wasm` - WebAssembly for browsers

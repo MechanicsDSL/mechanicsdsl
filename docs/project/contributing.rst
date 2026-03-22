@@ -174,12 +174,12 @@ Place tests in the ``tests/`` directory:
    class TestMyFeature:
        def test_basic_functionality(self):
            compiler = PhysicsCompiler()
-           result = compiler.compile(source)
+           result = compiler.compile_dsl(source)
            assert result['success']
-       
+
        def test_error_handling(self):
            with pytest.raises(ValueError):
-               compiler.compile("invalid source")
+               compiler.compile_dsl("invalid source")
 
 
 Documentation

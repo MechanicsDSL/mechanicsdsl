@@ -10,7 +10,7 @@ Prerequisites
 
 Before you begin, make sure you have:
 
-* Python 3.8 or later
+* Python 3.9 or later
 * NumPy, SciPy, SymPy, and Matplotlib installed
 * Basic knowledge of classical mechanics (helpful but not required)
 
@@ -68,7 +68,7 @@ Step 3: Compile and Simulate
 .. code-block:: python
 
    # Compile the DSL source
-   result = compiler.compile(source)
+   result = compiler.compile_dsl(source)
    
    if result['success']:
        print("Compilation successful!")
@@ -87,7 +87,7 @@ Step 4: Visualize the Results
 .. code-block:: python
 
    # Create an animated visualization
-   compiler.visualize(solution)
+   compiler.animate(solution)
    
    # Or plot energy conservation
    compiler.plot_energy(solution)
@@ -125,11 +125,11 @@ Here's everything together as a copy-paste ready script:
    '''
    
    # Compile and run
-   result = compiler.compile(source)
+   result = compiler.compile_dsl(source)
    solution = compiler.simulate((0, 10))
    
    # Visualize
-   compiler.visualize(solution)
+   compiler.animate(solution)
    plt.show()
 
 Understanding the Output

@@ -7,27 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.0.7] - 2026-01-30
 
-### 🔧 Maintenance Mode
-
-MechanicsDSL has transitioned to **maintenance mode**.
-
-### Added
-
-- **MAINTENANCE.md** — Comprehensive maintenance mode documentation
-- Maintenance mode notices in README.md and CONTRIBUTING.md
-
 ### Changed
 
-- Project status changed to maintenance mode
-- Version 1.5.x will receive security-only updates until June 2026
-- New feature development is paused
-
-### What This Means
-
-- ✅ Security patches and critical bug fixes will continue
-- ✅ Dependency compatibility updates will continue  
-- ⏸️ New features are not being actively developed
-- ❌ Major architectural changes are not planned
+- Version bumped to 2.0.7
+- Internal code quality improvements
 
 ---
 

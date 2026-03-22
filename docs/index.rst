@@ -53,9 +53,9 @@ Quick Start
    \initial{theta=0.5, theta_dot=0}
    '''
    
-   result = compiler.compile(source)
+   result = compiler.compile_dsl(source)
    solution = compiler.simulate((0, 10))
-   compiler.visualize()
+   compiler.animate(solution)
 
 Documentation Contents
 ----------------------

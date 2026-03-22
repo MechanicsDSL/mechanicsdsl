@@ -365,7 +365,7 @@ View derived equations:
 
 .. code-block:: python
 
-   result = compiler.compile(source)
+   result = compiler.compile_dsl(source)
    
    # Print equations of motion
    for coord, eom in compiler.symbolic.equations.items():

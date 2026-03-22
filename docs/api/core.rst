@@ -23,11 +23,11 @@ PhysicsCompiler
       from mechanics_dsl import PhysicsCompiler
       
       compiler = PhysicsCompiler()
-      result = compiler.compile(source)
+      result = compiler.compile_dsl(source)
       solution = compiler.simulate((0, 10))
-      compiler.visualize(solution)
+      compiler.animate(solution)
 
-   .. py:method:: compile(source: str) -> dict
+   .. py:method:: compile_dsl(source: str) -> dict
 
       Compile DSL source code into an executable simulation.
 
