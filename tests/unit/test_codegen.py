@@ -27,7 +27,7 @@ from mechanics_dsl.codegen import (
 )
 
 # Sample system data for testing - includes equations for validation
-theta, g, L = sp.symbols('theta g L')
+theta, g, L = sp.symbols("theta g L")
 SAMPLE_SYSTEM = {
     "system_name": "test_pendulum",
     "coordinates": ["theta"],

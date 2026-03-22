@@ -119,8 +119,17 @@ class TestCodegenConfig:
     @pytest.mark.skipif(not PYDANTIC_AVAILABLE, reason="Pydantic required for validation")
     def test_all_valid_targets(self):
         valid_targets = [
-            "cpp", "rust", "cuda", "arm", "julia",
-            "matlab", "fortran", "javascript", "wasm", "arduino", "python",
+            "cpp",
+            "rust",
+            "cuda",
+            "arm",
+            "julia",
+            "matlab",
+            "fortran",
+            "javascript",
+            "wasm",
+            "arduino",
+            "python",
         ]
         for target in valid_targets:
             config = CodegenConfig(target=target, system_name="test")

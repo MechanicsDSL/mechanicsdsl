@@ -72,8 +72,14 @@ class CudaGenerator(CodeGenerator):
             batch_size: Number of parallel simulations (for sweeps)
             compute_capability: CUDA compute capability (30, 50, 60, 70, 80)
         """
-        super().__init__(system_name, coordinates, parameters, initial_conditions, equations,
-                         lagrangian=lagrangian)
+        super().__init__(
+            system_name,
+            coordinates,
+            parameters,
+            initial_conditions,
+            equations,
+            lagrangian=lagrangian,
+        )
 
         self.generate_cpu_fallback = generate_cpu_fallback
         self.fluid_particles = fluid_particles or []

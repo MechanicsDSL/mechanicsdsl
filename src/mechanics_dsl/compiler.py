@@ -553,22 +553,22 @@ class PhysicsCompiler:
     def _process_import(self, filename: str) -> None:
         """
         Process an import directive by parsing the imported file.
-        
+
         Handles \\import{file.mdsl} by reading and parsing the referenced file,
         then incorporating its definitions into the current compilation context.
-        
+
         Args:
             filename: Path to the file to import (relative or absolute)
-            
+
         Security:
             - Validates file path using validate_file_path
             - Only allows .mdsl and .txt extensions
             - Tracks imported files to prevent cycles
         """
         # Initialize import tracking if needed
-        if not hasattr(self, '_imported_files'):
+        if not hasattr(self, "_imported_files"):
             self._imported_files: set = set()
-        
+
         # Normalize and validate path
         try:
             # Handle relative paths
@@ -582,33 +582,33 @@ class PhysicsCompiler:
                     return
             else:
                 filepath = filename
-            
+
             # Validate file path security
             validate_file_path(filepath, must_exist=True)
-            
+
             # Check extension
-            if not filepath.endswith(('.mdsl', '.txt')):
+            if not filepath.endswith((".mdsl", ".txt")):
                 logger.warning(f"Import file has unsupported extension: {filename}")
                 return
-            
+
             # Cycle detection
             abs_path = os.path.abspath(filepath)
             if abs_path in self._imported_files:
                 logger.warning(f"Circular import detected, skipping: {filename}")
                 return
-            
+
             self._imported_files.add(abs_path)
             logger.info(f"Processing import: {filename}")
-            
+
             # Read file
-            with open(filepath, 'r', encoding='utf-8') as f:
+            with open(filepath, "r", encoding="utf-8") as f:
                 imported_source = f.read()
-            
+
             # Tokenize and parse
             tokens = tokenize(imported_source)
             parser = MechanicsParser(tokens)
             imported_ast = parser.parse()
-            
+
             # Insert imported AST nodes for semantic analysis
             # (but don't process ImportDefs from imported files to avoid deep recursion)
             for node in imported_ast:
@@ -618,16 +618,16 @@ class PhysicsCompiler:
                 else:
                     # Process directly (duplicates analyze_semantics logic)
                     self._process_imported_node(node)
-            
+
             logger.debug(f"Imported {len(imported_ast)} nodes from {filename}")
-            
+
         except FileNotFoundError:
             logger.warning(f"Import file not found: {filename}")
         except (ValueError, PermissionError) as e:
             logger.warning(f"Import file validation failed: {filename} - {e}")
         except Exception as e:
             logger.error(f"Failed to process import {filename}: {e}")
-    
+
     def _process_imported_node(self, node: ASTNode) -> None:
         """Process a single AST node from an imported file."""
         if isinstance(node, SystemDef):

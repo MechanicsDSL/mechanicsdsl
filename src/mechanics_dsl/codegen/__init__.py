@@ -34,6 +34,4 @@ __all__ = [
     "WasmGenerator",
     "ArduinoGenerator",
     "ARMGenerator",
-
 ]
-

@@ -245,8 +245,7 @@ class CodeGenerator(ABC):
         V = sp.simplify(T - L)
 
         # Substitute numerical parameter values
-        param_subs = {self._symbols[k]: v for k, v in self.parameters.items()
-                      if k in self._symbols}
+        param_subs = {self._symbols[k]: v for k, v in self.parameters.items() if k in self._symbols}
         T = T.subs(param_subs)
         V = V.subs(param_subs)
 
@@ -335,6 +334,7 @@ class CodeGenerator(ABC):
 
         # Check parameters for invalid values
         import math
+
         for name, val in self.parameters.items():
             if val is None:
                 errors.append(f"parameter '{name}' is None")

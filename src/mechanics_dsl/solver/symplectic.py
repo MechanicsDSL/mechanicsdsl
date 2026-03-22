@@ -414,22 +414,22 @@ class McLachlan4(SymplecticIntegrator):
 class PEFRL(SymplecticIntegrator):
     """
     Position Extended Forest-Ruth Like (PEFRL) 4th order integrator.
-    
+
     One of the best 4th order symplectic integrators for molecular dynamics.
     Uses optimized coefficients from Omelyan, Mryglod, Folk (2002).
-    
+
     Key advantages over Yoshida-4:
     - Same order, comparable cost
     - Significantly smaller error coefficient
     - Better long-term energy conservation
-    
+
     Only 4 force evaluations per step like standard Forest-Ruth.
-    
+
     Reference:
         Omelyan, Mryglod, Folk, "Optimized Forest-Ruth- and Suzuki-like
         integrators for symplectic systems" (2002)
     """
-    
+
     # Optimized PEFRL coefficients
     XI = 0.1786178958448091
     LAMBDA = -0.2123418310626054
@@ -447,45 +447,47 @@ class PEFRL(SymplecticIntegrator):
         xi = self.XI
         lam = self.LAMBDA
         chi = self.CHI
-        
+
         # 9-stage PEFRL composition
         q = q + xi * h * grad_T(p)
-        p = p - (1 - 2*lam) / 2 * h * grad_V(q)
+        p = p - (1 - 2 * lam) / 2 * h * grad_V(q)
         q = q + chi * h * grad_T(p)
         p = p - lam * h * grad_V(q)
-        q = q + (1 - 2*(chi + xi)) * h * grad_T(p)
+        q = q + (1 - 2 * (chi + xi)) * h * grad_T(p)
         p = p - lam * h * grad_V(q)
         q = q + chi * h * grad_T(p)
-        p = p - (1 - 2*lam) / 2 * h * grad_V(q)
+        p = p - (1 - 2 * lam) / 2 * h * grad_V(q)
         q_new = q + xi * h * grad_T(p)
-        
+
         return q_new, p
 
 
 class Yoshida6(SymplecticIntegrator):
     """
     Yoshida 6th order symplectic integrator.
-    
+
     Composed of 7 Verlet steps (15 stages total).
     Higher accuracy but more force evaluations per step.
-    
+
     Properties:
     - 6th order accurate
     - Symplectic
     - 7 stages
     - Time-reversible
-    
+
     Reference:
         Yoshida, "Construction of higher order symplectic integrators" (1990)
     """
-    
+
     # Yoshida 6th order "Solution A" coefficients
-    _w = np.array([
-        0.78451361047755726382,
-        0.23557321335935813368,
-        -1.17767998417887100695,
-        1.31518632068391121889,
-    ])
+    _w = np.array(
+        [
+            0.78451361047755726382,
+            0.23557321335935813368,
+            -1.17767998417887100695,
+            1.31518632068391121889,
+        ]
+    )
 
     @property
     def order(self) -> int:
@@ -498,10 +500,10 @@ class Yoshida6(SymplecticIntegrator):
     def step(self, t, q, p, h, grad_T, grad_V):
         # Build symmetric weights: w1, w2, w3, w4, w3, w2, w1
         w = np.concatenate([self._w, self._w[-2::-1]])
-        
+
         q_new = q.copy()
         p_new = p.copy()
-        
+
         for wi in w:
             # Half position step
             q_new = q_new + (wi / 2) * h * grad_T(p_new)
@@ -509,37 +511,39 @@ class Yoshida6(SymplecticIntegrator):
             p_new = p_new - wi * h * grad_V(q_new)
             # Half position step
             q_new = q_new + (wi / 2) * h * grad_T(p_new)
-        
+
         return q_new, p_new
 
 
 class Yoshida8(SymplecticIntegrator):
     """
     Yoshida 8th order symplectic integrator.
-    
+
     Very high accuracy for long-term integrations.
     15 stages with optimized coefficients.
-    
+
     Ideal for:
     - Precision celestial mechanics
     - Long-term stability analysis
     - Cases where computational cost is not limiting
-    
+
     Reference:
         Yoshida, "Construction of higher order symplectic integrators" (1990)
     """
-    
+
     # Yoshida 8th order "Solution D" coefficients
-    _w = np.array([
-        0.74167036435061295345,
-        -0.40910082580003159400,
-        0.19075471029623837995,
-        -0.57386247111608226666,
-        0.29906418130365592384,
-        0.33462491824529818378,
-        0.31529309239676659663,
-        -0.79688793935291635402,
-    ])
+    _w = np.array(
+        [
+            0.74167036435061295345,
+            -0.40910082580003159400,
+            0.19075471029623837995,
+            -0.57386247111608226666,
+            0.29906418130365592384,
+            0.33462491824529818378,
+            0.31529309239676659663,
+            -0.79688793935291635402,
+        ]
+    )
 
     @property
     def order(self) -> int:
@@ -552,76 +556,76 @@ class Yoshida8(SymplecticIntegrator):
     def step(self, t, q, p, h, grad_T, grad_V):
         # Build symmetric weights
         w = np.concatenate([self._w, self._w[-2::-1]])
-        
+
         q_new = q.copy()
         p_new = p.copy()
-        
+
         for wi in w:
             q_new = q_new + (wi / 2) * h * grad_T(p_new)
             p_new = p_new - wi * h * grad_V(q_new)
             q_new = q_new + (wi / 2) * h * grad_T(p_new)
-        
+
         return q_new, p_new
 
 
 class EnergyDriftMonitor:
     """
     Monitor energy conservation during symplectic integration.
-    
+
     Provides real-time diagnostics for detecting energy drift,
     which should remain bounded for symplectic integrators.
-    
+
     Usage:
         >>> monitor = EnergyDriftMonitor(hamiltonian_func)
         >>> for step in integration:
         ...     monitor.record(q, p)
         >>> print(f"Max relative error: {monitor.max_relative_error}")
     """
-    
+
     def __init__(self, hamiltonian: Callable[[np.ndarray, np.ndarray], float]):
         """
         Initialize energy monitor.
-        
+
         Args:
             hamiltonian: Function H(q, p) returning total energy
         """
         self.hamiltonian = hamiltonian
         self.reset()
-    
+
     def reset(self):
         """Reset monitor for new integration."""
         self._initial_energy: Optional[float] = None
         self._energy_history: list = []
         self._time_history: list = []
-    
+
     def record(self, q: np.ndarray, p: np.ndarray, t: float = 0.0) -> float:
         """
         Record energy at current state.
-        
+
         Args:
             q: Current positions
             p: Current momenta
             t: Current time (optional)
-            
+
         Returns:
             Current relative energy error
         """
         E = self.hamiltonian(q, p)
         self._energy_history.append(E)
         self._time_history.append(t)
-        
+
         if self._initial_energy is None:
             self._initial_energy = E
             return 0.0
-        
+
         return self._relative_error(E)
-    
+
     def _relative_error(self, E: float) -> float:
         """Compute relative error from initial energy."""
         if self._initial_energy is None or self._initial_energy == 0:
             return 0.0
         return (E - self._initial_energy) / abs(self._initial_energy)
-    
+
     @property
     def max_relative_error(self) -> float:
         """Maximum relative energy error observed."""
@@ -629,14 +633,14 @@ class EnergyDriftMonitor:
             return 0.0
         errors = [self._relative_error(E) for E in self._energy_history]
         return max(abs(e) for e in errors)
-    
+
     @property
     def final_relative_error(self) -> float:
         """Final relative energy error."""
         if not self._energy_history:
             return 0.0
         return self._relative_error(self._energy_history[-1])
-    
+
     @property
     def energy_oscillation(self) -> float:
         """Peak-to-peak energy oscillation (relative)."""
@@ -645,19 +649,19 @@ class EnergyDriftMonitor:
         E0 = self._initial_energy or 1.0
         E_array = np.array(self._energy_history)
         return (E_array.max() - E_array.min()) / abs(E0)
-    
+
     def is_conserved(self, tolerance: float = 1e-6) -> bool:
         """Check if energy is conserved within tolerance."""
         return self.max_relative_error < tolerance
-    
+
     def get_statistics(self) -> Dict[str, float]:
         """Get comprehensive energy statistics."""
         if not self._energy_history:
             return {"error": "No data recorded"}
-        
+
         E = np.array(self._energy_history)
         E0 = self._initial_energy or 1.0
-        
+
         return {
             "initial_energy": E0,
             "final_energy": E[-1],

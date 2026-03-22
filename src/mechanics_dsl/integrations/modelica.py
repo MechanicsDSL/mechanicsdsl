@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional
 try:
     import sympy as sp
     from sympy.printing import ccode
+
     SYMPY_AVAILABLE = True
 except ImportError:
     sp = None
@@ -21,50 +22,51 @@ except ImportError:
 def sympy_to_modelica(expr: Any) -> str:
     """
     Convert a sympy expression to Modelica code.
-    
+
     Args:
         expr: Sympy expression to convert
-        
+
     Returns:
         Modelica code string representing the expression
     """
     if expr is None:
         return "0"
-    
+
     if not SYMPY_AVAILABLE:
         return "0 /* sympy not available */"
-    
+
     try:
         # Convert to C code first (syntactically similar to Modelica)
         c_code = ccode(expr)
-        
+
         # Replace C math functions with Modelica equivalents
         replacements = [
-            ('sin(', 'Modelica.Math.sin('),
-            ('cos(', 'Modelica.Math.cos('),
-            ('tan(', 'Modelica.Math.tan('),
-            ('asin(', 'Modelica.Math.asin('),
-            ('acos(', 'Modelica.Math.acos('),
-            ('atan(', 'Modelica.Math.atan('),
-            ('atan2(', 'Modelica.Math.atan2('),
-            ('sqrt(', 'sqrt('),  # Modelica has built-in sqrt
-            ('pow(', '^('),  # Modelica uses ^ for power - handle specially
-            ('exp(', 'exp('),
-            ('log(', 'log('),
-            ('abs(', 'abs('),
-            ('fabs(', 'abs('),
-            ('M_PI', 'Modelica.Constants.pi'),
+            ("sin(", "Modelica.Math.sin("),
+            ("cos(", "Modelica.Math.cos("),
+            ("tan(", "Modelica.Math.tan("),
+            ("asin(", "Modelica.Math.asin("),
+            ("acos(", "Modelica.Math.acos("),
+            ("atan(", "Modelica.Math.atan("),
+            ("atan2(", "Modelica.Math.atan2("),
+            ("sqrt(", "sqrt("),  # Modelica has built-in sqrt
+            ("pow(", "^("),  # Modelica uses ^ for power - handle specially
+            ("exp(", "exp("),
+            ("log(", "log("),
+            ("abs(", "abs("),
+            ("fabs(", "abs("),
+            ("M_PI", "Modelica.Constants.pi"),
         ]
-        
+
         for old, new in replacements:
             c_code = c_code.replace(old, new)
-        
+
         # Handle pow(a, b) -> a^b conversion
         import re as regex
-        c_code = regex.sub(r'\^\(([^,]+),\s*([^)]+)\)', r'(\1)^(\2)', c_code)
-        
+
+        c_code = regex.sub(r"\^\(([^,]+),\s*([^)]+)\)", r"(\1)^(\2)", c_code)
+
         return c_code
-        
+
     except Exception as e:
         return f"0 /* Error: {str(e)[:50]} */"
 
@@ -92,28 +94,30 @@ class ModelicaGenerator:
     def __init__(self, compiler=None):
         self.compiler = compiler
         self.equations: Dict[str, Any] = {}
-        
+
         if compiler:
             self.system_name = getattr(compiler, "system_name", "PhysicsSystem")
             self.coordinates: List[str] = getattr(compiler.simulator, "coordinates", [])
             self.parameters: Dict[str, float] = dict(getattr(compiler.simulator, "parameters", {}))
-            self.initial_conditions: Dict[str, float] = dict(getattr(compiler.simulator, "initial_conditions", {}))
+            self.initial_conditions: Dict[str, float] = dict(
+                getattr(compiler.simulator, "initial_conditions", {})
+            )
             self._extract_equations(compiler)
         else:
             self.system_name = "PhysicsSystem"
             self.coordinates = []
             self.parameters = {}
             self.initial_conditions = {}
-    
+
     def _extract_equations(self, compiler) -> None:
         """
         Extract acceleration equations from the compiler.
         """
-        if hasattr(compiler, 'accelerations') and compiler.accelerations:
+        if hasattr(compiler, "accelerations") and compiler.accelerations:
             self.equations = dict(compiler.accelerations)
             return
-            
-        if hasattr(compiler, 'simulator') and hasattr(compiler.simulator, 'equations'):
+
+        if hasattr(compiler, "simulator") and hasattr(compiler.simulator, "equations"):
             eqs = compiler.simulator.equations
             if isinstance(eqs, dict):
                 self.equations = eqs
@@ -123,8 +127,8 @@ class ModelicaGenerator:
                     if i < len(self.coordinates):
                         self.equations[self.coordinates[i]] = eq
                 return
-        
-        if hasattr(compiler, 'equations_of_motion') and compiler.equations_of_motion:
+
+        if hasattr(compiler, "equations_of_motion") and compiler.equations_of_motion:
             eom = compiler.equations_of_motion
             if isinstance(eom, dict):
                 self.equations = eom
@@ -218,7 +222,7 @@ end {model_name};
     def _generate_equations(self) -> str:
         """
         Generate Modelica equations from sympy expressions.
-        
+
         Produces kinematic relations (der(x) = v) and dynamic equations
         (acceleration) converted from sympy to Modelica syntax.
         """

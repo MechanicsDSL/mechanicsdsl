@@ -334,12 +334,15 @@ class TestRealEndpoints:
     def test_simulate_valid(self):
         """POST /api/simulate compiles and runs simulation"""
         dsl = r"\system{oscillator}\coordinates{x}\parameters{k=1.0, m=1.0}\lagrangian{0.5*m*x_dot^2 - 0.5*k*x^2}\initial{x=1.0, x_dot=0}"
-        response = self.client.post("/api/simulate", json={
-            "code": dsl,
-            "t_start": 0,
-            "t_end": 1,
-            "num_points": 50,
-        })
+        response = self.client.post(
+            "/api/simulate",
+            json={
+                "code": dsl,
+                "t_start": 0,
+                "t_end": 1,
+                "num_points": 50,
+            },
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
@@ -349,10 +352,13 @@ class TestRealEndpoints:
     def test_export_invalid_target(self):
         """POST /api/export with invalid target returns error"""
         dsl = r"\system{test}\coordinates{x}\parameters{k=1.0}\lagrangian{0.5*x_dot^2 - 0.5*k*x^2}"
-        response = self.client.post("/api/export", json={
-            "code": dsl,
-            "target": "nonexistent_lang",
-        })
+        response = self.client.post(
+            "/api/export",
+            json={
+                "code": dsl,
+                "target": "nonexistent_lang",
+            },
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is False

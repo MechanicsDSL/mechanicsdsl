@@ -35,16 +35,21 @@ __version__ = "2.0.7"
 __author__ = "Noah Parsons"
 __license__ = "MIT"
 
+
 # Lazy import for presets
 def get_preset(name):
     """Get a built-in preset by name. See `list_presets()` for available options."""
     from .presets import get_preset as _get_preset
+
     return _get_preset(name)
+
 
 def list_presets():
     """List available built-in presets."""
     from .presets import list_presets as _list_presets
+
     return _list_presets()
+
 
 __all__ = [
     # Core

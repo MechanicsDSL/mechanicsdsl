@@ -110,41 +110,41 @@ THREE_BODY_FIGURE8 = r"""\system{figure8_orbit}
 # Registry of all presets
 PRESETS = {
     # Classical
-    'pendulum': PENDULUM,
-    'simple_pendulum': PENDULUM,
-    'double_pendulum': DOUBLE_PENDULUM,
-    'spring': SPRING_MASS,
-    'spring_mass': SPRING_MASS,
-    'harmonic_oscillator': SPRING_MASS,
-    'damped': DAMPED_OSCILLATOR,
-    'damped_oscillator': DAMPED_OSCILLATOR,
-    'projectile': PROJECTILE,
-    'coupled': COUPLED_OSCILLATORS,
-    'coupled_oscillators': COUPLED_OSCILLATORS,
+    "pendulum": PENDULUM,
+    "simple_pendulum": PENDULUM,
+    "double_pendulum": DOUBLE_PENDULUM,
+    "spring": SPRING_MASS,
+    "spring_mass": SPRING_MASS,
+    "harmonic_oscillator": SPRING_MASS,
+    "damped": DAMPED_OSCILLATOR,
+    "damped_oscillator": DAMPED_OSCILLATOR,
+    "projectile": PROJECTILE,
+    "coupled": COUPLED_OSCILLATORS,
+    "coupled_oscillators": COUPLED_OSCILLATORS,
     # Celestial
-    'kepler': KEPLER_ORBIT,
-    'orbit': KEPLER_ORBIT,
-    'figure8': THREE_BODY_FIGURE8,
-    'three_body': THREE_BODY_FIGURE8,
+    "kepler": KEPLER_ORBIT,
+    "orbit": KEPLER_ORBIT,
+    "figure8": THREE_BODY_FIGURE8,
+    "three_body": THREE_BODY_FIGURE8,
 }
 
 
 def get_preset(name: str) -> str:
     """
     Get a preset DSL definition by name.
-    
+
     Args:
         name: Preset name (case-insensitive)
-        
+
     Returns:
         DSL source code for the preset
-        
+
     Raises:
         KeyError: If preset not found
     """
     key = name.lower().strip()
     if key not in PRESETS:
-        available = ', '.join(sorted(set(PRESETS.keys())))
+        available = ", ".join(sorted(set(PRESETS.keys())))
         raise KeyError(f"Preset '{name}' not found. Available: {available}")
     return PRESETS[key]
 
@@ -154,4 +154,4 @@ def list_presets() -> list[str]:
     return sorted(set(PRESETS.keys()))
 
 
-__all__ = ['PRESETS', 'get_preset', 'list_presets']
+__all__ = ["PRESETS", "get_preset", "list_presets"]

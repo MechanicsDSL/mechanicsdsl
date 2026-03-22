@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional
 try:
     import sympy as sp
     from sympy.printing import ccode
+
     SYMPY_AVAILABLE = True
 except ImportError:
     sp = None
@@ -19,59 +20,60 @@ except ImportError:
 def sympy_to_cpp(expr: Any, use_fmath: bool = True) -> str:
     """
     Convert a sympy expression to C++ code for Unreal Engine.
-    
+
     Args:
         expr: Sympy expression to convert
         use_fmath: If True, use FMath:: functions (Unreal). Otherwise use std::.
-        
+
     Returns:
         C++ code string representing the expression
     """
     if expr is None:
         return "0.0f"
-    
+
     if not SYMPY_AVAILABLE:
         return "0.0f /* sympy not available */"
-    
+
     try:
         # Get C code representation
         c_code = ccode(expr)
-        
+
         # Replace with Unreal Math functions if requested
         if use_fmath:
             replacements = [
-                ('sin(', 'FMath::Sin('),
-                ('cos(', 'FMath::Cos('),
-                ('tan(', 'FMath::Tan('),
-                ('asin(', 'FMath::Asin('),
-                ('acos(', 'FMath::Acos('),
-                ('atan(', 'FMath::Atan('),
-                ('atan2(', 'FMath::Atan2('),
-                ('sqrt(', 'FMath::Sqrt('),
-                ('pow(', 'FMath::Pow('),
-                ('exp(', 'FMath::Exp('),
-                ('log(', 'FMath::Loge('),
-                ('abs(', 'FMath::Abs('),
-                ('fabs(', 'FMath::Abs('),
-                ('floor(', 'FMath::FloorToFloat('),
-                ('ceil(', 'FMath::CeilToFloat('),
-                ('M_PI', 'PI'),
+                ("sin(", "FMath::Sin("),
+                ("cos(", "FMath::Cos("),
+                ("tan(", "FMath::Tan("),
+                ("asin(", "FMath::Asin("),
+                ("acos(", "FMath::Acos("),
+                ("atan(", "FMath::Atan("),
+                ("atan2(", "FMath::Atan2("),
+                ("sqrt(", "FMath::Sqrt("),
+                ("pow(", "FMath::Pow("),
+                ("exp(", "FMath::Exp("),
+                ("log(", "FMath::Loge("),
+                ("abs(", "FMath::Abs("),
+                ("fabs(", "FMath::Abs("),
+                ("floor(", "FMath::FloorToFloat("),
+                ("ceil(", "FMath::CeilToFloat("),
+                ("M_PI", "PI"),
             ]
         else:
             replacements = [
-                ('M_PI', 'PI'),
+                ("M_PI", "PI"),
             ]
-        
+
         for old, new in replacements:
             c_code = c_code.replace(old, new)
-        
+
         # Ensure floating point literals with 'f' suffix
         import re
-        c_code = re.sub(r'(\d+\.\d+)(?!f)', r'\1f', c_code)
-        c_code = re.sub(r'(\d+)(?!\.\d)(?!f)(?![a-zA-Z_])', r'\1.0f', c_code)
-        
+
+        c_code = re.sub(r"(\d+\.\d+)(?!f)", r"\1f", c_code)
+        c_code = re.sub(r"(\d+)(?!\.\d)(?!f)(?![a-zA-Z_])", r"\1.0f", c_code)
+
         return c_code
-        
+
     except Exception as e:
         return f"0.0f /* Error: {str(e)[:50]} */"
 
@@ -98,7 +100,7 @@ class UnrealGenerator:
     def __init__(self, compiler=None):
         self.compiler = compiler
         self.equations: Dict[str, Any] = {}
-        
+
         if compiler:
             self.system_name = getattr(compiler, "system_name", "Physics")
             self.coordinates: List[str] = getattr(compiler.simulator, "coordinates", [])
@@ -108,18 +110,18 @@ class UnrealGenerator:
             self.system_name = "Physics"
             self.coordinates = []
             self.parameters = {}
-    
+
     def _extract_equations(self, compiler) -> None:
         """
         Extract acceleration equations from the compiler.
         """
         # Try accelerations dict first
-        if hasattr(compiler, 'accelerations') and compiler.accelerations:
+        if hasattr(compiler, "accelerations") and compiler.accelerations:
             self.equations = dict(compiler.accelerations)
             return
-            
+
         # Try simulator equations
-        if hasattr(compiler, 'simulator') and hasattr(compiler.simulator, 'equations'):
+        if hasattr(compiler, "simulator") and hasattr(compiler.simulator, "equations"):
             eqs = compiler.simulator.equations
             if isinstance(eqs, dict):
                 self.equations = eqs
@@ -129,9 +131,9 @@ class UnrealGenerator:
                     if i < len(self.coordinates):
                         self.equations[self.coordinates[i]] = eq
                 return
-        
+
         # Try equations_of_motion
-        if hasattr(compiler, 'equations_of_motion') and compiler.equations_of_motion:
+        if hasattr(compiler, "equations_of_motion") and compiler.equations_of_motion:
             eom = compiler.equations_of_motion
             if isinstance(eom, dict):
                 self.equations = eom
@@ -378,11 +380,11 @@ void U{class_name}Component::SetState(const TArray<float>& NewState)
     def _generate_cpp_accelerations(self) -> str:
         """
         Generate C++ acceleration calculations from sympy equations.
-        
+
         Converts symbolic equations to Unreal Engine C++ code using FMath functions.
         """
         lines = []
-        
+
         for coord in self.coordinates:
             # Check if we have a real equation for this coordinate
             if coord in self.equations and self.equations[coord] is not None:
@@ -395,7 +397,7 @@ void U{class_name}Component::SetState(const TArray<float>& NewState)
                 lines.append(f"    float {coord}_ddot = {cpp_code};")
             else:
                 lines.append(f"    float {coord}_ddot = 0.0f; // Warning: No equation for {coord}")
-        
+
         return "\n".join(lines) if lines else "    // No accelerations defined"
 
     def _generate_cpp_pack(self) -> str:

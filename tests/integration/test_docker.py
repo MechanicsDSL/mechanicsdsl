@@ -10,12 +10,14 @@ import subprocess
 
 import pytest
 
+
 # Skip all tests if Docker is not available
 def _docker_available():
     try:
         return subprocess.run(["docker", "--version"], capture_output=True).returncode == 0
     except FileNotFoundError:
         return False
+
 
 pytestmark = pytest.mark.skipif(
     not _docker_available(),

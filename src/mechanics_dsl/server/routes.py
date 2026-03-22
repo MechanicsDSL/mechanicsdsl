@@ -187,34 +187,49 @@ if FASTAPI_AVAILABLE:
         """
         # SECURITY: Validate target against allowlist to prevent path traversal
         ALLOWED_TARGETS = {
-            "cpp", "python", "rust", "julia", "matlab", 
-            "fortran", "javascript", "cuda", "openmp", "wasm", "arduino"
+            "cpp",
+            "python",
+            "rust",
+            "julia",
+            "matlab",
+            "fortran",
+            "javascript",
+            "cuda",
+            "openmp",
+            "wasm",
+            "arduino",
         }
         target = request.target.lower().strip()
         if target not in ALLOWED_TARGETS:
             return ExportResponse(
-                success=False, 
+                success=False,
                 error=f"Invalid target '{request.target}'. Allowed: {', '.join(sorted(ALLOWED_TARGETS))}",
-                language=request.target
+                language=request.target,
             )
-        
+
         # Map target to safe file extension
         EXTENSION_MAP = {
-            "cpp": "cpp", "python": "py", "rust": "rs", "julia": "jl",
-            "matlab": "m", "fortran": "f90", "javascript": "js",
-            "cuda": "cu", "openmp": "cpp", "wasm": "wat", "arduino": "ino"
+            "cpp": "cpp",
+            "python": "py",
+            "rust": "rs",
+            "julia": "jl",
+            "matlab": "m",
+            "fortran": "f90",
+            "javascript": "js",
+            "cuda": "cu",
+            "openmp": "cpp",
+            "wasm": "wat",
+            "arduino": "ino",
         }
         safe_extension = EXTENSION_MAP.get(target, "txt")
-        
+
         try:
             compiler = get_or_create_compiler(session_id)
 
             # Compile first
             result = compiler.compile_dsl(request.code)
             if not result["success"]:
-                return ExportResponse(
-                    success=False, error=result.get("error"), language=target
-                )
+                return ExportResponse(success=False, error=result.get("error"), language=target)
 
             # Export to temp file with safe extension
             with tempfile.NamedTemporaryFile(
