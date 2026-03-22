@@ -1,8 +1,5 @@
 # Contributing to MechanicsDSL
 
-> [!NOTE]
-> **Maintenance Mode**: MechanicsDSL is in maintenance mode as of January 2026. We welcome bug fixes, security patches, and documentation improvements. New features may have limited review capacity. See [MAINTENANCE.md](MAINTENANCE.md).
-
 Thank you for your interest in contributing! MechanicsDSL is a pedagogical tool designed to make computational physics accessible. We welcome contributions from students, educators, and researchers.
 
 ## Getting Started
