@@ -46,12 +46,12 @@ class TestFullPipeline:
         \defvar{x}{Position}{m}
         \defvar{m}{Mass}{kg}
         \defvar{k}{Spring Constant}{N/m}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{k}{10.0}{N/m}
-        
+
         \lagrangian{\frac{1}{2} * m * \dot{x}^2 - \frac{1}{2} * k * x^2}
-        
+
         \initial{x=1.0, x_dot=0.0}
         """
 
@@ -88,12 +88,12 @@ class TestFullPipeline:
         \defvar{x}{Position}{m}
         \defvar{m}{Mass}{kg}
         \defvar{k}{Spring Constant}{N/m}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{k}{10.0}{N/m}
-        
+
         \lagrangian{\frac{1}{2} * m * \dot{x}^2 - \frac{1}{2} * k * x^2}
-        
+
         \initial{x=1.0, x_dot=0.0}
         """
 
@@ -125,13 +125,13 @@ class TestFullPipeline:
         \defvar{m}{Mass}{kg}
         \defvar{l}{Constant}{m}
         \defvar{g}{Acceleration}{m/s^2}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{l}{1.0}{m}
         \parameter{g}{9.81}{m/s^2}
-        
+
         \lagrangian{\frac{1}{2} * m * l^2 * \dot{theta}^2 - m * g * l * (1 - \cos{theta})}
-        
+
         \initial{theta=0.5, theta_dot=0.0}
         """
 
@@ -155,12 +155,12 @@ class TestFullPipeline:
         \defvar{x}{Position}{m}
         \defvar{m}{Mass}{kg}
         \defvar{k}{Spring Constant}{N/m}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{k}{10.0}{N/m}
-        
+
         \lagrangian{\frac{1}{2} * m * \dot{x}^2 - \frac{1}{2} * k * x^2}
-        
+
         \initial{x=1.0, x_dot=0.0}
         """
 
@@ -174,7 +174,7 @@ class TestFullPipeline:
         # Plot energy (should not raise, but we can't easily test display)
         try:
             compiler.plot_energy(solution)
-        except Exception as e:
+        except Exception as e:  # noqa: F841
             # If plotting fails due to display issues, that's okay
             # Just make sure it's not a logic error
             pass  # Display/backend errors are acceptable in CI environments
@@ -186,12 +186,12 @@ class TestFullPipeline:
         \defvar{x}{Position}{m}
         \defvar{m}{Mass}{kg}
         \defvar{k}{Spring Constant}{N/m}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{k}{10.0}{N/m}
-        
+
         \lagrangian{\frac{1}{2} * m * \dot{x}^2 - \frac{1}{2} * k * x^2}
-        
+
         \initial{x=1.0, x_dot=0.0}
         """
 
@@ -205,7 +205,7 @@ class TestFullPipeline:
         # Plot phase space (should not raise)
         try:
             compiler.plot_phase_space(solution, coordinate_index=0)
-        except Exception as e:
+        except Exception as e:  # noqa: F841
             pass  # Display/backend errors are acceptable in CI environments
 
 
@@ -219,12 +219,12 @@ class TestContextManager:
         \defvar{x}{Position}{m}
         \defvar{m}{Mass}{kg}
         \defvar{k}{Spring Constant}{N/m}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{k}{10.0}{N/m}
-        
+
         \lagrangian{\frac{1}{2} * m * \dot{x}^2 - \frac{1}{2} * k * x^2}
-        
+
         \initial{x=1.0, x_dot=0.0}
         """
 

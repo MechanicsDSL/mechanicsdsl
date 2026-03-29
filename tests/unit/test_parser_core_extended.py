@@ -9,8 +9,6 @@ parse_command (vec, hat, mag, partial, nabla/grad), parse_multiplicative (vector
 implicit mult), expression_to_string.
 """
 
-import pytest
-
 from mechanics_dsl.parser import MechanicsParser, tokenize
 from mechanics_dsl.parser.ast_nodes import (
     AnimateDef,
@@ -23,11 +21,9 @@ from mechanics_dsl.parser.ast_nodes import (
     NonHolonomicConstraintDef,
     ParameterDef,
     RayleighDef,
-    RegionDef,
     SolveDef,
     TransformDef,
 )
-from mechanics_dsl.parser.core import ParserError
 
 
 class TestExpectEndOfInput:
@@ -73,7 +69,7 @@ class TestParseStatementUnknownToken:
         # Tokenize "42" or a number at top level - NUMBER is not in handlers
         tokens = tokenize("42")
         parser = MechanicsParser(tokens)
-        # parse() will call parse_statement, get handler=None, so else: logger.debug, pos+=1, return None
+        # parse() will call parse_statement, get handler=None, so else: logger.debug, pos+=1, return None  # noqa: E501
         ast = parser.parse()
         assert isinstance(ast, list)
 

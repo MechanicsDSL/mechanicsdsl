@@ -358,7 +358,7 @@ class MechanicsDSLLanguageServer(LanguageServer if PYGLS_AVAILABLE else object):
                 cmd = "\\" + match.group(1)
                 if cmd in COMMAND_DOCS:
                     doc = COMMAND_DOCS[cmd]
-                    content = f"**{doc['signature']}**\n\n{doc['description']}\n\n```mdsl\n{doc['example']}\n```"
+                    content = f"**{doc['signature']}**\n\n{doc['description']}\n\n```mdsl\n{doc['example']}\n```"  # noqa: E501
                     return Hover(contents=MarkupContent(kind=MarkupKind.Markdown, value=content))
 
         return None

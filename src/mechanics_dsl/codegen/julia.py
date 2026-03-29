@@ -30,8 +30,8 @@ def sympy_to_julia(expr: sp.Expr) -> str:
 
     Examples:
         >>> import sympy as sp
-        >>> theta, g, l = sp.symbols('theta g l')
-        >>> sympy_to_julia(-g/l * sp.sin(theta))
+        >>> theta, g, length = sp.symbols('theta g l')
+        >>> sympy_to_julia(-g/length * sp.sin(theta))
         '-g*sin(theta)/l'
     """
     if expr is None:
@@ -56,13 +56,13 @@ class JuliaGenerator(CodeGenerator):
 
     Example:
         >>> import sympy as sp
-        >>> theta, g, l = sp.symbols('theta g l')
+        >>> theta, g, length = sp.symbols('theta g l')
         >>> gen = JuliaGenerator(
         ...     system_name="pendulum",
         ...     coordinates=["theta"],
         ...     parameters={"g": 9.81, "l": 1.0},
         ...     initial_conditions={"theta": 0.5, "theta_dot": 0.0},
-        ...     equations={"theta_ddot": -g/l * sp.sin(theta)}
+        ...     equations={"theta_ddot": -g/length * sp.sin(theta)}
         ... )
         >>> gen.generate("pendulum.jl")
         'pendulum.jl'
@@ -265,7 +265,7 @@ end
         energy_fn = self.generate_energy_function()
 
         # CSV header
-        csv_coords = ", ".join(f'"{c}", "{c}_dot"' for c in self.coordinates)
+        csv_coords = ", ".join(f'"{c}", "{c}_dot"' for c in self.coordinates)  # noqa: F841
 
         template = f'''#=
     {self.system_name} Simulation
@@ -392,7 +392,7 @@ end
 function export_csv(sol; filename::String = "{self.system_name}_results.csv")
     df = DataFrame(
         t = sol.t,
-        {", ".join(f'{c} = sol[{2*i+1}, :], {c}_dot = sol[{2*i+2}, :]' for i, c in enumerate(self.coordinates))}
+        {", ".join(f'{c} = sol[{2*i+1}, :], {c}_dot = sol[{2*i+2}, :]' for i, c in enumerate(self.coordinates))}  # noqa: E501
     )
     CSV.write(filename, df)
     println("Exported $(length(sol.t)) points to $filename")

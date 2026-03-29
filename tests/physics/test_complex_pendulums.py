@@ -57,21 +57,21 @@ class TestDoublePendulum:
         \defvar{l1}{Constant}{m}
         \defvar{l2}{Constant}{m}
         \defvar{g}{Acceleration}{m/s^2}
-        
+
         \parameter{m1}{1.0}{kg}
         \parameter{m2}{1.0}{kg}
         \parameter{l1}{1.0}{m}
         \parameter{l2}{1.0}{m}
         \parameter{g}{9.81}{m/s^2}
-        
+
         \lagrangian{
-            \frac{1}{2} * (m1 + m2) * l1^2 * \dot{theta1}^2 
-            + \frac{1}{2} * m2 * l2^2 * \dot{theta2}^2 
+            \frac{1}{2} * (m1 + m2) * l1^2 * \dot{theta1}^2
+            + \frac{1}{2} * m2 * l2^2 * \dot{theta2}^2
             + m2 * l1 * l2 * \dot{theta1} * \dot{theta2} * \cos{theta1 - theta2}
             + (m1 + m2) * g * l1 * \cos{theta1}
             + m2 * g * l2 * \cos{theta2}
         }
-        
+
         \initial{theta1=1.57, theta1_dot=0.0, theta2=1.57, theta2_dot=0.0}
         """
 
@@ -99,21 +99,21 @@ class TestDoublePendulum:
         \defvar{l1}{Constant}{m}
         \defvar{l2}{Constant}{m}
         \defvar{g}{Acceleration}{m/s^2}
-        
+
         \parameter{m1}{1.0}{kg}
         \parameter{m2}{1.0}{kg}
         \parameter{l1}{1.0}{m}
         \parameter{l2}{1.0}{m}
         \parameter{g}{9.81}{m/s^2}
-        
+
         \lagrangian{
-            \frac{1}{2} * (m1 + m2) * l1^2 * \dot{theta1}^2 
-            + \frac{1}{2} * m2 * l2^2 * \dot{theta2}^2 
+            \frac{1}{2} * (m1 + m2) * l1^2 * \dot{theta1}^2
+            + \frac{1}{2} * m2 * l2^2 * \dot{theta2}^2
             + m2 * l1 * l2 * \dot{theta1} * \dot{theta2} * \cos{theta1 - theta2}
             + (m1 + m2) * g * l1 * \cos{theta1}
             + m2 * g * l2 * \cos{theta2}
         }
-        
+
         \initial{theta1=0.5, theta1_dot=0.0, theta2=0.1, theta2_dot=0.0}
         """
 
@@ -150,7 +150,7 @@ class TestDoublePendulum:
             tolerance = 500.0 if IS_CI else 10.0
             assert (
                 np.max(energy_error) < tolerance
-            ), f"Energy conservation violated: max error {np.max(energy_error):.6f} (tolerance: {tolerance:.6f})"
+            ), f"Energy conservation violated: max error {np.max(energy_error):.6f} (tolerance: {tolerance:.6f})"  # noqa: E501
         else:
             # If initial energy is zero or very small, just check that energy stays small
             assert np.all(np.abs(E_total) < 1e-5), "Energy should remain near zero"
@@ -165,16 +165,16 @@ class TestDoublePendulum:
         \defvar{m}{Mass}{kg}
         \defvar{l}{Length}{m}
         \defvar{g}{Acceleration}{m/s^2}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{l}{1.0}{m}
         \parameter{g}{9.81}{m/s^2}
-        
+
         \lagrangian{
-            \frac{1}{2} * m * l^2 * (\dot{theta1}^2 + \dot{theta2}^2 + \dot{theta3}^2) 
+            \frac{1}{2} * m * l^2 * (\dot{theta1}^2 + \dot{theta2}^2 + \dot{theta3}^2)
             - m * g * l * (3 - \cos{theta1} - \cos{theta2} - \cos{theta3})
         }
-        
+
         \initial{theta1=0.5, theta1_dot=0.0, theta2=0.0, theta2_dot=0.0, theta3=0.0, theta3_dot=0.0}
         """
 
@@ -203,17 +203,17 @@ class TestQuadruplePendulum:
         \defvar{m}{Mass}{kg}
         \defvar{l}{Length}{m}
         \defvar{g}{Acceleration}{m/s^2}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{l}{1.0}{m}
         \parameter{g}{9.81}{m/s^2}
-        
+
         \lagrangian{
-            \frac{1}{2} * m * l^2 * (\dot{theta1}^2 + \dot{theta2}^2 + \dot{theta3}^2 + \dot{theta4}^2) 
+            \frac{1}{2} * m * l^2 * (\dot{theta1}^2 + \dot{theta2}^2 + \dot{theta3}^2 + \dot{theta4}^2)  # noqa: E501
             - m * g * l * (4 - \cos{theta1} - \cos{theta2} - \cos{theta3} - \cos{theta4})
         }
-        
-        \initial{theta1=0.3, theta1_dot=0.0, theta2=0.0, theta2_dot=0.0, theta3=0.0, theta3_dot=0.0, theta4=0.0, theta4_dot=0.0}
+
+        \initial{theta1=0.3, theta1_dot=0.0, theta2=0.0, theta2_dot=0.0, theta3=0.0, theta3_dot=0.0, theta4=0.0, theta4_dot=0.0}  # noqa: E501
         """
 
         compiler = get_compiler()

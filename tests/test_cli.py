@@ -5,11 +5,11 @@ Run with:
     pytest tests/test_cli.py -v
 """
 
-import pytest
-import sys
+from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
-from io import StringIO
+
+import pytest
 
 # Get the project root directory
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -40,8 +40,9 @@ class TestCLIBasics:
 
     def test_cli_info(self):
         """Test info command."""
-        from mechanics_dsl.cli import cmd_info
         from argparse import Namespace
+
+        from mechanics_dsl.cli import cmd_info
 
         with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
             result = cmd_info(Namespace())
@@ -82,21 +83,23 @@ class TestCLIValidate:
 
     def test_validate_valid_file(self, valid_dsl_file):
         """Test validating a correct DSL file."""
-        from mechanics_dsl.cli import cmd_validate
         from argparse import Namespace
+
+        from mechanics_dsl.cli import cmd_validate
 
         with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
             args = Namespace(input=str(valid_dsl_file))
             result = cmd_validate(args)
             # May or may not succeed depending on DSL content
-            output = mock_stdout.getvalue()
+            output = mock_stdout.getvalue()  # noqa: F841
             # Just verify it runs without crashing
             assert result in [0, 1]
 
     def test_validate_nonexistent_file(self):
         """Test validating a file that doesn't exist."""
-        from mechanics_dsl.cli import cmd_validate
         from argparse import Namespace
+
+        from mechanics_dsl.cli import cmd_validate
 
         with patch("sys.stderr", new_callable=StringIO) as mock_stderr:
             args = Namespace(input="nonexistent.mdsl")
@@ -124,13 +127,14 @@ class TestCLICompile:
 
     def test_compile_unknown_target(self, simple_dsl_file, tmp_path):
         """Test compiling to unknown target."""
-        from mechanics_dsl.cli import cmd_compile
         from argparse import Namespace
+
+        from mechanics_dsl.cli import cmd_compile
 
         output_dir = tmp_path / "output"
         output_dir.mkdir()
 
-        with patch("sys.stderr", new_callable=StringIO) as mock_stderr:
+        with patch("sys.stderr", new_callable=StringIO) as mock_stderr:  # noqa: F841
             args = Namespace(
                 input=str(simple_dsl_file), target="unknown_language", output=str(output_dir)
             )
@@ -158,8 +162,9 @@ class TestCLIRun:
 
     def test_run_nonexistent_file(self):
         """Test running a simulation with nonexistent file."""
-        from mechanics_dsl.cli import cmd_run
         from argparse import Namespace
+
+        from mechanics_dsl.cli import cmd_run
 
         with patch("sys.stderr", new_callable=StringIO) as mock_stderr:
             args = Namespace(
@@ -190,10 +195,11 @@ class TestCLIExport:
 
     def test_export_nonexistent_file(self):
         """Test exporting from nonexistent file."""
-        from mechanics_dsl.cli import cmd_export
         from argparse import Namespace
 
-        with patch("sys.stderr", new_callable=StringIO) as mock_stderr:
+        from mechanics_dsl.cli import cmd_export
+
+        with patch("sys.stderr", new_callable=StringIO) as mock_stderr:  # noqa: F841
             args = Namespace(
                 input="nonexistent.mdsl", format="json", output=None, t_span=None, points=100
             )
@@ -220,16 +226,18 @@ class TestParseSpan:
 
     def test_parse_invalid_span(self):
         """Test parsing invalid t-span."""
-        from mechanics_dsl.cli import parse_t_span
         import argparse
+
+        from mechanics_dsl.cli import parse_t_span
 
         with pytest.raises(argparse.ArgumentTypeError):
             parse_t_span("invalid")
 
     def test_parse_single_value(self):
         """Test parsing single value (should fail)."""
-        from mechanics_dsl.cli import parse_t_span
         import argparse
+
+        from mechanics_dsl.cli import parse_t_span
 
         with pytest.raises(argparse.ArgumentTypeError):
             parse_t_span("10")

@@ -432,7 +432,7 @@ class KinematicsSolver:
         if len(knowns) < 4:
             return (
                 False,
-                f"Insufficient information: need at least 3 knowns besides x₀, got {len(knowns) - 1}",
+                f"Insufficient information: need at least 3 knowns besides x₀, got {len(knowns) - 1}",  # noqa: E501
             )
 
         # Check for time validity

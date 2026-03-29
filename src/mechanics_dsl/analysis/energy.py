@@ -111,14 +111,14 @@ class EnergyAnalyzer:
 
         return result
 
-    def compute_pendulum_energy(self, solution: dict, m: float, l: float, g: float) -> Dict:
+    def compute_pendulum_energy(self, solution: dict, m: float, length: float, g: float) -> Dict:
         """
         Compute energy for simple pendulum.
 
         Args:
             solution: Simulation result
             m: Mass
-            l: Length
+            length: Length
             g: Gravitational acceleration
 
         Returns:
@@ -128,7 +128,7 @@ class EnergyAnalyzer:
         theta = y[0]
         theta_dot = y[1]
 
-        T = 0.5 * m * (l * theta_dot) ** 2
-        V = m * g * l * (1 - np.cos(theta))
+        T = 0.5 * m * (length * theta_dot) ** 2
+        V = m * g * length * (1 - np.cos(theta))
 
         return {"kinetic": T, "potential": V, "total": T + V}

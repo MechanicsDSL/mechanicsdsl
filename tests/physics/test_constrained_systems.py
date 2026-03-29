@@ -53,20 +53,20 @@ class TestRollingBall:
         \defvar{R}{Radius}{m}
         \defvar{g}{Acceleration}{m/s^2}
         \defvar{alpha}{Incline Angle}{rad}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{R}{0.1}{m}
         \parameter{g}{9.81}{m/s^2}
         \parameter{alpha}{0.3}{rad}
-        
+
         \lagrangian{
-            \frac{1}{2} * m * \dot{x}^2 
-            + \frac{1}{2} * \frac{2}{5} * m * R^2 * \dot{theta}^2 
+            \frac{1}{2} * m * \dot{x}^2
+            + \frac{1}{2} * \frac{2}{5} * m * R^2 * \dot{theta}^2
             - m * g * x * \sin{alpha}
         }
-        
+
         \constraint{x - R * theta}
-        
+
         \initial{x=0.0, x_dot=0.0}
         """
 
@@ -102,21 +102,21 @@ class TestAtwoodMachine:
         \defvar{m2}{Mass}{kg}
         \defvar{g}{Acceleration}{m/s^2}
         \defvar{l}{Constant}{m}
-        
+
         \parameter{m1}{2.0}{kg}
         \parameter{m2}{1.0}{kg}
         \parameter{g}{9.81}{m/s^2}
         \parameter{l}{5.0}{m}
-        
+
         \lagrangian{
-            \frac{1}{2} * m1 * \dot{x1}^2 
-            + \frac{1}{2} * m2 * \dot{x2}^2 
-            + m1 * g * x1 
+            \frac{1}{2} * m1 * \dot{x1}^2
+            + \frac{1}{2} * m2 * \dot{x2}^2
+            + m1 * g * x1
             + m2 * g * x2
         }
-        
+
         \constraint{x1 + x2 - l}
-        
+
         \initial{x1=2.0, x1_dot=0.0}
         """
 
@@ -164,18 +164,18 @@ class TestPendulumWithConstraint:
         \defvar{m}{Mass}{kg}
         \defvar{g}{Acceleration}{m/s^2}
         \defvar{l}{Constant}{m}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{g}{9.81}{m/s^2}
         \parameter{l}{1.0}{m}
-        
+
         \lagrangian{
-            \frac{1}{2} * m * (\dot{x}^2 + \dot{y}^2) 
+            \frac{1}{2} * m * (\dot{x}^2 + \dot{y}^2)
             - m * g * y
         }
-        
+
         \constraint{x^2 + y^2 - l^2}
-        
+
         \initial{x=0.0, x_dot=0.0, y=-1.0, y_dot=0.0}
         """
 

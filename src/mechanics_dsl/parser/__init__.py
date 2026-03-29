@@ -26,7 +26,7 @@ for expressions. It handles:
 - SPH fluid definitions
 """
 
-from .ast_nodes import (  # Base classes; Basic expressions; Operations; Vectors; Calculus; Functions; Statements; SPH
+from .ast_nodes import (  # noqa: F401
     AnimateDef,
     ASTNode,
     BinaryOpExpr,

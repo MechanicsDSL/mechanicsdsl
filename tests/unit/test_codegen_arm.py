@@ -25,14 +25,14 @@ class TestARMGenerator:
         """Create a simple pendulum generator."""
         theta = sp.Symbol("theta")
         sp.Symbol("theta_dot")
-        g, l = sp.symbols("g l")
+        g, length = sp.symbols("g l")
 
         return ARMGenerator(
             system_name="test_pendulum",
             coordinates=["theta"],
             parameters={"g": 9.81, "l": 1.0},
             initial_conditions={"theta": 0.5, "theta_dot": 0.0},
-            equations={"theta_ddot": -g / l * sp.sin(theta)},
+            equations={"theta_ddot": -g / length * sp.sin(theta)},
             target="raspberry_pi",
             use_neon=True,
             embedded=False,
@@ -42,14 +42,14 @@ class TestARMGenerator:
     def embedded_generator(self):
         """Create an embedded/bare-metal generator."""
         theta = sp.Symbol("theta")
-        g, l = sp.symbols("g l")
+        g, length = sp.symbols("g l")
 
         return ARMGenerator(
             system_name="embedded_pendulum",
             coordinates=["theta"],
             parameters={"g": 9.81, "l": 0.5},
             initial_conditions={"theta": 0.1, "theta_dot": 0.0},
-            equations={"theta_ddot": -g / l * sp.sin(theta)},
+            equations={"theta_ddot": -g / length * sp.sin(theta)},
             target="cortex_m",
             use_neon=False,
             embedded=True,

@@ -12,7 +12,7 @@ Generates standalone Python simulation scripts with:
 The generated code runs independently without MechanicsDSL installed.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import sympy as sp
 from sympy.printing import pycode
@@ -34,8 +34,8 @@ def sympy_to_python(expr: sp.Expr, use_numpy: bool = True) -> str:
 
     Examples:
         >>> import sympy as sp
-        >>> theta, g, l = sp.symbols('theta g l')
-        >>> sympy_to_python(-g/l * sp.sin(theta))
+        >>> theta, g, length = sp.symbols('theta g l')
+        >>> sympy_to_python(-g/length * sp.sin(theta))
         '-g*numpy.sin(theta)/l'
     """
     if expr is None:
@@ -74,13 +74,13 @@ class PythonGenerator(CodeGenerator):
 
     Example:
         >>> import sympy as sp
-        >>> theta, g, l = sp.symbols('theta g l')
+        >>> theta, g, length = sp.symbols('theta g l')
         >>> gen = PythonGenerator(
         ...     system_name="pendulum",
         ...     coordinates=["theta"],
         ...     parameters={"g": 9.81, "l": 1.0},
         ...     initial_conditions={"theta": 0.5, "theta_dot": 0.0},
-        ...     equations={"theta_ddot": -g/l * sp.sin(theta)}
+        ...     equations={"theta_ddot": -g/length * sp.sin(theta)}
         ... )
         >>> gen.generate("pendulum.py")
         'pendulum.py'

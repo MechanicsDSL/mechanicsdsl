@@ -12,10 +12,12 @@ Security: All refractive indices and angles validated.
 """
 
 from __future__ import annotations
+
 import math
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import List, Tuple, Optional
+from typing import List, Optional, Tuple
+
 import numpy as np
 
 
@@ -375,7 +377,7 @@ class Polarization:
 
         Returns (intensity, degree_of_polarization, angle)
         """
-        I = S[0]
+        I = S[0]  # noqa: E741
         DOP = math.sqrt(S[1] ** 2 + S[2] ** 2 + S[3] ** 2) / I
         angle = 0.5 * math.atan2(S[2], S[1])
         return (I, DOP, angle)

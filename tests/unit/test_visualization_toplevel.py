@@ -19,8 +19,8 @@ import numpy as np
 import pytest
 
 matplotlib.use("Agg")  # Use non-interactive backend for testing
-import matplotlib.animation as animation
-import matplotlib.pyplot as plt
+import matplotlib.animation as animation  # noqa: E402
+import matplotlib.pyplot as plt  # noqa: E402
 
 # Import MechanicsVisualizer from the visualization.py module file
 # The visualization/ folder shadows visualization.py when using normal imports
@@ -513,7 +513,7 @@ class TestAnimateDoublePendulumPrivate:
 
 # Check if pandas is available for fluid tests
 try:
-    import pandas
+    pass
 
     HAS_PANDAS = True
 except ImportError:

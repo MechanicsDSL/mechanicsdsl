@@ -54,16 +54,16 @@ class TestGyroscope:
         \defvar{I1}{Moment of Inertia 1}{kg*m^2}
         \defvar{I3}{Moment of Inertia 3}{kg*m^2}
         \defvar{omega}{Spin Rate}{rad/s}
-        
+
         \parameter{I1}{1.0}{kg*m^2}
         \parameter{I3}{0.5}{kg*m^2}
         \parameter{omega}{10.0}{rad/s}
-        
+
         \lagrangian{
-            \frac{1}{2} * I1 * (\dot{theta}^2 + \sin{theta}^2 * \dot{phi}^2) 
+            \frac{1}{2} * I1 * (\dot{theta}^2 + \sin{theta}^2 * \dot{phi}^2)
             + \frac{1}{2} * I3 * (\dot{psi} + \cos{theta} * \dot{phi})^2
         }
-        
+
         \initial{theta=0.1, theta_dot=0.0, phi=0.0, phi_dot=0.0, psi=0.0, psi_dot=omega}
         """
 
@@ -104,17 +104,17 @@ class TestRigidBody3D:
         \defvar{I1}{Moment of Inertia 1}{kg*m^2}
         \defvar{I2}{Moment of Inertia 2}{kg*m^2}
         \defvar{I3}{Moment of Inertia 3}{kg*m^2}
-        
+
         \parameter{I1}{1.0}{kg*m^2}
         \parameter{I2}{0.8}{kg*m^2}
         \parameter{I3}{0.5}{kg*m^2}
-        
+
         \lagrangian{
-            \frac{1}{2} * I1 * (\dot{theta}^2 + \sin{theta}^2 * \dot{phi}^2) 
+            \frac{1}{2} * I1 * (\dot{theta}^2 + \sin{theta}^2 * \dot{phi}^2)
             + \frac{1}{2} * I2 * (\dot{psi}^2 + \cos{theta}^2 * \dot{phi}^2)
             + \frac{1}{2} * I3 * (\dot{phi} + \dot{psi} * \cos{theta})^2
         }
-        
+
         \initial{theta=0.1, theta_dot=0.0, phi=0.0, phi_dot=1.0, psi=0.0, psi_dot=0.0}
         """
 
@@ -148,16 +148,16 @@ class TestSphericalPendulum:
         \defvar{m}{Mass}{kg}
         \defvar{l}{Length}{m}
         \defvar{g}{Acceleration}{m/s^2}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{l}{1.0}{m}
         \parameter{g}{9.81}{m/s^2}
-        
+
         \lagrangian{
-            \frac{1}{2} * m * l^2 * (\dot{theta}^2 + \sin{theta}^2 * \dot{phi}^2) 
+            \frac{1}{2} * m * l^2 * (\dot{theta}^2 + \sin{theta}^2 * \dot{phi}^2)
             - m * g * l * (1 - \cos{theta})
         }
-        
+
         \initial{theta=0.3, theta_dot=0.0, phi=0.0, phi_dot=0.5}
         """
 
@@ -196,7 +196,7 @@ class TestSphericalPendulum:
 
         if E_total[0] != 0 and np.abs(E_total[0]) > 1e-10:
             energy_error = np.abs((E_total - E_total[0]) / E_total[0])
-            # Spherical pendulum can have significant energy drift in CI due to numerical instability
+            # Spherical pendulum can have significant energy drift in CI due to numerical instability  # noqa: E501
             tolerance = 50.0  # Spherical pendulum accumulates significant energy drift
             assert (
                 np.max(energy_error) < tolerance

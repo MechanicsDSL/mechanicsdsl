@@ -13,10 +13,10 @@ from this class and implement the required methods.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
 import sympy as sp
-from sympy import Symbol, symbols, diff, simplify
+from sympy import Symbol, simplify, symbols
 
 
 class CodeGenerator(ABC):
@@ -38,13 +38,13 @@ class CodeGenerator(ABC):
     Example:
         >>> from mechanics_dsl.codegen import PythonGenerator
         >>> import sympy as sp
-        >>> theta, g, l = sp.symbols('theta g l')
+        >>> theta, g, length = sp.symbols('theta g l')
         >>> gen = PythonGenerator(
         ...     system_name="pendulum",
         ...     coordinates=["theta"],
         ...     parameters={"g": 9.81, "l": 1.0},
         ...     initial_conditions={"theta": 0.5, "theta_dot": 0.0},
-        ...     equations={"theta_ddot": -g/l * sp.sin(theta)}
+        ...     equations={"theta_ddot": -g/length * sp.sin(theta)}
         ... )
         >>> gen.validate()
         (True, [])

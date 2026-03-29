@@ -191,7 +191,7 @@ class SymbolicEngine:
                 self._perf_monitor.stop_timer("ast_to_sympy")
 
             return result
-        except Exception as e:
+        except Exception as e:  # noqa: F841
             if self._perf_monitor:
                 self._perf_monitor.stop_timer("ast_to_sympy")
             raise
@@ -215,11 +215,11 @@ class SymbolicEngine:
             right = self._ast_to_sympy_impl(expr.right)
 
             ops = {
-                "+": lambda l, r: l + r,
-                "-": lambda l, r: l - r,
-                "*": lambda l, r: l * r,
-                "/": lambda l, r: l / r,
-                "^": lambda l, r: l**r,
+                "+": lambda l, r: l + r,  # noqa: E741
+                "-": lambda l, r: l - r,  # noqa: E741
+                "*": lambda l, r: l * r,  # noqa: E741
+                "/": lambda l, r: l / r,  # noqa: E741
+                "^": lambda l, r: l**r,  # noqa: E741
             }
 
             if expr.operator in ops:
@@ -410,14 +410,14 @@ class SymbolicEngine:
                         try:
                             if hasattr(term.expr, "func") and str(term.expr.func) == coord:
                                 equation = equation.subs(term, coord_ddots[coord])
-                        except:
+                        except Exception:
                             if str(term).startswith(f"Derivative({coord}"):
                                 equation = equation.subs(term, coord_ddots[coord])
                     elif order == 1 and term.has(self.time_symbol):
                         try:
                             if hasattr(term.expr, "func") and str(term.expr.func) == coord:
                                 equation = equation.subs(term, coord_dots[coord])
-                        except:
+                        except Exception:
                             if str(term).startswith(f"Derivative({coord}"):
                                 equation = equation.subs(term, coord_dots[coord])
 

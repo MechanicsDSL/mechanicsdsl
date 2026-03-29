@@ -5,8 +5,9 @@ Tests Unity, Unreal, and Modelica code generators to ensure
 they properly convert sympy equations to target language code.
 """
 
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 # Test sympy-to-target-language converters
 
@@ -25,6 +26,7 @@ class TestUnityIntegration:
         """Test conversion of simple sympy expression."""
         try:
             import sympy as sp
+
             from mechanics_dsl.integrations.unity import sympy_to_csharp
 
             # Simple expression: -g/l * sin(theta)
@@ -73,6 +75,7 @@ class TestUnrealIntegration:
         """Test conversion with FMath functions."""
         try:
             import sympy as sp
+
             from mechanics_dsl.integrations.unreal import sympy_to_cpp
 
             theta = sp.Symbol("theta")
@@ -117,6 +120,7 @@ class TestModelicaIntegration:
         """Test conversion of trig functions."""
         try:
             import sympy as sp
+
             from mechanics_dsl.integrations.modelica import sympy_to_modelica
 
             theta = sp.Symbol("theta")
@@ -177,7 +181,7 @@ class TestDslImports:
 
     def test_import_def_in_parser(self):
         """Test that parser recognizes import directive."""
-        from mechanics_dsl.parser import tokenize, MechanicsParser, ImportDef
+        from mechanics_dsl.parser import ImportDef, MechanicsParser, tokenize
 
         # Parser expects single identifier for filename
         # NOTE: Real filenames with dots/slashes would need parser enhancement

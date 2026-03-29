@@ -35,7 +35,7 @@ class TestSandbox:
 
     def test_sandbox_context_manager(self):
         """Test sandboxed context manager."""
-        with sandboxed() as sb:
+        with sandboxed() as sb:  # noqa: F841
             assert Sandbox.is_sandboxed()
 
         assert not Sandbox.is_sandboxed()

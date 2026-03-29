@@ -550,12 +550,12 @@ class TestLagrangianToHamiltonian:
 
     def test_pendulum(self, engine):
         m = engine.get_symbol("m")
-        l = engine.get_symbol("l")
+        length = engine.get_symbol("l")
         g = engine.get_symbol("g")
         theta = engine.get_symbol("theta")
         theta_dot = engine.get_symbol("theta_dot")
 
-        L = sp.Rational(1, 2) * m * l**2 * theta_dot**2 + m * g * l * sp.cos(theta)
+        L = sp.Rational(1, 2) * m * length**2 * theta_dot**2 + m * g * length * sp.cos(theta)
 
         H = engine.lagrangian_to_hamiltonian(L, ["theta"])
 

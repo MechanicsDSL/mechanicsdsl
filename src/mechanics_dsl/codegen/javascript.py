@@ -59,13 +59,13 @@ class JavaScriptGenerator(CodeGenerator):
 
     Example:
         >>> import sympy as sp
-        >>> theta, g, l = sp.symbols('theta g l')
+        >>> theta, g, length = sp.symbols('theta g l')
         >>> gen = JavaScriptGenerator(
         ...     system_name="pendulum",
         ...     coordinates=["theta"],
         ...     parameters={"g": 9.81, "l": 1.0},
         ...     initial_conditions={"theta": 0.5, "theta_dot": 0.0},
-        ...     equations={"theta_ddot": -g/l * sp.sin(theta)},
+        ...     equations={"theta_ddot": -g/length * sp.sin(theta)},
         ...     integrator="rk4"
         ... )
         >>> gen.generate("pendulum.js")
@@ -355,9 +355,11 @@ export const PARAMETERS: PhysicsParameters;
         state_dim = len(self.coordinates) * 2
 
         # Integrator choice
-        step_fn = {"euler": "eulerStep", "rk4": "rk4Step", "adaptive": "adaptiveStep"}.get(
-            self.integrator, "rk4Step"
-        )
+        step_fn = {  # noqa: F841
+            "euler": "eulerStep",
+            "rk4": "rk4Step",
+            "adaptive": "adaptiveStep",
+        }.get(self.integrator, "rk4Step")
 
         # Integrators code
         integrators = self._generate_integrators()
@@ -600,7 +602,7 @@ if (typeof require !== 'undefined' && require.main === module) {{
     console.timeEnd('Simulation');
     console.log(`Completed: ${{results.t.length}} points`);
     console.log(`Final state: ${{results.y[results.y.length-1]}}`);
-    console.log(`Energy drift: ${{Math.abs(results.energy[0] - results.energy[results.energy.length-1]).toFixed(6)}}`);
+    console.log(`Energy drift: ${{Math.abs(results.energy[0] - results.energy[results.energy.length-1]).toFixed(6)}}`);  # noqa: E501
 }}
 """
         return template

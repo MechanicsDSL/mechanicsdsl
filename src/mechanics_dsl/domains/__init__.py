@@ -9,7 +9,7 @@ maintainability. All imports remain backward compatible.
 
 # Domain packages (reorganized from single files)
 # Physics domain packages
-from . import (
+from . import (  # noqa: F401
     acoustics,
     classical,
     electromagnetic,

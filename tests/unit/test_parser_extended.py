@@ -404,7 +404,7 @@ class TestMechanicsParserWithTokens:
         try:
             result = parser.parse_expression()
             assert result is not None
-        except:
+        except Exception:
             pass  # Parser may need different syntax
 
     def test_parser_parse_cos(self):
@@ -414,7 +414,7 @@ class TestMechanicsParserWithTokens:
         try:
             result = parser.parse_expression()
             assert result is not None
-        except:
+        except Exception:
             pass  # Parser may need different syntax
 
     def test_parser_parse_complex(self):

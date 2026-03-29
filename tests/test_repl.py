@@ -5,9 +5,10 @@ Run with:
     pytest tests/test_repl.py -v
 """
 
-import pytest
-from unittest.mock import patch
 from io import StringIO
+from unittest.mock import patch
+
+import pytest
 
 
 class TestREPLImport:
@@ -51,7 +52,7 @@ class TestREPLClass:
         repl.buffer = ["line1", "line2"]
         with patch("sys.stdout", new_callable=StringIO):
             result = repl._handle_command("clear")
-        assert result == True
+        assert result
         assert repl.buffer == []
 
     def test_quit_command(self):
@@ -61,7 +62,7 @@ class TestREPLClass:
         repl = REPL()
         with patch("sys.stdout", new_callable=StringIO):
             result = repl._handle_command("quit")
-        assert result == False
+        assert not result
 
     def test_exit_command(self):
         """Test :exit command returns False."""
@@ -70,7 +71,7 @@ class TestREPLClass:
         repl = REPL()
         with patch("sys.stdout", new_callable=StringIO):
             result = repl._handle_command("exit")
-        assert result == False
+        assert not result
 
     def test_show_command_empty(self):
         """Test :show with empty buffer."""
@@ -122,7 +123,7 @@ class TestREPLClass:
         with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
             result = repl._handle_command("unknown_command")
             output = mock_stdout.getvalue()
-        assert result == True  # Don't exit
+        assert result  # Don't exit
         assert "unknown" in output.lower() or "help" in output.lower()
 
     def test_run_without_compilation(self):

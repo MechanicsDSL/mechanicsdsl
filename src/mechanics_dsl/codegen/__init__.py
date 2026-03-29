@@ -12,12 +12,10 @@ from .cuda import CudaGenerator
 from .fortran import FortranGenerator
 from .javascript import JavaScriptGenerator
 from .julia import JuliaGenerator
-
 from .matlab import MatlabGenerator
 from .openmp import OpenMPGenerator
 from .python import PythonGenerator
 from .rust import RustGenerator
-
 from .wasm import WasmGenerator
 
 __all__ = [

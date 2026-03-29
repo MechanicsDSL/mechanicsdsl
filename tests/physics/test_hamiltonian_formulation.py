@@ -50,12 +50,12 @@ class TestHamiltonianOscillator:
         \defvar{x}{Position}{m}
         \defvar{m}{Mass}{kg}
         \defvar{k}{Spring Constant}{N/m}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{k}{10.0}{N/m}
-        
+
         \lagrangian{\frac{1}{2} * m * \dot{x}^2 - \frac{1}{2} * k * x^2}
-        
+
         \initial{x=1.0, x_dot=0.0}
         """
 
@@ -103,13 +103,13 @@ class TestHamiltonianOscillator:
         \defvar{m}{Mass}{kg}
         \defvar{l}{Constant}{m}
         \defvar{g}{Acceleration}{m/s^2}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{l}{1.0}{m}
         \parameter{g}{9.81}{m/s^2}
-        
+
         \lagrangian{\frac{1}{2} * m * l^2 * \dot{theta}^2 - m * g * l * (1 - \cos{theta})}
-        
+
         \initial{theta=0.5, theta_dot=0.0}
         """
 
@@ -139,12 +139,12 @@ class TestExplicitHamiltonian:
         \defvar{p}{Momentum}{kg*m/s}
         \defvar{m}{Mass}{kg}
         \defvar{k}{Spring Constant}{N/m}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{k}{10.0}{N/m}
-        
+
         \hamiltonian{\frac{p^2}{2 * m} + \frac{1}{2} * k * x^2}
-        
+
         \initial{x=1.0, p=0.0}
         """
 

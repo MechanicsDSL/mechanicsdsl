@@ -4,7 +4,6 @@ MechanicsDSL Interactive REPL
 An interactive shell for experimenting with the DSL.
 """
 
-import sys
 import atexit
 from pathlib import Path
 from typing import Optional
@@ -232,7 +231,7 @@ class REPL:
             result = self.compiler.compile_dsl(dsl_source)
 
             if result.get("success"):
-                print(f"✓ Compiled successfully!")
+                print("✓ Compiled successfully!")
                 print(f"  System: {result.get('system_name', 'unknown')}")
                 coords = result.get("coordinates", [])
                 if coords:
@@ -306,6 +305,7 @@ class REPL:
             return
 
         import json
+
         import numpy as np
 
         fmt = format_type.lower()

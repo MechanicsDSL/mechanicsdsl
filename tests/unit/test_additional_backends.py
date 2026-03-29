@@ -20,14 +20,14 @@ def create_test_system():
     """Create a standard pendulum system for testing."""
     theta = sp.Symbol("theta", real=True)
     g = sp.Symbol("g", positive=True)
-    l = sp.Symbol("l", positive=True)
+    length = sp.Symbol("l", positive=True)
 
     return {
         "system_name": "test_pendulum",
         "coordinates": ["theta"],
         "parameters": {"g": 9.81, "l": 1.0},
         "initial_conditions": {"theta": 0.1, "theta_dot": 0.0},
-        "equations": {"theta_ddot": -g / l * sp.sin(theta)},
+        "equations": {"theta_ddot": -g / length * sp.sin(theta)},
     }
 
 

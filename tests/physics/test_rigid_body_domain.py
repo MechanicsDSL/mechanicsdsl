@@ -27,7 +27,7 @@ class TestRigidBodyDynamics:
         assert body._I3 == 0.5
 
         # Inertia tensor should be diagonal
-        I = body._inertia_tensor
+        I = body._inertia_tensor  # noqa: E741
         assert I[0, 0] == 1.0
         assert I[1, 1] == 1.0
         assert I[2, 2] == 0.5
@@ -146,11 +146,11 @@ class TestGyroscope:
         gyro = Gyroscope(I_perp=0.01, I_axis=0.005, spin_rate=100.0)
 
         # Ω = Mgl / (I₃ * ω_spin)
-        M, g, l = 1.0, 10.0, 0.1
+        M, g, length = 1.0, 10.0, 0.1
 
-        omega_prec = gyro.precession_rate(M, g, l)
+        omega_prec = gyro.precession_rate(M, g, length)
 
-        expected = M * g * l / (0.005 * 100.0)
+        expected = M * g * length / (0.005 * 100.0)
 
         assert abs(omega_prec - expected) < 1e-10
 
@@ -158,8 +158,8 @@ class TestGyroscope:
         """Test gyroscope nutation frequency."""
         gyro = Gyroscope(I_perp=0.01, I_axis=0.005, spin_rate=100.0)
 
-        M, g, l = 1.0, 10.0, 0.1
-        omega_n = gyro.nutation_frequency(M, g, l)
+        M, g, length = 1.0, 10.0, 0.1
+        omega_n = gyro.nutation_frequency(M, g, length)
 
         # Should be approximately I₃*ω_spin/I₁
         expected = 0.005 * 100.0 / 0.01

@@ -122,7 +122,7 @@ class NumericalSimulator:
                             ):
                                 try:
                                     # FIX: Always split time from state vector
-                                    # args_with_time comes from solve_ivp, so it is ALWAYS (t, y0, y1, ...)
+                                    # args_with_time comes from solve_ivp, so it is ALWAYS (t, y0, y1, ...)  # noqa: E501
                                     if len(args_with_time) < 1:
                                         return 0.0
 
@@ -446,7 +446,7 @@ class NumericalSimulator:
 
             if not isinstance(self.hamiltonian_equations, dict):
                 logger.error(
-                    f"_hamiltonian_ode: hamiltonian_equations is not dict, got {type(self.hamiltonian_equations).__name__}"
+                    f"_hamiltonian_ode: hamiltonian_equations is not dict, got {type(self.hamiltonian_equations).__name__}"  # noqa: E501
                 )
                 return dydt
 
@@ -466,7 +466,7 @@ class NumericalSimulator:
 
                 if i >= len(self.hamiltonian_equations["q_dots"]):
                     logger.warning(
-                        f"_hamiltonian_ode: Index {i} out of range for q_dots (len={len(self.hamiltonian_equations['q_dots'])})"
+                        f"_hamiltonian_ode: Index {i} out of range for q_dots (len={len(self.hamiltonian_equations['q_dots'])})"  # noqa: E501
                     )
                     continue
 
@@ -504,7 +504,7 @@ class NumericalSimulator:
                             else:
                                 dydt[q_idx] = 0.0
                                 logger.warning(
-                                    f"_hamiltonian_ode: Incomplete arguments for d{q}/dt (got {len(args)}, expected {len(indices)})"
+                                    f"_hamiltonian_ode: Incomplete arguments for d{q}/dt (got {len(args)}, expected {len(indices)})"  # noqa: E501
                                 )
                         except (
                             ValueError,
@@ -527,7 +527,7 @@ class NumericalSimulator:
 
                 if i >= len(self.hamiltonian_equations["p_dots"]):
                     logger.warning(
-                        f"_hamiltonian_ode: Index {i} out of range for p_dots (len={len(self.hamiltonian_equations['p_dots'])})"
+                        f"_hamiltonian_ode: Index {i} out of range for p_dots (len={len(self.hamiltonian_equations['p_dots'])})"  # noqa: E501
                     )
                     continue
 
@@ -565,7 +565,7 @@ class NumericalSimulator:
                             else:
                                 dydt[p_idx] = 0.0
                                 logger.warning(
-                                    f"_hamiltonian_ode: Incomplete arguments for dp_{q}/dt (got {len(args)}, expected {len(indices)})"
+                                    f"_hamiltonian_ode: Incomplete arguments for dp_{q}/dt (got {len(args)}, expected {len(indices)})"  # noqa: E501
                                 )
                         except (
                             ValueError,

@@ -7,9 +7,9 @@ Tests fundamental physics invariants that must hold for all valid inputs.
 pytest = __import__("pytest")
 hypothesis = pytest.importorskip("hypothesis")
 
-import numpy as np
-from hypothesis import assume, given, settings
-from hypothesis import strategies as st
+import numpy as np  # noqa: E402
+from hypothesis import assume, given, settings  # noqa: E402
+from hypothesis import strategies as st  # noqa: E402
 
 
 class TestEnergyConservation:

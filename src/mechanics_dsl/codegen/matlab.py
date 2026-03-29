@@ -59,13 +59,13 @@ class MatlabGenerator(CodeGenerator):
 
     Example:
         >>> import sympy as sp
-        >>> theta, g, l = sp.symbols('theta g l')
+        >>> theta, g, length = sp.symbols('theta g l')
         >>> gen = MatlabGenerator(
         ...     system_name="pendulum",
         ...     coordinates=["theta"],
         ...     parameters={"g": 9.81, "l": 1.0},
         ...     initial_conditions={"theta": 0.5, "theta_dot": 0.0},
-        ...     equations={"theta_ddot": -g/l * sp.sin(theta)},
+        ...     equations={"theta_ddot": -g/length * sp.sin(theta)},
         ...     solver="ode45"
         ... )
         >>> gen.generate("pendulum.m")
@@ -236,7 +236,7 @@ end
             param_lines.append(f"    {name} = {val};")
             param_globals.append(name)
         param_str = "\n".join(param_lines) if param_lines else "    % No parameters"
-        global_decl = " ".join(param_globals) if param_globals else ""
+        global_decl = " ".join(param_globals) if param_globals else ""  # noqa: F841
 
         # State variable unpacking (MATLAB is 1-indexed)
         unpack_lines = []
@@ -486,7 +486,7 @@ function export_csv(results, filename)
     end
 
     % Header
-    fprintf(fid, 't,{",".join(self.coordinates)},{",".join(c + "_dot" for c in self.coordinates)},energy\\n');
+    fprintf(fid, 't,{",".join(self.coordinates)},{",".join(c + "_dot" for c in self.coordinates)},energy\\n');  # noqa: E501
 
     % Data
     for i = 1:length(results.t)

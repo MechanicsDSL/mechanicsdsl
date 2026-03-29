@@ -27,14 +27,14 @@ class TestCppGeneratorV2:
     def cpp_generator(self):
         """Create a C++ generator for testing."""
         theta = sp.Symbol("theta")
-        g, l = sp.symbols("g l")
+        g, length = sp.symbols("g l")
 
         return CppGenerator(
             system_name="pendulum",
             coordinates=["theta"],
             parameters={"g": 9.81, "l": 1.0},
             initial_conditions={"theta": 0.5, "theta_dot": 0.0},
-            equations={"theta_ddot": -g / l * sp.sin(theta)},
+            equations={"theta_ddot": -g / length * sp.sin(theta)},
         )
 
     def test_generate_cmake(self, cpp_generator):
@@ -171,14 +171,14 @@ class TestCudaGeneratorV2:
     def cuda_generator(self):
         """Create a CUDA generator for testing."""
         theta = sp.Symbol("theta")
-        g, l = sp.symbols("g l")
+        g, length = sp.symbols("g l")
 
         return CudaGenerator(
             system_name="pendulum_cuda",
             coordinates=["theta"],
             parameters={"g": 9.81, "l": 1.0},
             initial_conditions={"theta": 0.5, "theta_dot": 0.0},
-            equations={"theta_ddot": -g / l * sp.sin(theta)},
+            equations={"theta_ddot": -g / length * sp.sin(theta)},
             use_cublas=True,
             batch_size=1000,
             compute_capability="70",
@@ -237,14 +237,14 @@ class TestCodegenIntegration:
         from mechanics_dsl.codegen import ARMGenerator, CppGenerator, RustGenerator
 
         theta = sp.Symbol("theta")
-        g, l = sp.symbols("g l")
+        g, length = sp.symbols("g l")
 
         params = {
             "system_name": "test_system",
             "coordinates": ["theta"],
             "parameters": {"g": 9.81, "l": 1.0},
             "initial_conditions": {"theta": 0.5, "theta_dot": 0.0},
-            "equations": {"theta_ddot": -g / l * sp.sin(theta)},
+            "equations": {"theta_ddot": -g / length * sp.sin(theta)},
         }
 
         with tempfile.TemporaryDirectory() as tmpdir:

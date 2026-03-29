@@ -11,7 +11,7 @@ import pytest
 matplotlib = pytest.importorskip("matplotlib")
 matplotlib.use("Agg")
 
-from mechanics_dsl.visualization.phase_space import PhaseSpaceVisualizer
+from mechanics_dsl.visualization.phase_space import PhaseSpaceVisualizer  # noqa: E402
 
 
 @pytest.fixture

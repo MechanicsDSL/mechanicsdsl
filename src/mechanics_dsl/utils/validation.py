@@ -72,7 +72,7 @@ def safe_float_conversion(value: Any) -> float:
                 return result
             except (ValueError, TypeError):
                 logger.warning(
-                    f"safe_float_conversion: cannot convert string '{value}' to float, returning 0.0"
+                    f"safe_float_conversion: cannot convert string '{value}' to float, returning 0.0"  # noqa: E501
                 )
                 return 0.0
 
@@ -87,7 +87,7 @@ def safe_float_conversion(value: Any) -> float:
             return result
         except (ValueError, TypeError, OverflowError) as e:
             logger.warning(
-                f"safe_float_conversion: conversion failed for {type(value).__name__}: {e}, returning 0.0"
+                f"safe_float_conversion: conversion failed for {type(value).__name__}: {e}, returning 0.0"  # noqa: E501
             )
             return 0.0
     except Exception as e:
@@ -342,7 +342,7 @@ def validate_solution_dict(solution: dict) -> None:
             raise ValueError("solution['coordinates'] cannot be empty")
         if y.shape[0] != 2 * len(coords):
             raise ValueError(
-                f"State vector size mismatch: y.shape[0]={y.shape[0]} != 2*len(coords)={2*len(coords)}"
+                f"State vector size mismatch: y.shape[0]={y.shape[0]} != 2*len(coords)={2*len(coords)}"  # noqa: E501
             )
 
 
@@ -431,7 +431,7 @@ def resource_manager(*resources):
                     stack.enter_context(resource)
                 else:
                     logger.warning(
-                        f"resource_manager: resource {type(resource).__name__} is not a context manager"
+                        f"resource_manager: resource {type(resource).__name__} is not a context manager"  # noqa: E501
                     )
             except Exception as e:
                 logger.error(

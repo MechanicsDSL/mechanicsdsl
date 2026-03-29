@@ -10,8 +10,8 @@ import pytest
 # Skip all tests in this module if hypothesis is not installed
 pytest.importorskip("hypothesis")
 
-from hypothesis import assume, given, settings
-from hypothesis import strategies as st
+from hypothesis import assume, given, settings  # noqa: E402
+from hypothesis import strategies as st  # noqa: E402
 
 
 class TestEnergyConservation:

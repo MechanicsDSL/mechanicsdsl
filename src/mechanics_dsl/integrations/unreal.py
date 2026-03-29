@@ -206,13 +206,13 @@ public:
 
 protected:
     virtual void BeginPlay() override;
-    virtual void TickComponent(float DeltaTime, ELevelTick TickType, 
+    virtual void TickComponent(float DeltaTime, ELevelTick TickType,
                                FActorComponentTickFunction* ThisTickFunction) override;
 
 private:
     // State array: [{', '.join(f'{c}, {c}_dot' for c in self.coordinates)}]
     TArray<float> State;
-    
+
     void InitializeState();
     void RK4Step(float dt);
     void ComputeDerivatives(float t, const TArray<float>& y, TArray<float>& dydt);
@@ -233,7 +233,7 @@ U{class_name}Component::U{class_name}Component()
 {{
     PrimaryComponentTick.bCanEverTick = true;
     PrimaryComponentTick.TickGroup = TG_PrePhysics;
-    
+
     State.SetNum({n_state});
 }}
 
@@ -252,9 +252,9 @@ void U{class_name}Component::TickComponent(float DeltaTime, ELevelTick TickType,
     FActorComponentTickFunction* ThisTickFunction)
 {{
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-    
+
     if (!bEnableSimulation) return;
-    
+
     float dt = DeltaTime * TimeScale;
     RK4Step(dt);
     UpdateOwnerTransform();
@@ -269,33 +269,33 @@ void U{class_name}Component::RK4Step(float dt)
     k3.SetNum(n);
     k4.SetNum(n);
     temp.SetNum(n);
-    
+
     float t = GetWorld()->GetTimeSeconds();
-    
+
     // k1
     ComputeDerivatives(t, State, k1);
-    
+
     // k2
     for (int32 i = 0; i < n; i++)
         temp[i] = State[i] + 0.5f * dt * k1[i];
     ComputeDerivatives(t + 0.5f * dt, temp, k2);
-    
+
     // k3
     for (int32 i = 0; i < n; i++)
         temp[i] = State[i] + 0.5f * dt * k2[i];
     ComputeDerivatives(t + 0.5f * dt, temp, k3);
-    
+
     // k4
     for (int32 i = 0; i < n; i++)
         temp[i] = State[i] + dt * k3[i];
     ComputeDerivatives(t + dt, temp, k4);
-    
+
     // Update state
     for (int32 i = 0; i < n; i++)
         State[i] += dt * (k1[i] + 2*k2[i] + 2*k3[i] + k4[i]) / 6.0f;
 }}
 
-void U{class_name}Component::ComputeDerivatives(float t, const TArray<float>& y, TArray<float>& dydt)
+void U{class_name}Component::ComputeDerivatives(float t, const TArray<float>& y, TArray<float>& dydt)  # noqa: E501
 {{
     // Unpack state
 {self._generate_cpp_unpack()}
@@ -342,9 +342,7 @@ void U{class_name}Component::SetState(const TArray<float>& NewState)
         """Generate UPROPERTY parameter declarations."""
         lines = []
         for name, value in self.parameters.items():
-            lines.append(
-                f'    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parameters")'
-            )
+            lines.append('    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parameters")')
             lines.append(f"    float {name.capitalize()} = {value}f;")
             lines.append("")
         return "\n".join(lines) if lines else "    // No parameters"
@@ -353,10 +351,10 @@ void U{class_name}Component::SetState(const TArray<float>& NewState)
         """Generate getter function declarations."""
         lines = []
         for coord in self.coordinates:
-            lines.append(f'    UFUNCTION(BlueprintPure, Category = "State")')
+            lines.append('    UFUNCTION(BlueprintPure, Category = "State")')
             lines.append(f"    float Get{coord.capitalize()}() const;")
             lines.append("")
-            lines.append(f'    UFUNCTION(BlueprintPure, Category = "State")')
+            lines.append('    UFUNCTION(BlueprintPure, Category = "State")')
             lines.append(f"    float Get{coord.capitalize()}Dot() const;")
             lines.append("")
         return "\n".join(lines)

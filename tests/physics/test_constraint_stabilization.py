@@ -40,10 +40,10 @@ class TestBaumgarteStabilization:
 
         x = stab.get_symbol("x")
         y = stab.get_symbol("y")
-        l = sp.Symbol("l", positive=True)
+        length = sp.Symbol("l", positive=True)
 
         # Position constraint: x^2 + y^2 - l^2 = 0
-        g = x**2 + y**2 - l**2
+        g = x**2 + y**2 - length**2
 
         g_dot = stab.velocity_level_constraint(g, ["x", "y"])
 
@@ -108,7 +108,7 @@ class TestConstrainedLagrangianSystem:
         system = ConstrainedLagrangianSystem()
 
         m = sp.Symbol("m", positive=True)
-        x = sp.Symbol("x", real=True)
+        x = sp.Symbol("x", real=True)  # noqa: F841
         x_dot = sp.Symbol("x_dot", real=True)
 
         L = sp.Rational(1, 2) * m * x_dot**2

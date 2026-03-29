@@ -214,7 +214,7 @@ class RigidBodyDynamics(PhysicsDomain):
             self._symbol_cache[name] = sp.Symbol(name, **default_assumptions)
         return self._symbol_cache[name]
 
-    def set_inertia_tensor(self, I: sp.Matrix) -> None:
+    def set_inertia_tensor(self, I: sp.Matrix) -> None:  # noqa: E741
         """
         Set the 3x3 inertia tensor.
 
@@ -266,7 +266,7 @@ class RigidBodyDynamics(PhysicsDomain):
         """Set the potential energy expression."""
         self._potential_energy = V
 
-    def set_gravitational_potential(self, M: str = "M", g: str = "g", l: str = "l") -> None:
+    def set_gravitational_potential(self, M: str = "M", g: str = "g", length: str = "l") -> None:
         """
         Set gravitational potential for a top with center of mass at height l*cos(θ).
 
@@ -275,17 +275,17 @@ class RigidBodyDynamics(PhysicsDomain):
         Args:
             M: Symbol name for mass
             g: Symbol name for gravitational acceleration
-            l: Symbol name for distance from pivot to center of mass
+            length: Symbol name for distance from pivot to center of mass
         """
         M_sym = self.get_symbol(M, positive=True)
         g_sym = self.get_symbol(g, positive=True)
-        l_sym = self.get_symbol(l, positive=True)
+        l_sym = self.get_symbol(length, positive=True)
         theta = self.get_symbol("theta")
 
         self._potential_energy = M_sym * g_sym * l_sym * sp.cos(theta)
 
     def set_gravitational_potential_quaternion(
-        self, M: str = "M", g: str = "g", l: str = "l"
+        self, M: str = "M", g: str = "g", length: str = "l"
     ) -> None:
         """
         Set gravitational potential for a top using quaternion formulation.
@@ -300,11 +300,11 @@ class RigidBodyDynamics(PhysicsDomain):
         Args:
             M: Symbol name for mass
             g: Symbol name for gravitational acceleration
-            l: Symbol name for distance from pivot to center of mass
+            length: Symbol name for distance from pivot to center of mass
         """
         M_sym = self.get_symbol(M, positive=True)
         g_sym = self.get_symbol(g, positive=True)
-        l_sym = self.get_symbol(l, positive=True)
+        l_sym = self.get_symbol(length, positive=True)
 
         self.get_symbol("q0")
         q1 = self.get_symbol("q1")
@@ -691,7 +691,7 @@ class Gyroscope(SymmetricTop):
         super().__init__(name, I_perp, I_axis)
         self.spin_rate = spin_rate
 
-    def precession_rate(self, M: float, g: float, l: float) -> float:
+    def precession_rate(self, M: float, g: float, length: float) -> float:
         """
         Compute steady precession rate.
 
@@ -700,15 +700,15 @@ class Gyroscope(SymmetricTop):
         Args:
             M: Mass
             g: Gravitational acceleration
-            l: Distance from pivot to center of mass
+            length: Distance from pivot to center of mass
 
         Returns:
             Precession angular velocity
         """
         I3 = float(self._I3) if not isinstance(self._I3, float) else self._I3
-        return M * g * l / (I3 * self.spin_rate)
+        return M * g * length / (I3 * self.spin_rate)
 
-    def nutation_frequency(self, M: float, g: float, l: float, theta: float = 0.1) -> float:
+    def nutation_frequency(self, M: float, g: float, length: float, theta: float = 0.1) -> float:
         """
         Compute nutation frequency for small oscillations.
 

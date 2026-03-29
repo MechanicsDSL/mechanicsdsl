@@ -52,13 +52,13 @@ class TestLongSimulations:
         \defvar{m}{Mass}{kg}
         \defvar{l}{Constant}{m}
         \defvar{g}{Acceleration}{m/s^2}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{l}{1.0}{m}
         \parameter{g}{9.81}{m/s^2}
-        
+
         \lagrangian{\frac{1}{2} * m * l^2 * \dot{theta}^2 - m * g * l * (1 - \cos{theta})}
-        
+
         \initial{theta=0.1, theta_dot=0.0}
         """
 
@@ -89,12 +89,12 @@ class TestLongSimulations:
         \defvar{x}{Position}{m}
         \defvar{m}{Mass}{kg}
         \defvar{k}{Spring Constant}{N/m}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{k}{10.0}{N/m}
-        
+
         \lagrangian{\frac{1}{2} * m * \dot{x}^2 - \frac{1}{2} * k * x^2}
-        
+
         \initial{x=1.0, x_dot=0.0}
         """
 
@@ -146,16 +146,16 @@ class TestManyCoordinates:
         \defvar{y3}{Position}{m}
         \defvar{m}{Mass}{kg}
         \defvar{k}{Spring Constant}{N/m}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{k}{10.0}{N/m}
-        
+
         \lagrangian{
-            \frac{1}{2} * m * (\dot{x1}^2 + \dot{x2}^2 + \dot{x3}^2 + \dot{y1}^2 + \dot{y2}^2 + \dot{y3}^2)
+            \frac{1}{2} * m * (\dot{x1}^2 + \dot{x2}^2 + \dot{x3}^2 + \dot{y1}^2 + \dot{y2}^2 + \dot{y3}^2)  # noqa: E501
             - \frac{1}{2} * k * (x1^2 + x2^2 + x3^2 + y1^2 + y2^2 + y3^2)
         }
-        
-        \initial{x1=1.0, x1_dot=0.0, x2=0.0, x2_dot=0.0, x3=0.0, x3_dot=0.0, y1=0.0, y1_dot=0.0, y2=0.0, y2_dot=0.0, y3=0.0, y3_dot=0.0}
+
+        \initial{x1=1.0, x1_dot=0.0, x2=0.0, x2_dot=0.0, x3=0.0, x3_dot=0.0, y1=0.0, y1_dot=0.0, y2=0.0, y2_dot=0.0, y3=0.0, y3_dot=0.0}  # noqa: E501
         """
 
         compiler = get_compiler()
@@ -180,12 +180,12 @@ class TestSolverMethods:
         \defvar{x}{Position}{m}
         \defvar{m}{Mass}{kg}
         \defvar{k}{Spring Constant}{N/m}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{k}{10.0}{N/m}
-        
+
         \lagrangian{\frac{1}{2} * m * \dot{x}^2 - \frac{1}{2} * k * x^2}
-        
+
         \initial{x=1.0, x_dot=0.0}
         """
 
@@ -204,12 +204,12 @@ class TestSolverMethods:
         \defvar{x}{Position}{m}
         \defvar{m}{Mass}{kg}
         \defvar{k}{Spring Constant}{N/m}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{k}{10.0}{N/m}
-        
+
         \lagrangian{\frac{1}{2} * m * \dot{x}^2 - \frac{1}{2} * k * x^2}
-        
+
         \initial{x=1.0, x_dot=0.0}
         """
 
@@ -228,12 +228,12 @@ class TestSolverMethods:
         \defvar{x}{Position}{m}
         \defvar{m}{Mass}{kg}
         \defvar{k}{Spring Constant}{N/m}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{k}{10.0}{N/m}
-        
+
         \lagrangian{\frac{1}{2} * m * \dot{x}^2 - \frac{1}{2} * k * x^2}
-        
+
         \initial{x=1.0, x_dot=0.0}
         """
 

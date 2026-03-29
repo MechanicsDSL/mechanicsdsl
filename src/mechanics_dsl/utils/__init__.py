@@ -7,7 +7,7 @@ Modular utilities for configuration, logging, caching, profiling, and validation
 from .caching import LRUCache
 
 # Re-export constants for backward compatibility and convenience
-from .config import (  # Physical constants; Numerical constants; Visualization constants; File constants; Cache constants; Logging constants
+from .config import (  # noqa: F401  # re-exports for backward compat
     ACCENT_COLOR,
     ANIMATION_INTERVAL_MS,
     DEFAULT_ATOL,

@@ -22,7 +22,8 @@ from .base import (
     SolverPlugin,
     VisualizationPlugin,
 )
-from .registry import PluginRegistry, PluginType, registry as default_registry
+from .registry import PluginRegistry, PluginType
+from .registry import registry as default_registry
 
 logger = logging.getLogger("MechanicsDSL")
 

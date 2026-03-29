@@ -139,7 +139,7 @@ class UncertaintyQuantifier:
 
                 for i, name in enumerate(params_to_fit):
                     estimates[b, i] = result.parameters.get(name, fitted_params[name])
-            except:
+            except Exception:
                 # Use original estimate if fit fails
                 for i, name in enumerate(params_to_fit):
                     estimates[b, i] = fitted_params[name]
@@ -267,7 +267,7 @@ class UncertaintyQuantifier:
                 log_lik -= len(residuals) * np.log(noise_std * np.sqrt(2 * np.pi))
 
                 return float(log_lik)
-            except:
+            except Exception:
                 return -np.inf
 
         # Initialize chain

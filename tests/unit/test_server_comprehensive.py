@@ -317,7 +317,7 @@ class TestRealEndpoints:
 
     def test_compile_valid_dsl(self):
         """POST /api/compile with valid DSL succeeds"""
-        dsl = r"\system{oscillator}\coordinates{x}\parameters{k=1.0, m=1.0}\lagrangian{0.5*m*x_dot^2 - 0.5*k*x^2}"
+        dsl = r"\system{oscillator}\coordinates{x}\parameters{k=1.0, m=1.0}\lagrangian{0.5*m*x_dot^2 - 0.5*k*x^2}"  # noqa: E501
         response = self.client.post("/api/compile", json={"code": dsl})
         assert response.status_code == 200
         data = response.json()
@@ -333,7 +333,7 @@ class TestRealEndpoints:
 
     def test_simulate_valid(self):
         """POST /api/simulate compiles and runs simulation"""
-        dsl = r"\system{oscillator}\coordinates{x}\parameters{k=1.0, m=1.0}\lagrangian{0.5*m*x_dot^2 - 0.5*k*x^2}\initial{x=1.0, x_dot=0}"
+        dsl = r"\system{oscillator}\coordinates{x}\parameters{k=1.0, m=1.0}\lagrangian{0.5*m*x_dot^2 - 0.5*k*x^2}\initial{x=1.0, x_dot=0}"  # noqa: E501
         response = self.client.post(
             "/api/simulate",
             json={

@@ -181,14 +181,14 @@ public class {class_name}Simulator : MonoBehaviour
     public bool showTrail = true;
     public LineRenderer trailRenderer;
     public int maxTrailPoints = 100;
-    
+
     [Header("Simulation")]
     public float timeScale = 1.0f;
     public bool useFixedDeltaTime = true;
-    
+
     private float[] state;
     private float[] k1, k2, k3, k4, temp;
-    
+
     void Start()
     {{
         InitializeState();
@@ -200,7 +200,7 @@ public class {class_name}Simulator : MonoBehaviour
             trailRenderer.endWidth = 0.02f;
         }}
     }}
-    
+
     void InitializeState()
     {{
         int n = {len(self.coordinates) * 2};
@@ -210,74 +210,74 @@ public class {class_name}Simulator : MonoBehaviour
         k3 = new float[n];
         k4 = new float[n];
         temp = new float[n];
-        
+
         // Initial conditions
 {self._generate_initial_conditions()}
     }}
-    
+
     void FixedUpdate()
     {{
         float dt = useFixedDeltaTime ? Time.fixedDeltaTime : Time.deltaTime;
         dt *= timeScale;
-        
+
         // RK4 integration step
         RK4Step(dt);
-        
+
         // Update transform
         UpdateTransform();
-        
+
         // Update trail
         if (showTrail && trailRenderer != null)
         {{
             UpdateTrail();
         }}
     }}
-    
+
     void RK4Step(float dt)
     {{
         float t = Time.time;
-        
+
         // k1
         ComputeDerivatives(t, state, k1);
-        
+
         // k2
         for (int i = 0; i < state.Length; i++)
             temp[i] = state[i] + 0.5f * dt * k1[i];
         ComputeDerivatives(t + 0.5f * dt, temp, k2);
-        
+
         // k3
         for (int i = 0; i < state.Length; i++)
             temp[i] = state[i] + 0.5f * dt * k2[i];
         ComputeDerivatives(t + 0.5f * dt, temp, k3);
-        
+
         // k4
         for (int i = 0; i < state.Length; i++)
             temp[i] = state[i] + dt * k3[i];
         ComputeDerivatives(t + dt, temp, k4);
-        
+
         // Update state
         for (int i = 0; i < state.Length; i++)
             state[i] += dt * (k1[i] + 2*k2[i] + 2*k3[i] + k4[i]) / 6.0f;
     }}
-    
+
     void ComputeDerivatives(float t, float[] y, float[] dydt)
     {{
         // Unpack state
 {self._generate_state_unpack()}
-        
+
         // Compute accelerations
 {self._generate_accelerations()}
-        
+
         // Pack derivatives
 {self._generate_derivatives_pack()}
     }}
-    
+
     void UpdateTransform()
     {{
         // Override in subclass for specific visualization
 {self._generate_transform_update()}
     }}
-    
+
     void UpdateTrail()
     {{
         if (trailRenderer.positionCount < maxTrailPoints)
@@ -292,7 +292,7 @@ public class {class_name}Simulator : MonoBehaviour
         }}
         trailRenderer.SetPosition(trailRenderer.positionCount - 1, transform.position);
     }}
-    
+
     /// <summary>
     /// Reset simulation to initial conditions.
     /// </summary>
@@ -302,7 +302,7 @@ public class {class_name}Simulator : MonoBehaviour
         if (trailRenderer != null)
             trailRenderer.positionCount = 0;
     }}
-    
+
     /// <summary>
     /// Get current state as array.
     /// </summary>
@@ -310,7 +310,7 @@ public class {class_name}Simulator : MonoBehaviour
     {{
         return (float[])state.Clone();
     }}
-    
+
     /// <summary>
     /// Set state from array.
     /// </summary>
@@ -387,7 +387,7 @@ public class {class_name}Simulator : MonoBehaviour
             else:
                 # No equation available - generate placeholder with warning
                 lines.append(
-                    f"        float {coord}_ddot = 0.0f; // Warning: No equation extracted for {coord}"
+                    f"        float {coord}_ddot = 0.0f; // Warning: No equation extracted for {coord}"  # noqa: E501
                 )
 
         return "\n".join(lines) if lines else "        // No accelerations defined"
@@ -406,7 +406,7 @@ public class {class_name}Simulator : MonoBehaviour
             return "        // No coordinates"
 
         self.coordinates[0]
-        return f"""        // Example: rotate based on first coordinate
+        return """        // Example: rotate based on first coordinate
         float angle = state[0] * Mathf.Rad2Deg;
         transform.localRotation = Quaternion.Euler(0, 0, -angle);"""
 

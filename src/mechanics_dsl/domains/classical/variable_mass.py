@@ -359,7 +359,7 @@ class SymbolicVariableMass:
         mf = self.get_symbol("m_f", positive=True)
         ve = self.get_symbol("v_e", positive=True)
         g = self.get_symbol("g", positive=True)
-        t = self.get_symbol("t", positive=True)
+        t = self.get_symbol("t", positive=True)  # noqa: F841
         m_dot = self.get_symbol("m_dot", negative=True)
 
         # Ideal delta-v

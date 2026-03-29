@@ -232,7 +232,7 @@ def create_ros2_package(
 
     # package.xml
     package_xml = f"""<?xml version="1.0"?>
-<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>  # noqa: E501
 <package format="3">
   <name>{package_name}</name>
   <version>1.0.0</version>
@@ -296,7 +296,7 @@ from mechanics_dsl.integrations.ros2 import MechanicsDSLNode
 def main(args=None):
     rclpy.init(args=args)
     node = MechanicsDSLNode()
-    
+
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:

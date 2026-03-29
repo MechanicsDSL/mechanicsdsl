@@ -189,7 +189,7 @@ class SensitivityAnalyzer:
             try:
                 result = self.compiler.simulate(t_span=t_span, num_points=100)
                 outputs[i] = output_fn(result)
-            except:
+            except Exception:
                 outputs[i] = np.nan
 
         return outputs

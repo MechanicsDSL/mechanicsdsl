@@ -806,21 +806,21 @@ class HydrogenAtom:
         """
         return 2 * n**2
 
-    def orbital_angular_momentum(self, l: int) -> float:
+    def orbital_angular_momentum(self, ell: int) -> float:
         """
         Orbital angular momentum magnitude.
 
         L = √(l(l+1)) × ℏ
         """
-        return np.sqrt(l * (l + 1)) * HBAR
+        return np.sqrt(ell * (ell + 1)) * HBAR
 
-    def radial_probability_max(self, n: int, l: int) -> float:
+    def radial_probability_max(self, n: int, ell: int) -> float:
         """
         Most probable radius for quantum numbers (n, l).
 
         For l = n-1 (circular orbits): r_max = n² × a₀ / Z
         """
-        if l >= n or l < 0:
+        if ell >= n or ell < 0:
             raise ValueError("l must satisfy 0 ≤ l < n")
 
         # For general (n, l), approximate using Bohr model

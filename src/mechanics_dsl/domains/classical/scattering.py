@@ -155,7 +155,7 @@ class ScatteringAnalyzer:
                     from scipy.optimize import brentq
 
                     return brentq(radial_energy, r_test[i], r_test[i + 1])
-            except:
+            except Exception:
                 continue
 
         return b  # Default to impact parameter

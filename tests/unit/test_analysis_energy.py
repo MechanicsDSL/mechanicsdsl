@@ -182,7 +182,7 @@ class TestCheckConservation:
 
         assert isinstance(result, dict)
         assert "conserved" in result
-        assert result["conserved"] == True
+        assert result["conserved"]
         assert "max_relative_error" in result
         assert result["max_relative_error"] < 1e-3
 
@@ -199,7 +199,7 @@ class TestCheckConservation:
 
         assert isinstance(result, dict)
         assert "conserved" in result
-        assert result["conserved"] == False
+        assert not result["conserved"]
 
     def test_check_conservation_custom_tolerance(self, analyzer):
         """Test conservation check with custom tolerance."""
@@ -213,7 +213,7 @@ class TestCheckConservation:
 
         # With very loose tolerance, should be conserved
         result_loose = analyzer.check_conservation(solution, kinetic, potential, tolerance=0.1)
-        assert result_loose["conserved"] == True
+        assert result_loose["conserved"]
 
         # With tight tolerance, won't be conserved due to variation
         result_tight = analyzer.check_conservation(solution, kinetic, potential, tolerance=1e-6)
@@ -234,7 +234,7 @@ class TestCheckConservation:
         assert isinstance(result, dict)
         assert "conserved" in result
         # With zero energy, should be conserved
-        assert result["conserved"] == True
+        assert result["conserved"]
 
     def test_check_conservation_result_keys(self, analyzer):
         """Test that result contains all expected keys."""

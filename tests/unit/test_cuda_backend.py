@@ -24,9 +24,9 @@ class TestCudaGeneratorBasics:
         """Set up simple pendulum for testing."""
         theta = sp.Symbol("theta", real=True)
         g = sp.Symbol("g", positive=True)
-        l = sp.Symbol("l", positive=True)
+        length = sp.Symbol("l", positive=True)
 
-        self.equations = {"theta_ddot": -g / l * sp.sin(theta)}
+        self.equations = {"theta_ddot": -g / length * sp.sin(theta)}
         self.coordinates = ["theta"]
         self.parameters = {"g": 9.81, "l": 1.0}
         self.initial_conditions = {"theta": 0.1, "theta_dot": 0.0}
@@ -70,9 +70,9 @@ class TestCudaFileGeneration:
         """Set up test system."""
         theta = sp.Symbol("theta", real=True)
         g = sp.Symbol("g", positive=True)
-        l = sp.Symbol("l", positive=True)
+        length = sp.Symbol("l", positive=True)
 
-        self.equations = {"theta_ddot": -g / l * sp.sin(theta)}
+        self.equations = {"theta_ddot": -g / length * sp.sin(theta)}
         self.coordinates = ["theta"]
         self.parameters = {"g": 9.81, "l": 1.0}
         self.initial_conditions = {"theta": 0.1, "theta_dot": 0.0}

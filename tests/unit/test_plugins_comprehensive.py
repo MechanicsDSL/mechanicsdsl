@@ -520,13 +520,13 @@ class TempPlugin(Plugin):
     @property
     def metadata(self):
         return PluginMetadata(name="temp")
-    
+
     def activate(self):
         pass
-    
+
     def deactivate(self):
         pass
-    
+
     def validate(self):
         return True
 """

@@ -59,7 +59,7 @@ class TestPhysicsCompilerContextManager:
     def test_context_manager_exception(self):
         """Test context manager with exception."""
         try:
-            with PhysicsCompiler() as compiler:
+            with PhysicsCompiler() as compiler:  # noqa: F841
                 raise ValueError("Test error")
         except ValueError:
             pass  # Expected
@@ -73,15 +73,15 @@ class TestCompileDSL:
         compiler = PhysicsCompiler()
         dsl = r"""
         \system{pendulum}
-        
+
         \defvar{theta}{Angle}{rad}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{L}{1.0}{m}
         \parameter{g}{9.81}{m/s^2}
-        
+
         \lagrangian{\frac{1}{2} * m * L^2 * \dot{theta}^2 - m * g * L * (1 - \cos{theta})}
-        
+
         \initial{theta=0.5, theta_dot=0.0}
         """
         result = compiler.compile_dsl(dsl)
@@ -92,14 +92,14 @@ class TestCompileDSL:
         compiler = PhysicsCompiler()
         dsl = r"""
         \system{oscillator}
-        
+
         \defvar{x}{Position}{m}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{k}{10.0}{N/m}
-        
+
         \lagrangian{\frac{1}{2} * m * \dot{x}^2 - \frac{1}{2} * k * x^2}
-        
+
         \initial{x=1.0, x_dot=0.0}
         """
         result = compiler.compile_dsl(dsl)

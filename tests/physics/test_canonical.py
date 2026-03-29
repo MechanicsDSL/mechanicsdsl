@@ -46,7 +46,7 @@ class TestPoissonBrackets:
         ct = CanonicalTransformation()
 
         q1 = sp.Symbol("q1", real=True)
-        q2 = sp.Symbol("q2", real=True)
+        q2 = sp.Symbol("q2", real=True)  # noqa: F841
         p1 = sp.Symbol("p_q1", real=True)
         p2 = sp.Symbol("p_q2", real=True)
 
@@ -133,7 +133,7 @@ class TestGeneratingFunctions:
     def test_f2_identity(self):
         """F₂ = qP gives identity transformation."""
         q = sp.Symbol("q", real=True)
-        Q = sp.Symbol("Q", real=True)
+        Q = sp.Symbol("Q", real=True)  # noqa: F841
         P = sp.Symbol("P_Q", real=True)
 
         # F₂(q, P) = qP → p = ∂F₂/∂q = P, Q = ∂F₂/∂P = q

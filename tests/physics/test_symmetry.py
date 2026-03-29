@@ -24,8 +24,8 @@ class TestCyclicCoordinates:
     def test_free_particle_momentum(self):
         """Free particle has all coordinates cyclic."""
         m = sp.Symbol("m", positive=True)
-        x = sp.Symbol("x", real=True)
-        y = sp.Symbol("y", real=True)
+        x = sp.Symbol("x", real=True)  # noqa: F841
+        y = sp.Symbol("y", real=True)  # noqa: F841
         x_dot = sp.Symbol("x_dot", real=True)
         y_dot = sp.Symbol("y_dot", real=True)
 
@@ -93,7 +93,7 @@ class TestNoetherConservation:
     def test_cyclic_momentum_conserved(self):
         """Cyclic coordinate → conjugate momentum conserved."""
         m = sp.Symbol("m", positive=True)
-        phi = sp.Symbol("phi", real=True)
+        phi = sp.Symbol("phi", real=True)  # noqa: F841
         phi_dot = sp.Symbol("phi_dot", real=True)
 
         # L = (1/2)*m*phi_dot^2 (free rotation)
@@ -112,7 +112,7 @@ class TestNoetherConservation:
         """Central force problem → angular momentum conserved."""
         m = sp.Symbol("m", positive=True)
         r = sp.Symbol("r", real=True, positive=True)
-        phi = sp.Symbol("phi", real=True)
+        phi = sp.Symbol("phi", real=True)  # noqa: F841
         r_dot = sp.Symbol("r_dot", real=True)
         phi_dot = sp.Symbol("phi_dot", real=True)
         k = sp.Symbol("k", positive=True)
@@ -136,8 +136,8 @@ class TestSymmetryAnalyzer:
     def test_find_all_symmetries(self):
         """Test finding multiple symmetries."""
         m = sp.Symbol("m", positive=True)
-        x = sp.Symbol("x", real=True)
-        y = sp.Symbol("y", real=True)
+        x = sp.Symbol("x", real=True)  # noqa: F841
+        y = sp.Symbol("y", real=True)  # noqa: F841
         x_dot = sp.Symbol("x_dot", real=True)
         y_dot = sp.Symbol("y_dot", real=True)
 

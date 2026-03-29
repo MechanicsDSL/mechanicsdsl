@@ -94,7 +94,7 @@ class TestReplaceDerivatives:
 
     def test_replace_derivatives(self, sim):
         x = sim.symbolic.get_symbol("x")
-        x_dot = sim.symbolic.get_symbol("x_dot")
+        x_dot = sim.symbolic.get_symbol("x_dot")  # noqa: F841
         # Build an expression that uses derivatives
         accels = {"x_ddot": -x}
         sim.compile_equations(accels, ["x"])

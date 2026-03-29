@@ -10,14 +10,12 @@ Security: All inputs validated for finite values and proper tensor symmetry.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import sympy as sp
-
-from ...utils import logger, validate_finite
 
 
 class MaterialSymmetry(Enum):
@@ -318,7 +316,7 @@ class StiffnessMatrix:
             raise ValueError(f"Poisson's ratio must be in (-1, 0.5), got {nu}")
 
         factor = E / ((1 + nu) * (1 - 2 * nu))
-        G = E / (2 * (1 + nu))
+        G = E / (2 * (1 + nu))  # noqa: F841
 
         C = (
             np.array(
@@ -522,9 +520,9 @@ class IsotropicElasticity:
         for i in range(3):
             for j in range(3):
                 for k in range(3):
-                    for l in range(3):
-                        C[i, j, k, l] = self.lambda_ * delta[i, j] * delta[k, l] + self.G * (
-                            delta[i, k] * delta[j, l] + delta[i, l] * delta[j, k]
+                    for ll in range(3):
+                        C[i, j, k, ll] = self.lambda_ * delta[i, j] * delta[k, ll] + self.G * (
+                            delta[i, k] * delta[j, ll] + delta[i, ll] * delta[j, k]
                         )
 
         return sp.ImmutableDenseNDimArray(C)

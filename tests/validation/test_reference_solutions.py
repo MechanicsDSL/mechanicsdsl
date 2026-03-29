@@ -18,8 +18,8 @@ import numpy as np
 import pytest
 import sympy as sp
 
-from mechanics_dsl.symbolic import SymbolicEngine
 from mechanics_dsl.solver import NumericalSimulator
+from mechanics_dsl.symbolic import SymbolicEngine
 
 
 class TestHarmonicOscillator:
@@ -266,7 +266,7 @@ class TestProjectileMotion:
         t_flight = 2 * v0y / g
 
         engine = SymbolicEngine()
-        x = engine.get_symbol("x")
+        x = engine.get_symbol("x")  # noqa: F841
         y = engine.get_symbol("y")
         x_dot = engine.get_symbol("x_dot")
         y_dot = engine.get_symbol("y_dot")
@@ -367,7 +367,7 @@ class TestKeplerOrbit:
 
         engine = SymbolicEngine()
         r = engine.get_symbol("r")
-        phi = engine.get_symbol("phi")
+        phi = engine.get_symbol("phi")  # noqa: F841
         r_dot = engine.get_symbol("r_dot")
         phi_dot = engine.get_symbol("phi_dot")
 

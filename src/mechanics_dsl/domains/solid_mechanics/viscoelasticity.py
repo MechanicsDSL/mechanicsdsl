@@ -15,12 +15,10 @@ Security: All time and temperature inputs validated.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from typing import Callable, Dict, List, Tuple
 
 import numpy as np
-
-from ...utils import logger
 
 
 @dataclass

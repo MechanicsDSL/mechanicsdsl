@@ -11,8 +11,8 @@ import pytest
 import sympy as sp
 
 from mechanics_dsl.codegen import (
-    ARMGenerator,
     ArduinoGenerator,
+    ARMGenerator,
     CodeGenerator,
     CppGenerator,
     CudaGenerator,

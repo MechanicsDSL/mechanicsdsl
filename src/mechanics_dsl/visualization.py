@@ -161,14 +161,14 @@ class MechanicsVisualizer:
             logger.error("Insufficient state vector for single pendulum animation")
             return None
         theta = y[0]
-        l = parameters.get("l", 1.0)
+        length = parameters.get("l", 1.0)
 
-        x = l * np.sin(theta)
-        y_pos = -l * np.cos(theta)
+        x = length * np.sin(theta)
+        y_pos = -length * np.cos(theta)
         z = np.zeros_like(x)
 
-        self.ax.set_xlim(-l * 1.2, l * 1.2)
-        self.ax.set_ylim(-l * 1.2, l * 0.2)
+        self.ax.set_xlim(-length * 1.2, length * 1.2)
+        self.ax.set_ylim(-length * 1.2, length * 0.2)
         self.ax.set_zlim(-0.1, 0.1)
 
         (line,) = self.ax.plot(
@@ -315,7 +315,7 @@ class MechanicsVisualizer:
             logger.error("CSV missing required 't' column")
             return None
 
-        logger.info(f"Found {len(times)} frames for {len(df[df['t']==times[0]])} particles")
+        logger.info(f"Found {len(times)} frames for {len(df[df['t'] == times[0]])} particles")
 
         # Setup Plot
         fig, ax = plt.subplots(figsize=(10, 8))
@@ -600,7 +600,7 @@ class MechanicsVisualizer:
 
         if pos_idx >= y.shape[0] or vel_idx >= y.shape[0]:
             raise ValueError(
-                f"State vector too small: need indices {pos_idx} and {vel_idx}, got size {y.shape[0]}"
+                f"State vector too small: need indices {pos_idx} and {vel_idx}, got size {y.shape[0]}"  # noqa: E501
             )
 
         position = y[pos_idx]
@@ -621,7 +621,7 @@ class MechanicsVisualizer:
 
         if len(position) != len(velocity):
             logger.warning(
-                f"plot_phase_space: position and velocity length mismatch ({len(position)} vs {len(velocity)})"
+                f"plot_phase_space: position and velocity length mismatch ({len(position)} vs {len(velocity)})"  # noqa: E501
             )
             min_len = min(len(position), len(velocity))
             position = position[:min_len]

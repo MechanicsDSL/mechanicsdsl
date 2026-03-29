@@ -13,11 +13,11 @@ Security: All frequency and speed inputs validated for physical consistency.
 """
 
 from __future__ import annotations
+
 import math
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import List, Tuple, Optional, Callable
-import numpy as np
+from typing import List, Tuple
 
 
 class WaveType(Enum):
@@ -380,7 +380,7 @@ class RoomAcoustics:
         return 20 * math.log10(p / p_ref)
 
     @staticmethod
-    def sound_intensity_level(I: float, I_ref: float = 1e-12) -> float:
+    def sound_intensity_level(I: float, I_ref: float = 1e-12) -> float:  # noqa: E741
         """SIL in dB: L_I = 10 log₁₀(I/I_ref)."""
         if I <= 0:
             return float("-inf")

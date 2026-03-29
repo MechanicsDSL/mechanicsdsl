@@ -144,7 +144,7 @@ class UnitSystem:
                 if op_func is None:
                     raise ValueError(f"Unsupported operator: {type(node.op).__name__}")
 
-                # Special handling for power operation: if right is dimensionless Unit (numeric constant),
+                # Special handling for power operation: if right is dimensionless Unit (numeric constant),  # noqa: E501
                 # extract its scale to use as float exponent
                 if isinstance(node.op, ast.Pow) and isinstance(right, Unit):
                     if not right.dimensions:  # Dimensionless = numeric constant

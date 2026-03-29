@@ -9,9 +9,14 @@ import numpy as np
 import pytest
 
 matplotlib.use("Agg")  # Use non-interactive backend for testing
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # noqa: E402
 
-from mechanics_dsl.visualization import Animator, MechanicsVisualizer, PhaseSpaceVisualizer, Plotter
+from mechanics_dsl.visualization import (  # noqa: E402
+    Animator,
+    MechanicsVisualizer,
+    PhaseSpaceVisualizer,
+    Plotter,
+)
 
 
 @pytest.fixture

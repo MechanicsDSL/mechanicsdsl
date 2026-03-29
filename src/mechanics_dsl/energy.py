@@ -37,17 +37,17 @@ class PotentialEnergyCalculator:
 
         elif "spherical" in system and "pendulum" in system:
             m = parameters.get("m", 1.0)
-            l = parameters.get("l", 1.0)
+            length = parameters.get("l", 1.0)
             g = parameters.get("g", 9.81)
             # Spherical pendulum: minimum PE when theta=0 (hanging straight down)
             return 0.0  # PE = mgl(1-cos(theta)), already 0 at theta=0
 
         elif "pendulum" in system:
             m = parameters.get("m", 1.0)
-            l = parameters.get("l", 1.0)
+            length = parameters.get("l", 1.0)
             g = parameters.get("g", 9.81)
             # Minimum PE when pendulum hangs straight down
-            return -m * g * l
+            return -m * g * length
 
         elif "oscillator" in system or "spring" in system:
             # Harmonic oscillator: PE minimum is already at x=0
@@ -95,8 +95,8 @@ class PotentialEnergyCalculator:
                     return KE
                 theta_dot = y[1]
                 m = parameters.get("m", 1.0)
-                l = parameters.get("l", 1.0)
-                KE = 0.5 * m * l**2 * theta_dot**2
+                length = parameters.get("l", 1.0)
+                KE = 0.5 * m * length**2 * theta_dot**2
 
             elif len(coords) >= 2:  # Double or spherical pendulum
                 if y.shape[0] < 4:
@@ -110,8 +110,8 @@ class PotentialEnergyCalculator:
                     theta_dot = y[1]
                     phi_dot = y[3]
                     m = parameters.get("m", 1.0)
-                    l = parameters.get("l", 1.0)
-                    KE = 0.5 * m * l**2 * (theta_dot**2 + np.sin(theta) ** 2 * phi_dot**2)
+                    length = parameters.get("l", 1.0)
+                    KE = 0.5 * m * length**2 * (theta_dot**2 + np.sin(theta) ** 2 * phi_dot**2)
                 else:
                     # Double pendulum
                     theta1_dot, theta2_dot = y[1], y[3]
@@ -162,10 +162,10 @@ class PotentialEnergyCalculator:
                     return PE
                 theta = y[0]
                 m = parameters.get("m", 1.0)
-                l = parameters.get("l", 1.0)
+                length = parameters.get("l", 1.0)
                 g = parameters.get("g", 9.81)
 
-                PE = -m * g * l * np.cos(theta)
+                PE = -m * g * length * np.cos(theta)
                 offset = PotentialEnergyCalculator.compute_pe_offset("simple_pendulum", parameters)
                 PE = PE - offset
 
@@ -179,9 +179,9 @@ class PotentialEnergyCalculator:
                     # Spherical pendulum: V = mgl(1 - cos(theta))
                     theta = y[0]
                     m = parameters.get("m", 1.0)
-                    l = parameters.get("l", 1.0)
+                    length = parameters.get("l", 1.0)
                     g = parameters.get("g", 9.81)
-                    PE = m * g * l * (1 - np.cos(theta))
+                    PE = m * g * length * (1 - np.cos(theta))
                 else:
                     # Double pendulum
                     theta1, theta2 = y[0], y[2]

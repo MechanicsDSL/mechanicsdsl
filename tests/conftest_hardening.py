@@ -33,15 +33,15 @@ def sample_dsl_code() -> str:
     """Sample valid DSL code for testing."""
     return r"""
     \system{test_pendulum}
-    
+
     \defvar{theta}{Angle}{rad}
-    
+
     \parameter{m}{1.0}{kg}
     \parameter{l}{1.0}{m}
     \parameter{g}{9.81}{m/s^2}
-    
+
     \lagrangian{0.5 * m * l^2 * \dot{theta}^2 - m * g * l * (1 - \cos{theta})}
-    
+
     \initial{theta=0.5, theta_dot=0.0}
     """
 
@@ -201,7 +201,7 @@ def require_gpu(reason: str = "GPU required"):
         import jax
 
         gpu_available = len(jax.devices("gpu")) > 0
-    except:
+    except Exception:
         gpu_available = False
 
     return pytest.mark.skipif(not gpu_available, reason=reason)

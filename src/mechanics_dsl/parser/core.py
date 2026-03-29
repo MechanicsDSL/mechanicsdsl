@@ -30,7 +30,7 @@ from typing import List, Optional
 import numpy as np
 
 from ..utils import config, logger, profile_function
-from .ast_nodes import (  # Base classes; Basic expressions; Operations; Vectors; Calculus; Functions; Statements; SPH
+from .ast_nodes import (  # Base classes; Basic expressions; Operations; Vectors; Calculus; Functions; Statements; SPH  # noqa: E501
     AnimateDef,
     ASTNode,
     BinaryOpExpr,
@@ -51,7 +51,6 @@ from .ast_nodes import (  # Base classes; Basic expressions; Operations; Vectors
     IdentExpr,
     ImportDef,
     InitialCondition,
-    IntegralExpr,
     LagrangianDef,
     NonHolonomicConstraintDef,
     NumberExpr,
@@ -528,8 +527,6 @@ class MechanicsParser:
         Example:
             \\rayleigh{\\frac{1}{2} * b * \\dot{x}^2}
         """
-        from .ast_nodes import RayleighDef
-
         self.expect("RAYLEIGH")
         self.expect("LBRACE")
         expr = self.parse_expression()

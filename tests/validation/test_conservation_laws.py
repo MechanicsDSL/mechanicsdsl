@@ -16,8 +16,8 @@ import numpy as np
 import pytest
 import sympy as sp
 
-from mechanics_dsl.symbolic import SymbolicEngine
 from mechanics_dsl.solver import NumericalSimulator
+from mechanics_dsl.symbolic import SymbolicEngine
 
 
 class TestEnergyConservation:
@@ -228,7 +228,7 @@ class TestMomentumConservation:
         # Using 2D polar coordinates for central force
         engine = SymbolicEngine()
         r = engine.get_symbol("r")
-        phi = engine.get_symbol("phi")
+        phi = engine.get_symbol("phi")  # noqa: F841
         r_dot = engine.get_symbol("r_dot")
         phi_dot = engine.get_symbol("phi_dot")
 

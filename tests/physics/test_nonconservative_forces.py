@@ -47,16 +47,16 @@ class TestDampedPendulum:
         \defvar{l}{Constant}{m}
         \defvar{g}{Acceleration}{m/s^2}
         \defvar{b}{Damping Coeff}{N*m*s}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{l}{1.0}{m}
         \parameter{g}{9.81}{m/s^2}
         \parameter{b}{0.5}{N*m*s}
-        
+
         \lagrangian{\frac{1}{2} * m * l^2 * \dot{theta}^2 - m * g * l * (1 - \cos{theta})}
-        
+
         \force{-b * theta_dot}
-        
+
         \initial{theta=1.0, theta_dot=0.0}
         """
 
@@ -99,16 +99,16 @@ class TestForcedOscillator:
         \defvar{k}{Spring Constant}{N/m}
         \defvar{F0}{Force Amplitude}{N}
         \defvar{omega_d}{Drive Frequency}{rad/s}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{k}{10.0}{N/m}
         \parameter{F0}{1.0}{N}
         \parameter{omega_d}{2.0}{rad/s}
-        
+
         \lagrangian{\frac{1}{2} * m * \dot{x}^2 - \frac{1}{2} * k * x^2}
-        
+
         \force{F0 * \cos{omega_d * t}}
-        
+
         \initial{x=0.0, x_dot=0.0}
         """
 
@@ -142,15 +142,15 @@ class TestSpringMassDamper:
         \defvar{m}{Mass}{kg}
         \defvar{k}{Spring Constant}{N/m}
         \defvar{c}{Damping Coeff}{N*s/m}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{k}{10.0}{N/m}
         \parameter{c}{0.5}{N*s/m}
-        
+
         \lagrangian{\frac{1}{2} * m * \dot{x}^2 - \frac{1}{2} * k * x^2}
-        
+
         \force{-c * x_dot}
-        
+
         \initial{x=1.0, x_dot=0.0}
         """
 
@@ -189,20 +189,20 @@ class TestMagneticPendulum:
         \defvar{g}{Acceleration}{m/s^2}
         \defvar{B}{Magnetic Field}{T}
         \defvar{q}{Charge}{C}
-        
+
         \parameter{m}{0.1}{kg}
         \parameter{l}{1.0}{m}
         \parameter{g}{9.81}{m/s^2}
         \parameter{B}{0.1}{T}
         \parameter{q}{1e-6}{C}
-        
+
         \lagrangian{
-            \frac{1}{2} * m * l^2 * \dot{theta}^2 
+            \frac{1}{2} * m * l^2 * \dot{theta}^2
             - m * g * l * (1 - \cos{theta})
         }
-        
+
         \force{-q * B * l * theta_dot}
-        
+
         \initial{theta=0.5, theta_dot=0.0}
         """
 

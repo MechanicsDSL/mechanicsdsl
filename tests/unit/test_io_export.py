@@ -336,7 +336,7 @@ class TestJSONExporterExportParameters:
             os.unlink(temp_path)
 
     def test_export_parameters_returns_false_on_error(self):
-        """Test that export_parameters returns False when json.dump fails (e.g. non-serializable)."""
+        """Test that export_parameters returns False when json.dump fails (e.g. non-serializable)."""  # noqa: E501
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             temp_path = f.name
         try:

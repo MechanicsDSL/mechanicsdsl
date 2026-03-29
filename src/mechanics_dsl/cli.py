@@ -18,11 +18,11 @@ Examples:
 """
 
 import argparse
-import sys
-import os
 import json
+import os
+import sys
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Tuple
 
 # Version info
 __version__ = "2.0.7"
@@ -88,7 +88,7 @@ def cmd_compile(args):
     if target not in target_methods:
         print(f"Error: Unknown target '{target}'", file=sys.stderr)
         print(
-            f"Available targets: {', '.join(sorted(set(t for t in target_methods.keys() if len(t) > 2)))}"
+            f"Available targets: {', '.join(sorted(set(t for t in target_methods.keys() if len(t) > 2)))}"  # noqa: E501
         )
         return 1
 
@@ -104,8 +104,8 @@ def cmd_compile(args):
 
 def cmd_run(args):
     """Run a simulation from DSL file."""
+
     from mechanics_dsl import PhysicsCompiler
-    import matplotlib.pyplot as plt
 
     # tqdm is optional
     try:
@@ -167,7 +167,7 @@ def cmd_run(args):
         print("Simulating...")
         solution = compiler.simulate(t_span=t_span, num_points=num_points)
 
-    print(f"✓ Simulation complete")
+    print("✓ Simulation complete")
     print(f"  System: {result.get('system_name', 'unknown')}")
     print(f"  Time: [{t_span[0]}, {t_span[1]}]")
     print(f"  Points: {len(solution['t'])}")
@@ -202,8 +202,9 @@ def cmd_run(args):
 
 def cmd_export(args):
     """Export simulation results to various formats."""
-    from mechanics_dsl import PhysicsCompiler
     import numpy as np
+
+    from mechanics_dsl import PhysicsCompiler
 
     # Read input file
     input_path = Path(args.input)
@@ -350,9 +351,9 @@ def cmd_info(args):
         print("  ✗ Numba not installed")
 
     try:
-        import fastapi
+        pass
 
-        print(f"  ✓ FastAPI server available")
+        print("  ✓ FastAPI server available")
     except ImportError:
         print("  ✗ FastAPI server not installed (pip install mechanicsdsl-core[server])")
 
@@ -414,13 +415,13 @@ Examples:
     validate_parser.add_argument("input", help="Input DSL file (.mdsl)")
 
     # info command
-    info_parser = subparsers.add_parser("info", help="Show version and system info")
+    info_parser = subparsers.add_parser("info", help="Show version and system info")  # noqa: F841
 
     # repl command
-    repl_parser = subparsers.add_parser("repl", help="Start interactive REPL")
+    repl_parser = subparsers.add_parser("repl", help="Start interactive REPL")  # noqa: F841
 
     # presets command
-    presets_parser = subparsers.add_parser("presets", help="List available presets")
+    presets_parser = subparsers.add_parser("presets", help="List available presets")  # noqa: F841
 
     args = parser.parse_args()
 
@@ -468,7 +469,7 @@ def cmd_repl(args):
 def cmd_presets(args):
     """List available presets."""
     try:
-        from .presets import list_presets, PRESETS
+        from .presets import PRESETS
 
         print("Available presets:")
         print()

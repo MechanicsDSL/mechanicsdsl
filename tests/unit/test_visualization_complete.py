@@ -8,17 +8,22 @@ import numpy as np
 import pytest
 
 matplotlib.use("Agg")  # Use non-interactive backend for testing
-import os
-import tempfile
-from unittest.mock import patch
+import os  # noqa: E402
+import tempfile  # noqa: E402
+from unittest.mock import patch  # noqa: E402
 
-import matplotlib.animation as animation
-import matplotlib.pyplot as plt
+import matplotlib.animation as animation  # noqa: E402
+import matplotlib.pyplot as plt  # noqa: E402
 
-from mechanics_dsl.utils import config
+from mechanics_dsl.utils import config  # noqa: E402
 
 # Import the module under test
-from mechanics_dsl.visualization import Animator, MechanicsVisualizer, PhaseSpaceVisualizer, Plotter
+from mechanics_dsl.visualization import (  # noqa: E402
+    Animator,
+    MechanicsVisualizer,
+    PhaseSpaceVisualizer,
+    Plotter,
+)
 
 # ============================================================================
 # FIXTURES

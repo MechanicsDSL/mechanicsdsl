@@ -16,14 +16,11 @@ from __future__ import annotations
 
 import math
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple
 
 import numpy as np
-import sympy as sp
-
-from ...utils import logger
 
 
 class BeamSupportType(Enum):
@@ -82,19 +79,16 @@ class BeamCrossSection(ABC):
     @abstractmethod
     def area(self) -> float:
         """Cross-sectional area (m²)."""
-        pass
 
     @property
     @abstractmethod
     def Ixx(self) -> float:
         """Second moment of area about x-axis (m⁴)."""
-        pass
 
     @property
     @abstractmethod
     def Iyy(self) -> float:
         """Second moment of area about y-axis (m⁴)."""
-        pass
 
     @property
     def J(self) -> float:
@@ -105,7 +99,6 @@ class BeamCrossSection(ABC):
     @abstractmethod
     def y_max(self) -> float:
         """Maximum distance from neutral axis (m)."""
-        pass
 
     @property
     def Sx(self) -> float:
@@ -399,7 +392,7 @@ class BendingStiffness:
     """Calculate bending stiffness for beam elements."""
 
     @staticmethod
-    def compute(E: float, I: float) -> float:
+    def compute(E: float, I: float) -> float:  # noqa: E741
         """
         Compute bending stiffness EI.
 
@@ -419,7 +412,7 @@ class SectionModulus:
     """Calculate section modulus for stress calculations."""
 
     @staticmethod
-    def elastic(I: float, y_max: float) -> float:
+    def elastic(I: float, y_max: float) -> float:  # noqa: E741
         """
         Elastic section modulus S = I / y_max.
 
@@ -1071,7 +1064,7 @@ def compute_bending_stress(M: float, section: BeamCrossSection, y: Optional[floa
     return M * y / section.Ixx
 
 
-def compute_shear_stress_beam(V: float, Q: float, I: float, t: float) -> float:
+def compute_shear_stress_beam(V: float, Q: float, I: float, t: float) -> float:  # noqa: E741
     """
     Compute shear stress τ = VQ/(It).
 

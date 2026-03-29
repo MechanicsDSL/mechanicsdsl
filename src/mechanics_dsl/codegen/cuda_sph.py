@@ -117,7 +117,7 @@ namespace params {{
     constexpr float mu = {self.mu}f;         // Viscosity
     constexpr float gravity = {self.gravity}f;
     constexpr float mass = rho0 * h * h * 0.8f;  // Particle mass
-    
+
     // Kernel constants
     constexpr float PI = 3.14159265358979f;
     constexpr float POLY6 = 315.0f / (64.0f * PI * powf(h, 9));
@@ -146,22 +146,22 @@ struct ParticleData {{
 __global__ void compute_density_pressure(ParticleData particles, int n) {{
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i >= n) return;
-    
+
     float xi = particles.x[i];
     float yi = particles.y[i];
     float rho = 0.0f;
-    
+
     for (int j = 0; j < n; j++) {{
         float dx = xi - particles.x[j];
         float dy = yi - particles.y[j];
         float r2 = dx*dx + dy*dy;
-        
+
         if (r2 < params::h2) {{
             float diff = params::h2 - r2;
             rho += params::mass * params::POLY6 * diff * diff * diff;
         }}
     }}
-    
+
     particles.rho[i] = fmaxf(rho, params::rho0);
     particles.p[i] = params::c0 * params::c0 * (particles.rho[i] - params::rho0);
 }}
@@ -170,44 +170,44 @@ __global__ void compute_density_pressure(ParticleData particles, int n) {{
 __global__ void compute_forces(ParticleData particles, int n) {{
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i >= n || particles.type[i] != 0) return;  // Only fluid particles
-    
+
     float xi = particles.x[i];
     float yi = particles.y[i];
     float vxi = particles.vx[i];
     float vyi = particles.vy[i];
     float pi = particles.p[i];
     float rhoi = particles.rho[i];
-    
+
     float ax = 0.0f;
     float ay = params::gravity;
-    
+
     for (int j = 0; j < n; j++) {{
         if (i == j) continue;
-        
+
         float dx = xi - particles.x[j];
         float dy = yi - particles.y[j];
         float r = sqrtf(dx*dx + dy*dy);
-        
+
         if (r > 0.0f && r < params::h) {{
             float rhoj = particles.rho[j];
             float pj = particles.p[j];
-            
+
             // Pressure force
-            float f_press = -params::mass * (pi + pj) / (2.0f * rhoj) 
+            float f_press = -params::mass * (pi + pj) / (2.0f * rhoj)
                            * params::SPIKY_GRAD * powf(params::h - r, 2);
-            
-            // Viscosity force  
-            float f_visc = params::mu * params::mass * params::VISC_LAP 
+
+            // Viscosity force
+            float f_visc = params::mu * params::mass * params::VISC_LAP
                           * (params::h - r) / rhoj;
-            
+
             float dir_x = dx / r;
             float dir_y = dy / r;
-            
+
             ax += f_press * dir_x + f_visc * (particles.vx[j] - vxi);
             ay += f_press * dir_y + f_visc * (particles.vy[j] - vyi);
         }}
     }}
-    
+
     particles.ax[i] = ax / rhoi;
     particles.ay[i] = ay / rhoi;
 }}
@@ -216,15 +216,15 @@ __global__ void compute_forces(ParticleData particles, int n) {{
 __global__ void integrate(ParticleData particles, int n, float dt) {{
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i >= n || particles.type[i] != 0) return;
-    
+
     // Update velocity
     particles.vx[i] += particles.ax[i] * dt;
     particles.vy[i] += particles.ay[i] * dt;
-    
+
     // Update position
     particles.x[i] += particles.vx[i] * dt;
     particles.y[i] += particles.vy[i] * dt;
-    
+
     // Simple boundary conditions
     if (particles.y[i] < 0.0f) {{
         particles.y[i] = 0.0f;
@@ -243,7 +243,7 @@ __global__ void integrate(ParticleData particles, int n, float dt) {{
 int main() {{
     std::cout << "CUDA SPH Simulation: {self.system_name}" << std::endl;
     std::cout << "Particles: " << NUM_PARTICLES << " (fluid: " << NUM_FLUID << ")" << std::endl;
-    
+
     // Check CUDA device
     int deviceCount = 0;
     cudaGetDeviceCount(&deviceCount);
@@ -251,15 +251,15 @@ int main() {{
         std::cerr << "No CUDA device found. Use CPU fallback." << std::endl;
         return EXIT_FAILURE;
     }}
-    
+
     // Allocate host memory
     float h_x[NUM_PARTICLES], h_y[NUM_PARTICLES];
     float h_vx[NUM_PARTICLES] = {{0}}, h_vy[NUM_PARTICLES] = {{0}};
     int h_type[NUM_PARTICLES];
-    
+
     // Initialize particles
     {self._generate_particle_init()}
-    
+
     // Allocate device memory
     ParticleData d_particles;
     CUDA_CHECK(cudaMalloc(&d_particles.x, NUM_PARTICLES * sizeof(float)));
@@ -271,42 +271,42 @@ int main() {{
     CUDA_CHECK(cudaMalloc(&d_particles.rho, NUM_PARTICLES * sizeof(float)));
     CUDA_CHECK(cudaMalloc(&d_particles.p, NUM_PARTICLES * sizeof(float)));
     CUDA_CHECK(cudaMalloc(&d_particles.type, NUM_PARTICLES * sizeof(int)));
-    
+
     // Copy to device
-    CUDA_CHECK(cudaMemcpy(d_particles.x, h_x, NUM_PARTICLES * sizeof(float), cudaMemcpyHostToDevice));
-    CUDA_CHECK(cudaMemcpy(d_particles.y, h_y, NUM_PARTICLES * sizeof(float), cudaMemcpyHostToDevice));
-    CUDA_CHECK(cudaMemcpy(d_particles.vx, h_vx, NUM_PARTICLES * sizeof(float), cudaMemcpyHostToDevice));
-    CUDA_CHECK(cudaMemcpy(d_particles.vy, h_vy, NUM_PARTICLES * sizeof(float), cudaMemcpyHostToDevice));
-    CUDA_CHECK(cudaMemcpy(d_particles.type, h_type, NUM_PARTICLES * sizeof(int), cudaMemcpyHostToDevice));
-    
+    CUDA_CHECK(cudaMemcpy(d_particles.x, h_x, NUM_PARTICLES * sizeof(float), cudaMemcpyHostToDevice));  # noqa: E501
+    CUDA_CHECK(cudaMemcpy(d_particles.y, h_y, NUM_PARTICLES * sizeof(float), cudaMemcpyHostToDevice));  # noqa: E501
+    CUDA_CHECK(cudaMemcpy(d_particles.vx, h_vx, NUM_PARTICLES * sizeof(float), cudaMemcpyHostToDevice));  # noqa: E501
+    CUDA_CHECK(cudaMemcpy(d_particles.vy, h_vy, NUM_PARTICLES * sizeof(float), cudaMemcpyHostToDevice));  # noqa: E501
+    CUDA_CHECK(cudaMemcpy(d_particles.type, h_type, NUM_PARTICLES * sizeof(int), cudaMemcpyHostToDevice));  # noqa: E501
+
     // Simulation parameters
     float dt = 0.0001f;
     int steps = 50000;
     int output_interval = 500;
-    
+
     // Output file
     std::ofstream outfile("{self.system_name}_sph_results.csv");
     outfile << "step,id,x,y,rho" << std::endl;
-    
+
     int blocks = (NUM_PARTICLES + BLOCK_SIZE - 1) / BLOCK_SIZE;
-    
+
     // Main loop
     for (int step = 0; step < steps; step++) {{
         compute_density_pressure<<<blocks, BLOCK_SIZE>>>(d_particles, NUM_PARTICLES);
         compute_forces<<<blocks, BLOCK_SIZE>>>(d_particles, NUM_PARTICLES);
         integrate<<<blocks, BLOCK_SIZE>>>(d_particles, NUM_PARTICLES, dt);
-        
+
         if (step % output_interval == 0) {{
-            CUDA_CHECK(cudaMemcpy(h_x, d_particles.x, NUM_PARTICLES * sizeof(float), cudaMemcpyDeviceToHost));
-            CUDA_CHECK(cudaMemcpy(h_y, d_particles.y, NUM_PARTICLES * sizeof(float), cudaMemcpyDeviceToHost));
-            
+            CUDA_CHECK(cudaMemcpy(h_x, d_particles.x, NUM_PARTICLES * sizeof(float), cudaMemcpyDeviceToHost));  # noqa: E501
+            CUDA_CHECK(cudaMemcpy(h_y, d_particles.y, NUM_PARTICLES * sizeof(float), cudaMemcpyDeviceToHost));  # noqa: E501
+
             for (int i = 0; i < NUM_FLUID; i++) {{
-                outfile << step << "," << i << "," << h_x[i] << "," << h_y[i] << ",1000" << std::endl;
+                outfile << step << "," << i << "," << h_x[i] << "," << h_y[i] << ",1000" << std::endl;  # noqa: E501
             }}
             std::cout << "Step " << step << "/" << steps << std::endl;
         }}
     }}
-    
+
     // Cleanup
     cudaFree(d_particles.x);
     cudaFree(d_particles.y);
@@ -317,8 +317,8 @@ int main() {{
     cudaFree(d_particles.rho);
     cudaFree(d_particles.p);
     cudaFree(d_particles.type);
-    
-    std::cout << "Simulation complete. Results saved to {self.system_name}_sph_results.csv" << std::endl;
+
+    std::cout << "Simulation complete. Results saved to {self.system_name}_sph_results.csv" << std::endl;  # noqa: E501
     return EXIT_SUCCESS;
 }}
 """
@@ -335,7 +335,7 @@ int main() {{
         for i, p in enumerate(self.boundary_particles):
             idx = offset + i
             lines.append(
-                f"h_x[{idx}] = {p.get('x', 0.0)}f; h_y[{idx}] = {p.get('y', 0.0)}f; h_type[{idx}] = 1;"
+                f"h_x[{idx}] = {p.get('x', 0.0)}f; h_y[{idx}] = {p.get('y', 0.0)}f; h_type[{idx}] = 1;"  # noqa: E501
             )
 
         if not lines:
@@ -388,7 +388,7 @@ add_executable({self.system_name}_sph_cpu {self.system_name}_sph_cpu.cpp)
         return f"""/*
  * CPU SPH Fallback: {self.system_name}
  * Generated by MechanicsDSL
- * 
+ *
  * Full CPU implementation when CUDA is not available.
  * Compile: g++ -O3 -o {self.system_name}_sph_cpu {self.system_name}_sph_cpu.cpp
  */
@@ -408,7 +408,7 @@ namespace params {{
     constexpr float mu = {self.mu}f;         // Viscosity
     constexpr float gravity = {self.gravity}f;
     constexpr float mass = rho0 * h * h * 0.8f;
-    
+
     constexpr float PI = 3.14159265358979f;
     constexpr float POLY6 = 315.0f / (64.0f * PI * std::pow(h, 9));
     constexpr float SPIKY_GRAD = -45.0f / (PI * std::pow(h, 6));
@@ -429,23 +429,23 @@ struct Particle {{
 // Compute density and pressure for all particles
 void compute_density_pressure(std::vector<Particle>& particles) {{
     const int n = particles.size();
-    
+
     for (int i = 0; i < n; i++) {{
         float rho = 0.0f;
         float xi = particles[i].x;
         float yi = particles[i].y;
-        
+
         for (int j = 0; j < n; j++) {{
             float dx = xi - particles[j].x;
             float dy = yi - particles[j].y;
             float r2 = dx*dx + dy*dy;
-            
+
             if (r2 < params::h2) {{
                 float diff = params::h2 - r2;
                 rho += params::mass * params::POLY6 * diff * diff * diff;
             }}
         }}
-        
+
         particles[i].rho = std::max(rho, params::rho0);
         particles[i].p = params::c0 * params::c0 * (particles[i].rho - params::rho0);
     }}
@@ -454,47 +454,47 @@ void compute_density_pressure(std::vector<Particle>& particles) {{
 // Compute forces for fluid particles
 void compute_forces(std::vector<Particle>& particles) {{
     const int n = particles.size();
-    
+
     for (int i = 0; i < n; i++) {{
         if (particles[i].type != 0) continue;  // Only fluid particles
-        
+
         float xi = particles[i].x;
         float yi = particles[i].y;
         float vxi = particles[i].vx;
         float vyi = particles[i].vy;
         float pi = particles[i].p;
         float rhoi = particles[i].rho;
-        
+
         float ax = 0.0f;
         float ay = params::gravity;
-        
+
         for (int j = 0; j < n; j++) {{
             if (i == j) continue;
-            
+
             float dx = xi - particles[j].x;
             float dy = yi - particles[j].y;
             float r = std::sqrt(dx*dx + dy*dy);
-            
+
             if (r > 0.0f && r < params::h) {{
                 float rhoj = particles[j].rho;
                 float pj = particles[j].p;
-                
+
                 // Pressure force (symmetric formulation)
                 float f_press = -params::mass * (pi + pj) / (2.0f * rhoj)
                                * params::SPIKY_GRAD * std::pow(params::h - r, 2);
-                
+
                 // Viscosity force
                 float f_visc = params::mu * params::mass * params::VISC_LAP
                               * (params::h - r) / rhoj;
-                
+
                 float dir_x = dx / r;
                 float dir_y = dy / r;
-                
+
                 ax += f_press * dir_x + f_visc * (particles[j].vx - vxi);
                 ay += f_press * dir_y + f_visc * (particles[j].vy - vyi);
             }}
         }}
-        
+
         particles[i].ax = ax / rhoi;
         particles[i].ay = ay / rhoi;
     }}
@@ -504,15 +504,15 @@ void compute_forces(std::vector<Particle>& particles) {{
 void integrate(std::vector<Particle>& particles, float dt) {{
     for (auto& p : particles) {{
         if (p.type != 0) continue;  // Only fluid particles
-        
+
         // Update velocity (symplectic Euler)
         p.vx += p.ax * dt;
         p.vy += p.ay * dt;
-        
+
         // Update position
         p.x += p.vx * dt;
         p.y += p.vy * dt;
-        
+
         // Simple boundary conditions
         if (p.y < 0.0f) {{
             p.y = 0.0f;
@@ -532,45 +532,45 @@ void integrate(std::vector<Particle>& particles, float dt) {{
 int main() {{
     std::cout << "CPU SPH Simulation: {self.system_name}" << std::endl;
     std::cout << "Particles: " << NUM_PARTICLES << " (fluid: " << NUM_FLUID << ")" << std::endl;
-    
+
     // Initialize particles
     std::vector<Particle> particles(NUM_PARTICLES);
-    
+
     // Initialize fluid particles
 {self._generate_cpu_particle_init()}
-    
+
     // Simulation parameters
     float dt = 0.0001f;
     int steps = 50000;
     int output_interval = 500;
-    
+
     // Output file
     std::ofstream outfile("{self.system_name}_sph_cpu_results.csv");
     outfile << "step,id,x,y,rho" << std::endl;
-    
+
     std::cout << "Running CPU SPH simulation..." << std::endl;
-    
+
     // Main simulation loop
     for (int step = 0; step < steps; step++) {{
         compute_density_pressure(particles);
         compute_forces(particles);
         integrate(particles, dt);
-        
+
         // Output at intervals
         if (step % output_interval == 0) {{
             for (int i = 0; i < NUM_FLUID; i++) {{
-                outfile << step << "," << i << "," 
-                        << particles[i].x << "," 
+                outfile << step << "," << i << ","
+                        << particles[i].x << ","
                         << particles[i].y << ","
                         << particles[i].rho << std::endl;
             }}
             std::cout << "Step " << step << "/" << steps << std::endl;
         }}
     }}
-    
+
     outfile.close();
-    std::cout << "Simulation complete. Results saved to {self.system_name}_sph_cpu_results.csv" << std::endl;
-    
+    std::cout << "Simulation complete. Results saved to {self.system_name}_sph_cpu_results.csv" << std::endl;  # noqa: E501
+
     return 0;
 }}
 """
@@ -583,7 +583,7 @@ int main() {{
             x = p.get("x", 0.0)
             y = p.get("y", 0.0)
             lines.append(
-                f"    particles[{i}] = {{{x}f, {y}f, 0.0f, 0.0f, 0.0f, 0.0f, params::rho0, 0.0f, 0}};"
+                f"    particles[{i}] = {{{x}f, {y}f, 0.0f, 0.0f, 0.0f, 0.0f, params::rho0, 0.0f, 0}};"  # noqa: E501
             )
 
         offset = len(self.fluid_particles)
@@ -592,7 +592,7 @@ int main() {{
             x = p.get("x", 0.0)
             y = p.get("y", 0.0)
             lines.append(
-                f"    particles[{idx}] = {{{x}f, {y}f, 0.0f, 0.0f, 0.0f, 0.0f, params::rho0, 0.0f, 1}};"
+                f"    particles[{idx}] = {{{x}f, {y}f, 0.0f, 0.0f, 0.0f, 0.0f, params::rho0, 0.0f, 1}};"  # noqa: E501
             )
 
         if not lines:
@@ -603,7 +603,7 @@ int main() {{
             lines.append("        for (float x = 0.1f; x < 0.4f; x += 0.02f) {")
             lines.append("            if (idx < NUM_FLUID) {")
             lines.append(
-                "                particles[idx] = {x, y, 0.0f, 0.0f, 0.0f, 0.0f, params::rho0, 0.0f, 0};"
+                "                particles[idx] = {x, y, 0.0f, 0.0f, 0.0f, 0.0f, params::rho0, 0.0f, 0};"  # noqa: E501
             )
             lines.append("                idx++;")
             lines.append("            }")

@@ -326,7 +326,7 @@ class TestDeserializeSolution:
         try:
             loaded = deserialize_solution(temp_path, format="json")
             assert loaded is not None
-            assert loaded["success"] == True
+            assert loaded["success"]
         finally:
             os.unlink(temp_path)
 

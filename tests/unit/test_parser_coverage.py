@@ -3,7 +3,25 @@ Additional parser coverage tests for core.py
 """
 
 from mechanics_dsl.parser import MechanicsParser, tokenize
-from mechanics_dsl.parser.ast_nodes import *
+from mechanics_dsl.parser.ast_nodes import (
+    BinaryOpExpr,
+    DampingDef,
+    DerivativeVarExpr,
+    ForceDef,
+    FractionExpr,
+    FunctionCallExpr,
+    HamiltonianDef,
+    IdentExpr,
+    InitialCondition,
+    LagrangianDef,
+    NumberExpr,
+    ParameterDef,
+    RayleighDef,
+    SystemDef,
+    UnaryOpExpr,
+    VarDef,
+    VectorExpr,
+)
 
 
 class TestParserEdgeCases:

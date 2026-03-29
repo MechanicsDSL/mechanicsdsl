@@ -74,11 +74,11 @@ class TestSimplePendulum:
         """Set up simple pendulum equations."""
         # θ'' = -(g/l) * sin(θ)
         theta = sp.Symbol("theta", real=True)
-        theta_dot = sp.Symbol("theta_dot", real=True)
+        theta_dot = sp.Symbol("theta_dot", real=True)  # noqa: F841
         g = sp.Symbol("g", positive=True)
-        l = sp.Symbol("l", positive=True)
+        length = sp.Symbol("l", positive=True)
 
-        self.accelerations = {"theta_ddot": -g / l * sp.sin(theta)}
+        self.accelerations = {"theta_ddot": -g / length * sp.sin(theta)}
         self.coordinates = ["theta"]
 
     def test_compile_equations(self):
@@ -134,12 +134,12 @@ class TestEnergyConservation:
     def test_pendulum_energy_conservation(self):
         """Test that total energy is conserved for simple pendulum."""
         theta = sp.Symbol("theta", real=True)
-        theta_dot = sp.Symbol("theta_dot", real=True)
+        theta_dot = sp.Symbol("theta_dot", real=True)  # noqa: F841
         g = sp.Symbol("g", positive=True)
-        l = sp.Symbol("l", positive=True)
-        m = sp.Symbol("m", positive=True)
+        length = sp.Symbol("l", positive=True)
+        m = sp.Symbol("m", positive=True)  # noqa: F841
 
-        accelerations = {"theta_ddot": -g / l * sp.sin(theta)}
+        accelerations = {"theta_ddot": -g / length * sp.sin(theta)}
 
         sim = NumbaSimulator()
         sim.set_parameters({"g": 9.81, "l": 1.0, "m": 1.0})
@@ -211,7 +211,7 @@ class TestCreateODEFunction:
     def test_create_simple_ode(self):
         """Test creating ODE function from symbolic expressions."""
         x = sp.Symbol("x", real=True)
-        x_dot = sp.Symbol("x_dot", real=True)
+        x_dot = sp.Symbol("x_dot", real=True)  # noqa: F841
         k = sp.Symbol("k", positive=True)
 
         accelerations = {"x_ddot": -k * x}

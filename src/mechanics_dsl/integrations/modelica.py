@@ -143,7 +143,7 @@ class ModelicaGenerator:
 
         code = f"""model {model_name}
   "Generated from MechanicsDSL"
-  
+
   // Parameters
 {self._generate_parameters()}
 
@@ -374,9 +374,9 @@ class ModelicaImporter:
         coords = list(self.variables.keys())
         if coords:
             mdsl_lines.append("% TODO: Define Lagrangian from imported equations")
-            mdsl_lines.append(f"\\lagrangian{{")
-            mdsl_lines.append(f"    % T - V")
-            mdsl_lines.append(f"}}")
+            mdsl_lines.append("\\lagrangian{")
+            mdsl_lines.append("    % T - V")
+            mdsl_lines.append("}")
             mdsl_lines.append("")
 
             # Initial conditions

@@ -185,14 +185,14 @@ class TestEnergyDissipation:
         \defvar{m}{Mass}{kg}
         \defvar{k}{Spring Constant}{N/m}
         \defvar{b}{Damping}{N*s/m}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{k}{10.0}{N/m}
         \parameter{b}{0.5}{N*s/m}
-        
+
         \lagrangian{\frac{1}{2} * m * \dot{x}^2 - \frac{1}{2} * k * x^2}
         \dissipation{b * \dot{x}}
-        
+
         \initial{x=1.0, x_dot=0.0}
         """
 

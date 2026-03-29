@@ -256,7 +256,7 @@ class ParameterEstimator:
                     losses[idx] = np.sum((pred - observations.flatten()[: len(pred)]) ** 2)
                 else:
                     losses[idx] = np.inf
-            except:
+            except Exception:
                 losses[idx] = np.inf
 
         # Find minimum

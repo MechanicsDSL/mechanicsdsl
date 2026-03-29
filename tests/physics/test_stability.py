@@ -141,7 +141,7 @@ class TestStabilityClassification:
 
     def test_unstable_inverted_pendulum(self):
         """Inverted pendulum (θ = π) is unstable."""
-        m, g, l = sp.symbols("m g l", positive=True)
+        m, g, length = sp.symbols("m g l", positive=True)
         theta = sp.Symbol("theta", real=True)
         theta_dot = sp.Symbol("theta_dot", real=True)
 

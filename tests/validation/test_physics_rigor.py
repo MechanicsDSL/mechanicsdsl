@@ -29,14 +29,14 @@ class TestSimpleHarmonicOscillator:
         \defvar{x}{Position}{m}
         \defvar{m}{Mass}{kg}
         \defvar{k}{Spring Constant}{N/m}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{k}{4.0}{N/m}
-        
+
         \lagrangian{
             \frac{1}{2} * m * \dot{x}^2 - \frac{1}{2} * k * x^2
         }
-        
+
         \initial{x=1.0, x_dot=0.0}
         """
 
@@ -148,15 +148,15 @@ class TestSimplePendulum:
         \defvar{m}{Mass}{kg}
         \defvar{l}{Length}{m}
         \defvar{g}{Acceleration}{m/s^2}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{l}{1.0}{m}
         \parameter{g}{9.81}{m/s^2}
-        
+
         \lagrangian{
             \frac{1}{2} * m * l^2 * \dot{theta}^2 - m * g * l * (1 - \cos{theta})
         }
-        
+
         \initial{theta=0.1, theta_dot=0.0}
         """
 
@@ -245,15 +245,15 @@ class TestKeplerProblem:
         \defvar{mu}{Mass}{kg}
         \defvar{M}{Central Mass}{kg}
         \defvar{G}{Gravitational Constant}{1}
-        
+
         \parameter{mu}{1.0}{kg}
         \parameter{M}{1.0}{kg}
         \parameter{G}{1.0}{1}
-        
+
         \lagrangian{
             \frac{1}{2} * mu * (\dot{r}^2 + r^2 * \dot{phi}^2) + G * M * mu / r
         }
-        
+
         \initial{r=1.0, r_dot=0.0, phi=0.0, phi_dot=1.0}
         """
 
@@ -319,13 +319,13 @@ class TestDoublePendulum:
         \defvar{l1}{Length}{m}
         \defvar{l2}{Length}{m}
         \defvar{g}{Acceleration}{m/s^2}
-        
+
         \parameter{m1}{1.0}{kg}
         \parameter{m2}{1.0}{kg}
         \parameter{l1}{1.0}{m}
         \parameter{l2}{1.0}{m}
         \parameter{g}{9.81}{m/s^2}
-        
+
         \lagrangian{
             \frac{1}{2} * (m1 + m2) * l1^2 * \dot{theta1}^2
             + \frac{1}{2} * m2 * l2^2 * \dot{theta2}^2
@@ -333,7 +333,7 @@ class TestDoublePendulum:
             - (m1 + m2) * g * l1 * (1 - \cos{theta1})
             - m2 * g * l2 * (1 - \cos{theta2})
         }
-        
+
         \initial{theta1=2.0, theta1_dot=0.0, theta2=2.0, theta2_dot=0.0}
         """
 
@@ -398,17 +398,17 @@ class TestCoupledOscillators:
         \defvar{m}{Mass}{kg}
         \defvar{k}{Spring Constant}{N/m}
         \defvar{kc}{Coupling Constant}{N/m}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{k}{1.0}{N/m}
         \parameter{kc}{0.5}{N/m}
-        
+
         \lagrangian{
             \frac{1}{2} * m * (\dot{x1}^2 + \dot{x2}^2)
             - \frac{1}{2} * k * (x1^2 + x2^2)
             - \frac{1}{2} * kc * (x2 - x1)^2
         }
-        
+
         \initial{x1=1.0, x1_dot=0.0, x2=1.0, x2_dot=0.0}
         """
 
@@ -482,19 +482,19 @@ class TestDampedOscillator:
         \defvar{m}{Mass}{kg}
         \defvar{k}{Spring Constant}{N/m}
         \defvar{b}{Damping Coefficient}{N*s/m}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{k}{4.0}{N/m}
         \parameter{b}{0.5}{N*s/m}
-        
+
         \lagrangian{
             \frac{1}{2} * m * \dot{x}^2 - \frac{1}{2} * k * x^2
         }
-        
+
         \rayleigh{
             \frac{1}{2} * b * \dot{x}^2
         }
-        
+
         \initial{x=1.0, x_dot=0.0}
         """
 

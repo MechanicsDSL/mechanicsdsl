@@ -203,7 +203,7 @@ if FASTAPI_AVAILABLE:
         if target not in ALLOWED_TARGETS:
             return ExportResponse(
                 success=False,
-                error=f"Invalid target '{request.target}'. Allowed: {', '.join(sorted(ALLOWED_TARGETS))}",
+                error=f"Invalid target '{request.target}'. Allowed: {', '.join(sorted(ALLOWED_TARGETS))}",  # noqa: E501
                 language=request.target,
             )
 

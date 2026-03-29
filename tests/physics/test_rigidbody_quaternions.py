@@ -191,11 +191,11 @@ class TestQuaternionGravity:
         # At θ=0, quaternion is (1,0,0,0), so V = Mgl*1 = Mgl
         M = sp.Symbol("M", positive=True)
         g = sp.Symbol("g", positive=True)
-        l = sp.Symbol("l", positive=True)
+        length = sp.Symbol("l", positive=True)
         q0, q1, q2, q3 = sp.symbols("q0 q1 q2 q3", real=True)
 
         V_vertical = V.subs({q0: 1, q1: 0, q2: 0, q3: 0})
-        expected = M * g * l
+        expected = M * g * length
 
         assert sp.simplify(V_vertical - expected) == 0
 

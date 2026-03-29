@@ -64,7 +64,7 @@ class PerformanceMonitor:
                 duration = 0.0
             if duration > 86400:  # More than 24 hours seems wrong
                 logger.warning(
-                    f"PerformanceMonitor.stop_timer: suspiciously long duration {duration}s for '{name}'"
+                    f"PerformanceMonitor.stop_timer: suspiciously long duration {duration}s for '{name}'"  # noqa: E501
                 )
             self.metrics[name].append(duration)
             del self.start_times[name]

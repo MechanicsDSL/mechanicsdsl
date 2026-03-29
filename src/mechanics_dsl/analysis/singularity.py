@@ -13,12 +13,9 @@ BEFORE simulation fails why their system has problems.
 
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List
 
 import sympy as sp
-import numpy as np
-
-from ..utils import logger
 
 
 class SingularityType(Enum):
@@ -185,7 +182,7 @@ class SingularityDetector:
                     condition="det(M) = 0 everywhere",
                     coordinates=coordinates,
                     severity="error",
-                    suggestion="Check Lagrangian formulation - mass matrix should be positive definite",
+                    suggestion="Check Lagrangian formulation - mass matrix should be positive definite",  # noqa: E501
                 )
             )
         else:
@@ -199,7 +196,7 @@ class SingularityDetector:
                         condition=f"det(M) = 0 when {det_zeros}",
                         coordinates=coordinates,
                         severity="warning",
-                        suggestion=f"Avoid configurations where determinant vanishes",
+                        suggestion="Avoid configurations where determinant vanishes",
                     )
                 )
 
@@ -231,7 +228,7 @@ class SingularityDetector:
                             condition=f"cos({angle}) = 0 (gimbal lock)",
                             coordinates=[angle],
                             severity="warning",
-                            suggestion=f"Use quaternions instead of Euler angles to avoid gimbal lock",
+                            suggestion="Use quaternions instead of Euler angles to avoid gimbal lock",  # noqa: E501
                         )
                     )
 
@@ -246,7 +243,7 @@ class SingularityDetector:
         Linearizes about equilibrium and checks eigenvalues.
         """
         warnings = []
-        n = len(coordinates)
+        n = len(coordinates)  # noqa: F841
 
         # Build Jacobian of the RHS evaluated at equilibrium
         # For a system ẍ = f(x, ẋ), eigenvalue analysis of linearization
@@ -278,7 +275,7 @@ class SingularityDetector:
                                 condition=f"∂²V/∂{c}² < 0 (local maximum of potential)",
                                 coordinates=[c],
                                 severity="warning",
-                                suggestion="This equilibrium is unstable - small perturbations will grow",
+                                suggestion="This equilibrium is unstable - small perturbations will grow",  # noqa: E501
                             )
                         )
                 except (TypeError, ValueError):
@@ -320,7 +317,7 @@ class SingularityDetector:
                     condition=f"Jacobian rank {rank} < {n_constraints} constraints",
                     coordinates=coordinates,
                     severity="error",
-                    suggestion="Some constraints are redundant or dependent - remove or reformulate",
+                    suggestion="Some constraints are redundant or dependent - remove or reformulate",  # noqa: E501
                 )
             )
 

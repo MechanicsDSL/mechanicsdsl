@@ -9,12 +9,12 @@ import numpy as np
 import pytest
 
 matplotlib.use("Agg")  # Use non-interactive backend for testing
-import matplotlib.animation as animation
-import matplotlib.pyplot as plt
+import matplotlib.animation as animation  # noqa: E402
+import matplotlib.pyplot as plt  # noqa: E402
 
-from mechanics_dsl.visualization.animator import Animator
-from mechanics_dsl.visualization.phase_space import PhaseSpaceVisualizer
-from mechanics_dsl.visualization.plotter import Plotter
+from mechanics_dsl.visualization.animator import Animator  # noqa: E402
+from mechanics_dsl.visualization.phase_space import PhaseSpaceVisualizer  # noqa: E402
+from mechanics_dsl.visualization.plotter import Plotter  # noqa: E402
 
 
 @pytest.fixture
@@ -183,7 +183,7 @@ class TestAnimatorSave:
         animator = Animator()
         result = animator.save("test.gif")
 
-        assert result == False
+        assert not result
 
 
 class TestPlotterInit:

@@ -48,17 +48,17 @@ class TestCoupledOscillators:
         \defvar{m}{Mass}{kg}
         \defvar{k}{Spring Constant}{N/m}
         \defvar{k_c}{Coupling Constant}{N/m}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{k}{10.0}{N/m}
         \parameter{k_c}{2.0}{N/m}
-        
+
         \lagrangian{
             \frac{1}{2} * m * (\dot{x1}^2 + \dot{x2}^2 + \dot{x3}^2)
             - \frac{1}{2} * k * (x1^2 + x2^2 + x3^2)
             - \frac{1}{2} * k_c * ((x1 - x2)^2 + (x2 - x3)^2)
         }
-        
+
         \initial{x1=1.0, x1_dot=0.0, x2=0.0, x2_dot=0.0, x3=0.0, x3_dot=0.0}
         """
 
@@ -86,18 +86,18 @@ class TestParametricResonance:
         \defvar{g}{Acceleration}{m/s^2}
         \defvar{omega_d}{Drive Frequency}{rad/s}
         \defvar{A}{Amplitude}{m}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{l}{1.0}{m}
         \parameter{g}{9.81}{m/s^2}
         \parameter{omega_d}{2.0}{rad/s}
         \parameter{A}{0.1}{m}
-        
+
         \lagrangian{
-            \frac{1}{2} * m * l^2 * \dot{theta}^2 
+            \frac{1}{2} * m * l^2 * \dot{theta}^2
             - m * g * (l + A * \cos{omega_d * t}) * (1 - \cos{theta})
         }
-        
+
         \initial{theta=0.1, theta_dot=0.0}
         """
 
@@ -126,16 +126,16 @@ class TestKeplerProblem:
         \defvar{m}{Mass}{kg}
         \defvar{M}{Central Mass}{kg}
         \defvar{G}{Gravitational Constant}{m^3/(kg*s^2)}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{M}{1000.0}{kg}
         \parameter{G}{6.674e-11}{m^3/(kg*s^2)}
-        
+
         \lagrangian{
-            \frac{1}{2} * m * (\dot{r}^2 + r^2 * \dot{phi}^2) 
+            \frac{1}{2} * m * (\dot{r}^2 + r^2 * \dot{phi}^2)
             + G * M * m / r
         }
-        
+
         \initial{r=10.0, r_dot=0.0, phi=0.0, phi_dot=0.1}
         """
 

@@ -51,7 +51,7 @@ class TestElectromagneticWave:
         from mechanics_dsl.domains.electromagnetic import ElectromagneticWave
 
         wave = ElectromagneticWave(frequency=1e9, amplitude_E=100.0)
-        I = wave.intensity()
+        I = wave.intensity()  # noqa: E741
 
         assert I > 0
 

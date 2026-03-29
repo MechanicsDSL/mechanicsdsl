@@ -108,7 +108,7 @@ class PluginRegistry:
             if name in self._plugins[plugin_type] and not replace:
                 raise ValueError(
                     f"Plugin '{name}' already registered for {plugin_type.name}. "
-                    f"Use replace=True to override."
+                    "Use replace=True to override."
                 )
 
             registered = RegisteredPlugin(

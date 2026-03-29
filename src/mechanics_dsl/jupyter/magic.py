@@ -15,12 +15,37 @@ try:
 except ImportError:
     IPYTHON_AVAILABLE = False
     Magics = object
-    magics_class = lambda x: x
-    cell_magic = lambda x: lambda y: y
-    line_magic = lambda x: lambda y: y
-    magic_arguments = lambda: lambda x: x
-    argument = lambda *args, **kwargs: lambda x: x
-    parse_argstring = lambda *args, **kwargs: type("Args", (), {})()
+
+    def magics_class(x):
+        return x
+
+    def cell_magic(x):
+        def _decorator(y):
+            return y
+
+        return _decorator
+
+    def line_magic(x):
+        def _decorator(y):
+            return y
+
+        return _decorator
+
+    def magic_arguments():
+        def _decorator(x):
+            return x
+
+        return _decorator
+
+    def argument(*args, **kwargs):
+        def _decorator(x):
+            return x
+
+        return _decorator
+
+    def parse_argstring(*args, **kwargs):
+        return type("Args", (), {})()
+
 
 try:
     from mechanics_dsl import PhysicsCompiler
@@ -105,7 +130,7 @@ class MechanicsDSLMagics(Magics):
         try:
             t_start, t_end = map(float, args.t_span.split(","))
             t_span = (t_start, t_end)
-        except:
+        except Exception:
             t_span = (0, 10)
 
         # Compile

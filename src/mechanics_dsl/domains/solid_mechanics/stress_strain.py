@@ -19,12 +19,9 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Dict, List, Optional, Tuple, Union
+from typing import List, Tuple
 
 import numpy as np
-import sympy as sp
-
-from ...utils import logger
 
 
 class StressState(Enum):

@@ -16,12 +16,10 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import sympy as sp
-
-from ...utils import logger
 
 
 class PlateBoundaryCondition(Enum):

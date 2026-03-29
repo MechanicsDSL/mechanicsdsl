@@ -93,7 +93,7 @@ class NoLagrangianError(SemanticError):
         super().__init__(
             message,
             suggestion=suggestion,
-            docs_url="https://mechanicsdsl.readthedocs.io/en/latest/physics/lagrangian_mechanics.html",
+            docs_url="https://mechanicsdsl.readthedocs.io/en/latest/physics/lagrangian_mechanics.html",  # noqa: E501
         )
 
 

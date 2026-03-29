@@ -54,21 +54,21 @@ class TestLorenzSystem:
         \defvar{sigma}{Parameter}{1}
         \defvar{rho}{Parameter}{1}
         \defvar{beta}{Parameter}{1}
-        
+
         \parameter{sigma}{10.0}{1}
         \parameter{rho}{28.0}{1}
         \parameter{beta}{2.666}{1}
-        
+
         \lagrangian{
-            \frac{1}{2} * (\dot{x}^2 + \dot{y}^2 + \dot{z}^2) 
-            - \frac{1}{2} * sigma * x^2 
+            \frac{1}{2} * (\dot{x}^2 + \dot{y}^2 + \dot{z}^2)
+            - \frac{1}{2} * sigma * x^2
             - \frac{1}{2} * beta * z^2
         }
-        
+
         \force{sigma * (y - x)}
         \force{rho * x - y - x * z}
         \force{x * y - beta * z}
-        
+
         \initial{x=1.0, x_dot=0.0, y=1.0, y_dot=0.0, z=1.0, z_dot=0.0}
         """
 
@@ -120,21 +120,21 @@ class TestRosslerAttractor:
         \defvar{a}{Parameter}{1}
         \defvar{b}{Parameter}{1}
         \defvar{c}{Parameter}{1}
-        
+
         \parameter{a}{0.2}{1}
         \parameter{b}{0.2}{1}
         \parameter{c}{5.7}{1}
-        
+
         \lagrangian{
-            \frac{1}{2} * (\dot{x}^2 + \dot{y}^2 + \dot{z}^2) 
-            - \frac{1}{2} * x^2 
+            \frac{1}{2} * (\dot{x}^2 + \dot{y}^2 + \dot{z}^2)
+            - \frac{1}{2} * x^2
             - \frac{1}{2} * y^2
         }
-        
+
         \force{-y - z}
         \force{x + a * y}
         \force{b + z * (x - c)}
-        
+
         \initial{x=1.0, x_dot=0.0, y=1.0, y_dot=0.0, z=0.0, z_dot=0.0}
         """
 
@@ -170,15 +170,15 @@ class TestHenonHeiles:
         \defvar{x}{Position}{m}
         \defvar{y}{Position}{m}
         \defvar{m}{Mass}{kg}
-        
+
         \parameter{m}{1.0}{kg}
-        
+
         \lagrangian{
-            \frac{1}{2} * m * (\dot{x}^2 + \dot{y}^2) 
-            - \frac{1}{2} * (x^2 + y^2) 
+            \frac{1}{2} * m * (\dot{x}^2 + \dot{y}^2)
+            - \frac{1}{2} * (x^2 + y^2)
             - x^2 * y + \frac{1}{3} * y^3
         }
-        
+
         \initial{x=0.1, x_dot=0.0, y=0.0, y_dot=0.0}
         """
 
@@ -222,17 +222,17 @@ class TestVanDerPol:
         \defvar{x}{Position}{m}
         \defvar{mu}{Damping Parameter}{1}
         \defvar{omega}{Natural Frequency}{rad/s}
-        
+
         \parameter{mu}{1.0}{1}
         \parameter{omega}{1.0}{rad/s}
-        
+
         \lagrangian{
-            \frac{1}{2} * \dot{x}^2 
+            \frac{1}{2} * \dot{x}^2
             - \frac{1}{2} * omega^2 * x^2
         }
-        
+
         \force{-mu * (x^2 - 1) * x_dot}
-        
+
         \initial{x=2.0, x_dot=0.0}
         """
 
@@ -263,20 +263,20 @@ class TestDuffingOscillator:
         \defvar{k}{Spring Constant}{N/m}
         \defvar{alpha}{Nonlinear Coeff}{N/m^3}
         \defvar{b}{Damping Coeff}{N*s/m}
-        
+
         \parameter{m}{1.0}{kg}
         \parameter{k}{10.0}{N/m}
         \parameter{alpha}{-1.0}{N/m^3}
         \parameter{b}{0.1}{N*s/m}
-        
+
         \lagrangian{
-            \frac{1}{2} * m * \dot{x}^2 
-            - \frac{1}{2} * k * x^2 
+            \frac{1}{2} * m * \dot{x}^2
+            - \frac{1}{2} * k * x^2
             - \frac{1}{4} * alpha * x^4
         }
-        
+
         \force{-b * x_dot}
-        
+
         \initial{x=1.0, x_dot=0.0}
         """
 

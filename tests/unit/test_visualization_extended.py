@@ -10,9 +10,9 @@ import numpy as np
 import pytest
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # noqa: E402
 
-from mechanics_dsl.visualization import Animator, PhaseSpaceVisualizer, Plotter
+from mechanics_dsl.visualization import Animator, PhaseSpaceVisualizer, Plotter  # noqa: E402
 
 
 @pytest.fixture

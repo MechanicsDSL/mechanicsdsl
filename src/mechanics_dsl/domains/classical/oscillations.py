@@ -92,7 +92,7 @@ class NormalModeAnalyzer:
     Example:
         >>> analyzer = NormalModeAnalyzer()
         >>> # Define Lagrangian for coupled pendulums
-        >>> L = 0.5*m*(theta1_dot**2 + theta2_dot**2) - 0.5*k*(theta1**2 + theta2**2 + (theta1-theta2)**2)
+        >>> L = 0.5*m*(theta1_dot**2 + theta2_dot**2) - 0.5*k*(theta1**2 + theta2**2 + (theta1-theta2)**2)  # noqa: E501
         >>> result = analyzer.analyze(L, ['theta1', 'theta2'])
         >>> print(result.get_frequencies())
     """

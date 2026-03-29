@@ -5,9 +5,11 @@ Thermal expansion, thermal stresses, and thermoelastic coupling.
 """
 
 from __future__ import annotations
+
 import math
 from dataclasses import dataclass
 from typing import Tuple
+
 import numpy as np
 
 
@@ -176,7 +178,9 @@ class ThermalBuckling:
         return delta_T_cr
 
     @staticmethod
-    def critical_temperature_column(L: float, A: float, I: float, E: float, alpha: float) -> float:
+    def critical_temperature_column(
+        L: float, A: float, I: float, E: float, alpha: float  # noqa: E741
+    ) -> float:
         """Critical temperature for Euler column buckling."""
         Pcr = math.pi**2 * E * I / L**2
         return Pcr / (E * A * alpha)
