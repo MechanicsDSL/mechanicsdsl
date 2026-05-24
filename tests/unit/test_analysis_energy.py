@@ -275,13 +275,13 @@ class TestComputePendulumEnergy:
 
     def test_compute_pendulum_energy_returns_dict(self, analyzer, pendulum_solution):
         """Test that compute_pendulum_energy returns a dictionary."""
-        result = analyzer.compute_pendulum_energy(pendulum_solution, m=1.0, l=1.0, g=9.81)
+        result = analyzer.compute_pendulum_energy(pendulum_solution, m=1.0, length=1.0, g=9.81)
 
         assert isinstance(result, dict)
 
     def test_compute_pendulum_energy_has_components(self, analyzer, pendulum_solution):
         """Test that result contains kinetic, potential, and total energy."""
-        result = analyzer.compute_pendulum_energy(pendulum_solution, m=1.0, l=1.0, g=9.81)
+        result = analyzer.compute_pendulum_energy(pendulum_solution, m=1.0, length=1.0, g=9.81)
 
         assert "kinetic" in result
         assert "potential" in result
@@ -289,7 +289,7 @@ class TestComputePendulumEnergy:
 
     def test_compute_pendulum_energy_array_lengths(self, analyzer, pendulum_solution):
         """Test that energy arrays have correct length."""
-        result = analyzer.compute_pendulum_energy(pendulum_solution, m=1.0, l=1.0, g=9.81)
+        result = analyzer.compute_pendulum_energy(pendulum_solution, m=1.0, length=1.0, g=9.81)
 
         assert len(result["kinetic"]) == 100
         assert len(result["potential"]) == 100
@@ -297,7 +297,7 @@ class TestComputePendulumEnergy:
 
     def test_compute_pendulum_energy_conservation(self, analyzer, pendulum_solution):
         """Test that pendulum energy components are computed correctly."""
-        result = analyzer.compute_pendulum_energy(pendulum_solution, m=1.0, l=1.0, g=9.81)
+        result = analyzer.compute_pendulum_energy(pendulum_solution, m=1.0, length=1.0, g=9.81)
 
         total = result["total"]
         # The test data isn't a physically accurate pendulum solution, so just check
@@ -306,7 +306,7 @@ class TestComputePendulumEnergy:
 
     def test_compute_pendulum_energy_positive_kinetic(self, analyzer, pendulum_solution):
         """Test that kinetic energy is always non-negative."""
-        result = analyzer.compute_pendulum_energy(pendulum_solution, m=1.0, l=1.0, g=9.81)
+        result = analyzer.compute_pendulum_energy(pendulum_solution, m=1.0, length=1.0, g=9.81)
 
         assert np.all(result["kinetic"] >= 0)
 
@@ -319,15 +319,15 @@ class TestComputePendulumEnergy:
         solution = {"t": t, "y": np.vstack([theta, theta_dot]), "coordinates": ["theta"]}
 
         # Different mass, length, gravity
-        result = analyzer.compute_pendulum_energy(solution, m=2.0, l=0.5, g=10.0)
+        result = analyzer.compute_pendulum_energy(solution, m=2.0, length=0.5, g=10.0)
 
         assert isinstance(result, dict)
         assert len(result["kinetic"]) == 50
 
     def test_compute_pendulum_energy_scales_with_mass(self, analyzer, pendulum_solution):
         """Test that energy scales linearly with mass."""
-        result_m1 = analyzer.compute_pendulum_energy(pendulum_solution, m=1.0, l=1.0, g=9.81)
-        result_m2 = analyzer.compute_pendulum_energy(pendulum_solution, m=2.0, l=1.0, g=9.81)
+        result_m1 = analyzer.compute_pendulum_energy(pendulum_solution, m=1.0, length=1.0, g=9.81)
+        result_m2 = analyzer.compute_pendulum_energy(pendulum_solution, m=2.0, length=1.0, g=9.81)
 
         # Total energy should double when mass doubles
         np.testing.assert_allclose(result_m2["total"], 2 * result_m1["total"], rtol=1e-6)

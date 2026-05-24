@@ -27,7 +27,7 @@ EnergyAnalyzer
       
       # Compute energies for pendulum
       energies = analyzer.compute_pendulum_energy(
-          solution, m=1.0, l=1.0, g=9.81
+          solution, m=1.0, length=1.0, g=9.81
       )
       
       T = energies['kinetic']
@@ -78,12 +78,12 @@ EnergyAnalyzer
              'potential_energy': np.ndarray,
          }
 
-   .. py:method:: compute_pendulum_energy(solution, m, l, g)
+   .. py:method:: compute_pendulum_energy(solution, m, length, g)
 
       Specialized method for simple pendulum energy.
 
       :param m: Mass
-      :param l: Length
+      :param length: Pendulum length
       :param g: Gravitational acceleration
       :returns: Dict with kinetic, potential, and total energy arrays
 
