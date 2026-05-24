@@ -151,11 +151,15 @@ class TestManyCoordinates:
         \parameter{k}{10.0}{N/m}
 
         \lagrangian{
-            \frac{1}{2} * m * (\dot{x1}^2 + \dot{x2}^2 + \dot{x3}^2 + \dot{y1}^2 + \dot{y2}^2 + \dot{y3}^2)
-            - \frac{1}{2} * k * (x1^2 + x2^2 + x3^2 + y1^2 + y2^2 + y3^2)
+            \frac{1}{2} * m * (\dot{x1}^2 + \dot{x2}^2 + \dot{x3}^2
+            + \dot{y1}^2 + \dot{y2}^2 + \dot{y3}^2)
+            - \frac{1}{2} * k * (x1^2 + x2^2 + x3^2
+            + y1^2 + y2^2 + y3^2)
         }
 
-        \initial{x1=1.0, x1_dot=0.0, x2=0.0, x2_dot=0.0, x3=0.0, x3_dot=0.0, y1=0.0, y1_dot=0.0, y2=0.0, y2_dot=0.0, y3=0.0, y3_dot=0.0}
+        \initial{x1=1.0, x1_dot=0.0, x2=0.0, x2_dot=0.0,
+        x3=0.0, x3_dot=0.0, y1=0.0, y1_dot=0.0,
+        y2=0.0, y2_dot=0.0, y3=0.0, y3_dot=0.0}
         """
 
         compiler = get_compiler()

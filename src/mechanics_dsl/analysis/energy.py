@@ -111,7 +111,7 @@ class EnergyAnalyzer:
 
         return result
 
-    def compute_pendulum_energy(self, solution: dict, m: float, l: float, g: float) -> Dict:
+    def compute_pendulum_energy(self, solution: dict, m: float, l: float, g: float) -> Dict:  # noqa: E741
         """
         Compute energy for simple pendulum.
 

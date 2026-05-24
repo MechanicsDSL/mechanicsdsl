@@ -209,11 +209,16 @@ class TestQuadruplePendulum:
         \parameter{g}{9.81}{m/s^2}
 
         \lagrangian{
-            \frac{1}{2} * m * l^2 * (\dot{theta1}^2 + \dot{theta2}^2 + \dot{theta3}^2 + \dot{theta4}^2)
-            - m * g * l * (4 - \cos{theta1} - \cos{theta2} - \cos{theta3} - \cos{theta4})
+            \frac{1}{2} * m * l^2 * (\dot{theta1}^2
+            + \dot{theta2}^2 + \dot{theta3}^2 + \dot{theta4}^2)
+            - m * g * l * (4 - \cos{theta1} - \cos{theta2}
+            - \cos{theta3} - \cos{theta4})
         }
 
-        \initial{theta1=0.3, theta1_dot=0.0, theta2=0.0, theta2_dot=0.0, theta3=0.0, theta3_dot=0.0, theta4=0.0, theta4_dot=0.0}
+        \initial{theta1=0.3, theta1_dot=0.0,
+        theta2=0.0, theta2_dot=0.0,
+        theta3=0.0, theta3_dot=0.0,
+        theta4=0.0, theta4_dot=0.0}
         """
 
         compiler = get_compiler()
