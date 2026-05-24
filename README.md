@@ -22,7 +22,7 @@
 
 ---
 
-## ✨ Why MechanicsDSL?
+## Why MechanicsDSL?
 
 | Feature | Description |
 |---------|-------------|
@@ -37,7 +37,7 @@
 
 ---
 
-## 📦 Installation
+## Installation
 
 ```bash
 pip install mechanicsdsl-core
@@ -69,7 +69,7 @@ docker run --gpus all -it ghcr.io/mechanicsdsl/mechanicsdsl:gpu
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Simple Pendulum
 
@@ -158,7 +158,7 @@ compiler.compile_to_cpp("dam_break.cpp", target="standard", compile_binary=True)
 
 ---
 
-## 🎯 Code Generation
+## Code Generation
 
 Export any system to optimized, standalone code for 15 targets:
 
@@ -195,7 +195,7 @@ gen.generate("pendulum.rs")
 
 ---
 
-## 🔬 Physics Domains
+## Physics Domains
 
 ### Classical Mechanics
 **Lagrangian & Hamiltonian** formulations with automatic EOM derivation. **Constraints**: holonomic, non-holonomic, rolling, knife-edge (Baumgarte stabilization). **Dissipation**: Rayleigh function, viscous/Coulomb/Stribeck friction. **Stability analysis**: equilibrium points, linearization, eigenvalue analysis. **Noether's theorem**: symmetry detection, conservation laws, cyclic coordinates. **Central forces**: effective potential, Kepler problem, orbital mechanics. **Canonical transformations**: generating functions, action-angle, Hamilton-Jacobi. **Normal modes**: mass/stiffness matrices, coupled oscillators, modal decomposition. **Rigid body**: Euler angles, quaternions, gyroscopes, symmetric top. **Perturbation theory**: Lindstedt-Poincare, averaging, multi-scale analysis. **Collisions**: elastic/inelastic, impulse, center of mass frame. **Scattering**: Rutherford, cross-sections, impact parameter. **Variable mass**: Tsiolkovsky rocket equation, conveyor belts. **Continuous systems**: vibrating strings, membranes, field equations.
@@ -220,7 +220,7 @@ gen.generate("pendulum.rs")
 
 ---
 
-## 🔧 Key Features
+## Key Features
 
 ### Jupyter Magic Commands
 
@@ -264,19 +264,7 @@ python -m mechanics_dsl.server
 
 ---
 
-## 🆕 What's New in v2.0.0
-
-**Released January 17, 2026** — Deployed in **19 countries** across enterprise, research, and embedded platforms.
-
-- **Docker Support** — Production-ready multi-stage containers for CPU and GPU with docker-compose orchestration
-- **ARM & Embedded** — Raspberry Pi examples, IMU integration (MPU6050), NEON detection, cross-compilation
-- **C++ CMake Projects** — `generate_cmake()` and `generate_project()` methods
-- **Rust Cargo Projects** — Full project scaffolding with `no_std` embedded option
-- **Kubernetes Ready** — Enterprise deployment guide with security best practices
-
----
-
-## 📚 Examples & Tutorials
+## Examples & Tutorials
 
 ### Interactive Tutorials (Jupyter)
 
@@ -301,7 +289,7 @@ The [`examples/`](examples/) directory contains 30+ progressive examples:
 
 ---
 
-## 📖 Documentation
+## Documentation
 
 Full documentation with tutorials, API reference, and DSL syntax guide:
 
