@@ -513,7 +513,7 @@ class TestAnimateDoublePendulumPrivate:
 
 # Check if pandas is available for fluid tests
 try:
-    pass
+    import pandas  # noqa: F401
 
     HAS_PANDAS = True
 except ImportError:
