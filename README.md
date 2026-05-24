@@ -1,24 +1,21 @@
-<p align="center">
-  <img src="docs/images/logo.png" alt="MechanicsDSL Logo" width="400">
-</p>
+![MechanicsDSL Logo](docs/images/logo.png)
 
-<h1 align="center">MechanicsDSL</h1>
+# MechanicsDSL
 
-<p align="center">
-  <a href="https://github.com"><img src="https://github.com/badge.svg" alt="Python CI"></a>
-  <a href="https://pepy.tech"><img src="https://pepy.tech" alt="PyPI Downloads"></a>
-  <img src="https://shields.io" alt="Python 3.9+">
-  <a href="https://opensource.org"><img src="https://shields.io" alt="License: MIT"></a>
-  <a href="https://doi.org"><img src="https://zenodo.org" alt="DOI"></a>
-  <a href="https://readthedocs.io"><img src="https://readthedocs.org" alt="Documentation Status"></a>
-  <a href="https://codecov.io"><img src="https://codecov.io/graph/badge.svg" alt="Code Coverage"></a>
-  <a href="https://github.com"><img src="https://github.com/badge.svg" alt="CodeQL Advanced"></a>
-  <a href="https://mybinder.org"><img src="https://mybinder.org" alt="Launch Binder"></a>
-</p>
+[![Python CI](https://github.com/MechanicsDSL/mechanicsdsl/actions/workflows/python-app.yml/badge.svg)](https://github.com/MechanicsDSL/mechanicsdsl/actions/workflows/python-app.yml)
+[![PyPI Downloads](https://static.pepy.tech/personalized-badge/mechanicsdsl-core?period=total&units=INTERNATIONAL_SYSTEM&left_color=GRAY&right_color=BLUE&left_text=Downloads)](https://pepy.tech/projects/mechanicsdsl-core)
+![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17771040.svg)](https://doi.org/10.5281/zenodo.17771040)
+[![Documentation Status](https://readthedocs.org/projects/mechanicsdsl/badge/?version=latest)](https://mechanicsdsl.readthedocs.io/en/latest/?badge=latest)
 
-<p align="center"><strong>Write a Lagrangian. Get a simulation.</strong></p>
+*Write a Lagrangian. Get a simulation.*
 
-**MechanicsDSL** is an educational physics framework that lets you describe mechanical systems in LaTeX-like syntax and instantly simulate them. It's built for students and researchers who want to go from textbook equations to working simulations without writing boilerplate ODE solvers.
+---
+
+MechanicsDSL is a domain-specific language and compiler for physical systems. You write a Lagrangian or Hamiltonian in a LaTeX-inspired syntax; the symbolic engine (built on SymPy) derives the equations of motion automatically, and the compiler generates simulation code in your choice of thirteen target languages — from Python and C++ to CUDA, Rust, WebAssembly, and Arduino.
+
+The goal is to collapse the distance between textbook physics and a running simulation, while keeping the path to lower-level, performance-tuned code open through code generation.
 
 ```python
 from mechanics_dsl import PhysicsCompiler
@@ -27,10 +24,6 @@ compiler = PhysicsCompiler()
 compiler.compile_dsl(r"""
 \system{pendulum}
 \defvar{theta}{Angle}{rad}
-\defvar{m}{Mass}{kg}
-\defvar{l}{Constant}{m}
-\defvar{g}{Acceleration}{m/s^2}
-
 \parameter{m}{1.0}{kg}
 \parameter{l}{1.0}{m}
 \parameter{g}{9.81}{m/s^2}
@@ -43,20 +36,18 @@ solution = compiler.simulate(t_span=(0, 10), num_points=1000)
 compiler.plot(solution)
 ```
 
-## What It Does
+## What's in the box
 
+| Component | Description |
+|-----------|-------------|
+| **Symbolic engine** | Derives equations of motion from Lagrangians or Hamiltonians, built on SymPy |
+| **Code generation** | Thirteen targets: C++, Python, Rust, Julia, CUDA, Fortran, MATLAB, JavaScript, OpenMP, WebAssembly, Arduino, ARM, Modelica |
+| **JAX backend** | GPU acceleration with JIT compilation and automatic differentiation |
+| **Inverse problems** | Parameter estimation, sensitivity analysis, MCMC uncertainty quantification |
+| **Jupyter integration** | `%%mechanicsdsl` magic commands for interactive notebooks |
+| **Plugin architecture** | Custom physics domains and solvers without modifying the core |
 
-| Feature | Description |
-| :--- | :--- |
-| **Symbolic Engine** | Derives equations of motion from Lagrangians or Hamiltonians automatically |
-| **Code Generation** | Export simulations to C++, Rust, Julia, CUDA, Fortran, MATLAB, JavaScript, and more |
-| **Visualization** | Built-in plotting, animation, and phase space diagrams |
-| **Jupyter Integration** | `%%mechanicsdsl` magic commands for interactive notebooks |
-| **Inverse Problems** | Parameter estimation, sensitivity analysis, MCMC uncertainty quantification |
-| **Plugin Architecture** | Extensible with custom physics domains and solvers |
-
-> [!NOTE]
-> MechanicsDSL is a learning and prototyping tool. The code generators produce working starter code, not production-optimized binaries. For mission-critical applications, use the generated code as a reference implementation.
+> **Note on generated code.** The code generators produce working reference implementations, not production-tuned binaries. For high-performance or mission-critical work, treat the generated code as a starting point rather than a finished product.
 
 ## Installation
 
@@ -64,24 +55,22 @@ compiler.plot(solution)
 pip install mechanicsdsl-core
 ```
 
-### Optional extras:
+Optional extras:
 
 ```bash
-pip install mechanicsdsl-core[jax]      # GPU acceleration + autodiff
-pip install mechanicsdsl-core[jupyter]  # Notebook magic commands
+pip install mechanicsdsl-core[jax]      # GPU + autodiff
+pip install mechanicsdsl-core[jupyter]  # Notebook magic
 pip install mechanicsdsl-core[all]      # Everything
 ```
 
-**Requirements:** Python 3.9+ with NumPy, SciPy, SymPy, and Matplotlib (installed automatically).
+Requires Python 3.9+. NumPy, SciPy, SymPy, and Matplotlib are installed automatically.
 
-## Examples
-
-### Figure-8 Three-Body Orbit
+## Example: Figure-8 three-body orbit
 
 ```python
 from mechanics_dsl import PhysicsCompiler
 
-figure8_code = r"""
+code = r"""
 \system{figure8_orbit}
 \defvar{x1}{Position}{m} \defvar{y1}{Position}{m}
 \defvar{x2}{Position}{m} \defvar{y2}{Position}{m}
@@ -99,7 +88,7 @@ figure8_code = r"""
 """
 
 compiler = PhysicsCompiler()
-compiler.compile_dsl(figure8_code)
+compiler.compile_dsl(code)
 compiler.simulator.set_initial_conditions({
     'x1': 0.97000436,  'y1': -0.24308753, 'x1_dot': 0.466203685, 'y1_dot': 0.43236573,
     'x2': -0.97000436, 'y2': 0.24308753,  'x2_dot': 0.466203685, 'y2_dot': 0.43236573,
@@ -108,55 +97,27 @@ compiler.simulator.set_initial_conditions({
 solution = compiler.simulate(t_span=(0, 6.326), num_points=2000)
 ```
 
-### Jupyter Magic Commands
+The `examples/` directory contains 30+ progressive examples, from harmonic oscillators to SPH fluid dynamics.
 
-```python
-%load_ext mechanics_dsl.jupyter
-```
+## Code generation
 
-```latex
-%%mechanicsdsl --animate --t_span=0,20
-\system{pendulum}
-\defvar{theta}{Angle}{rad}
-\parameter{m}{1.0}{kg}
-\lagrangian{\frac{1}{2}*m*l^2*\dot{theta}^2 - m*g*l*(1-\cos{theta})}
-\initial{theta=2.5, theta_dot=0.0}
-```
+Any compiled system can be exported as standalone code in any of the supported targets:
 
-### Parameter Estimation
-
-```python
-from mechanics_dsl.inverse import ParameterEstimator
-
-estimator = ParameterEstimator(compiler)
-result = estimator.fit(observations, t_obs, ['m', 'k'])
-print(f"Fitted: m={result.parameters['m']:.3f}, k={result.parameters['k']:.3f}")
-```
-
-The `examples/` directory has 30+ progressive examples from harmonic oscillators to SPH fluid dynamics.
-
-_Show Image_
-
-## Code Generation
-
-Export any system to standalone code for 13 target languages:
-
-
-| Target | Generator | Output |
-| :--- | :--- | :--- |
-| **C++** | CppGenerator | CMake project with solver |
-| **Python** | PythonGenerator | NumPy/SciPy standalone script |
-| **Rust** | RustGenerator | Cargo project, no_std option |
-| **Julia** | JuliaGenerator | DifferentialEquations.jl |
-| **CUDA** | CudaGenerator | GPU-parallel solver |
-| **Fortran** | FortranGenerator | F90 with LAPACK |
-| **MATLAB** | MatlabGenerator | .m script with ode45 |
-| **JavaScript** | JavaScriptGenerator | Browser or Node.js |
-| **OpenMP** | OpenMPGenerator | Multi-threaded C++ |
-| **WebAssembly** | WasmGenerator | Emscripten WASM |
-| **Arduino** | ArduinoGenerator | .ino embedded sketch |
-| **ARM** | ARMGenerator | Raspberry Pi / NEON |
-| **Modelica** | via integrations | Standards-based FMU |
+| Target | Output |
+|--------|--------|
+| C++ | CMake project with solver |
+| Python | NumPy/SciPy standalone script |
+| Rust | Cargo project, `no_std` option |
+| Julia | DifferentialEquations.jl |
+| CUDA | GPU-parallel solver |
+| Fortran | F90 with LAPACK |
+| MATLAB | `.m` script with `ode45` |
+| JavaScript | Browser or Node.js |
+| OpenMP | Multi-threaded C++ |
+| WebAssembly | Emscripten WASM |
+| Arduino | `.ino` embedded sketch |
+| ARM | Raspberry Pi / NEON |
+| Modelica | Standards-based FMU |
 
 ```python
 from mechanics_dsl.codegen.rust import RustGenerator
@@ -171,23 +132,27 @@ gen = RustGenerator(
 gen.generate("pendulum.rs")
 ```
 
-## Physics Coverage
+## Physics coverage
 
-*   **Classical Mechanics** — Lagrangian & Hamiltonian formulations, constraints (holonomic, non-holonomic, rolling), Rayleigh dissipation, stability analysis, Noether's theorem, central forces, canonical transformations, normal modes, rigid body dynamics, perturbation theory, collisions, scattering, variable mass systems, continuous media.
-*   **Quantum Mechanics** — Bound states, scattering, tunneling, WKB approximation, hydrogen atom, Ehrenfest theorem.
-*   **Electromagnetism** — Lorentz force, cyclotron motion, plane waves, antennas, waveguides, Penning traps.
-*   **Relativity** — Special: Lorentz boosts, four-vectors, Doppler effect. General: Schwarzschild & Kerr metrics, geodesics, gravitational lensing, FLRW cosmology.
-*   **Statistical Mechanics & Thermodynamics** — Microcanonical/canonical/grand canonical ensembles, Boltzmann/Fermi-Dirac/Bose-Einstein distributions, Ising model, heat engines, phase transitions.
-*   **Fluid Dynamics** — SPH solver with Poly6/Spiky/Viscosity kernels, Tait equation of state, boundary conditions.
+- **Classical mechanics** — Lagrangian and Hamiltonian formulations; holonomic, non-holonomic, and rolling constraints; Rayleigh dissipation; stability analysis; Noether's theorem; central forces; canonical transformations; normal modes; rigid body dynamics; perturbation theory; collisions; scattering; variable-mass systems; continuous media.
+- **Quantum mechanics** — Bound states, scattering, tunneling, WKB approximation, hydrogen atom, Ehrenfest theorem.
+- **Electromagnetism** — Lorentz force, cyclotron motion, plane waves, antennas, waveguides, Penning traps.
+- **Relativity** — Special: Lorentz boosts, four-vectors, Doppler effect. General: Schwarzschild and Kerr metrics, geodesics, gravitational lensing, FLRW cosmology.
+- **Statistical mechanics and thermodynamics** — Microcanonical, canonical, and grand canonical ensembles; Boltzmann, Fermi-Dirac, and Bose-Einstein distributions; Ising model; heat engines; phase transitions.
+- **Fluid dynamics** — SPH solver with Poly6, Spiky, and viscosity kernels; Tait equation of state; boundary conditions.
+
+## Project status
+
+MechanicsDSL is under active development. The v2.0.x line is stable; new features, additional backends, and broader validation are ongoing. Issues, pull requests, and use-case reports are all welcome — what the project becomes next depends in part on how people are using it.
 
 ## Documentation
 
-[mechanicsdsl.readthedocs.io](https://readthedocs.io)
+Full documentation, tutorials, and DSL reference at **[mechanicsdsl.readthedocs.io](https://mechanicsdsl.readthedocs.io/)**.
 
 ## Contributing
 
-Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+MIT — see [LICENSE](LICENSE).
