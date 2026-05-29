@@ -66,6 +66,11 @@ class SymbolicEngine:
             self._cache = None
         self._perf_monitor = _perf_monitor if config.enable_performance_monitoring else None
 
+        # Warnings recorded by the last call to solve_for_accelerations() so
+        # callers can surface symbolic-solve failures instead of silently
+        # accepting the zero fallback.
+        self.last_solve_warnings: List[str] = []
+
     def get_symbol(self, name: str, **assumptions) -> sp.Symbol:
         """Get or create a SymPy symbol with assumptions (cached)"""
         if name not in self.symbol_map:
@@ -165,11 +170,15 @@ class SymbolicEngine:
         Returns:
             SymPy expression
         """
-        # v6.0: Cache key generation
+        # v6.0: Cache key generation.
+        # Use the expression's repr directly as the key. Hashing through
+        # Python's int hash() loses information (collisions return wrong
+        # cached SymPy expressions); the string itself is the unique key
+        # we already have.
         cache_key = None
         if self._cache is not None:
             try:
-                cache_key = str(hash(str(expr)))
+                cache_key = str(expr)
                 cached = self._cache.get(cache_key)
                 if cached is not None:
                     logger.debug(f"Cache hit for expression: {expr}")
@@ -635,6 +644,7 @@ class SymbolicEngine:
         each other's equations.
         """
         logger.info("Solving for accelerations (Simultaneous Coupled System)")
+        self.last_solve_warnings = []
 
         n = len(coordinates)
         if n == 0:
@@ -709,7 +719,12 @@ class SymbolicEngine:
                 logger.info(f"Solved {accel_key} (single coordinate)")
                 return {accel_key: sol}
             else:
-                logger.error("Could not solve single-coordinate equation")
+                msg = (
+                    f"Could not solve for {coordinates[0]}_ddot (acceleration "
+                    "coefficient is zero); falling back to zero acceleration."
+                )
+                logger.error(msg)
+                self.last_solve_warnings.append(msg)
                 return {f"{coordinates[0]}_ddot": sp.S.Zero}
 
         # --- Step 4: For multiple coordinates, solve SIMULTANEOUSLY ---
@@ -730,12 +745,21 @@ class SymbolicEngine:
                         accelerations[accel_key] = sp.simplify(sol_dict[accel_sym])
                         logger.info(f"Solved {accel_key} via simultaneous solution")
                     else:
-                        logger.warning(f"No solution found for {accel_key}")
+                        msg = (
+                            f"No solution found for {accel_key}; falling back to "
+                            "zero acceleration. Check that the Lagrangian is "
+                            "non-degenerate in this coordinate."
+                        )
+                        logger.warning(msg)
+                        self.last_solve_warnings.append(msg)
                         accelerations[accel_key] = sp.S.Zero
 
                 return accelerations
         except Exception as e:
             logger.warning(f"sp.solve failed: {e}, trying matrix method")
+            self.last_solve_warnings.append(
+                f"Simultaneous solve failed ({e}); attempting matrix-method fallback."
+            )
 
         # Fallback: Manual matrix extraction and solve
         M = sp.zeros(n, n)
@@ -763,12 +787,24 @@ class SymbolicEngine:
                     logger.info(f"Solved {accel_key} via matrix inversion")
                 return accelerations
             else:
-                logger.error("Mass matrix is singular!")
+                msg = (
+                    "Mass matrix is singular; cannot solve for accelerations. "
+                    "Check that the Lagrangian's kinetic term is positive-definite."
+                )
+                logger.error(msg)
+                self.last_solve_warnings.append(msg)
         except Exception as e:
-            logger.error(f"Matrix solve failed: {e}")
+            msg = f"Matrix solve failed: {e}"
+            logger.error(msg)
+            self.last_solve_warnings.append(msg)
 
         # Last resort: return zeros with warning
-        logger.error("CRITICAL: Could not solve for accelerations!")
+        msg = (
+            "Could not solve for any acceleration; all accelerations defaulted "
+            "to zero. Simulation will produce static dynamics."
+        )
+        logger.error(f"CRITICAL: {msg}")
+        self.last_solve_warnings.append(msg)
         accelerations = {}
         for q in coordinates:
             accelerations[f"{q}_ddot"] = sp.S.Zero

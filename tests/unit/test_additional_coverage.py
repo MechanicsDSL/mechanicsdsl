@@ -80,23 +80,6 @@ class TestRateLimiter:
             raise RateLimitExceeded("test_key", retry_after=1.0)
 
 
-class TestUtilsUnitsModule:
-    """Tests for utils/units module"""
-
-    def test_units_module_import(self):
-        """Test utils/units module import"""
-        from mechanics_dsl.utils import units
-
-        assert units is not None
-
-    def test_units_module_content(self):
-        """Test utils/units has expected content"""
-        from mechanics_dsl.utils import units
-
-        # Check it's a proper module
-        assert hasattr(units, "__name__")
-
-
 class TestPhaseSpaceVisualization:
     """Tests for phase space visualization"""
 

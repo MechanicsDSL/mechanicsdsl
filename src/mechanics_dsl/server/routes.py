@@ -4,6 +4,8 @@ REST API routes for MechanicsDSL server.
 
 import os
 import tempfile
+import threading
+from collections import OrderedDict
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
@@ -92,23 +94,49 @@ else:
     router = None
 
 
-# Session storage (in production, use Redis or similar)
-_sessions: Dict[str, Any] = {}
+# Session storage.
+#
+# - Bounded so an attacker can't grow the store without limit (DoS).
+# - LRU eviction so the oldest idle session is dropped first.
+# - Anonymous (session_id is None) requests get a fresh per-request compiler
+#   so they never share mutable state with another caller.
+#
+# For production deployments, swap this for a Redis-backed store.
+MAX_SESSIONS = 256
+_sessions: "OrderedDict[str, Any]" = OrderedDict()
+_sessions_lock = threading.Lock()
 
 
-def get_or_create_compiler(session_id: str = "default") -> "PhysicsCompiler":
-    """Get or create a compiler for a session."""
-    if session_id not in _sessions:
-        if PhysicsCompiler is None:
-            raise HTTPException(500, "PhysicsCompiler not available")
-        _sessions[session_id] = PhysicsCompiler()
-    return _sessions[session_id]
+def get_or_create_compiler(session_id: Optional[str] = None) -> "PhysicsCompiler":
+    """
+    Get the compiler for a session, or create a fresh one for anonymous use.
+
+    If session_id is None or empty, an unshared, single-request PhysicsCompiler
+    is returned and not cached. This prevents concurrent anonymous requests
+    from racing on shared mutable state.
+    """
+    if PhysicsCompiler is None:
+        raise HTTPException(500, "PhysicsCompiler not available")
+
+    if not session_id:
+        return PhysicsCompiler()
+
+    with _sessions_lock:
+        if session_id in _sessions:
+            _sessions.move_to_end(session_id)
+            return _sessions[session_id]
+
+        compiler = PhysicsCompiler()
+        _sessions[session_id] = compiler
+        while len(_sessions) > MAX_SESSIONS:
+            _sessions.popitem(last=False)
+        return compiler
 
 
 if FASTAPI_AVAILABLE:
 
     @router.post("/compile", response_model=CompileResponse)
-    async def compile_dsl(request: CompileRequest, session_id: str = "default"):
+    async def compile_dsl(request: CompileRequest, session_id: Optional[str] = None):
         """
         Compile MechanicsDSL code.
 
@@ -133,16 +161,18 @@ if FASTAPI_AVAILABLE:
             return CompileResponse(success=False, error=str(e))
 
     @router.post("/simulate", response_model=SimulateResponse)
-    async def simulate(request: SimulateRequest, session_id: str = "default"):
+    async def simulate(request: SimulateRequest, session_id: Optional[str] = None):
         """
         Compile and run simulation.
 
         Returns time series data for all coordinates.
         """
-        # Rate limiting
+        # Rate limiting: key anonymous traffic under a shared bucket so it
+        # can't bypass limits by simply omitting session_id.
+        rl_key = session_id or "anonymous"
         if rate_limiter:
             if not rate_limiter.allow_simulation(
-                session_id, num_points=request.num_points, time_span=request.t_end - request.t_start
+                rl_key, num_points=request.num_points, time_span=request.t_end - request.t_start
             ):
                 raise HTTPException(429, "Rate limit exceeded")
 
@@ -181,7 +211,7 @@ if FASTAPI_AVAILABLE:
             return SimulateResponse(success=False, error=str(e))
 
     @router.post("/export", response_model=ExportResponse)
-    async def export_code(request: ExportRequest, session_id: str = "default"):
+    async def export_code(request: ExportRequest, session_id: Optional[str] = None):
         """
         Export compiled system to target language.
         """

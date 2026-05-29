@@ -121,12 +121,16 @@ class SystemSerializer:
             return False
 
     @staticmethod
-    def import_system(filename: str) -> Optional[dict]:
+    def import_system(filename: str, allow_pickle: bool = False) -> Optional[dict]:
         """
         Import system state from file with validation.
 
         Args:
             filename: Input filename (validated)
+            allow_pickle: Required to be True to load .pkl/.pickle files.
+                Pickle deserialization can execute arbitrary code, so this is
+                refused by default. Only enable for fully trusted local files
+                (e.g. ones you produced yourself).
 
         Returns:
             System state dictionary or None if failed
@@ -143,8 +147,19 @@ class SystemSerializer:
                 with open(filename, "r", encoding="utf-8") as f:
                     state = json.load(f)
             elif filename.endswith(".pkl") or filename.endswith(".pickle"):
+                if not allow_pickle:
+                    logger.error(
+                        "import_system refused to load pickle file: pickle "
+                        "deserialization can execute arbitrary code. Pass "
+                        "allow_pickle=True only for fully trusted local files."
+                    )
+                    return None
+                logger.warning(
+                    f"Loading pickle from {filename}; allow_pickle=True was set."
+                )
                 with open(filename, "rb") as f:
-                    state = pickle.load(f)  # nosec B301 - trusted local files only
+                    # nosec B301: caller opted in via allow_pickle=True
+                    state = pickle.load(f)  # nosec B301
             else:
                 # Try JSON first
                 with open(filename, "r", encoding="utf-8") as f:
@@ -229,7 +244,8 @@ class PhysicsCompiler:
         self.transforms: Dict[str, dict] = {}
         self.constraints: List[Expression] = []
         self.non_holonomic_constraints: List[Expression] = []
-        self.forces: List[Expression] = []
+        # Each entry is (target_coordinate_or_None, force_expression).
+        self.forces: List[Tuple[Optional[str], Expression]] = []
         self.damping_forces: List[Expression] = []
         self.rayleigh_dissipation: Optional[Expression] = None
         self.initial_conditions: Dict[str, float] = {}
@@ -261,6 +277,52 @@ class PhysicsCompiler:
         """Context manager exit with cleanup"""
         self.cleanup()
         return False
+
+    def _reset_system_state(self) -> None:
+        """
+        Clear all per-system state so a single PhysicsCompiler instance can be
+        reused for multiple compile_dsl() calls without leaking definitions
+        (variables, constraints, forces, initial conditions, ...) from a
+        previously compiled system into the next one.
+        """
+        self.ast = []
+        self.variables = {}
+        self.definitions = {}
+        self.parameters_def = {}
+        self.system_name = "unnamed_system"
+        self.lagrangian = None
+        self.hamiltonian = None
+        self.transforms = {}
+        self.constraints = []
+        self.non_holonomic_constraints = []
+        self.forces = []
+        self.damping_forces = []
+        self.rayleigh_dissipation = None
+        self.initial_conditions = {}
+        self.fluid_particles = []
+        self.boundary_particles = []
+        self.smoothing_length = 0.1
+        self.equations = None
+        self.use_hamiltonian_formulation = False
+
+        # Hamiltonian derived from a Lagrangian is cached on the instance; drop it
+        if hasattr(self, "hamiltonian_expr"):
+            del self.hamiltonian_expr
+
+        # Import-cycle tracking is per-compilation
+        if hasattr(self, "_imported_files"):
+            self._imported_files = set()
+
+        # The simulator accumulates via update()/append(); clear it in place so
+        # external references to compiler.simulator stay valid.
+        self.simulator.parameters.clear()
+        self.simulator.initial_conditions.clear()
+        self.simulator.equations = {}
+        self.simulator.constraints = []
+        self.simulator.state_vars = []
+        self.simulator.coordinates = []
+        self.simulator.use_hamiltonian = False
+        self.simulator.hamiltonian_equations = None
 
     def cleanup(self) -> None:
         """v6.0: Cleanup resources and trigger garbage collection"""
@@ -356,6 +418,10 @@ class PhysicsCompiler:
             logger.error(f"compile_dsl: {error_msg}")
             raise TypeError(error_msg)
 
+        # Reset any state left over from a previous compile_dsl() on this
+        # instance so systems don't bleed into each other.
+        self._reset_system_state()
+
         start_time = time.time()
         logger.info(f"Starting DSL compilation (source length: {len(dsl_source)} chars)")
 
@@ -407,6 +473,7 @@ class PhysicsCompiler:
 
             # Derive equations with error handling
             try:
+                equations: Any = None
 
                 if self.fluid_particles and self.lagrangian is None:
                     logger.info("Fluid system detected: Skipping symbolic derivation")
@@ -452,6 +519,13 @@ class PhysicsCompiler:
                 _perf_monitor.stop_timer("compilation")
                 _perf_monitor.snapshot_memory("post_compilation")
 
+            # Collect diagnostics from the symbolic engine and the simulator so
+            # callers can see when solve_for_accelerations or lambdify silently
+            # fell back to zero, rather than treating "success" as "correct".
+            warnings_list: List[str] = []
+            warnings_list.extend(getattr(self.symbolic, "last_solve_warnings", []) or [])
+            warnings_list.extend(getattr(self.simulator, "last_compile_warnings", []) or [])
+
             result = {
                 "success": True,
                 "system_name": self.system_name,
@@ -463,7 +537,14 @@ class PhysicsCompiler:
                 "ast_nodes": len(self.ast),
                 "formulation": "Hamiltonian" if use_hamiltonian else "Lagrangian",
                 "num_constraints": len(self.constraints) if use_constraints else 0,
+                "warnings": warnings_list,
             }
+
+            if warnings_list:
+                logger.warning(
+                    f"Compilation produced {len(warnings_list)} diagnostic warning(s); "
+                    "results may be incomplete."
+                )
 
             logger.info(f"Compilation successful in {self.compilation_time:.4f}s")
 
@@ -531,8 +612,8 @@ class PhysicsCompiler:
                 logger.debug("Non-holonomic constraint added")
 
             elif isinstance(node, ForceDef):
-                self.forces.append(node.expr)
-                logger.debug(f"Force added: {node.force_type}")
+                self.forces.append((node.coordinate, node.expr))
+                logger.debug(f"Force added: {node.force_type} (coord={node.coordinate})")
 
             elif isinstance(node, DampingDef):
                 self.damping_forces.append(node.expr)
@@ -655,7 +736,7 @@ class PhysicsCompiler:
         elif isinstance(node, NonHolonomicConstraintDef):
             self.non_holonomic_constraints.append(node.expr)
         elif isinstance(node, ForceDef):
-            self.forces.append(node.expr)
+            self.forces.append((node.coordinate, node.expr))
         elif isinstance(node, DampingDef):
             self.damping_forces.append(node.expr)
         elif isinstance(node, RayleighDef):
@@ -743,11 +824,34 @@ class PhysicsCompiler:
         # Note: Don't expand yet - keep derivative structure for acceleration extraction
         if self.forces:
             logger.info(f"Applying {len(self.forces)} non-conservative forces")
-            for i, force_ast in enumerate(self.forces):
-                if i < len(eq_list):
-                    F_sym = self.symbolic.ast_to_sympy(force_ast)
+            # Untargeted forces are applied positionally in declaration order.
+            positional_idx = 0
+            for coord_name, force_ast in self.forces:
+                F_sym = self.symbolic.ast_to_sympy(force_ast)
+
+                if coord_name is not None:
+                    # Force explicitly targets a named coordinate.
+                    if coord_name in coordinates:
+                        idx = coordinates.index(coord_name)
+                        eq_list[idx] = eq_list[idx] - F_sym
+                    else:
+                        logger.warning(
+                            f"Force targets unknown coordinate '{coord_name}'; "
+                            f"known coordinates: {coordinates}. Skipping."
+                        )
+                    continue
+
+                # Legacy positional application.
+                if len(coordinates) > 1 and len(self.forces) == 1:
+                    logger.warning(
+                        "Applying an untargeted \\force to the first coordinate of a "
+                        "multi-DOF system. Use \\force{coord}{expr} to target a "
+                        "specific coordinate."
+                    )
+                if positional_idx < len(eq_list):
                     # Subtract Force but don't expand yet - preserve derivative structure
-                    eq_list[i] = eq_list[i] - F_sym
+                    eq_list[positional_idx] = eq_list[positional_idx] - F_sym
+                positional_idx += 1
 
         # 3. Apply Rayleigh Dissipation: Q_i = -∂F/∂q̇_i
         # The dissipative generalized force is the negative partial derivative of
@@ -947,10 +1051,79 @@ class PhysicsCompiler:
         """Export system state to file"""
         return SystemSerializer.export_system(self, filename, format)
 
+    # Mapping of target language -> code generator class, populated lazily
+    # so that importing PhysicsCompiler doesn't pay the cost of pulling in
+    # every backend.
+    _GENERATOR_REGISTRY: Dict[str, str] = {
+        "cpp": "CppGenerator",
+        "python": "PythonGenerator",
+        "rust": "RustGenerator",
+        "julia": "JuliaGenerator",
+        "matlab": "MatlabGenerator",
+        "fortran": "FortranGenerator",
+        "javascript": "JavaScriptGenerator",
+        "cuda": "CudaGenerator",
+        "openmp": "OpenMPGenerator",
+        "wasm": "WasmGenerator",
+        "arduino": "ArduinoGenerator",
+        "arm": "ARMGenerator",
+    }
+
+    def export(self, target: str, filename: str) -> str:
+        """
+        Generate standalone simulation code for a target language.
+
+        Args:
+            target: Target language identifier (see _GENERATOR_REGISTRY for the
+                list, e.g. 'cpp', 'python', 'rust', 'julia', 'cuda', ...).
+            filename: Output file path for the generated source.
+
+        Returns:
+            Path to the generated file.
+
+        Raises:
+            ValueError: If target is not supported or the compiler has no
+                equations yet.
+            IOError: If the file cannot be written.
+        """
+        target_key = (target or "").lower().strip()
+        if target_key not in self._GENERATOR_REGISTRY:
+            allowed = ", ".join(sorted(self._GENERATOR_REGISTRY))
+            raise ValueError(f"Unsupported export target '{target}'. Allowed: {allowed}")
+
+        if self.equations is None:
+            raise ValueError("No equations derived. Call compile_dsl() first.")
+
+        # Lazy import - keeps PhysicsCompiler import cheap.
+        from . import codegen as _codegen
+
+        generator_cls = getattr(_codegen, self._GENERATOR_REGISTRY[target_key])
+
+        lagrangian_sympy = self.symbolic.ast_to_sympy(self.lagrangian) if self.lagrangian else None
+        hamiltonian_sympy = (
+            self.symbolic.ast_to_sympy(self.hamiltonian) if self.hamiltonian else None
+        )
+
+        generator = generator_cls(
+            system_name=self.system_name,
+            coordinates=self.get_coordinates(),
+            parameters=self.simulator.parameters,
+            initial_conditions=self.initial_conditions,
+            equations=self.equations,
+            lagrangian=lagrangian_sympy,
+            hamiltonian=hamiltonian_sympy,
+        )
+        return generator.generate(filename)
+
     @staticmethod
-    def import_system(filename: str) -> Optional["PhysicsCompiler"]:
-        """Import system state from file"""
-        state = SystemSerializer.import_system(filename)
+    def import_system(filename: str, allow_pickle: bool = False) -> Optional["PhysicsCompiler"]:
+        """
+        Import system state from file.
+
+        See ``SystemSerializer.import_system`` for the semantics of
+        ``allow_pickle``; pickle loading is refused by default.
+        """
+        state = SystemSerializer.import_system(filename, allow_pickle=allow_pickle)
         if state is None:
             return None
 
@@ -1004,6 +1177,11 @@ class PhysicsCompiler:
                 filename = os.path.splitext(filename)[0] + ".ino"
 
             source_file = generator.generate(filename)
+            # Ensure the source path can't be reinterpreted as a compiler flag
+            # if the caller-supplied filename starts with '-' (argv injection
+            # via a relative path like "-Wl,...").
+            if not os.path.isabs(source_file):
+                source_file = os.path.abspath(source_file)
 
             if compile_binary and target != "arduino":  # Arduino compilation typically requires IDE
                 binary_name = os.path.splitext(source_file)[0]

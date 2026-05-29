@@ -596,13 +596,16 @@ class ForceDef(ASTNode):
     Attributes:
         expr: The force expression.
         force_type: Type of force ('friction', 'damping', 'drag', 'general').
+        coordinate: Optional name of the generalized coordinate this force acts
+            on. When None the force is applied positionally (legacy behavior).
     """
 
     expr: Expression
     force_type: str = "general"
+    coordinate: Optional[str] = None
 
     def __repr__(self) -> str:
-        return f"Force({self.expr}, type={self.force_type})"
+        return f"Force({self.expr}, type={self.force_type}, coord={self.coordinate})"
 
 
 @dataclass

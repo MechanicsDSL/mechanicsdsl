@@ -79,14 +79,31 @@ class SystemSerializer:
             return False
 
     @staticmethod
-    def load_pickle(filename: str) -> Optional[Dict[str, Any]]:
-        """Load system data from pickle file."""
+    def load_pickle(filename: str, allow_pickle: bool = False) -> Optional[Dict[str, Any]]:
+        """
+        Load system data from a pickle file.
+
+        Pickle deserialization can execute arbitrary code, so this is gated
+        behind an explicit ``allow_pickle=True`` flag. Only enable this when
+        the file's provenance is fully trusted (e.g. created by you on this
+        machine). For anything you didn't write yourself, prefer JSON.
+        """
+        if not allow_pickle:
+            logger.error(
+                "load_pickle refused: pickle deserialization can execute arbitrary "
+                "code. Pass allow_pickle=True only for fully trusted local files."
+            )
+            return None
+
         try:
             validate_file_path(filename, must_exist=True)
 
+            logger.warning(
+                f"Loading pickle from {filename}; allow_pickle=True was set. "
+                "Only do this for trusted files."
+            )
             with open(filename, "rb") as f:
-                # nosec B301: pickle used intentionally for system serialization
-                # Only load from trusted sources (local files validated by validate_file_path)
+                # nosec B301: caller opted in via allow_pickle=True
                 data = pickle.load(f)  # nosec B301
 
             logger.info(f"System loaded from pickle {filename}")
@@ -130,13 +147,17 @@ def serialize_solution(solution: Dict[str, Any], filename: str, format: str = "j
     return SystemSerializer.save_json(solution, filename)
 
 
-def deserialize_solution(filename: str, format: str = None) -> Optional[Dict[str, Any]]:
+def deserialize_solution(
+    filename: str, format: str = None, allow_pickle: bool = False
+) -> Optional[Dict[str, Any]]:
     """
     Deserialize a simulation solution from file.
 
     Args:
         filename: Input file path
         format: 'json' or 'pickle' (auto-detected if None)
+        allow_pickle: Required for pickle files. Pickle can execute arbitrary
+            code, so it is refused by default. See ``SystemSerializer.load_pickle``.
 
     Returns:
         Solution dictionary or None on error
@@ -149,5 +170,5 @@ def deserialize_solution(filename: str, format: str = None) -> Optional[Dict[str
             format = "json"
 
     if format == "pickle":
-        return SystemSerializer.load_pickle(filename)
+        return SystemSerializer.load_pickle(filename, allow_pickle=allow_pickle)
     return SystemSerializer.load_json(filename)
