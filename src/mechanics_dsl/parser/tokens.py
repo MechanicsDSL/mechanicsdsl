@@ -19,7 +19,7 @@ Example:
 
 import re
 from dataclasses import dataclass
-from typing import List
+from typing import List, Tuple
 
 from ..utils import logger
 
@@ -157,7 +157,8 @@ def tokenize(source: str) -> List[Token]:
     Tokenize DSL source code with position tracking.
 
     Converts a string of MechanicsDSL code into a list of tokens,
-    excluding whitespace and comments.
+    excluding whitespace and comments. Unrecognized characters are reported
+    as a single error rather than silently dropped.
 
     Args:
         source: DSL source code string.
@@ -166,36 +167,69 @@ def tokenize(source: str) -> List[Token]:
         List of Token objects (excluding whitespace and comments).
 
     Raises:
-        No explicit exceptions, but malformed input may produce
-        unexpected token sequences.
+        ValueError: If the source contains characters that do not match any
+            token pattern (e.g. ``@``, ``$``, ``&``).
 
     Example:
         >>> tokens = tokenize(r"\\lagrangian{T - V}")
         >>> [t.type for t in tokens]
         ['LAGRANGIAN', 'LBRACE', 'IDENT', 'MINUS', 'IDENT', 'RBRACE']
     """
-    tokens = []
+    tokens: List[Token] = []
     line = 1
     line_start = 0
+    pos = 0
+    unknown: List[Tuple[int, int, str]] = []
+
+    def _account_for_text(text: str, base_pos: int) -> None:
+        """Advance line/line_start across `text` starting at `base_pos`."""
+        nonlocal line, line_start
+        last_nl = text.rfind("\n")
+        if last_nl != -1:
+            line += text.count("\n")
+            line_start = base_pos + last_nl + 1
 
     for match in token_pattern.finditer(source):
+        start = match.start()
+
+        # Anything between the last match and this one is unmatched. Track
+        # line numbers across that gap and record any non-whitespace chars.
+        if start > pos:
+            gap = source[pos:start]
+            for offset, ch in enumerate(gap):
+                if ch == "\n":
+                    line += 1
+                    line_start = pos + offset + 1
+                elif not ch.isspace():
+                    unknown.append((line, (pos + offset) - line_start + 1, ch))
+
         kind = match.lastgroup
         value = match.group()
-        position = match.start()
+        column = start - line_start + 1
 
-        # Update line tracking
-        while line_start < position and "\n" in source[line_start:position]:
-            newline_pos = source.find("\n", line_start)
-            if newline_pos != -1 and newline_pos < position:
+        if kind not in ("WHITESPACE", "COMMENT"):
+            tokens.append(Token(kind, value, start, line, column))
+
+        # Update line tracking for newlines inside the matched span too.
+        if "\n" in value:
+            _account_for_text(value, start)
+        pos = match.end()
+
+    # Anything left after the final match.
+    if pos < len(source):
+        tail = source[pos:]
+        for offset, ch in enumerate(tail):
+            if ch == "\n":
                 line += 1
-                line_start = newline_pos + 1
-            else:
-                break
+                line_start = pos + offset + 1
+            elif not ch.isspace():
+                unknown.append((line, (pos + offset) - line_start + 1, ch))
 
-        column = position - line_start + 1
-
-        if kind not in ["WHITESPACE", "COMMENT"]:
-            tokens.append(Token(kind, value, position, line, column))
+    if unknown:
+        head = unknown[:5]
+        details = ", ".join(f"{ch!r} at line {ln}, col {col}" for ln, col, ch in head)
+        more = "" if len(unknown) <= len(head) else f" (+{len(unknown) - len(head)} more)"
+        raise ValueError(f"Unrecognized character(s): {details}{more}")
 
     logger.debug(f"Tokenized {len(tokens)} tokens from {line} lines")
     return tokens

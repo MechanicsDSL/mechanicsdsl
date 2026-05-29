@@ -41,6 +41,10 @@ class NumericalSimulator:
         self.coordinates: List[str] = []
         self.use_hamiltonian: bool = False
         self.hamiltonian_equations: Optional[Dict[str, List[Tuple]]] = None
+        # Warnings recorded by the most recent equation-compilation pass so
+        # callers can surface lambdify/eval failures instead of accepting the
+        # silent zero fallback.
+        self.last_compile_warnings: List[str] = []
 
     def set_parameters(self, params: Dict[str, float]):
         """Set physical parameters"""
@@ -62,6 +66,7 @@ class NumericalSimulator:
         """Compile symbolic equations to numerical functions"""
 
         logger.info(f"Compiling equations for {len(coordinates)} coordinates")
+        self.last_compile_warnings = []
 
         state_vars = []
         for q in coordinates:
@@ -173,12 +178,17 @@ class NumericalSimulator:
                         NotImplementedError,
                         SyntaxError,
                     ) as e:
-                        logger.error(f"Compilation failed for {accel_key}: {e}")
+                        msg = f"Compilation failed for {accel_key}: {e}; using zero fallback."
+                        logger.error(msg)
+                        self.last_compile_warnings.append(msg)
                         compiled_equations[accel_key] = lambda *args: 0.0
                     except Exception as e:
-                        logger.error(
-                            f"Unexpected compilation error for {accel_key}: {type(e).__name__}: {e}"
+                        msg = (
+                            f"Unexpected compilation error for {accel_key}: "
+                            f"{type(e).__name__}: {e}; using zero fallback."
                         )
+                        logger.error(msg)
+                        self.last_compile_warnings.append(msg)
                         compiled_equations[accel_key] = lambda *args: 0.0
                 else:
                     try:
@@ -188,7 +198,12 @@ class NumericalSimulator:
                         compiled_equations[accel_key] = lambda *args, _val=const_value: _val
                         logger.debug(f"{accel_key} is constant: {const_value}")
                     except (ValueError, TypeError) as e:
-                        logger.warning(f"Could not evaluate constant for {accel_key}: {e}")
+                        msg = (
+                            f"Could not evaluate constant for {accel_key}: {e}; "
+                            "using zero fallback."
+                        )
+                        logger.warning(msg)
+                        self.last_compile_warnings.append(msg)
                         compiled_equations[accel_key] = lambda *args: 0.0
 
         self.equations = compiled_equations

@@ -499,12 +499,30 @@ class MechanicsParser:
         return NonHolonomicConstraintDef(expr)
 
     def parse_force(self) -> ForceDef:
-        """Parse \\force{expression}."""
+        """
+        Parse a non-conservative force.
+
+        Two forms are supported:
+          \\force{expr}          - applied positionally (legacy)
+          \\force{coord}{expr}   - applied to the named generalized coordinate
+        """
         self.expect("FORCE")
         self.expect("LBRACE")
-        expr = self.parse_expression()
+        first = self.parse_expression()
         self.expect("RBRACE")
-        return ForceDef(expr)
+
+        # Two-brace form: the first group names the target coordinate.
+        if self.peek() and self.peek().type == "LBRACE":
+            self.expect("LBRACE")
+            expr = self.parse_expression()
+            self.expect("RBRACE")
+            if not isinstance(first, IdentExpr):
+                raise ParserError(
+                    "Force target must be a coordinate name, e.g. \\force{theta}{...}"
+                )
+            return ForceDef(expr, coordinate=first.name)
+
+        return ForceDef(first)
 
     def parse_damping(self) -> DampingDef:
         """Parse \\damping{expression}."""

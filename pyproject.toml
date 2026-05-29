@@ -153,12 +153,14 @@ warn_unused_configs = true
 # Disable strict checking - this is a physics library, not a web app
 disable_error_code = [
     "no-redef",
-    "no-any-return", 
+    "no-any-return",
     "misc",
     "assignment",
     "arg-type",
     "var-annotated",
-    "attr-defined",
+    # attr-defined intentionally NOT disabled - it catches calls to methods
+    # that don't exist on a class, which is a real bug class (see the broken
+    # server /export route bug fixed in the same change that re-enabled this).
     "union-attr",
     "return-value",
     "call-arg",

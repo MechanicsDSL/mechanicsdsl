@@ -172,15 +172,27 @@ class TestSystemSerializerLoadPickle:
             temp_path = f.name
 
         try:
-            loaded = SystemSerializer.load_pickle(temp_path)
+            loaded = SystemSerializer.load_pickle(temp_path, allow_pickle=True)
             assert isinstance(loaded, dict)
             assert loaded == data
         finally:
             os.unlink(temp_path)
 
+    def test_load_pickle_refuses_without_opt_in(self):
+        """load_pickle must refuse by default; opt-in is required."""
+        data = {"key": "value"}
+        with tempfile.NamedTemporaryFile(mode="wb", suffix=".pkl", delete=False) as f:
+            pickle.dump(data, f)
+            temp_path = f.name
+        try:
+            assert SystemSerializer.load_pickle(temp_path) is None
+            assert SystemSerializer.load_pickle(temp_path, allow_pickle=False) is None
+        finally:
+            os.unlink(temp_path)
+
     def test_load_pickle_nonexistent_file(self):
         """Test loading nonexistent file returns None."""
-        result = SystemSerializer.load_pickle("/nonexistent/file.pkl")
+        result = SystemSerializer.load_pickle("/nonexistent/file.pkl", allow_pickle=True)
         assert result is None
 
     def test_load_pickle_roundtrip(self):
@@ -192,7 +204,7 @@ class TestSystemSerializerLoadPickle:
 
         try:
             SystemSerializer.save_pickle(original, temp_path)
-            loaded = SystemSerializer.load_pickle(temp_path)
+            loaded = SystemSerializer.load_pickle(temp_path, allow_pickle=True)
 
             np.testing.assert_array_equal(loaded["array"], original["array"])
             np.testing.assert_array_equal(loaded["nested"]["inner"], original["nested"]["inner"])
@@ -339,7 +351,7 @@ class TestDeserializeSolution:
             temp_path = f.name
 
         try:
-            loaded = deserialize_solution(temp_path, format="pickle")
+            loaded = deserialize_solution(temp_path, format="pickle", allow_pickle=True)
             assert loaded is not None
             np.testing.assert_array_equal(loaded["t"], solution["t"])
         finally:
@@ -367,7 +379,7 @@ class TestDeserializeSolution:
             temp_path = f.name
 
         try:
-            loaded = deserialize_solution(temp_path)  # Auto-detect
+            loaded = deserialize_solution(temp_path, allow_pickle=True)  # Auto-detect
             assert loaded == solution
         finally:
             os.unlink(temp_path)

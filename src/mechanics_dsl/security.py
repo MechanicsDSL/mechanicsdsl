@@ -205,8 +205,15 @@ def validate_dsl_code(code: str) -> str:
 
     Checks for:
     - Size limits
-    - Dangerous patterns
-    - Injection attempts
+    - Dangerous-looking substrings (defense-in-depth blocklist)
+
+    NOTE: This blocklist is *defense in depth*, not the real security
+    boundary. The DSL is tokenized and parsed to an AST and never executed
+    by eval/exec; an identifier like ``exec`` in user input becomes a SymPy
+    symbol, not Python code. The tokenizer and parser (which reject anything
+    that isn't a recognized token) are the actual boundary. Keep this check
+    in place to make obvious attacks fail fast and to satisfy automated
+    scanners, but do not rely on it for safety.
 
     Args:
         code: DSL code to validate
