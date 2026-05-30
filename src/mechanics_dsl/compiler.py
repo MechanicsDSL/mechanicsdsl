@@ -63,11 +63,13 @@ except ImportError:
     SECURITY_AVAILABLE = False
     InjectionError = ValueError  # type: ignore[misc]
 
-# Version imported from package root for single source of truth
-try:
-    from . import __version__
-except ImportError:
-    __version__ = "1.5.0"
+def _package_version() -> str:
+    """Lazy lookup of the package version to dodge the circular import that
+    would happen if we did ``from . import __version__`` at the module level
+    (this file is imported by ``__init__.py`` before ``__version__`` is set)."""
+    from . import __version__ as _v
+
+    return _v
 
 
 class SystemSerializer:
@@ -88,7 +90,7 @@ class SystemSerializer:
         """
         try:
             state = {
-                "version": __version__,
+                "version": _package_version(),
                 "system_name": compiler.system_name,
                 "variables": compiler.variables,
                 "parameters": compiler.parameters_def,

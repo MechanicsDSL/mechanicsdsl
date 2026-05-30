@@ -450,8 +450,10 @@ class CentralForceAnalyzer:
             precession = total_phi - 2 * np.pi
             return precession
         except Exception as e:
-            logger.warning(f"Precession integration failed: {e}")
-            return 0.0
+            # Returning 0.0 was indistinguishable from a non-precessing
+            # Kepler orbit. NaN makes failure obvious downstream.
+            logger.error(f"Precession integration failed: {e}")
+            return float("nan")
 
     def compute_radial_period(
         self, potential: sp.Expr, angular_momentum: float, mass: float, energy: float
@@ -491,8 +493,9 @@ class CentralForceAnalyzer:
             )
             return 2 * half_period
         except Exception as e:
-            logger.warning(f"Period integration failed: {e}")
-            return float("inf")
+            # Returning inf was indistinguishable from an unbounded orbit.
+            logger.error(f"Period integration failed: {e}")
+            return float("nan")
 
 
 class KeplerProblem:

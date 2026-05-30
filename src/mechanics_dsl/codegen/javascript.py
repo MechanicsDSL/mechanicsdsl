@@ -602,7 +602,9 @@ if (typeof require !== 'undefined' && require.main === module) {{
     console.timeEnd('Simulation');
     console.log(`Completed: ${{results.t.length}} points`);
     console.log(`Final state: ${{results.y[results.y.length-1]}}`);
-    console.log(`Energy drift: ${{Math.abs(results.energy[0] - results.energy[results.energy.length-1]).toFixed(6)}}`);  # noqa: E501
+    console.log(
+        `Energy drift: ${{Math.abs(results.energy[0] - results.energy[results.energy.length-1]).toFixed(6)}}`
+    );
 }}
 """
         return template

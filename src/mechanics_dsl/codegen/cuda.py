@@ -49,6 +49,7 @@ class CudaGenerator(CodeGenerator):
         initial_conditions: Dict[str, float],
         equations: Dict[str, sp.Expr],
         lagrangian: Optional[sp.Expr] = None,
+        hamiltonian: Optional[sp.Expr] = None,
         generate_cpu_fallback: bool = True,
         fluid_particles: List[dict] = None,
         boundary_particles: List[dict] = None,
@@ -79,6 +80,7 @@ class CudaGenerator(CodeGenerator):
             initial_conditions,
             equations,
             lagrangian=lagrangian,
+            hamiltonian=hamiltonian,
         )
 
         self.generate_cpu_fallback = generate_cpu_fallback
@@ -129,22 +131,32 @@ __device__ double compute_energy(const double* state) {{
 }}
 """
 
-    def generate(self, output_dir: str = ".") -> str:
+    def generate(self, output_path: str = ".") -> str:
         """
-        Generate complete CUDA project with all necessary files.
+        Generate a complete CUDA project.
+
+        Accepts either a ``.cu`` file path (the rest of the project is
+        emitted alongside it) or a directory (used to match the
+        ``PhysicsCompiler.export()`` contract that always passes a file
+        path).
 
         Args:
-            output_dir: Directory to write generated files
+            output_path: ``.cu`` file path or directory.
 
         Returns:
-            Path to main CUDA file
+            Path to the main CUDA file.
         """
-        os.makedirs(output_dir, exist_ok=True)
+        if output_path.endswith(".cu"):
+            cuda_file = output_path
+            output_dir = os.path.dirname(os.path.abspath(cuda_file)) or "."
+        else:
+            output_dir = output_path
+            os.makedirs(output_dir, exist_ok=True)
+            cuda_file = os.path.join(output_dir, f"{self.system_name}.cu")
 
         logger.info(f"Generating CUDA code for {self.system_name}")
 
-        # Generate main files
-        cuda_file = os.path.join(output_dir, f"{self.system_name}.cu")
+        # Generate sibling files in the same directory.
         header_file = os.path.join(output_dir, f"{self.system_name}.h")
         cmake_file = os.path.join(output_dir, "CMakeLists.txt")
 

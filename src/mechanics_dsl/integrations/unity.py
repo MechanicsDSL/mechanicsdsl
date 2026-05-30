@@ -6,6 +6,8 @@ Generates C# MonoBehaviour scripts for Unity physics simulation.
 
 from typing import Any, Dict, List, Optional
 
+from ..utils import logger
+
 try:
     import sympy as sp
     from sympy.printing import ccode
@@ -81,7 +83,14 @@ def sympy_to_csharp(expr: Any, coord_map: Dict[str, int] = None) -> str:
         return c_code
 
     except Exception as e:
-        return f"0.0f /* Error: {str(e)[:50]} */"
+        # Emit a symbol that does NOT compile in C#. The previous
+        # placeholder "0.0f /* Error */" compiled silently and produced
+        # zero output - the user only noticed when their game did nothing.
+        logger.error(f"sympy_to_csharp: conversion failed for {expr!r}: {e}")
+        return (
+            f"MECHANICSDSL_CODEGEN_FAILED("
+            f'"unity: {str(e).replace(chr(34), chr(39))[:80]}")'
+        )
 
 
 class UnityGenerator(CodeGenerator if CodeGenerator != object else object):

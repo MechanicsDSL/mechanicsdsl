@@ -34,8 +34,14 @@ def sympy_to_c_wasm(expr: sp.Expr) -> str:
     try:
         return ccode(expr)
     except Exception as e:
-        logger.warning(f"Failed to convert expression to C: {e}")
-        return f"0.0 /* ERROR: {e} */"
+        # Was: returning "0.0 /* ERROR */" which compiles silently in C/WASM
+        # and produced wrong-zero output. Now emits an undefined identifier
+        # so the downstream emcc/cc compile fails with a clear error.
+        logger.error(f"sympy_to_c_wasm: conversion failed for {expr!r}: {e}")
+        return (
+            f"MECHANICSDSL_CODEGEN_FAILED("
+            f'"wasm: {str(e).replace(chr(34), chr(39))[:80]}")'
+        )
 
 
 class WasmGenerator(CodeGenerator):
@@ -153,36 +159,51 @@ double compute_energy(double* state, int n) {{
 }}
 """
 
-    def generate(self, output_dir: str) -> str:
+    def generate(self, output_path: str) -> str:
         """
         Generate WASM project files.
 
+        Two calling styles are supported so this generator stays compatible
+        with ``PhysicsCompiler.export()``, which always passes a single file
+        path:
+
+          * If ``output_path`` ends in ``.c``, that file is written and
+            ``index.html`` / ``build.sh`` are emitted alongside it in the
+            same directory.
+          * Otherwise ``output_path`` is treated as a directory and the
+            files are written as ``<system_name>.c``, ``index.html``,
+            ``build.sh`` inside it.
+
         Args:
-            output_dir: Directory to write generated files
+            output_path: Output file path (``.c``) or output directory.
 
         Returns:
-            Path to main C file
+            Path to the main C file.
 
         Raises:
-            ValueError: If validation fails
+            ValueError: If validation fails.
         """
         self.validate_or_raise()
 
-        os.makedirs(output_dir, exist_ok=True)
+        if output_path.endswith(".c"):
+            c_file = output_path
+            output_dir = os.path.dirname(os.path.abspath(c_file)) or "."
+        else:
+            output_dir = output_path
+            os.makedirs(output_dir, exist_ok=True)
+            c_file = os.path.join(output_dir, f"{self.system_name}.c")
 
         logger.info(f"Generating WASM code for {self.system_name}")
 
-        # Generate C source
-        c_file = os.path.join(output_dir, f"{self.system_name}.c")
         with open(c_file, "w", encoding="utf-8") as f:
             f.write(self._generate_c_source())
 
-        # Generate HTML wrapper
+        # Generate HTML wrapper alongside the .c file.
         html_file = os.path.join(output_dir, "index.html")
         with open(html_file, "w", encoding="utf-8") as f:
             f.write(self._generate_html())
 
-        # Generate build script
+        # Generate build script.
         build_file = os.path.join(output_dir, "build.sh")
         with open(build_file, "w", encoding="utf-8") as f:
             f.write(self._generate_build_script())

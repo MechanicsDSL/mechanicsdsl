@@ -10,9 +10,8 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
 try:
-    from pydantic import BaseModel, Field
+    from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
     from pydantic import ValidationError as PydanticValidationError
-    from pydantic import root_validator, validator
 
     PYDANTIC_AVAILABLE = True
 except ImportError:
@@ -37,21 +36,23 @@ if PYDANTIC_AVAILABLE:
         atol: float = Field(default=1e-9, gt=0, le=1, description="Absolute tolerance")
         max_step: Optional[float] = Field(default=None, gt=0, description="Maximum step size")
 
-        @validator("t_end")
-        def t_end_after_t_start(cls, v, values):
-            if "t_start" in values and v <= values["t_start"]:
+        model_config = ConfigDict(extra="forbid")
+
+        @field_validator("t_end")
+        @classmethod
+        def t_end_after_t_start(cls, v, info):
+            t_start = info.data.get("t_start")
+            if t_start is not None and v <= t_start:
                 raise ValueError("t_end must be greater than t_start")
             return v
 
-        @validator("method")
+        @field_validator("method")
+        @classmethod
         def valid_method(cls, v):
             valid = ["RK45", "RK23", "DOP853", "Radau", "BDF", "LSODA", "euler", "rk4"]
             if v not in valid:
                 raise ValueError(f"method must be one of {valid}")
             return v
-
-        class Config:
-            extra = "forbid"  # Reject unknown fields
 
     class CoordinateConfig(BaseModel):
         """Validated coordinate configuration."""
@@ -63,11 +64,11 @@ if PYDANTIC_AVAILABLE:
         initial_velocity: float = Field(default=0.0)
         bounds: Optional[Tuple[float, float]] = None
 
-        @validator("bounds")
+        @field_validator("bounds")
+        @classmethod
         def valid_bounds(cls, v):
-            if v is not None:
-                if v[0] >= v[1]:
-                    raise ValueError("Lower bound must be less than upper bound")
+            if v is not None and v[0] >= v[1]:
+                raise ValueError("Lower bound must be less than upper bound")
             return v
 
     class ParameterConfig(BaseModel):
@@ -80,19 +81,14 @@ if PYDANTIC_AVAILABLE:
         min_value: Optional[float] = None
         max_value: Optional[float] = None
 
-        @root_validator(skip_on_failure=True)
-        def value_in_bounds(cls, values):
-            val = values.get("value")
-            min_val = values.get("min_value")
-            max_val = values.get("max_value")
-
-            if val is not None:
-                if min_val is not None and val < min_val:
-                    raise ValueError(f"value {val} below min {min_val}")
-                if max_val is not None and val > max_val:
-                    raise ValueError(f"value {val} above max {max_val}")
-
-            return values
+        @model_validator(mode="after")
+        def value_in_bounds(self):
+            if self.value is not None:
+                if self.min_value is not None and self.value < self.min_value:
+                    raise ValueError(f"value {self.value} below min {self.min_value}")
+                if self.max_value is not None and self.value > self.max_value:
+                    raise ValueError(f"value {self.value} above max {self.max_value}")
+            return self
 
     class CodegenConfig(BaseModel):
         """Validated code generation configuration."""
@@ -105,7 +101,8 @@ if PYDANTIC_AVAILABLE:
         use_simd: bool = Field(default=True)
         embedded: bool = Field(default=False)
 
-        @validator("target")
+        @field_validator("target")
+        @classmethod
         def valid_target(cls, v):
             valid = [
                 "cpp",
@@ -136,7 +133,8 @@ if PYDANTIC_AVAILABLE:
         cors_origins: List[str] = Field(default_factory=list)
         enable_docs: bool = Field(default=True)
 
-        @validator("host")
+        @field_validator("host")
+        @classmethod
         def valid_host(cls, v):
             import socket
 

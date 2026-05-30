@@ -431,8 +431,14 @@ class ActionAngleVariables:
         q_vals = np.linspace(q_min, q_max, 1000)
         try:
             p_vals = np.array([abs(p_func(q)) for q in q_vals])
-        except Exception:
-            return 0.0
+        except Exception as e:
+            # Was silently returning 0.0 with no log - a perfectly-valid-looking
+            # action-angle result that was actually a failed evaluation.
+            logger.error(
+                f"compute_action_variable: momentum evaluation failed across "
+                f"sampling grid ({e}); cannot proceed."
+            )
+            return float("nan")
 
         # Find sign changes or zeros
         turning_points = []
@@ -441,8 +447,11 @@ class ActionAngleVariables:
                 turning_points.append(q_vals[i])
 
         if len(turning_points) < 2:
-            logger.warning("Could not find two turning points")
-            return 0.0
+            logger.warning(
+                "compute_action_variable: could not find two turning points; "
+                "the orbit may not be bounded at this energy."
+            )
+            return float("nan")
 
         q_left = min(turning_points)
         q_right = max(turning_points)
@@ -453,8 +462,8 @@ class ActionAngleVariables:
             J = integral / np.pi  # Factor of 2π for full cycle, but we only do half
             return J
         except Exception as e:
-            logger.warning(f"Action integral failed: {e}")
-            return 0.0
+            logger.error(f"Action integral failed: {e}")
+            return float("nan")
 
     def compute_frequency(
         self, hamiltonian: sp.Expr, coordinate: str, action: float, delta_J: float = 0.01

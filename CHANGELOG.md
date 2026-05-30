@@ -5,6 +5,95 @@ All notable changes to MechanicsDSL will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2026-05-29
+
+### 🔬 Quality & Validation Release
+
+Backs up v2.1.0's correctness fixes with verification. Adds physics
+validation against textbook closed-form answers, smoke tests for every
+codegen backend, and end-to-end tests for the plugin, inverse, and JAX
+features. Each batch of new tests surfaced a real bug, all fixed here.
+
+### Added
+
+- **Physics validation suite** (`tests/physics/test_domain_validation.py`,
+  11 tests) — every domain module is now spot-checked against a textbook
+  closed-form answer: small-angle pendulum period, projectile range,
+  Lorentz factor, Schwarzschild radius, hydrogen ground state, harmonic
+  oscillator levels, Carnot efficiency, ideal gas law, SPH Poly6 kernel
+  normalization, cantilever tip deflection.
+- **Codegen smoke tests** (`tests/integration/test_codegen_smoke.py`,
+  14 tests + skips) — every backend generates non-trivial output for a
+  pendulum, with optional `node --check` and `g++ -fsyntax-only` passes
+  where the host tooling is available.
+- **Feature end-to-end tests** (`tests/integration/test_features_e2e.py`)
+  — plugin file load + invoke, parameter estimator recovery of a known
+  ground-truth length, and a JAX-backend pendulum run (skipped when JAX
+  isn't installed).
+- ``MECHANICSDSL_CODEGEN_FAILED`` sentinel — the new placeholder emitted
+  by Unity, Unreal, Modelica, and WASM when a sympy → target-language
+  conversion fails. The string deliberately doesn't compile in any of
+  those targets so the failure surfaces at build time instead of
+  silently producing a `0.0` literal.
+
+### Fixed
+
+- **`ParameterEstimator` actually fits now.** It was setting new parameter
+  values on `compiler.simulator.parameters` but never recompiling the
+  lambdified equations — the optimizer's loss surface was flat because
+  the simulated trajectory always used the original baked-in constants.
+  The fit appeared to succeed (`result.success is True`) while returning
+  the initial guess unchanged. Now the simulator recompiles its
+  equations on every objective evaluation.
+- **`CudaGenerator` accepts `hamiltonian=`** like every other generator.
+  The new `PhysicsCompiler.export()` passes `hamiltonian=` to all
+  backends; CUDA was the only one that rejected it.
+- **CUDA and WASM generators write to a file path** (matching
+  `PhysicsCompiler.export()`'s contract) in addition to the legacy
+  "write to a directory" mode. Calling `.generate("foo.cu")` no longer
+  raises `FileExistsError` on Windows.
+- **JavaScript output no longer embeds a Python `# noqa: E501` comment**
+  inside the generated `console.log(...)` block; Node was rejecting the
+  generated file with `SyntaxError`.
+- **Domain methods that masked failures as numeric defaults** — silent
+  `return 0.0` / `return float("inf")` paths in
+  `canonical.compute_action_variable`, `central_forces` precession and
+  period integrations, and `scattering` cross-section now return
+  `float("nan")` with an ERROR-level log. NaN propagates obviously
+  downstream; the old defaults looked like physically valid results.
+- **Unity / Unreal / Modelica / WASM** integration codegen no longer emits
+  `0.0f /* Error */` (which compiled to silent-zero output in the target
+  language). They now emit `MECHANICSDSL_CODEGEN_FAILED("...")` plus an
+  ERROR log; the generated target source fails to compile, surfacing
+  the conversion problem at the right layer.
+- `compile_dsl` initializes `equations` before the formulation branch so
+  a DSL with no Lagrangian / Hamiltonian / fluid produces a clear error
+  instead of `UnboundLocalError`.
+- `tests/unit/test_server_comprehensive.py` previously used non-existent
+  `\coordinates` / `\parameters` (plural) DSL keywords; replaced with
+  real `\defvar` / `\parameter` syntax. These tests were silently
+  skipped before fastapi was installed; now they actually run.
+- `tests/test_cli.py::test_cli_version` no longer hardcodes `"2.0"`;
+  it now asserts the CLI version tracks the package version.
+
+### Changed
+
+- **`validators.py` fully migrated to Pydantic v2** — `@validator` →
+  `@field_validator` (+`@classmethod`), `@root_validator` →
+  `@model_validator(mode="after")`, `class Config` →
+  `model_config = ConfigDict(...)`. Removes deprecation warnings on
+  Pydantic 2.x.
+- **Compiler version is single-source** — `compiler.py` no longer carries
+  a stale `__version__ = "1.5.0"` fallback; it lazy-loads the real
+  version from the package root.
+
+### Tests
+
+- 2182 passing, 9 skipped, 0 failing (was 2155). +27 net tests: 11 physics
+  validation, 14 codegen smoke, 3 feature e2e (one skipped).
+
+---
+
 ## [2.1.0] - 2026-05-29
 
 ### 🛡️ Correctness, Security & Consolidation Release

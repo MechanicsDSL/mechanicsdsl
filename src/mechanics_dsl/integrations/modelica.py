@@ -8,6 +8,8 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from ..utils import logger
+
 try:
     import sympy as sp
     from sympy.printing import ccode
@@ -68,7 +70,14 @@ def sympy_to_modelica(expr: Any) -> str:
         return c_code
 
     except Exception as e:
-        return f"0 /* Error: {str(e)[:50]} */"
+        # MECHANICSDSL_CODEGEN_FAILED is undefined in Modelica's namespace so
+        # the generated .mo file fails at parse time rather than silently
+        # substituting 0 for the failed expression.
+        logger.error(f"sympy_to_modelica: conversion failed for {expr!r}: {e}")
+        return (
+            f"MECHANICSDSL_CODEGEN_FAILED("
+            f'"modelica: {str(e).replace(chr(34), chr(39))[:80]}")'
+        )
 
 
 class ModelicaGenerator:

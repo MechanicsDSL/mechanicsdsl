@@ -6,6 +6,8 @@ Generates C++ ActorComponent for Unreal Engine physics simulation.
 
 from typing import Any, Dict, List, Optional
 
+from ..utils import logger
+
 try:
     import sympy as sp
     from sympy.printing import ccode
@@ -75,7 +77,13 @@ def sympy_to_cpp(expr: Any, use_fmath: bool = True) -> str:
         return c_code
 
     except Exception as e:
-        return f"0.0f /* Error: {str(e)[:50]} */"
+        # An invalid identifier so the generated C++ fails to compile rather
+        # than silently using 0.0f for the failed expression.
+        logger.error(f"sympy_to_cpp: conversion failed for {expr!r}: {e}")
+        return (
+            f"MECHANICSDSL_CODEGEN_FAILED("
+            f'"unreal: {str(e).replace(chr(34), chr(39))[:80]}")'
+        )
 
 
 class UnrealGenerator:

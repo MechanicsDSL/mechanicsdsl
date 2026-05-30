@@ -294,8 +294,10 @@ class ScatteringAnalyzer:
             result, _ = integrate.quad(integrand, theta_min, theta_max)
             return 2 * np.pi * result
         except Exception as e:
-            logger.warning(f"Cross-section integration failed: {e}")
-            return float("inf")
+            # Was returning inf (physically meaningful: "no scattering, infinite
+            # cross-section") which masked the integration failure.
+            logger.error(f"Cross-section integration failed: {e}")
+            return float("nan")
 
 
 class SymbolicScattering:

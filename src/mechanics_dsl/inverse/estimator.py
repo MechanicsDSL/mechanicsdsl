@@ -128,7 +128,20 @@ class ParameterEstimator:
 
             # Run simulation
             try:
+                # The simulator's compiled (lambdified) equations have the
+                # current parameter values substituted as numeric constants -
+                # so just calling set_parameters() doesn't actually move the
+                # objective. Recompile the equations with the new values
+                # before each simulation.
                 self.compiler.simulator.set_parameters(params)
+                if (
+                    self.compiler.equations is not None
+                    and not self.compiler.use_hamiltonian_formulation
+                ):
+                    self.compiler.simulator.compile_equations(
+                        self.compiler.equations,
+                        self.compiler.get_coordinates(),
+                    )
                 result = self.compiler.simulate(
                     t_span=(float(t_obs[0]), float(t_obs[-1])), num_points=len(t_obs)
                 )
