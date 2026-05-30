@@ -56,7 +56,7 @@ if PYDANTIC_AVAILABLE:
     class CoordinateConfig(BaseModel):
         """Validated coordinate configuration."""
 
-        name: str = Field(..., min_length=1, max_length=64, regex=r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+        name: str = Field(..., min_length=1, max_length=64, pattern=r"^[a-zA-Z_][a-zA-Z0-9_]*$")
         description: str = Field(default="", max_length=256)
         unit: str = Field(default="", max_length=32)
         initial_value: float = Field(default=0.0)
@@ -73,14 +73,14 @@ if PYDANTIC_AVAILABLE:
     class ParameterConfig(BaseModel):
         """Validated parameter configuration."""
 
-        name: str = Field(..., min_length=1, max_length=64, regex=r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+        name: str = Field(..., min_length=1, max_length=64, pattern=r"^[a-zA-Z_][a-zA-Z0-9_]*$")
         value: float = Field(...)
         description: str = Field(default="", max_length=256)
         unit: str = Field(default="", max_length=32)
         min_value: Optional[float] = None
         max_value: Optional[float] = None
 
-        @root_validator
+        @root_validator(skip_on_failure=True)
         def value_in_bounds(cls, values):
             val = values.get("value")
             min_val = values.get("min_value")

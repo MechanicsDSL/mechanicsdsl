@@ -1,5 +1,10 @@
 """
-Visualization engine for MechanicsDSL
+Legacy MechanicsVisualizer.
+
+This module was originally at ``src/mechanics_dsl/visualization.py`` and
+collided with the same-named ``visualization`` package. It now lives inside
+the package as a private submodule; ``visualization/__init__.py`` re-exports
+``MechanicsVisualizer`` so existing imports keep working.
 """
 
 from collections import deque
@@ -9,8 +14,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sympy as sp
 
-from .energy import PotentialEnergyCalculator
-from .utils import (
+from ..energy import PotentialEnergyCalculator
+from ..utils import (
     ANIMATION_INTERVAL_MS,
     PRIMARY_COLOR,
     SECONDARY_COLOR,

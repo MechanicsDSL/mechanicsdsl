@@ -1,16 +1,14 @@
 """
-Comprehensive unit tests for src/mechanics_dsl/visualization.py
+Comprehensive unit tests for the legacy MechanicsVisualizer.
 
-Tests the MechanicsVisualizer class for 95%+ code coverage.
-Covers all methods: __init__, has_ffmpeg, save_animation_to_file, setup_3d_plot,
-animate_pendulum, _animate_single_pendulum, _animate_double_pendulum,
-animate_fluid_from_csv, animate_oscillator, animate, _animate_phase_space,
-plot_energy, plot_phase_space
+The class now lives at ``mechanics_dsl.visualization._legacy`` and is
+re-exported from ``mechanics_dsl.visualization``. A normal import works;
+the previous importlib spec-from-file-location dance is no longer needed
+because the module no longer collides with a same-named package.
 """
 
 import os
 import shutil
-import sys
 import tempfile
 from unittest.mock import MagicMock, patch
 
@@ -22,32 +20,7 @@ matplotlib.use("Agg")  # Use non-interactive backend for testing
 import matplotlib.animation as animation  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
 
-# Import MechanicsVisualizer from the visualization.py module file
-# The visualization/ folder shadows visualization.py when using normal imports
-# Use the same module name as visualization/__init__.py for coverage tracking
-_src_path = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "src"
-)
-if _src_path not in sys.path:
-    sys.path.insert(0, _src_path)
-
-# Module name must match what visualization/__init__.py uses for coverage to work
-_MODULE_NAME = "mechanics_dsl._visualization_module"
-_viz_file = os.path.join(_src_path, "mechanics_dsl", "visualization.py")
-
-# Check if already loaded by package import
-if _MODULE_NAME in sys.modules:
-    _viz_module = sys.modules[_MODULE_NAME]
-else:
-    import importlib.util
-
-    _spec = importlib.util.spec_from_file_location(_MODULE_NAME, _viz_file)
-    _viz_module = importlib.util.module_from_spec(_spec)
-    _viz_module.__package__ = "mechanics_dsl"
-    sys.modules[_MODULE_NAME] = _viz_module
-    _spec.loader.exec_module(_viz_module)
-
-MechanicsVisualizer = _viz_module.MechanicsVisualizer
+from mechanics_dsl.visualization import MechanicsVisualizer  # noqa: E402
 
 
 # ============================================================================

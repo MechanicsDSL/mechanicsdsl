@@ -19,10 +19,12 @@ class TestCLIBasics:
     """Test basic CLI functionality using direct function calls."""
 
     def test_cli_version(self):
-        """Test --version flag."""
-        from mechanics_dsl.cli import __version__
+        """The CLI exposes the same major version as the package."""
+        from mechanics_dsl import __version__ as pkg_version
+        from mechanics_dsl.cli import __version__ as cli_version
 
-        assert "2.0" in __version__
+        assert cli_version == pkg_version
+        assert cli_version.startswith("2.")
 
     def test_cli_help(self):
         """Test that main parser has expected commands."""
