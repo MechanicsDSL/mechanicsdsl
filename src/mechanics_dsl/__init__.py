@@ -8,7 +8,10 @@ mechanical systems using LaTeX-inspired notation.
 # Core imports from main modules
 from .compiler import PhysicsCompiler
 
-# Analysis imports
+# Analysis (lives in two complementary modules - top-level energy.py for the
+# Lagrangian-aware potential-energy extractor, and the analysis/ package for
+# post-simulation energy/stability analyzers)
+from .analysis import EnergyAnalyzer, StabilityAnalyzer
 from .energy import PotentialEnergyCalculator
 
 # Exceptions with actionable error messages
@@ -26,12 +29,17 @@ from .exceptions import (
 )
 from .parser import MechanicsParser, tokenize
 from .solver import NumericalSimulator  # Now imports from solver package
+
+# Optional Numba-JIT backend. Importing the module is cheap (the heavy numba
+# import is gated behind HAS_NUMBA); the class only fails at instantiation
+# when numba isn't installed.
+from .solver_numba import NumbaSimulator, is_numba_available
 from .symbolic import SymbolicEngine
 
 # Utils imports
 from .utils import config, logger, setup_logging
 
-__version__ = "2.0.7"
+__version__ = "2.1.0"
 __author__ = "Noah Parsons"
 __license__ = "MIT"
 
@@ -57,6 +65,8 @@ __all__ = [
     "MechanicsParser",
     "SymbolicEngine",
     "NumericalSimulator",
+    "NumbaSimulator",
+    "is_numba_available",
     "tokenize",
     # Utils
     "setup_logging",
@@ -64,6 +74,8 @@ __all__ = [
     "config",
     # Analysis
     "PotentialEnergyCalculator",
+    "EnergyAnalyzer",
+    "StabilityAnalyzer",
     # Presets
     "get_preset",
     "list_presets",

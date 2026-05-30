@@ -317,7 +317,12 @@ class TestRealEndpoints:
 
     def test_compile_valid_dsl(self):
         """POST /api/compile with valid DSL succeeds"""
-        dsl = r"\system{oscillator}\coordinates{x}\parameters{k=1.0, m=1.0}\lagrangian{0.5*m*x_dot^2 - 0.5*k*x^2}"  # noqa: E501
+        dsl = (
+            r"\system{oscillator}"
+            r"\defvar{x}{Position}{m}"
+            r"\parameter{k}{1.0}{1}\parameter{m}{1.0}{kg}"
+            r"\lagrangian{0.5*m*\dot{x}^2 - 0.5*k*x^2}"
+        )
         response = self.client.post("/api/compile", json={"code": dsl})
         assert response.status_code == 200
         data = response.json()
@@ -333,7 +338,13 @@ class TestRealEndpoints:
 
     def test_simulate_valid(self):
         """POST /api/simulate compiles and runs simulation"""
-        dsl = r"\system{oscillator}\coordinates{x}\parameters{k=1.0, m=1.0}\lagrangian{0.5*m*x_dot^2 - 0.5*k*x^2}\initial{x=1.0, x_dot=0}"  # noqa: E501
+        dsl = (
+            r"\system{oscillator}"
+            r"\defvar{x}{Position}{m}"
+            r"\parameter{k}{1.0}{1}\parameter{m}{1.0}{kg}"
+            r"\lagrangian{0.5*m*\dot{x}^2 - 0.5*k*x^2}"
+            r"\initial{x=1.0, x_dot=0}"
+        )
         response = self.client.post(
             "/api/simulate",
             json={
@@ -351,7 +362,12 @@ class TestRealEndpoints:
 
     def test_export_invalid_target(self):
         """POST /api/export with invalid target returns error"""
-        dsl = r"\system{test}\coordinates{x}\parameters{k=1.0}\lagrangian{0.5*x_dot^2 - 0.5*k*x^2}"
+        dsl = (
+            r"\system{test}"
+            r"\defvar{x}{Position}{m}"
+            r"\parameter{k}{1.0}{1}"
+            r"\lagrangian{0.5*\dot{x}^2 - 0.5*k*x^2}"
+        )
         response = self.client.post(
             "/api/export",
             json={

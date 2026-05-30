@@ -5,6 +5,134 @@ All notable changes to MechanicsDSL will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-05-29
+
+### 🛡️ Correctness, Security & Consolidation Release
+
+A focused pass over the compile pipeline, the server, and the package
+layout. Most users should upgrade; two behaviors changed in ways callers
+may rely on - see **Breaking changes** below.
+
+### Added
+
+- **`\force{coord}{expr}`** — generalized forces can now target a named
+  coordinate. The legacy `\force{expr}` form still works but applies
+  positionally and now warns when used with a multi-DOF system.
+- **`PhysicsCompiler.export(target, filename)`** — public method that
+  dispatches to any of the code generators. The server `/export` route
+  (previously broken — see Fixed) now uses it.
+- **`result["warnings"]`** — `compile_dsl()` now surfaces diagnostics from
+  the symbolic solver and the equation compiler instead of silently
+  returning zero accelerations. A successful compile with non-empty
+  warnings is no longer indistinguishable from a clean one.
+- **Public exports for complementary modules** — `NumbaSimulator`,
+  `is_numba_available`, `EnergyAnalyzer`, and `StabilityAnalyzer` are now
+  importable from `mechanics_dsl` directly.
+- **`MAX_SESSIONS = 256`** bound on the server's in-memory session store
+  with LRU eviction and a thread lock. Anonymous (no `session_id`)
+  requests now get a fresh per-request compiler.
+- Regression test suite (`tests/unit/test_v2_1_0_regressions.py`, 24
+  tests) and FastAPI end-to-end tests (`tests/integration/
+  test_server_endpoints.py`, 10 tests) pinning every fix in this release.
+
+### Changed
+
+- **Visualization package layout** — `src/mechanics_dsl/visualization.py`
+  moved into the `visualization/` package as `_legacy.py`. The previous
+  `__init__.py` re-loaded the colliding module file via
+  `importlib.util.spec_from_file_location`; that hack is gone.
+  `MechanicsVisualizer` still re-exports unchanged.
+- `requirements.txt` is now a thin pointer at `pyproject.toml` listing
+  only the real runtime deps. The `numba`, `pytest`, `black`, and
+  `flake8` entries are gone (none of those are runtime dependencies).
+- `mypy` `attr-defined` warnings are no longer suppressed — re-enabling
+  that check would have caught the broken `/export` route.
+
+### Fixed
+
+- **`compile_dsl()` no longer leaks state between calls.** A reused
+  `PhysicsCompiler` previously inherited variables, constraints, forces,
+  initial conditions, and simulator parameters from the prior compile;
+  the server's reused per-session compiler made this silently corrupt
+  subsequent systems. The compiler now resets all per-system state at
+  the start of every `compile_dsl()` call.
+- **`/export` endpoint** called `compiler.export(target, filename)` —
+  a method that did not exist on `PhysicsCompiler`. Now the method
+  exists and the route works.
+- **Generalized forces are matched by coordinate**, not by list index.
+  Previously the i-th `\force` was bound to the i-th coordinate, which
+  silently mis-assigned in any multi-DOF system.
+- **Symbolic solver diagnostics surface** through `result["warnings"]`
+  instead of being swallowed. `solve_for_accelerations` previously
+  returned `0` on every failure path and the compile still reported
+  `success: True`.
+- **`compile_to_cpp` argv hardening** — the generated source path is
+  normalized to absolute so a filename starting with `-` cannot be
+  reinterpreted as a g++ flag.
+- **Symbolic cache key** is now `str(expr)` instead of
+  `str(hash(str(expr)))`. The previous hash-of-string keys could
+  collide and return wrong cached SymPy expressions.
+- `compile_dsl` initialises `equations` before the formulation branch so
+  a Lagrangian-less / Hamiltonian-less / fluid-less input gets a clear
+  error rather than `UnboundLocalError`.
+
+### Security
+
+- **Pickle deserialization is opt-in.**
+  `SystemSerializer.load_pickle`, `deserialize_solution`,
+  `SystemSerializer.import_system`, and
+  `PhysicsCompiler.import_system` now refuse `.pkl` / `.pickle` files
+  by default and require an explicit `allow_pickle=True` argument.
+  Pickle can execute arbitrary code; the previous default was unsafe
+  for any file the user did not produce themselves.
+- **Server session DoS** mitigated — the session store is bounded and
+  the default session is no longer a shared mutable compiler across
+  anonymous requests.
+- **Rate limiter** keys anonymous traffic under `"anonymous"` so it
+  can't be bypassed by simply omitting `session_id`.
+- **Tokenizer rejects unrecognized characters** with a precise position
+  (was silently dropping them). Malformed DSL is now an error at the
+  earliest stage, not surprise behavior downstream.
+
+### Removed
+
+- `src/mechanics_dsl/compiler_pkg/` — zero references anywhere in the
+  codebase. Dead.
+- `src/mechanics_dsl/utils/units.py` — a verbatim duplicate of the
+  top-level `units.py`. Only its own test imported it.
+- `src/mechanics_dsl/error_handling.py` and its test — imported only
+  by the test itself, never wired into the package. Use the
+  `exceptions` module instead.
+
+### Breaking changes
+
+- **Pickle is no longer loaded by default.** Code that did
+  `import_system("system.pkl")` must now pass `allow_pickle=True`. JSON
+  loading is unaffected.
+- **The tokenizer rejects unknown characters.** DSL sources that
+  previously parsed by silently dropping `@`, `&`, etc. now raise a
+  `ValueError` at compile time.
+
+### Migration
+
+```python
+# Before
+state = PhysicsCompiler.import_system("system.pkl")
+
+# After (only if you produced the file yourself)
+state = PhysicsCompiler.import_system("system.pkl", allow_pickle=True)
+```
+
+```latex
+% Before - works on 1-DOF, silently wrong on multi-DOF
+\force{F_drive}
+
+% After - explicit target, multi-DOF safe
+\force{theta}{F_drive}
+```
+
+---
+
 ## [2.0.7] - 2026-01-30
 
 ### Changed
