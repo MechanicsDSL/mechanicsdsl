@@ -3,11 +3,11 @@
 # ============================================================================
 # Multi-stage build for optimized production image
 #
-# Build: docker build -t mechanicsdsl:2.0 .
-# Run:   docker run -it mechanicsdsl:2.0
+# Build: docker build -t mechanicsdsl:2.1.2 .
+# Run:   docker run -it mechanicsdsl:2.1.2
 #
 # GPU Build (requires nvidia-docker):
-#   docker build --build-arg GPU=true -t mechanicsdsl:2.0-gpu .
+#   docker build --build-arg GPU=true -t mechanicsdsl:2.1.2-gpu .
 # ============================================================================
 
 # Build arguments

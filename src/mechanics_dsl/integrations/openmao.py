@@ -140,6 +140,18 @@ class OpenMDAOMechanicsComponent:
                         params[param] = float(inputs[param])
 
                 self._compiler.simulator.set_parameters(params)
+                # The simulator's lambdified equations have parameter values
+                # baked in; without this recompile, an OpenMDAO optimizer
+                # would explore a flat loss surface and "converge" at its
+                # initial guess (the same bug ParameterEstimator had).
+                if (
+                    self._compiler.equations is not None
+                    and not self._compiler.use_hamiltonian_formulation
+                ):
+                    self._compiler.simulator.compile_equations(
+                        self._compiler.equations,
+                        self._compiler.get_coordinates(),
+                    )
 
                 # Run simulation
                 solution = self._compiler.simulate(

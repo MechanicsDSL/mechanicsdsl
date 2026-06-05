@@ -97,7 +97,7 @@ compiler.simulator.set_initial_conditions({
 solution = compiler.simulate(t_span=(0, 6.326), num_points=2000)
 ```
 
-The `examples/` directory contains 30+ progressive examples, from harmonic oscillators to SPH fluid dynamics.
+The `examples/` directory contains 40+ progressive examples, from harmonic oscillators to SPH fluid dynamics.
 
 ## Code generation
 

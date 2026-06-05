@@ -18,7 +18,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: runtime-gpu
-    image: mechanicsdsl:2.0-gpu
+    image: mechanicsdsl:2.1.2-gpu
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
       - JAX_PLATFORM_NAME=gpu
@@ -36,7 +36,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: runtime-gpu
-    image: mechanicsdsl:2.0-gpu
+    image: mechanicsdsl:2.1.2-gpu
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
       - JAX_PLATFORM_NAME=gpu

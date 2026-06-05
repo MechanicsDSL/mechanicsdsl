@@ -27,7 +27,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: mechanicsdsl:2.0
+    image: mechanicsdsl:2.1.2
     container_name: mdsl-api
     command: >
       python -m mechanics_dsl.server
@@ -58,7 +58,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: mechanicsdsl:2.0
+    image: mechanicsdsl:2.1.2
     container_name: mdsl-jupyter
     command: >
       jupyter lab
@@ -86,7 +86,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: mechanicsdsl:2.0
+    image: mechanicsdsl:2.1.2
     container_name: mdsl-worker
     command: >
       python -c "

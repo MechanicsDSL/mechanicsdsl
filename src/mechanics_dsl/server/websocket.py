@@ -3,6 +3,8 @@ WebSocket streaming for real-time simulation.
 """
 
 import asyncio
+import threading
+from collections import OrderedDict
 from typing import Any, Dict
 
 try:
@@ -60,11 +62,16 @@ class SimulationStreamer:
         self._solution = await loop.run_in_executor(None, _simulate)
         return self._solution
 
-    async def stream_frames(self, websocket: "WebSocket"):
+    async def stream_frames(self, websocket: "WebSocket", restart: bool = False):
         """
         Stream simulation frames to WebSocket.
 
-        Yields frames at the specified frame rate.
+        Args:
+            websocket: Target socket.
+            restart: When True, rewind to frame 0 before streaming. The
+                default (False) resumes from whatever frame the streamer
+                was paused at, so calling ``resume()`` after ``pause()``
+                actually resumes instead of starting the playback over.
         """
         if self._solution is None or not self._solution["success"]:
             await websocket.send_json({"type": "error", "message": "Simulation not available"})
@@ -76,7 +83,8 @@ class SimulationStreamer:
 
         frame_interval = 1.0 / self.frame_rate
         self._running = True
-        self._current_frame = 0
+        if restart:
+            self._current_frame = 0
 
         while self._running and self._current_frame < n_frames:
             # Build frame data
@@ -115,9 +123,30 @@ class SimulationStreamer:
             self._current_frame = max(0, min(frame, len(self._solution["t"]) - 1))
 
 
-# Active connections
-_connections: Dict[str, "WebSocket"] = {}
-_streamers: Dict[str, SimulationStreamer] = {}
+# Active connections.
+#
+# Bounded LRU so a crashed handler (anything other than a clean
+# ``WebSocketDisconnect``) can't leak entries forever. Mirrors the
+# session-store fix on the REST routes.
+MAX_WS_CONNECTIONS = 256
+_connections: "OrderedDict[str, Any]" = OrderedDict()
+_streamers: "OrderedDict[str, SimulationStreamer]" = OrderedDict()
+_ws_lock = threading.Lock()
+
+
+def _record_connection(session_id: str, websocket: Any) -> None:
+    """Record an active socket, evicting the oldest if the cap is hit."""
+    with _ws_lock:
+        _connections[session_id] = websocket
+        while len(_connections) > MAX_WS_CONNECTIONS:
+            _connections.popitem(last=False)
+
+
+def _drop_connection(session_id: str) -> None:
+    """Drop a socket and its streamer, regardless of how the handler exited."""
+    with _ws_lock:
+        _connections.pop(session_id, None)
+        _streamers.pop(session_id, None)
 
 
 if FASTAPI_AVAILABLE:
@@ -145,7 +174,7 @@ if FASTAPI_AVAILABLE:
         await websocket.accept()
 
         session_id = str(id(websocket))
-        _connections[session_id] = websocket
+        _record_connection(session_id, websocket)
 
         compiler = None
         streamer = None
@@ -200,9 +229,9 @@ if FASTAPI_AVAILABLE:
                     await websocket.send_json({"type": "simulating"})
                     await streamer.run_simulation()
 
-                    # Stream frames
+                    # Stream frames from the beginning of a fresh simulation.
                     await websocket.send_json({"type": "streaming"})
-                    await streamer.stream_frames(websocket)
+                    await streamer.stream_frames(websocket, restart=True)
 
                 elif action == "pause":
                     if streamer:
@@ -212,7 +241,7 @@ if FASTAPI_AVAILABLE:
                 elif action == "resume":
                     if streamer:
                         streamer.resume()
-                        # Continue streaming from current frame
+                        # Continue from the paused frame (not from 0).
                         await streamer.stream_frames(websocket)
 
                 elif action == "seek":
@@ -225,6 +254,16 @@ if FASTAPI_AVAILABLE:
                     if compiler:
                         params = data.get("values", {})
                         compiler.simulator.set_parameters(params)
+                        # Without recompiling, the lambdified equations keep
+                        # the old constants and the next /simulate would
+                        # ignore the update.
+                        if (
+                            compiler.equations is not None
+                            and not compiler.use_hamiltonian_formulation
+                        ):
+                            compiler.simulator.compile_equations(
+                                compiler.equations, compiler.get_coordinates()
+                            )
                         await websocket.send_json({"type": "params_updated", "values": params})
 
                 elif action == "ping":
@@ -233,11 +272,9 @@ if FASTAPI_AVAILABLE:
         except WebSocketDisconnect:
             pass
         finally:
-            # Cleanup
-            if session_id in _connections:
-                del _connections[session_id]
-            if session_id in _streamers:
-                del _streamers[session_id]
+            # Drop the session regardless of how the handler exited so we
+            # never leak _connections / _streamers entries.
+            _drop_connection(session_id)
 
 
 __all__ = ["websocket_router", "SimulationStreamer", "simulation_stream"]

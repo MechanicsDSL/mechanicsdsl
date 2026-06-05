@@ -5,6 +5,104 @@ All notable changes to MechanicsDSL will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.2] - 2026-06-04
+
+### 🧹 Cleanup & Latent-Bug Release
+
+Closes the high- and medium-priority findings surfaced in the v2.1.1
+take-stock review. Every item below corresponds to a real defect or
+piece of staleness somebody hit (or would hit) — not speculative
+cleanup.
+
+### Fixed
+
+- **`set_parameters` was a no-op in four more places.** v2.1.1 fixed
+  this only in `ParameterEstimator`; the same pattern was silently
+  broken in:
+    - `jupyter/magic.py:210` — `%mdsl_params m=2.0` would print
+      "Updated parameters" while the next `%%mechanicsdsl` ran with
+      the old values.
+    - `integrations/openmao.py:142` — OpenMDAO optimizations explored
+      a flat loss surface and "converged" at the initial guess.
+    - `integrations/ros2.py:200` — The ROS2 `/parameters` topic
+      accepted updates that never reached the running simulation.
+    - `server/websocket.py:227` — The WebSocket `params` action
+      replied `params_updated` but the next streamed simulation used
+      the original constants.
+  All four now recompile the lambdified equations after updating
+  parameters, the same fix shape as the estimator.
+- **LSP server is functional again.** `lsp/server.py:12` imported from
+  the pre-1.0 `pygls.lsp.types` namespace; pygls ≥1.0 moved types to
+  the standalone `lsprotocol` package and `LanguageServer` to
+  `pygls.lsp.server`. With the declared dependency (`pygls>=1.0.0`)
+  installed, the server silently set `PYGLS_AVAILABLE = False` and
+  refused to start. Migrated to the modern API and verified against
+  pygls 2.1.
+- **WebSocket `resume` action actually resumes.** `server/websocket.py`
+  — `stream_frames()` previously reset `_current_frame` to 0
+  unconditionally, so resume-after-pause always restarted from the
+  beginning. The handler now restarts only when called for a fresh
+  simulation; the resume path continues from the paused frame.
+- **WebSocket bookkeeping is bounded.** `_connections` and `_streamers`
+  are now a bounded LRU (`MAX_WS_CONNECTIONS = 256`) under a thread
+  lock, and the cleanup is unconditional in the `finally` block so a
+  non-`WebSocketDisconnect` exception can't leak entries. Mirrors the
+  REST session-store fix from v2.1.0.
+- **JAX backend test signature.** `tests/integration/test_features_e2e.py`
+  was calling `backend.simulate(compiler, t_span, num_points=20)` —
+  the real signature is `simulate(equations, t_span, y0, ...)` where
+  `equations` is the compiled callable from
+  `compile_equations(accelerations, coordinates, parameters)`. The
+  test would have errored the moment anyone with JAX installed ran
+  it; rewritten to use the right pipeline.
+
+### Changed
+
+- **Stale version strings swept.**
+    - `conda-recipe/meta.yaml`: 1.5.1 → 2.1.2 (was six minor versions
+      behind).
+    - `Dockerfile`, `docker-compose.yml`, `docker-compose.gpu.yml`:
+      `mechanicsdsl:2.0` / `mechanicsdsl:2.0-gpu` → `:2.1.2` /
+      `:2.1.2-gpu`.
+    - `src/mechanics_dsl/repl.py`: REPL banner v2.0.6 → v2.1.2.
+    - `# v6.0:` comments scattered across `compiler.py`, `solver/core.py`,
+      `symbolic.py` — these referenced an internal pre-release scheme
+      that was never the public version. Stripped.
+- **Pre-commit `types-all` replaced.** `.pre-commit-config.yaml` —
+  `types-all` is deprecated; replaced with `types-setuptools` and
+  `types-PyYAML` plus a comment pointing at `mypy --install-types`
+  for anything else.
+- **REPL exports open with explicit UTF-8 encoding.** `repl.py` —
+  `:export json` and `:export csv` now pass `encoding="utf-8"` so
+  non-ASCII data isn't mangled on Windows (cp1252 default).
+- **README example count.** "30+ examples" → "40+" to match the actual
+  count (44 Python + 5 .mdsl).
+- **Modelica import** documents the round-trip limitation explicitly:
+  the imported `.mdsl` file leaves a `\lagrangian{}` placeholder that
+  the user fills in by hand. The previous `% TODO` left users
+  guessing whether this would ever work.
+- **`quantum/core.py`** documents that returned energies are in
+  Joules (SI) by default; pass `hbar=1.0` / `mass=1.0` for natural
+  units or do the eV conversion at the call site.
+- **`PluginRegistry`** docstring documents the singleton constraint
+  (subclassing silently shares state; for isolated registries
+  construct a fresh `PluginRegistry()` and pass to `PluginLoader`).
+
+### Added
+
+- 3 LSP smoke tests (`tests/unit/test_lsp_smoke.py`) pinning the
+  modern pygls / lsprotocol import surface so a future dependency
+  shake-up doesn't silently disable the LSP again.
+- 3 WebSocket regression tests (`tests/integration/test_websocket_endpoint.py`)
+  covering: streaming a real simulation, session-bookkeeping cleanup,
+  and that the `params` action actually triggers a recompile.
+
+### Tests
+
+- 2188 passed, 9 skipped, 0 failed.
+
+---
+
 ## [2.1.1] - 2026-05-29
 
 ### 🔬 Quality & Validation Release

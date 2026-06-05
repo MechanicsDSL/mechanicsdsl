@@ -214,7 +214,7 @@ class ParticleGenerator:
 
 class PhysicsCompiler:
     """
-    Main compiler class - v6.0.0 with enterprise-grade features.
+    Main compiler class.
 
     Production-ready physics DSL compiler with comprehensive validation,
     cross-platform support, and security hardening.
@@ -264,12 +264,12 @@ class PhysicsCompiler:
         self.equations: Optional[Any] = None
         self.use_hamiltonian_formulation: bool = False
 
-        # v6.0: Memory management
+        # Memory management
         if config.enable_memory_monitoring:
             gc.set_threshold(*config._gc_threshold)
             _perf_monitor.snapshot_memory("compiler_init")
 
-        logger.debug("PhysicsCompiler initialized (v6.0.0)")
+        logger.debug("PhysicsCompiler initialized")
 
     def __enter__(self):
         """Context manager entry"""
@@ -327,7 +327,7 @@ class PhysicsCompiler:
         self.simulator.hamiltonian_equations = None
 
     def cleanup(self) -> None:
-        """v6.0: Cleanup resources and trigger garbage collection"""
+        """Cleanup resources and trigger garbage collection."""
         if config.enable_memory_monitoring:
             _perf_monitor.snapshot_memory("pre_cleanup")
 

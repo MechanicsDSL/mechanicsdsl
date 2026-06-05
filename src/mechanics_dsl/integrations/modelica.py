@@ -379,10 +379,15 @@ class ModelicaImporter:
         if self.parameters:
             mdsl_lines.append("")
 
-        # Placeholder for Lagrangian (would need equation analysis)
+        # KNOWN LIMITATION: Modelica -> MechanicsDSL import is one-way for
+        # state and parameters only. The Lagrangian itself isn't
+        # reconstructed from imported equations because reverse-engineering
+        # T - V from an arbitrary Modelica equation block requires
+        # nontrivial pattern matching. The generated .mdsl file leaves a
+        # placeholder Lagrangian that the user must fill in by hand.
         coords = list(self.variables.keys())
         if coords:
-            mdsl_lines.append("% TODO: Define Lagrangian from imported equations")
+            mdsl_lines.append("% Lagrangian not reconstructed from Modelica - fill in by hand:")
             mdsl_lines.append("\\lagrangian{")
             mdsl_lines.append("    % T - V")
             mdsl_lines.append("}")

@@ -198,6 +198,17 @@ class MechanicsDSLNode:
                         new_params[params[i]] = val
 
                 self._compiler.simulator.set_parameters(new_params)
+                # set_parameters alone doesn't reach the lambdified equations;
+                # recompile so the next /state publication reflects the new
+                # values rather than continuing with the original ones.
+                if (
+                    self._compiler.equations is not None
+                    and not self._compiler.use_hamiltonian_formulation
+                ):
+                    self._compiler.simulator.compile_equations(
+                        self._compiler.equations,
+                        self._compiler.get_coordinates(),
+                    )
                 self.get_logger().info(f"Updated parameters: {new_params}")
 
         return _MechanicsNode()

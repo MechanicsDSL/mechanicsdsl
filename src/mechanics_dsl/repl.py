@@ -28,7 +28,7 @@ except ImportError:
 
 REPL_BANNER = """
 ╔══════════════════════════════════════════════════════════════╗
-║           MechanicsDSL Interactive REPL v2.0.6               ║
+║           MechanicsDSL Interactive REPL v2.1.2               ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  Commands:                                                   ║
 ║    :help          Show this help                             ║
@@ -313,13 +313,13 @@ class REPL:
         if fmt == "json":
             data = {"t": self.solution["t"].tolist(), "y": [y.tolist() for y in self.solution["y"]]}
             filename = "results.json"
-            with open(filename, "w") as f:
+            with open(filename, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
             print(f"Exported to {filename}")
 
         elif fmt == "csv":
             filename = "results.csv"
-            with open(filename, "w") as f:
+            with open(filename, "w", encoding="utf-8", newline="") as f:
                 f.write("t," + ",".join(f"y{i}" for i in range(len(self.solution["y"]))) + "\n")
                 for i, t in enumerate(self.solution["t"]):
                     row = [str(t)] + [

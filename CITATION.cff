@@ -4,9 +4,9 @@ authors:
   - family-names: Parsons
     given-names: Noah
 title: "MechanicsDSL: A Domain-Specific Language for Classical Mechanics"
-version: 2.1.1
+version: 2.1.2
 doi: 10.5281/zenodo.17771040
-date-released: 2026-05-29
+date-released: 2026-06-04
 url: "https://github.com/MechanicsDSL/mechanicsdsl"
 repository-code: "https://github.com/MechanicsDSL/mechanicsdsl"
 license: MIT

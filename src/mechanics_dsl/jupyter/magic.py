@@ -208,6 +208,17 @@ class MechanicsDSLMagics(Magics):
 
         if params:
             compiler.simulator.set_parameters(params)
+            # The simulator's lambdified equations have parameters baked in
+            # as numeric constants, so a bare set_parameters() doesn't
+            # actually change subsequent simulations. Recompile so the
+            # next %%mechanicsdsl run picks up the new values.
+            if (
+                compiler.equations is not None
+                and not compiler.use_hamiltonian_formulation
+            ):
+                compiler.simulator.compile_equations(
+                    compiler.equations, compiler.get_coordinates()
+                )
             print(f"Updated parameters: {params}")
 
     @line_magic

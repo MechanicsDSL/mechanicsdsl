@@ -16,7 +16,13 @@ from typing import Callable, Dict, List, Optional, Tuple
 import numpy as np
 from scipy import integrate
 
-# Physical constants (SI units)
+# Physical constants in SI units.
+#
+# Returned energies from classes in this module (e.g. ``HydrogenAtom.energy_level``)
+# are therefore in Joules unless the constructor accepts custom unit-scaled
+# values (most do via ``hbar=`` / ``mass=`` kwargs - pass `hbar=1.0` and
+# `mass=1.0` for natural units, or do the eV conversion at the call site
+# with ``energy / 1.602176634e-19``).
 HBAR = 1.054571817e-34  # Reduced Planck constant (J·s)
 PLANCK_H = 6.62607015e-34  # Planck constant (J·s)
 

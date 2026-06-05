@@ -55,6 +55,14 @@ class PluginRegistry:
     Thread-safe singleton that manages plugin registration, discovery,
     and lifecycle.
 
+    .. note::
+        This is a process-wide singleton via ``__new__``. Subclassing
+        would silently share state with the base class because
+        ``cls._instance`` is resolved on the base. If you need an
+        isolated registry (e.g. in tests) construct a fresh
+        ``PluginRegistry`` and pass it to ``PluginLoader(registry=...)``
+        rather than subclassing.
+
     Example:
         # Register directly
         registry.register(PluginType.DOMAIN, "acoustics", AcousticsPlugin)

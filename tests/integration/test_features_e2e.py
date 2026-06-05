@@ -155,7 +155,13 @@ def test_parameter_estimator_recovers_pendulum_length():
 
 
 def test_jax_backend_runs_pendulum_simulation():
-    """If jax/diffrax are installed, the JAX backend must run a pendulum."""
+    """If jax / diffrax are installed, the JAX backend must run a pendulum.
+
+    JAXBackend doesn't take a PhysicsCompiler directly - it expects the
+    symbolic accelerations + coordinates + parameters and returns a
+    JIT-compiled vector field that you then hand to ``simulate(equations,
+    t_span, y0)``.
+    """
     pytest.importorskip("jax")
     pytest.importorskip("diffrax")
 
@@ -169,9 +175,23 @@ def test_jax_backend_runs_pendulum_simulation():
         r"\lagrangian{0.5*m*l^2*\dot{theta}^2 - m*g*l*(1 - \cos{theta})}"
         r"\initial{theta=0.1, theta_dot=0}"
     )
-    backend = JAXBackend()
-    sol = backend.simulate(compiler, t_span=(0, 1.0), num_points=20)
+
+    backend = JAXBackend(use_gpu=False, jit_compile=False)
+    # The backend wants the raw symbolic accelerations keyed by coordinate
+    # name (without the "_ddot" suffix).
+    accelerations = {q: compiler.equations[f"{q}_ddot"] for q in compiler.get_coordinates()}
+    equations = backend.compile_equations(
+        accelerations=accelerations,
+        coordinates=compiler.get_coordinates(),
+        parameters=compiler.simulator.parameters,
+    )
+    # Initial state vector matches the simulator's state ordering:
+    # [q1, q1_dot, q2, q2_dot, ...].
+    y0 = np.array([0.1, 0.0])
+
+    sol = backend.simulate(equations, t_span=(0.0, 1.0), y0=y0)
     assert sol is not None
-    # Some shape with 20 time points.
+    # The solver returns a result dict with a 't' and 'y' array.
     arr = np.asarray(sol["y"] if isinstance(sol, dict) else sol)
-    assert arr.shape[-1] in (20, 2)
+    # Either (n_state, n_times) or transposed.
+    assert 2 in arr.shape

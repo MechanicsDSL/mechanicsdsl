@@ -9,7 +9,12 @@ import re
 from typing import Dict, Optional
 
 try:
-    from pygls.lsp.types import (
+    # Modern pygls (>=1.0) moved LanguageServer to pygls.lsp.server and
+    # all LSP types now live in the standalone ``lsprotocol`` package.
+    # The pre-1.0 imports (``pygls.lsp.types`` + ``pygls.server``) silently
+    # fail-soft, which made the LSP look "uninstalled" even when pygls was
+    # in the environment.
+    from lsprotocol.types import (
         TEXT_DOCUMENT_COMPLETION,
         TEXT_DOCUMENT_DID_CHANGE,
         TEXT_DOCUMENT_DID_OPEN,
@@ -17,18 +22,19 @@ try:
         CompletionItem,
         CompletionItemKind,
         CompletionList,
+        CompletionParams,
         Diagnostic,
         DiagnosticSeverity,
         DidChangeTextDocumentParams,
         DidOpenTextDocumentParams,
         Hover,
+        HoverParams,
         MarkupContent,
         MarkupKind,
         Position,
         Range,
-        TextDocumentPositionParams,
     )
-    from pygls.server import LanguageServer
+    from pygls.lsp.server import LanguageServer
 
     PYGLS_AVAILABLE = True
 except ImportError:
@@ -213,11 +219,11 @@ class MechanicsDSLLanguageServer(LanguageServer if PYGLS_AVAILABLE else object):
             self._validate_document(uri)
 
         @self.feature(TEXT_DOCUMENT_COMPLETION)
-        def completion(params: TextDocumentPositionParams) -> CompletionList:
+        def completion(params: CompletionParams) -> CompletionList:
             return self._get_completions(params)
 
         @self.feature(TEXT_DOCUMENT_HOVER)
-        def hover(params: TextDocumentPositionParams) -> Optional[Hover]:
+        def hover(params: HoverParams) -> Optional[Hover]:
             return self._get_hover(params)
 
     def _validate_document(self, uri: str):
@@ -274,7 +280,7 @@ class MechanicsDSLLanguageServer(LanguageServer if PYGLS_AVAILABLE else object):
 
         self.publish_diagnostics(uri, diagnostics)
 
-    def _get_completions(self, params: TextDocumentPositionParams) -> CompletionList:
+    def _get_completions(self, params: CompletionParams) -> CompletionList:
         """Get completion items at position."""
         uri = params.text_document.uri
         pos = params.position
@@ -340,7 +346,7 @@ class MechanicsDSLLanguageServer(LanguageServer if PYGLS_AVAILABLE else object):
 
         return CompletionList(is_incomplete=False, items=items)
 
-    def _get_hover(self, params: TextDocumentPositionParams) -> Optional[Hover]:
+    def _get_hover(self, params: HoverParams) -> Optional[Hover]:
         """Get hover information at position."""
         uri = params.text_document.uri
         pos = params.position

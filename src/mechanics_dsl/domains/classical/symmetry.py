@@ -344,8 +344,13 @@ class NoetherAnalyzer:
         if not (dQ_dt_explicit.equals(sp.S.Zero) or sp.simplify(dQ_dt_explicit) == 0):
             return False
 
-        # For a more complete check, we would need to substitute the EOM
-        # This is left as a TODO for advanced verification
+        # NOTE: This is a sufficient but not complete check. A fully rigorous
+        # verification would substitute the equations of motion into dQ/dt
+        # and confirm the result is identically zero. Returning True here
+        # means "no explicit time dependence detected" - acceptable for the
+        # textbook cases of cyclic-coordinate momenta but may report false
+        # positives for non-trivial conserved quantities. Pending a full
+        # EOM-substitution pass.
         logger.debug(f"Quantity {quantity} has no explicit time dependence")
         return True
 

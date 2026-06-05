@@ -616,7 +616,7 @@ class NumericalSimulator:
             return np.zeros(1)
 
     def _select_optimal_solver(self, t_span: Tuple[float, float], y0: np.ndarray) -> str:
-        """v6.0: Intelligently select optimal solver based on system characteristics"""
+        """Intelligently select the optimal solver based on system characteristics."""
         if not config.enable_adaptive_solver:
             # Default to LSODA for better stability in CI environments
             return "LSODA"
@@ -794,7 +794,7 @@ class NumericalSimulator:
                 f"status={'success' if solution.success else 'failed'}"
             )
 
-            # v6.0: Performance monitoring
+            # Performance monitoring
             if config.enable_performance_monitoring:
                 _perf_monitor.stop_timer("simulation")
                 _perf_monitor.snapshot_memory("post_simulation")
@@ -809,10 +809,10 @@ class NumericalSimulator:
                 "nfev": solution.nfev if hasattr(solution, "nfev") else 0,
                 "is_stiff": is_stiff,
                 "use_hamiltonian": self.use_hamiltonian,
-                "method_used": method,  # v6.0: Track which method was used
+                "method_used": method,  # Track which method was used
             }
 
-            # v6.0: Add performance metrics if available
+            # Add performance metrics if available
             if config.enable_performance_monitoring:
                 sim_stats = _perf_monitor.get_stats("simulation")
                 if sim_stats:

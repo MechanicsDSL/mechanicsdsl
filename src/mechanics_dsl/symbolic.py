@@ -57,7 +57,7 @@ class SymbolicEngine:
         self.time_symbol = sp.Symbol("t", real=True)
         self.assumptions: Dict[str, dict] = {}
 
-        # v6.0: Advanced LRU cache
+        # Advanced LRU cache
         if config.cache_symbolic_results:
             self._cache = LRUCache(
                 maxsize=config.cache_max_size, max_memory_mb=config.cache_max_memory_mb
@@ -170,7 +170,7 @@ class SymbolicEngine:
         Returns:
             SymPy expression
         """
-        # v6.0: Cache key generation.
+        # Cache key generation.
         # Use the expression's repr directly as the key. Hashing through
         # Python's int hash() loses information (collisions return wrong
         # cached SymPy expressions); the string itself is the unique key
