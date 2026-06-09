@@ -281,10 +281,13 @@ class MechanicsDSLApp {
     render3D() {
         if (!this.threeRenderer || !this.show3D) return;
 
-        // Use pendulum angles to rotate the 3D object
+        // Drive the 3D mesh from whatever state shape the active sim exposes.
         if (this.simulation && this.threeMesh) {
             const state = this.pythonMode ? this.pythonState : this.simulation.state;
-            if (state?.theta1 !== undefined) {
+            if (state?.q) {
+                // Rigid body: apply the body-to-world unit quaternion directly.
+                this.threeMesh.quaternion.set(state.q.x, state.q.y, state.q.z, state.q.w);
+            } else if (state?.theta1 !== undefined) {
                 this.threeMesh.rotation.x = state.theta1;
                 this.threeMesh.rotation.z = state.theta2 || 0;
             } else if (state?.theta !== undefined) {
@@ -394,32 +397,28 @@ class MechanicsDSLApp {
     // ========================================
     // COMPARE MODE
     // ========================================
-    setupCompareMode() {
-        document.getElementById('compare-btn')?.addEventListener('click', () => {
-            this.toggleCompareMode();
-        });
-    }
-
     toggleCompareMode() {
         this.compareMode = !this.compareMode;
         document.getElementById('compare-btn').classList.toggle('active', this.compareMode);
 
         if (this.compareMode && this.simulation) {
-            // Create second simulation with slightly different initial conditions
             const active = document.querySelector('.example-card.active');
             const ex = EXAMPLES[active?.dataset.example || 'double-pendulum'];
-            const params = { ...ex.params };
+            const params = { ...ex.params, color: '#ef4444' };
 
-            // Tiny perturbation to show chaos
+            // Tiny perturbation in whichever coordinate is the example's main DOF
             if (params.theta1 !== undefined) params.theta1 += 0.001;
-            if (params.theta !== undefined) params.theta += 0.001;
-            params.color = '#ef4444'; // Red for comparison
+            if (params.theta !== undefined)  params.theta  += 0.001;
+            if (params.wx !== undefined)     params.wx    += 0.001;
+            if (params.x !== undefined && params.type === 'spring')   params.x  += 0.001;
+            if (params.r !== undefined)      params.r     += 0.1;
 
-            if (params.type === 'double-pendulum') {
-                this.compareSimulation = this.physics.createDoublePendulum(params);
-            } else if (params.type === 'pendulum') {
-                this.compareSimulation = this.physics.createPendulum(params);
-            }
+            if (params.type === 'double-pendulum') this.compareSimulation = this.physics.createDoublePendulum(params);
+            else if (params.type === 'pendulum')   this.compareSimulation = this.physics.createPendulum(params);
+            else if (params.type === 'rigid-body') this.compareSimulation = this.physics.createRigidBody(params);
+            else if (params.type === 'spring')     this.compareSimulation = this.physics.createSpring(params);
+            else if (params.type === 'orbital')    this.compareSimulation = this.physics.createOrbital(params);
+            // SPH compare would draw 2× particles on the same canvas — not useful, skipped.
         } else {
             this.compareSimulation = null;
         }
@@ -530,6 +529,7 @@ class MechanicsDSLApp {
         else if (p.type === 'double-pendulum') this.simulation = this.physics.createDoublePendulum(p);
         else if (p.type === 'spring') this.simulation = this.physics.createSpring(p);
         else if (p.type === 'orbital') this.simulation = this.physics.createOrbital(p);
+        else if (p.type === 'rigid-body') this.simulation = this.physics.createRigidBody(p);
         else if (p.type === 'sph') this.simulation = this.physics.createSPH(p);
         else this.simulation = this.physics.createDoublePendulum({});
 
@@ -760,9 +760,17 @@ class MechanicsDSLApp {
             'preview-double': () => this.physics.createDoublePendulum({ theta1: 1.5, theta2: 1.0 }),
             'preview-spring': () => this.physics.createSpring({ x: 1.0 }),
             'preview-orbital': () => this.physics.createOrbital({}),
-            'preview-rigid': () => this.physics.createDoublePendulum({ theta1: 0.3, omega2: 5 }),
-            'preview-sph': () => this.physics.createSPH({ n: 50 })
+            'preview-rigid': () => this.physics.createRigidBody({ wx: 0.05, wy: 3.0, wz: 0.0 }),
+            'preview-sph': () => this.physics.createSPH({ n: 40 })
         };
+        const visible = new Set();
+        const observer = ('IntersectionObserver' in window) ? new IntersectionObserver(entries => {
+            for (const entry of entries) {
+                if (entry.isIntersecting) visible.add(entry.target);
+                else visible.delete(entry.target);
+            }
+        }, { rootMargin: '50px' }) : null;
+
         Object.entries(previews).forEach(([id, fn]) => {
             const el = document.getElementById(id);
             if (!el) return;
@@ -770,10 +778,16 @@ class MechanicsDSLApp {
             canvas.width = el.clientWidth || 300; canvas.height = el.clientHeight || 160;
             el.appendChild(canvas);
             const ctx = canvas.getContext('2d'), sim = fn();
+            // Without IntersectionObserver, fall back to always-visible.
+            if (observer) observer.observe(el); else visible.add(el);
+
             const anim = () => {
-                ctx.fillStyle = '#050508'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                for (let i = 0; i < 5; i++) sim.step(0.01);
-                sim.render(ctx, canvas.width, canvas.height);
+                if (visible.has(el)) {
+                    ctx.fillStyle = '#050508';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    for (let i = 0; i < 5; i++) sim.step(0.01);
+                    sim.render(ctx, canvas.width, canvas.height);
+                }
                 requestAnimationFrame(anim);
             };
             anim();
