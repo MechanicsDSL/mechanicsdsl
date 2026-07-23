@@ -255,11 +255,33 @@ def test_state_array_not_shadowed_by_coordinate(xy_compiler, target, ext):
             pass
 
 
+def _gxx_accepts(flags):
+    """Whether the `g++` on PATH accepts these flags on a trivial program.
+
+    On macOS `g++` is really Apple clang, which rejects `-fopenmp`
+    ('unsupported option'); such environments should skip the OpenMP check
+    rather than fail it.
+    """
+    try:
+        probe = subprocess.run(  # nosec B603 - test harness
+            ["g++", "-std=c++17", "-fsyntax-only", *flags, "-xc++", "-"],
+            input="int main(){return 0;}",
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        return probe.returncode == 0
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
 @pytest.mark.skipif(shutil.which("g++") is None, reason="g++ not on PATH")
 @pytest.mark.parametrize("target,flags", [("cpp", []), ("openmp", ["-fopenmp"])])
 def test_y_coordinate_output_compiles(xy_compiler, target, flags):
     """If g++ is installed, a system with a coordinate named 'y' must still
     compile (regression for the state-array shadowing bug)."""
+    if flags and not _gxx_accepts(flags):
+        pytest.skip(f"g++ does not accept {flags} (e.g. Apple clang without OpenMP)")
     with tempfile.NamedTemporaryFile(suffix=".cpp", delete=False) as f:
         path = f.name
     try:
