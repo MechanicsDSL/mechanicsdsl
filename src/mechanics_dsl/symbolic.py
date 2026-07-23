@@ -484,18 +484,108 @@ class SymbolicEngine:
         # Derive augmented equations
         equations = self.derive_equations_of_motion(L_augmented, coordinates)
 
-        # Add time derivatives of constraints as additional equations
+        # Add the SECOND time derivative of each constraint as an additional
+        # equation (acceleration-level / index-1 form). The holonomic
+        # constraint g(q) = 0 implies d²g/dt² = 0, which is the only level that
+        # introduces the accelerations q̈ needed to close the linear system for
+        # the multipliers λ. Using only dg/dt (velocity level) leaves λ
+        # undetermined and, because g is written in time-independent symbols,
+        # sp.diff(g, t) is identically zero — so the constraint contributed
+        # nothing and the multipliers leaked into the accelerations as unbound
+        # free symbols.
         constraint_eqs = []
         for constraint in constraints:
-            # First time derivative: dg/dt = 0
-            constraint_dot = sp.diff(constraint, self.time_symbol)
-            constraint_eqs.append(constraint_dot)
+            constraint_ddot = self._constraint_second_derivative(constraint, coordinates)
+            constraint_eqs.append(constraint_ddot)
 
         extended_coords = coordinates + [str(lam) for lam in lambdas]
         all_equations = equations + constraint_eqs
 
         logger.info(f"Generated {len(all_equations)} constrained equations")
         return all_equations, extended_coords
+
+    def _constraint_second_derivative(self, constraint: sp.Expr, coordinates: List[str]) -> sp.Expr:
+        """
+        Compute d²g/dt² for a holonomic constraint g(q)=0, expressed back in the
+        {q, q_dot, q_ddot} symbol basis.
+
+        The constraint is written in time-independent coordinate symbols, so we
+        temporarily promote each coordinate to a function of time, differentiate
+        twice, then map the resulting time derivatives back onto the
+        q_dot / q_ddot symbols the rest of the pipeline uses.
+        """
+        coord_funcs = {q: sp.Function(q)(self.time_symbol) for q in coordinates}
+
+        g = constraint
+        for q in coordinates:
+            g = g.subs(self.get_symbol(q), coord_funcs[q])
+
+        g_ddot = sp.diff(g, self.time_symbol, 2)
+
+        # Back-substitute most-specific (second derivatives) first.
+        for q in coordinates:
+            g_ddot = g_ddot.subs(
+                sp.diff(coord_funcs[q], self.time_symbol, 2), self.get_symbol(f"{q}_ddot")
+            )
+        for q in coordinates:
+            g_ddot = g_ddot.subs(
+                sp.diff(coord_funcs[q], self.time_symbol), self.get_symbol(f"{q}_dot")
+            )
+        for q in coordinates:
+            g_ddot = g_ddot.subs(coord_funcs[q], self.get_symbol(q))
+
+        return g_ddot
+
+    def solve_constrained_accelerations(
+        self, equations: List[sp.Expr], coordinates: List[str], num_constraints: int
+    ) -> Dict[str, sp.Expr]:
+        """
+        Solve the augmented constrained system for the coordinate accelerations.
+
+        The unknowns are the accelerations q̈_i (one per coordinate) AND the
+        Lagrange multipliers λ_k (one per constraint) — the multipliers are
+        algebraic unknowns, not dynamical coordinates, so they must be solved
+        simultaneously rather than treated as things with their own
+        acceleration. The equations are linear in this combined unknown vector.
+
+        Returns a dict of "{coord}_ddot" -> expression with the multipliers
+        eliminated. λ values themselves are discarded (they are recovered
+        implicitly inside each acceleration expression).
+        """
+        self.last_solve_warnings = []
+
+        accel_syms = [self.get_symbol(f"{q}_ddot") for q in coordinates]
+        lambda_syms = [self.get_symbol(f"lambda_{k}") for k in range(num_constraints)]
+        unknowns = accel_syms + lambda_syms
+
+        processed = [sp.expand(eq) for eq in equations]
+
+        try:
+            solutions = sp.solve(processed, unknowns, dict=True)
+        except Exception as e:
+            solutions = None
+            msg = f"Constrained solve failed ({e}); falling back to zero accelerations."
+            logger.error(msg)
+            self.last_solve_warnings.append(msg)
+
+        accelerations: Dict[str, sp.Expr] = {}
+        sol = solutions[0] if solutions else {}
+        for q, accel_sym in zip(coordinates, accel_syms):
+            accel_key = f"{q}_ddot"
+            if accel_sym in sol:
+                accelerations[accel_key] = sp.simplify(sol[accel_sym])
+                logger.info(f"Solved {accel_key} (constrained, multipliers eliminated)")
+            else:
+                msg = (
+                    f"No constrained solution for {accel_key}; falling back to zero. "
+                    "Check that the constraints are independent and compatible with "
+                    "the Lagrangian's mass matrix."
+                )
+                logger.warning(msg)
+                self.last_solve_warnings.append(msg)
+                accelerations[accel_key] = sp.S.Zero
+
+        return accelerations
 
     @profile_function
     def derive_hamiltonian_equations(

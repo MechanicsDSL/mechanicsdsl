@@ -421,7 +421,7 @@ class MechanicsParser:
         name = self.expect("IDENT").value
         self.expect("RBRACE")
         self.expect("LBRACE")
-        value = float(self.expect("NUMBER").value)
+        value = self._signed_number()
         self.expect("RBRACE")
         self.expect("LBRACE")
         unit_expr = self.parse_expression()
@@ -551,6 +551,22 @@ class MechanicsParser:
         self.expect("RBRACE")
         return RayleighDef(expr)
 
+    def _signed_number(self) -> float:
+        """
+        Consume an optional leading '+'/'-' sign followed by a NUMBER and
+        return the signed float.
+
+        A bare ``self.expect("NUMBER")`` chokes on negative literals because the
+        tokenizer emits '-1.0' as two tokens (MINUS, NUMBER); callers that used
+        it silently dropped their whole directive on any negative value.
+        """
+        sign = 1.0
+        if self.match("MINUS"):
+            sign = -1.0
+        elif self.match("PLUS"):
+            sign = 1.0
+        return sign * float(self.expect("NUMBER").value)
+
     def parse_initial(self) -> InitialCondition:
         """Parse \\initial{var1=val1, var2=val2, ...}."""
         self.expect("INITIAL")
@@ -559,13 +575,13 @@ class MechanicsParser:
         conditions = {}
         var = self.expect("IDENT").value
         self.expect("EQUALS")
-        val = float(self.expect("NUMBER").value)
+        val = self._signed_number()
         conditions[var] = val
 
         while self.match("COMMA"):
             var = self.expect("IDENT").value
             self.expect("EQUALS")
-            val = float(self.expect("NUMBER").value)
+            val = self._signed_number()
             conditions[var] = val
 
         self.expect("RBRACE")
