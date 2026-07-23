@@ -223,6 +223,7 @@ class CppGenerator(CodeGenerator):
         code = code.replace("{{SYSTEM_NAME}}", self.system_name)
         code = code.replace("{{PARAMETERS}}", param_str)
         code = code.replace("{{STATE_DIM}}", str(self.state_dim))
+        code = code.replace("{{STATE_VAR}}", self.noncolliding_name("y"))
         code = code.replace("{{STATE_UNPACK}}", unpack_str)
         code = code.replace("{{EQUATIONS}}", eq_str)
         code = code.replace("{{INITIAL_CONDITIONS}}", init_str)
@@ -280,10 +281,11 @@ class CppGenerator(CodeGenerator):
 
         T_code = self.expr_to_code(T)
         V_code = self.expr_to_code(V)
+        array = self.noncolliding_name("y")
 
         return f"""
     // Energy computation (T + V extracted from Lagrangian)
-    double compute_energy(const std::vector<double>& y) {{
+    double compute_energy(const std::vector<double>& {array}) {{
         // Unpack state
 {self._generate_state_unpacking()}
 
@@ -498,13 +500,16 @@ Results are saved to `{self.system_name}_results.csv` with columns:
         return "\n".join(lines)
 
     def _generate_state_unpacking(self) -> str:
-        """Generate code to unpack state vector into named variables."""
+        """Generate code to unpack state vector into named variables.
+
+        Reads from ``noncolliding_name("y")``, the same name the enclosing
+        function declares its state parameter with. When a coordinate is named
+        'y' the parameter (and these reads) become '_y', so unpacking a
+        coordinate 'y' doesn't redeclare the parameter (a same-scope error in
+        C++, not a shadow).
+        """
         array = self.noncolliding_name("y")
         lines = ["// Unpack state variables"]
-        if array != "y":
-            # A coordinate is named 'y'; alias the state array so unpacking it
-            # doesn't shadow the array parameter.
-            lines.append(f"    const auto& {array} = y;")
         idx = 0
         for coord in self.coordinates:
             lines.append(f"    const double {coord} = {array}[{idx}];")
@@ -569,7 +574,7 @@ constexpr int DIM = {{STATE_DIM}};
  * @param dydt Output derivative vector
  * @param t Current time
  */
-void equations(const std::vector<double>& y, std::vector<double>& dydt, double t) {
+void equations(const std::vector<double>& {{STATE_VAR}}, std::vector<double>& dydt, double t) {
 {{STATE_UNPACK}}
 
 {{EQUATIONS}}

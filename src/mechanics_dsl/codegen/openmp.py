@@ -211,17 +211,14 @@ double compute_energy(const double* state, int n) {{
         # Parameters
         params = "\n".join(f"const double {name} = {val};" for name, val in self.parameters.items())
 
-        # State unpacking. If a coordinate is named 'y', alias the state
-        # pointer first so unpacking it doesn't shadow the array parameter.
+        # State unpacking. Read from noncolliding_name("y"), which is also the
+        # name compute_derivatives declares its state parameter with, so a
+        # coordinate named 'y' doesn't redeclare the parameter.
         array = self.noncolliding_name("y")
-        unpack_lines = []
-        if array != "y":
-            unpack_lines.append(f"        const double* {array} = y;")
-        unpack_lines.extend(
+        unpack = "\n".join(
             f"        const double {c} = {array}[{2*i}]; const double {c}_dot = {array}[{2*i+1}];"
             for i, c in enumerate(self.coordinates)
         )
-        unpack = "\n".join(unpack_lines)
 
         # Initial conditions
         init_vals = []
@@ -263,7 +260,7 @@ constexpr int STATE_DIM = {state_dim};
 constexpr int NUM_SYSTEMS = 100;  // Number of parallel trajectories
 
 // Compute derivatives for a single system
-inline void compute_derivatives(const double* y, double* dydt, double t) {{
+inline void compute_derivatives(const double* {array}, double* dydt, double t) {{
 {unpack}
 
 {self.generate_equations()}

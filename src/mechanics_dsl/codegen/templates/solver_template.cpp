@@ -15,7 +15,7 @@ using std::pow; using std::abs;
 const int DIM = {{STATE_DIM}};
 
 // Equations of Motion
-void equations(const std::vector<double>& y, std::vector<double>& dydt, double t) {
+void equations(const std::vector<double>& {{STATE_VAR}}, std::vector<double>& dydt, double t) {
 {{STATE_UNPACK}}
     
 {{EQUATIONS}}
