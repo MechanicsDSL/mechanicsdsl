@@ -44,7 +44,13 @@ def sympy_to_python(expr: sp.Expr, use_numpy: bool = True) -> str:
     try:
         # Use sympy's pycode with NumPy module
         if use_numpy:
-            py_code = pycode(expr, fully_qualified_modules=False)
+            # pycode() with the default fully_qualified_modules=True emits a
+            # 'math.' prefix (e.g. 'math.sin(theta)'); we rewrite that prefix
+            # to 'np.' so the generated script (which imports numpy as np) can
+            # evaluate it. Passing fully_qualified_modules=False would instead
+            # STRIP the prefix entirely, leaving bare 'sin(theta)' that raises
+            # NameError at runtime.
+            py_code = pycode(expr)
             # Replace 'math.' with 'np.'
             py_code = py_code.replace("math.", "np.")
         else:
@@ -146,6 +152,23 @@ class PythonGenerator(CodeGenerator):
         self.integrator = integrator
 
     @property
+    def _state_var(self) -> str:
+        """
+        Name of the state-vector parameter in the generated function.
+
+        Conventionally ``y``, but a coordinate can *also* be named ``y`` (2D
+        motion, projectiles, ...). If it were, the unpacking ``y = y[2]`` would
+        rebind the array to a scalar and the next read ``y_dot = y[3]`` would
+        raise IndexError at runtime. So we pick a name guaranteed not to collide
+        with any coordinate or its derivative.
+        """
+        name = "y"
+        reserved = set(self.coordinates) | {f"{c}_dot" for c in self.coordinates}
+        while name in reserved:
+            name = "_" + name
+        return name
+
+    @property
     def target_name(self) -> str:
         """Target platform identifier."""
         return "python"
@@ -202,12 +225,13 @@ class PythonGenerator(CodeGenerator):
             Python code computing derivatives
         """
         lines = []
+        sv = self._state_var
         idx = 0
         for coord in self.coordinates:
             accel_key = f"{coord}_ddot"
 
             # Velocity equation
-            lines.append(f"    dydt[{idx}] = y[{idx + 1}]  # d{coord}/dt = {coord}_dot")
+            lines.append(f"    dydt[{idx}] = {sv}[{idx + 1}]  # d{coord}/dt = {coord}_dot")
 
             # Acceleration equation
             if accel_key in self.equations and self.equations[accel_key] is not None:
@@ -238,11 +262,12 @@ class PythonGenerator(CodeGenerator):
         T_code = self.expr_to_code(T)
         V_code = self.expr_to_code(V)
 
+        sv = self._state_var
         return f'''
-def compute_energy(y):
+def compute_energy({sv}):
     """Compute total energy (kinetic + potential)."""
     # Unpack state
-{self._generate_unpack("y")}
+{self._generate_unpack(sv)}
 
     kinetic = {T_code}
     potential = {V_code}
@@ -257,8 +282,10 @@ def compute_energy(y):
         # Parameters
         param_str = self._generate_parameters()
 
-        # State unpacking
-        unpack_str = self._generate_unpack("y")
+        # State unpacking (state-vector name chosen to avoid colliding with a
+        # coordinate literally named 'y', 'x', etc.)
+        sv = self._state_var
+        unpack_str = self._generate_unpack(sv)
 
         # Equations
         eq_str = self.generate_equations()
@@ -289,13 +316,13 @@ Run: python {self.system_name}.py
 # Equations of Motion
 # =============================================================================
 {numba_decorator}
-def equations_of_motion(t: float, y: np.ndarray) -> np.ndarray:
+def equations_of_motion(t: float, {sv}: np.ndarray) -> np.ndarray:
     """
     Compute derivatives for {self.system_name}.
 
     Args:
         t: Current time
-        y: State vector [{", ".join(f"{c}, {c}_dot" for c in self.coordinates)}]
+        {sv}: State vector [{", ".join(f"{c}, {c}_dot" for c in self.coordinates)}]
 
     Returns:
         Derivative vector dydt

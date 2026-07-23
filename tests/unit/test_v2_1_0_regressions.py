@@ -183,17 +183,19 @@ class TestCompilationWarnings:
         assert result["warnings"] == []
 
     def test_warnings_surface_solve_failures(self):
-        # A constrained 1-DOF Lagrangian where the multiplier can't be solved
-        # for its acceleration produces a "No solution found for lambda_0_ddot"
-        # diagnostic. Previously this was swallowed; now it must appear.
+        # A Lagrangian with no kinetic term for its coordinate has a singular
+        # mass matrix, so the acceleration cannot be solved for and the engine
+        # falls back to zero. That fallback must surface as a diagnostic warning
+        # rather than being silently swallowed (compilation still "succeeds").
         compiler = PhysicsCompiler()
         result = compiler.compile_dsl(
-            r"\system{a}\defvar{x}{Position}{m}"
-            r"\constraint{x}\lagrangian{\dot{x}^2}"
+            r"\system{a}\defvar{x}{Position}{m}\lagrangian{x^2}"
         )
         assert result["success"]
         assert isinstance(result["warnings"], list)
-        assert any("lambda" in w or "fallback" in w for w in result["warnings"])
+        assert any(
+            "falling back" in w or "fallback" in w for w in result["warnings"]
+        ), result["warnings"]
 
 
 # ---------------------------------------------------------------------------

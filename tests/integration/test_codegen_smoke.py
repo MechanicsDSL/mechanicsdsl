@@ -122,6 +122,55 @@ def test_python_output_parses_as_python(pendulum_compiler):
             pass
 
 
+def test_python_output_runs_and_simulates():
+    """
+    Behavioral check: the generated Python must actually *execute* and produce
+    a physically sensible pendulum trajectory.
+
+    A syntax-only check (ast.parse) passes even when transcendental calls are
+    emitted unqualified (bare ``sin(theta)``), which raises NameError at
+    runtime. Running the module is what catches that.
+    """
+    import runpy
+
+    import numpy as np
+
+    # Own compiler WITH initial conditions so the generated script actually
+    # releases the bob from theta0 = 0.5 rad.
+    compiler = PhysicsCompiler()
+    result = compiler.compile_dsl(
+        r"\system{pendulum_run}"
+        r"\defvar{theta}{Angle}{rad}"
+        r"\parameter{m}{1.0}{kg}\parameter{l}{1.0}{m}\parameter{g}{9.81}{m/s^2}"
+        r"\lagrangian{0.5*m*l^2*\dot{theta}^2 - m*g*l*(1 - \cos{theta})}"
+        r"\initial{theta=0.5, theta_dot=0.0}"
+    )
+    assert result["success"], result
+
+    with tempfile.NamedTemporaryFile(suffix=".py", delete=False, mode="w") as f:
+        path = f.name
+    try:
+        out = compiler.export("python", path)
+        # Execute the generated module in isolation (it must not depend on
+        # mechanics_dsl being importable).
+        ns = runpy.run_path(out, run_name="_generated_pendulum")
+        assert "simulate" in ns, "generated module exposes no simulate()"
+
+        sol = ns["simulate"](t_span=(0, 5), num_points=200)
+        theta = np.asarray(sol.y[0])
+
+        assert np.all(np.isfinite(theta)), "generated simulation produced NaN/Inf"
+        # Undamped pendulum released from rest at theta0=0.5 must oscillate:
+        # it should swing to roughly -theta0 and stay bounded by it.
+        assert theta.min() < -0.3, f"pendulum did not swing back (min {theta.min():.3f})"
+        assert np.max(np.abs(theta)) < 0.6, f"energy not conserved (max |theta| {np.max(np.abs(theta)):.3f})"
+    finally:
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+
+
 @pytest.mark.skipif(shutil.which("node") is None, reason="node not on PATH")
 def test_javascript_output_passes_node_syntax_check(pendulum_compiler):
     """If Node is installed, the JS output must pass `node --check`."""

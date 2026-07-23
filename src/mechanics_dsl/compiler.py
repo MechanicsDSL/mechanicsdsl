@@ -895,20 +895,19 @@ class PhysicsCompiler:
         # Convert constraint expressions to SymPy
         constraint_exprs = [self.symbolic.ast_to_sympy(c) for c in self.constraints]
 
-        # Derive constrained equations
-        eq_list, extended_coords = self.symbolic.derive_equations_with_constraints(
+        # Derive constrained equations (Euler-Lagrange + acceleration-level
+        # constraint equations, with Lagrange multipliers as extra unknowns).
+        eq_list, _extended_coords = self.symbolic.derive_equations_with_constraints(
             L_sympy, coordinates, constraint_exprs
         )
 
-        # Solve for accelerations and lambda multipliers
-        accelerations = self.symbolic.solve_for_accelerations(eq_list, extended_coords)
-
-        # Filter out only the coordinate accelerations (not lambda derivatives)
-        coord_accelerations = {
-            k: v
-            for k, v in accelerations.items()
-            if any(k.startswith(f"{c}_ddot") for c in coordinates)
-        }
+        # Solve the augmented linear system for the coordinate accelerations,
+        # eliminating the Lagrange multipliers. The multipliers are algebraic
+        # unknowns solved alongside the accelerations, not dynamical
+        # coordinates with their own second derivative.
+        coord_accelerations = self.symbolic.solve_constrained_accelerations(
+            eq_list, coordinates, len(constraint_exprs)
+        )
 
         return coord_accelerations
 

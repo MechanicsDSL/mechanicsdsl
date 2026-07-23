@@ -80,13 +80,39 @@ class TestRollingBall:
 
         assert solution["success"]
 
-        # Ball should accelerate down the incline
+        # Behavioral check: a uniform solid sphere (I = 2/5 m R^2) rolling
+        # without slipping on an incline has acceleration of magnitude
+        # a = (5/7) g sin(alpha) along the slope, independent of m and R.
+        # With this Lagrangian's sign convention the coordinate x decreases,
+        # so we test the magnitude and the rolling constraint x = R*theta,
+        # not a hard-coded direction.
+        t = solution["t"]
         x = solution["y"][0]
-        # Allow for small numerical errors - check that it moves significantly
-        movement = x[-1] - x[0]
-        assert movement > -0.01, f"Ball should move forward, but moved {movement:.6f}"
-        # Allow small negative values due to numerical errors
-        assert np.all(x >= -0.01), f"Ball went backwards: min x = {np.min(x):.6f}"
+        theta = solution["y"][2]
+
+        g, alpha, R = 9.81, 0.3, 0.1
+        a_expected = (5.0 / 7.0) * g * np.sin(alpha)
+
+        # Constant-acceleration trajectory from rest: |x(t) - x0| = 1/2 a t^2.
+        displacement = np.abs(x - x[0])
+        predicted = 0.5 * a_expected * t**2
+        # Relative agreement over the whole trajectory (skip t=0 where both ~0).
+        mask = t > 0.5
+        rel_err = np.abs(displacement[mask] - predicted[mask]) / predicted[mask]
+        tol = 0.05 * CONSTRAINT_TOL_MULTIPLIER
+        assert np.max(rel_err) < tol, (
+            f"Rolling acceleration magnitude wrong: max rel err {np.max(rel_err):.4f} "
+            f"(expected a = {a_expected:.4f} m/s^2)"
+        )
+
+        # Rolling constraint x = R*theta must hold to tight tolerance.
+        constraint_resid = np.max(np.abs(x - R * theta))
+        assert constraint_resid < 1e-6, (
+            f"Rolling constraint x = R*theta violated: max resid {constraint_resid:.2e}"
+        )
+
+        # And it genuinely moved (guards against a frozen/degenerate solve).
+        assert np.abs(x[-1] - x[0]) > 1.0, f"Ball barely moved: {x[-1] - x[0]:.6f}"
 
 
 class TestAtwoodMachine:
@@ -117,39 +143,42 @@ class TestAtwoodMachine:
 
         \constraint{x1 + x2 - l}
 
-        \initial{x1=2.0, x1_dot=0.0}
+        \initial{x1=2.0, x1_dot=0.0, x2=3.0, x2_dot=0.0}
         """
 
         compiler = get_compiler()
-        try:
-            result = compiler.compile_dsl(dsl_code, use_constraints=True)
-        except Exception as e:
-            # If constraint system fails to compile, that's acceptable for now
-            pytest.skip(f"Constraint compilation not fully supported: {e}")
-            return
+        result = compiler.compile_dsl(dsl_code, use_constraints=True)
+        assert result["success"], result
 
-        if not result["success"]:
-            pytest.skip("Constraint compilation failed")
-            return
+        solution = compiler.simulate(t_span=(0, 3), num_points=300)
+        assert solution["success"]
 
-        try:
-            solution = compiler.simulate(t_span=(0, 3), num_points=300)
-        except Exception as e:
-            pytest.skip(f"Simulation with constraints not fully supported: {e}")
-            return
-
-        if not solution["success"]:
-            pytest.skip("Simulation failed - constraint engine needs update")
-            return
-
-        # Heavier mass should fall
+        # Behavioral check: an Atwood machine has constant acceleration of
+        # magnitude a = (m1 - m2)/(m1 + m2) * g for the coordinate x1. With
+        # m1=2, m2=1: a = g/3. The inextensible-string constraint x1 + x2 = l
+        # must also hold throughout.
+        t = solution["t"]
         x1 = solution["y"][0]
-        if len(solution["coordinates"]) > 0:
-            # Check that mass moves (either up or down, but significantly)
-            # Or if constraint engine doesn't work properly, at least verify something ran
-            movement = abs(x1[-1] - x1[0])
-            # Accept either movement OR no movement (constraint engine limitation)
-            assert movement >= 0, f"Movement should be non-negative: {movement:.6f}"
+        x2 = solution["y"][2]
+
+        m1, m2, g, length = 2.0, 1.0, 9.81, 5.0
+        a_expected = (m1 - m2) / (m1 + m2) * g
+
+        displacement = np.abs(x1 - x1[0])
+        predicted = 0.5 * a_expected * t**2
+        mask = t > 0.5
+        rel_err = np.abs(displacement[mask] - predicted[mask]) / predicted[mask]
+        tol = 0.05 * CONSTRAINT_TOL_MULTIPLIER
+        assert np.max(rel_err) < tol, (
+            f"Atwood acceleration wrong: max rel err {np.max(rel_err):.4f} "
+            f"(expected a = {a_expected:.4f} m/s^2)"
+        )
+
+        # String constraint x1 + x2 = l must be preserved.
+        constraint_resid = np.max(np.abs(x1 + x2 - length))
+        assert constraint_resid < 1e-6, (
+            f"String constraint x1 + x2 = l violated: max resid {constraint_resid:.2e}"
+        )
 
 
 class TestPendulumWithConstraint:
@@ -176,48 +205,31 @@ class TestPendulumWithConstraint:
 
         \constraint{x^2 + y^2 - l^2}
 
-        \initial{x=0.0, x_dot=0.0, y=-1.0, y_dot=0.0}
+        \initial{x=0.0, x_dot=1.5, y=-1.0, y_dot=0.0}
         """
 
         compiler = get_compiler()
-        try:
-            result = compiler.compile_dsl(dsl_code, use_constraints=True)
-        except Exception as e:
-            # If constraint system fails to compile, that's acceptable for now
-            pytest.skip(f"Constraint compilation not fully supported: {e}")
-            return
+        result = compiler.compile_dsl(dsl_code, use_constraints=True)
+        assert result["success"], result
 
-        if not result["success"]:
-            pytest.skip("Constraint compilation failed")
-            return
+        solution = compiler.simulate(t_span=(0, 5), num_points=500)
+        assert solution["success"]
 
-        try:
-            solution = compiler.simulate(t_span=(0, 5), num_points=500)
-        except Exception as e:
-            pytest.skip(f"Simulation with constraints not fully supported: {e}")
-            return
-
-        if not solution["success"]:
-            pytest.skip("Simulation failed - constraint engine needs update")
-            return
-
-        # Verify constraint is approximately satisfied or that simulation at least ran
+        # The bob starts at the bottom (0, -1) with a tangential push, so it
+        # must actually swing (not sit frozen at a degenerate/NaN solve).
         x = solution["y"][0]
         y = solution["y"][2] if solution["y"].shape[0] > 2 else solution["y"][1]
+        assert np.ptp(x) > 0.2, f"Pendulum did not swing (x range {np.ptp(x):.4f})"
+
+        # Behavioral check: the holonomic constraint x^2 + y^2 = l^2 must hold
+        # throughout the trajectory. The acceleration-level formulation keeps
+        # this tight over this horizon.
         r = np.sqrt(x**2 + y**2)
-
-        # Constraint: r should be approximately l
-        # The constraint engine may have significant drift, so be very lenient
-        constraint_error = np.abs(r - 1.0)
-        # Accept up to 200% error since constraint engine has known issues
-        tolerance = 2.0 * CONSTRAINT_TOL_MULTIPLIER
-        # Don't fail - just warn if constraint is badly violated
-        if np.max(constraint_error) >= tolerance:
-            import warnings
-
-            warnings.warn(f"Constraint drift: max error {np.max(constraint_error):.6f}")
-        # Always pass if we got here - simulation at least ran
-        assert solution["success"], "Simulation should have completed"
+        constraint_error = np.max(np.abs(r - 1.0))
+        tolerance = 1e-2 * CONSTRAINT_TOL_MULTIPLIER
+        assert constraint_error < tolerance, (
+            f"Constraint x^2+y^2=l^2 violated: max |r - 1| = {constraint_error:.6f}"
+        )
 
 
 if __name__ == "__main__":
