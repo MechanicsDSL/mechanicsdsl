@@ -189,11 +189,12 @@ double compute_energy(const double* state, int n) {{
 
     def generate_equations(self) -> str:
         """Generate equations code."""
+        array = self.noncolliding_name("y")
         lines = []
         idx = 0
         for coord in self.coordinates:
             accel_key = f"{coord}_ddot"
-            lines.append(f"        dydt[{idx}] = y[{idx+1}];")
+            lines.append(f"        dydt[{idx}] = {array}[{idx+1}];")
             if accel_key in self.equations and self.equations[accel_key] is not None:
                 expr = self.equations[accel_key]
                 cpp_expr = self.expr_to_code(expr)
@@ -210,11 +211,17 @@ double compute_energy(const double* state, int n) {{
         # Parameters
         params = "\n".join(f"const double {name} = {val};" for name, val in self.parameters.items())
 
-        # State unpacking
-        unpack = "\n".join(
-            f"        const double {c} = y[{2*i}]; const double {c}_dot = y[{2*i+1}];"
+        # State unpacking. If a coordinate is named 'y', alias the state
+        # pointer first so unpacking it doesn't shadow the array parameter.
+        array = self.noncolliding_name("y")
+        unpack_lines = []
+        if array != "y":
+            unpack_lines.append(f"        const double* {array} = y;")
+        unpack_lines.extend(
+            f"        const double {c} = {array}[{2*i}]; const double {c}_dot = {array}[{2*i+1}];"
             for i, c in enumerate(self.coordinates)
         )
+        unpack = "\n".join(unpack_lines)
 
         # Initial conditions
         init_vals = []

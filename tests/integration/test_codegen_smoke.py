@@ -217,3 +217,65 @@ def test_cpp_output_passes_compiler_syntax_check(pendulum_compiler):
             os.unlink(path)
         except OSError:
             pass
+
+
+@pytest.fixture(scope="module")
+def xy_compiler():
+    """A 2D system whose coordinate 'y' collides with the conventional state
+    vector name (the case that broke the C-family generators)."""
+    compiler = PhysicsCompiler()
+    result = compiler.compile_dsl(
+        r"\system{proj}"
+        r"\defvar{x}{Position}{m}\defvar{y}{Position}{m}"
+        r"\parameter{m}{1.0}{kg}\parameter{g}{9.81}{m/s^2}"
+        r"\lagrangian{0.5*m*(\dot{x}^2 + \dot{y}^2) - m*g*y}"
+    )
+    assert result["success"], result
+    return compiler
+
+
+@pytest.mark.parametrize("target,ext", [("cpp", ".cpp"), ("openmp", ".cpp")])
+def test_state_array_not_shadowed_by_coordinate(xy_compiler, target, ext):
+    """A coordinate named 'y' must not be unpacked from an array also named 'y'
+    (``double y = y[...]`` shadows the array). The generator must alias the
+    array to a free name first."""
+    with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as f:
+        path = f.name
+    try:
+        out = xy_compiler.export(target, path)
+        with open(out, "r", encoding="utf-8") as fh:
+            source = fh.read()
+        assert "double y = y[" not in source, (
+            f"{target}: coordinate 'y' unpacked from array 'y' (self-shadow)"
+        )
+    finally:
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+
+
+@pytest.mark.skipif(shutil.which("g++") is None, reason="g++ not on PATH")
+@pytest.mark.parametrize("target,flags", [("cpp", []), ("openmp", ["-fopenmp"])])
+def test_y_coordinate_output_compiles(xy_compiler, target, flags):
+    """If g++ is installed, a system with a coordinate named 'y' must still
+    compile (regression for the state-array shadowing bug)."""
+    with tempfile.NamedTemporaryFile(suffix=".cpp", delete=False) as f:
+        path = f.name
+    try:
+        out = xy_compiler.export(target, path)
+        result = subprocess.run(  # nosec B603 - test harness
+            ["g++", "-std=c++17", "-fsyntax-only", *flags, out],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert result.returncode == 0, (
+            f"g++ -fsyntax-only failed for {target} with a 'y' coordinate:\n"
+            f"stderr: {result.stderr}"
+        )
+    finally:
+        try:
+            os.unlink(path)
+        except OSError:
+            pass

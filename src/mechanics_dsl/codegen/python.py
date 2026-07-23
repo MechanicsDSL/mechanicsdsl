@@ -44,14 +44,11 @@ def sympy_to_python(expr: sp.Expr, use_numpy: bool = True) -> str:
     try:
         # Use sympy's pycode with NumPy module
         if use_numpy:
-            # pycode() with the default fully_qualified_modules=True emits a
-            # 'math.' prefix (e.g. 'math.sin(theta)'); we rewrite that prefix
-            # to 'np.' so the generated script (which imports numpy as np) can
-            # evaluate it. Passing fully_qualified_modules=False would instead
-            # STRIP the prefix entirely, leaving bare 'sin(theta)' that raises
-            # NameError at runtime.
+            # pycode() emits a 'math.' prefix (math.sin(...)); rewrite it to
+            # 'np.' for the generated script. Don't pass
+            # fully_qualified_modules=False: it drops the prefix entirely,
+            # leaving bare sin(...) that fails with NameError at runtime.
             py_code = pycode(expr)
-            # Replace 'math.' with 'np.'
             py_code = py_code.replace("math.", "np.")
         else:
             py_code = pycode(expr)

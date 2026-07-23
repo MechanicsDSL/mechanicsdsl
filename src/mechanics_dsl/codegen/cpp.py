@@ -499,11 +499,16 @@ Results are saved to `{self.system_name}_results.csv` with columns:
 
     def _generate_state_unpacking(self) -> str:
         """Generate code to unpack state vector into named variables."""
+        array = self.noncolliding_name("y")
         lines = ["// Unpack state variables"]
+        if array != "y":
+            # A coordinate is named 'y'; alias the state array so unpacking it
+            # doesn't shadow the array parameter.
+            lines.append(f"    const auto& {array} = y;")
         idx = 0
         for coord in self.coordinates:
-            lines.append(f"    const double {coord} = y[{idx}];")
-            lines.append(f"    const double {coord}_dot = y[{idx + 1}];")
+            lines.append(f"    const double {coord} = {array}[{idx}];")
+            lines.append(f"    const double {coord}_dot = {array}[{idx + 1}];")
             idx += 2
         return "\n".join(lines)
 

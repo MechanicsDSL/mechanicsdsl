@@ -204,6 +204,23 @@ class CodeGenerator(ABC):
             vals.extend([str(pos), str(vel)])
         return ", ".join(vals)
 
+    def noncolliding_name(self, preferred: str) -> str:
+        """
+        Return `preferred`, or an underscore-prefixed variant if a coordinate
+        (or its _dot) already uses that name.
+
+        The generated state-vector array is conventionally called 'y', but a
+        coordinate can be named 'y' too (2D motion). Unpacking such a coordinate
+        would shadow the array with a scalar; naming the array with this helper
+        avoids that. Returns `preferred` unchanged when there is no collision, so
+        generated output is identical for the common case.
+        """
+        reserved = set(self.coordinates) | {f"{c}_dot" for c in self.coordinates}
+        name = preferred
+        while name in reserved:
+            name = "_" + name
+        return name
+
     def generate_state_unpacking(self, state_var: str = "y") -> str:
         """
         Generate code to unpack state vector into named variables.

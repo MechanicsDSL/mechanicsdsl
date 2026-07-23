@@ -484,15 +484,13 @@ class SymbolicEngine:
         # Derive augmented equations
         equations = self.derive_equations_of_motion(L_augmented, coordinates)
 
-        # Add the SECOND time derivative of each constraint as an additional
-        # equation (acceleration-level / index-1 form). The holonomic
-        # constraint g(q) = 0 implies d²g/dt² = 0, which is the only level that
-        # introduces the accelerations q̈ needed to close the linear system for
-        # the multipliers λ. Using only dg/dt (velocity level) leaves λ
-        # undetermined and, because g is written in time-independent symbols,
-        # sp.diff(g, t) is identically zero — so the constraint contributed
-        # nothing and the multipliers leaked into the accelerations as unbound
-        # free symbols.
+        # Add the second time derivative of each constraint (acceleration-level
+        # / index-1 form). The holonomic constraint g(q) = 0 implies d²g/dt² = 0,
+        # which is the level that introduces the accelerations q̈ needed to close
+        # the linear system for the multipliers λ. Using only dg/dt leaves λ
+        # undetermined; and since g is in time-independent symbols, sp.diff(g, t)
+        # is identically zero, so the old code's constraint contributed nothing
+        # and λ leaked into the accelerations as unbound free symbols.
         constraint_eqs = []
         for constraint in constraints:
             constraint_ddot = self._constraint_second_derivative(constraint, coordinates)
@@ -542,11 +540,11 @@ class SymbolicEngine:
         """
         Solve the augmented constrained system for the coordinate accelerations.
 
-        The unknowns are the accelerations q̈_i (one per coordinate) AND the
-        Lagrange multipliers λ_k (one per constraint) — the multipliers are
-        algebraic unknowns, not dynamical coordinates, so they must be solved
-        simultaneously rather than treated as things with their own
-        acceleration. The equations are linear in this combined unknown vector.
+        The unknowns are the accelerations q̈_i (one per coordinate) and the
+        Lagrange multipliers λ_k (one per constraint). The multipliers are
+        algebraic unknowns, not dynamical coordinates, so they are solved
+        simultaneously with the accelerations rather than integrated. The
+        equations are linear in this combined unknown vector.
 
         Returns a dict of "{coord}_ddot" -> expression with the multipliers
         eliminated. λ values themselves are discarded (they are recovered
