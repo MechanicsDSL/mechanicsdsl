@@ -335,7 +335,12 @@ Results are saved to `{self.system_name}.csv`.
         # Parameter definitions
         param_lines = []
         for name, val in self.parameters.items():
-            param_lines.append(f"const {name.upper()}: f64 = {val};")
+            # Keep the parameter's original (lower-case) name so it matches the
+            # symbol the equations reference. Uppercasing it (Rust's const
+            # convention) left the equations referring to an undefined lower-case
+            # name and the crate failed to compile; the allow attribute below
+            # silences the resulting non_upper_case_globals lint.
+            param_lines.append(f"const {name}: f64 = {val};")
         param_str = "\n".join(param_lines)
 
         # State variable unpacking
@@ -372,6 +377,8 @@ Results are saved to `{self.system_name}.csv`.
 //! Requires ode_solvers in Cargo.toml:
 //!   [dependencies]
 //!   ode_solvers = "0.4"
+
+#![allow(non_upper_case_globals)]
 
 use std::fs::File;
 use std::io::Write;
