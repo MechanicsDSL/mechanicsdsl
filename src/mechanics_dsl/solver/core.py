@@ -27,6 +27,14 @@ from ..utils import (
 
 __all__ = ["NumericalSimulator"]
 
+# Lower bounds on the conditioning-scaled integration tolerance. Past roughly
+# 1e-13 the solver is chasing double-precision round-off and buys accuracy only
+# in wall-clock time, so a system ill-conditioned enough to demand more than
+# this cannot be integrated reliably at all -- it needs rescaling, not a
+# smaller step.
+RTOL_FLOOR = 1e-13
+ATOL_FLOOR = 1e-15
+
 
 class NumericalSimulator:
     """Enhanced numerical simulator with better stability and diagnostics"""
@@ -246,6 +254,7 @@ class NumericalSimulator:
         self._mm_n = len(coordinates)
         self._mm_M = sp.lambdify(syms, M_sub, modules=["numpy", "math"])
         self._mm_F = sp.lambdify(syms, F_sub, modules=["numpy", "math"])
+        self._mm_singular_events = 0
         self.use_mass_matrix = True
 
         self.equations = {}
@@ -264,6 +273,17 @@ class NumericalSimulator:
         try:
             accels = np.linalg.solve(Mn, Fn)
         except np.linalg.LinAlgError:
+            # The least-squares solution of a singular system is well defined
+            # mathematically and meaningless physically: it is the minimum-norm
+            # answer to a question the model does not determine. Integrating it
+            # yields a plausible trajectory that is not this system's motion.
+            #
+            # Continue so the integrator can finish (aborting mid-solve loses
+            # the diagnostic), but COUNT it. simulate() turns a non-zero count
+            # into a failed result, because reporting success here would be a
+            # silent wrong answer -- the same failure mode this engine was
+            # already fixed for once, at compile time.
+            self._mm_singular_events += 1
             logger.warning(
                 f"Mass matrix numerically singular at t={t:.6f}; using least-squares"
             )
@@ -775,8 +795,44 @@ class NumericalSimulator:
         if config.enable_performance_monitoring:
             _perf_monitor.start_timer("simulation")
 
+        user_set_tolerance = rtol is not None or atol is not None
         rtol = rtol or config.default_rtol
         atol = atol or config.default_atol
+
+        # Scale the tolerance to the mass matrix's conditioning.
+        #
+        # An ill-conditioned mass matrix means a wide spread of normal-mode
+        # frequencies: the fastest scales as 1/sqrt(det(M)), so a system with
+        # condition number C packs on the order of sqrt(C) times more
+        # oscillation into the same time span. Truncation error accumulates per
+        # oscillation, so holding total drift constant needs the tolerance
+        # tightened by that same factor. Integrating such a system at a default
+        # chosen for benign problems produces a trajectory that is quietly
+        # wrong rather than obviously wrong.
+        #
+        # Measured on M = [[1, 1-eps], [1-eps, 1]] at eps=1e-8 (cond 2e8, fast
+        # mode ~1e4 rad/s, ~16000 oscillations over a 10s span):
+        #     rtol 1e-6 (default) -> 3.7e-2 energy drift  (silently wrong)
+        #     rtol 1e-9           -> 3.0e-5               (1.6x the evaluations)
+        #     rtol 1e-11          -> 8.9e-8               (2.1x)
+        # The cost is mild because the solver was already step-limited by the
+        # fast mode; what was missing was the accuracy budget to match.
+        #
+        # Only applied when the caller did not ask for a specific tolerance --
+        # an explicit rtol/atol is an instruction, not a suggestion.
+        cond = getattr(self, "_mass_matrix_condition", None)
+        if not user_set_tolerance and cond is not None and np.isfinite(cond) and cond > 1.0:
+            scale = float(np.sqrt(cond))
+            scaled_rtol = max(config.default_rtol / scale, RTOL_FLOOR)
+            scaled_atol = max(config.default_atol / scale, ATOL_FLOOR)
+            if scaled_rtol < rtol or scaled_atol < atol:
+                logger.info(
+                    f"Mass matrix condition number ~{cond:.2e}; tightening "
+                    f"integration tolerance to rtol={scaled_rtol:.2e}, "
+                    f"atol={scaled_atol:.2e}"
+                )
+            rtol = min(rtol, scaled_rtol)
+            atol = min(atol, scaled_atol)
 
         # Build initial state vector first to get y0 for solver selection
         y0 = []
@@ -811,6 +867,10 @@ class NumericalSimulator:
         if not validate_finite(y0, "Initial conditions"):
             return {"success": False, "error": "Initial conditions contain non-finite values"}
 
+        # Reset the runtime degeneracy counter before any evaluation, so both
+        # the initial probe and the integration proper are covered.
+        self._mm_singular_events = 0
+
         # Test initial evaluation
         try:
             dydt_test = self.equations_of_motion(t_span[0], y0)
@@ -823,20 +883,31 @@ class NumericalSimulator:
             logger.error(f"Unexpected error in initial evaluation: {type(e).__name__}: {e}")
             return {"success": False, "error": f"Initial evaluation failed: {str(e)}"}
 
-        # Stiffness detection
+        # Stiffness detection.
+        #
+        # Previously this ran only when method == "RK45" -- but by this point
+        # the auto-selector has usually already chosen something else, so the
+        # check almost never executed. And when it did fire it only logged a
+        # suggestion and integrated with the explicit method anyway, so the
+        # diagnosis never reached the integration. Detect for any EXPLICIT
+        # method, and act on it.
+        EXPLICIT_METHODS = ("RK45", "RK23", "DOP853")
         is_stiff = False
-        if detect_stiff and method == "RK45":
+        if detect_stiff and method in EXPLICIT_METHODS:
             try:
                 test_sol = solve_ivp(
                     self.equations_of_motion,
                     (t_span[0], t_span[0] + 0.01),
                     y0,
-                    method="RK45",
+                    method=method,
                     max_step=0.001,
                 )
                 if not test_sol.success:
                     is_stiff = True
-                    logger.warning("System may be stiff. Consider using 'LSODA' or 'Radau' method.")
+                    logger.warning(
+                        f"System appears stiff under {method}; switching to LSODA."
+                    )
+                    method = "LSODA"
             except (ValueError, RuntimeError, AttributeError) as e:
                 logger.debug(f"Stiffness detection test failed: {e}")
 
@@ -875,6 +946,23 @@ class NumericalSimulator:
                 "use_hamiltonian": self.use_hamiltonian,
                 "method_used": method,  # Track which method was used
             }
+
+            # A singular mass matrix during integration means some part of this
+            # trajectory is least-squares filler, not the system's motion.
+            # Returning it under success=True would be precisely the silent
+            # wrong answer this engine refuses to give at compile time.
+            singular_events = getattr(self, "_mm_singular_events", 0)
+            if singular_events:
+                result["success"] = False
+                result["singular_events"] = singular_events
+                result["error"] = (
+                    f"Mass matrix was singular at {singular_events} integration "
+                    f"step(s); accelerations there are a minimum-norm "
+                    f"least-squares substitute, not the system's dynamics. The "
+                    f"model is degenerate in the region visited -- check for "
+                    f"massless coordinates, redundant constraints, or a "
+                    f"configuration where the coordinates stop being independent."
+                )
 
             # Add performance metrics if available
             if config.enable_performance_monitoring:

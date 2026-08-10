@@ -1025,6 +1025,12 @@ class PhysicsCompiler:
                 return None
             cond = float(np.linalg.cond(M_arr))
 
+            # Hand the conditioning to the solver, which uses it to scale the
+            # integration tolerance. Warning about ill-conditioning while
+            # integrating at a tolerance chosen for benign systems is what
+            # produced a silently wrong trajectory at eps=1e-8.
+            self.simulator._mass_matrix_condition = cond
+
             if not np.isfinite(cond) or cond > MASS_MATRIX_CONDITION_WARN:
                 return (
                     f"Mass matrix is ill-conditioned at the initial state "
