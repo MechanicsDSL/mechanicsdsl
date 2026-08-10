@@ -41,6 +41,12 @@ class NumericalSimulator:
         self.coordinates: List[str] = []
         self.use_hamiltonian: bool = False
         self.hamiltonian_equations: Optional[Dict[str, List[Tuple]]] = None
+        # Numeric mass-matrix formulation (large coupled systems): callables
+        # for M(t, y) and F(t, y) with M q̈ = F solved per evaluation.
+        self.use_mass_matrix: bool = False
+        self._mm_M: Optional[Callable] = None
+        self._mm_F: Optional[Callable] = None
+        self._mm_n: int = 0
         # Warnings recorded by the most recent equation-compilation pass so
         # callers can surface lambdify/eval failures instead of accepting the
         # silent zero fallback.
@@ -211,6 +217,61 @@ class NumericalSimulator:
         self.coordinates = coordinates
         logger.info("Equation compilation complete")
 
+    def compile_mass_matrix_equations(
+        self, M: sp.Matrix, F: sp.Matrix, coordinates: List[str]
+    ):
+        """
+        Compile a linear-in-accelerations system M(q, q̇) q̈ = F(q, q̇) for
+        numeric-time solution.
+
+        Instead of inverting the mass matrix symbolically (which blows up
+        factorially for large coupled systems), the symbolic M and F are
+        lambdified once and the linear solve M a = F happens numerically at
+        each integrator evaluation.
+        """
+        logger.info(f"Compiling mass-matrix system for {len(coordinates)} coordinates")
+        self.last_compile_warnings = []
+
+        state_vars = []
+        for q in coordinates:
+            state_vars.extend([q, f"{q}_dot"])
+
+        param_subs = {self.symbolic.get_symbol(k): v for k, v in self.parameters.items()}
+        M_sub = M.subs(param_subs)
+        F_sub = F.subs(param_subs)
+
+        syms = [self.symbolic.time_symbol] + [
+            self.symbolic.get_symbol(v) for v in state_vars
+        ]
+        self._mm_n = len(coordinates)
+        self._mm_M = sp.lambdify(syms, M_sub, modules=["numpy", "math"])
+        self._mm_F = sp.lambdify(syms, F_sub, modules=["numpy", "math"])
+        self.use_mass_matrix = True
+
+        self.equations = {}
+        self.state_vars = state_vars
+        self.coordinates = coordinates
+        logger.info("Mass-matrix compilation complete")
+
+    def _mass_matrix_ode(self, t: float, y: np.ndarray) -> np.ndarray:
+        """ODE right-hand side for the numeric mass-matrix formulation."""
+        n = self._mm_n
+        dydt = np.zeros(2 * n)
+        dydt[0::2] = y[1::2]
+
+        Mn = np.asarray(self._mm_M(t, *y), dtype=float).reshape(n, n)
+        Fn = np.asarray(self._mm_F(t, *y), dtype=float).reshape(n)
+        try:
+            accels = np.linalg.solve(Mn, Fn)
+        except np.linalg.LinAlgError:
+            logger.warning(
+                f"Mass matrix numerically singular at t={t:.6f}; using least-squares"
+            )
+            accels, *_ = np.linalg.lstsq(Mn, Fn, rcond=None)
+
+        dydt[1::2] = accels
+        return dydt
+
     def compile_hamiltonian_equations(
         self, q_dots: List[sp.Expr], p_dots: List[sp.Expr], coordinates: List[str]
     ):
@@ -335,6 +396,9 @@ class NumericalSimulator:
 
         if self.use_hamiltonian:
             return self._hamiltonian_ode(t, y)
+
+        if self.use_mass_matrix:
+            return self._mass_matrix_ode(t, y)
 
         # Validate expected size
         expected_size = 2 * len(self.coordinates) if self.coordinates else 1

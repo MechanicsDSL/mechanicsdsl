@@ -661,42 +661,47 @@ class SymbolicEngine:
             Hamiltonian expression
         """
         logger.info("Converting Lagrangian to Hamiltonian")
-        hamiltonian = sp.S.Zero
 
-        for q in coordinates:
-            q_dot_sym = self.get_symbol(f"{q}_dot")
-            p_sym = self.get_symbol(f"p_{q}")
+        # The momentum relations p_i = ∂L/∂q̇_i must be inverted for the
+        # velocities SIMULTANEOUSLY: for coupled kinetic terms (e.g. a double
+        # pendulum) each p_i involves several q̇_j, and solving one at a time
+        # yields an H that still contains q̇ symbols. Those leftover symbols are
+        # never part of the (q, p) phase-space state, so Hamilton's equations
+        # built from such an H silently freeze the coupled coordinates. A
+        # Lagrangian whose momentum relations cannot be inverted is degenerate,
+        # and that must be a hard error rather than a wrong Hamiltonian.
+        q_dot_syms = [self.get_symbol(f"{q}_dot") for q in coordinates]
+        p_syms = [self.get_symbol(f"p_{q}") for q in coordinates]
 
-            # Calculate conjugate momentum p = ∂L/∂q̇
-            momentum_def = sp.diff(lagrangian, q_dot_sym)
-            logger.debug(f"Momentum for {q}: p_{q} = {momentum_def}")
+        momentum_eqs = [
+            sp.diff(lagrangian, qd) - p for qd, p in zip(q_dot_syms, p_syms)
+        ]
 
-            # Solve for q̇ in terms of p
-            try:
-                q_dot_solution = sp.solve(momentum_def - p_sym, q_dot_sym)
-                if q_dot_solution:
-                    q_dot_expr = q_dot_solution[0]
-                    hamiltonian += p_sym * q_dot_expr
-                    logger.debug(f"Solved for {q}_dot: {q_dot_expr}")
-            except (ValueError, TypeError, NotImplementedError) as e:
-                logger.warning(f"Could not solve for {q}_dot: {e}, using symbolic form")
-                hamiltonian += p_sym * q_dot_sym
+        try:
+            solutions = sp.solve(momentum_eqs, q_dot_syms, dict=True)
+        except Exception as e:
+            raise ValueError(
+                f"Legendre transform failed: could not invert the momentum "
+                f"relations ({e})"
+            ) from e
 
-        # H = Σ(p_i * q̇_i) - L
-        hamiltonian = hamiltonian - lagrangian
+        if not solutions:
+            raise ValueError(
+                "Legendre transform failed: momentum relations are not "
+                "invertible (degenerate Lagrangian?)"
+            )
 
-        # Substitute momentum definitions
-        for q in coordinates:
-            q_dot_sym = self.get_symbol(f"{q}_dot")
-            p_sym = self.get_symbol(f"p_{q}")
-            momentum_def = sp.diff(lagrangian, q_dot_sym)
+        sol = solutions[0]
+        missing = [qd for qd in q_dot_syms if qd not in sol]
+        if missing:
+            raise ValueError(
+                f"Legendre transform failed: could not solve for velocities "
+                f"{missing} in terms of momenta"
+            )
 
-            try:
-                q_dot_solution = sp.solve(momentum_def - p_sym, q_dot_sym)
-                if q_dot_solution:
-                    hamiltonian = hamiltonian.subs(q_dot_sym, q_dot_solution[0])
-            except (ValueError, TypeError, NotImplementedError):
-                logger.debug(f"Could not substitute {q}_dot in Hamiltonian")
+        # H = Σ p_i q̇_i - L, with every q̇ replaced by its momentum expression.
+        hamiltonian = sum(p * sol[qd] for p, qd in zip(p_syms, q_dot_syms))
+        hamiltonian = hamiltonian - lagrangian.subs(sol)
 
         # Simplify with timeout
         try:
@@ -713,44 +718,18 @@ class SymbolicEngine:
         logger.info(f"Hamiltonian: {hamiltonian}")
         return hamiltonian
 
-    def solve_for_accelerations(
+    def _substitute_derivative_symbols(
         self, equations: List[sp.Expr], coordinates: List[str]
-    ) -> Dict[str, sp.Expr]:
-        """
-        Solve equations of motion for accelerations SIMULTANEOUSLY.
+    ) -> Tuple[List[sp.Expr], List[sp.Symbol]]:
+        """Replace Derivative(q(t), ...) / q(t) notation in each equation with
+        the flat q, q_dot, q_ddot symbol basis. Returns (processed equations,
+        acceleration symbols in coordinate order)."""
+        accel_syms = [self.get_symbol(f"{q}_ddot") for q in coordinates]
 
-        For coupled systems like double pendulum, accelerations are interdependent:
-        M * [q1_ddot, q2_ddot, ...]^T = F
-
-        This function:
-        1. Substitutes all derivative notations with symbols
-        2. Extracts the mass matrix M and force vector F
-        3. Solves the linear system M*a = F simultaneously
-        4. Returns simplified acceleration expressions
-
-        This is CRITICAL for coupled systems where accelerations appear in
-        each other's equations.
-        """
-        logger.info("Solving for accelerations (Simultaneous Coupled System)")
-        self.last_solve_warnings = []
-
-        n = len(coordinates)
-        if n == 0:
-            return {}
-
-        # --- Step 1: Create acceleration symbols ---
-        accel_syms = []
-        for q in coordinates:
-            accel_key = f"{q}_ddot"
-            accel_syms.append(self.get_symbol(accel_key))
-
-        # --- Step 2: Substitute all derivatives with symbols ---
         processed_eqs = []
         for i, eq in enumerate(equations):
-            # Clean up the equation - replace Derivative objects with symbols
             eq_clean = eq
 
-            # Replace ALL second derivatives (not just for current coordinate)
             for j, q in enumerate(coordinates):
                 accel_sym = accel_syms[j]
                 vel_sym = self.get_symbol(f"{q}_dot")
@@ -792,6 +771,59 @@ class SymbolicEngine:
 
             processed_eqs.append(sp.expand(eq_clean))
             logger.debug(f"Processed equation {i}: {eq_clean}")
+
+        return processed_eqs, accel_syms
+
+    def mass_matrix_form(
+        self, equations: List[sp.Expr], coordinates: List[str]
+    ) -> Tuple[sp.Matrix, sp.Matrix]:
+        """
+        Extract the linear system M(q, q̇) · q̈ = F(q, q̇) from the equations of
+        motion WITHOUT symbolically inverting M.
+
+        Euler-Lagrange equations are always linear in the accelerations, so
+        M[i,j] = ∂(eq_i)/∂q̈_j and F[i] = -eq_i|_{q̈=0}. Keeping M and F
+        symbolic and solving the linear system numerically at each integration
+        step avoids the factorial blow-up of symbolic matrix inversion, which
+        is what makes large coupled systems time out.
+        """
+        processed_eqs, accel_syms = self._substitute_derivative_symbols(equations, coordinates)
+        n = len(coordinates)
+        M = sp.zeros(n, n)
+        F = sp.zeros(n, 1)
+        for i in range(n):
+            eq = processed_eqs[i]
+            for j in range(n):
+                M[i, j] = sp.diff(eq, accel_syms[j])
+            F[i, 0] = -eq.subs([(a, 0) for a in accel_syms])
+        return M, F
+
+    def solve_for_accelerations(
+        self, equations: List[sp.Expr], coordinates: List[str]
+    ) -> Dict[str, sp.Expr]:
+        """
+        Solve equations of motion for accelerations SIMULTANEOUSLY.
+
+        For coupled systems like double pendulum, accelerations are interdependent:
+        M * [q1_ddot, q2_ddot, ...]^T = F
+
+        This function:
+        1. Substitutes all derivative notations with symbols
+        2. Extracts the mass matrix M and force vector F
+        3. Solves the linear system M*a = F simultaneously
+        4. Returns simplified acceleration expressions
+
+        This is CRITICAL for coupled systems where accelerations appear in
+        each other's equations.
+        """
+        logger.info("Solving for accelerations (Simultaneous Coupled System)")
+        self.last_solve_warnings = []
+
+        n = len(coordinates)
+        if n == 0:
+            return {}
+
+        processed_eqs, accel_syms = self._substitute_derivative_symbols(equations, coordinates)
 
         # --- Step 3: For single coordinate, use direct extraction ---
         if n == 1:

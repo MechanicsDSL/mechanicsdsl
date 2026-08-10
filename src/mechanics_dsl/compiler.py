@@ -63,6 +63,26 @@ except ImportError:
     SECURITY_AVAILABLE = False
     InjectionError = ValueError  # type: ignore[misc]
 
+# Systems with at least this many generalized coordinates skip symbolic
+# inversion of the mass matrix (which blows up factorially) and instead solve
+# M(q, q̇)·q̈ = F(q, q̇) numerically at each integration step.
+NUMERIC_MASS_MATRIX_MIN_COORDS = 4
+
+# Warn when the mass matrix's condition number at the initial state exceeds
+# this; integration accuracy degrades long before exact singularity.
+MASS_MATRIX_CONDITION_WARN = 1e8
+
+# Warnings containing these markers mean the symbolic solve degenerated and the
+# derived "dynamics" are a zero-acceleration placeholder; compilation must not
+# report success in that case.
+_FATAL_WARNING_MARKERS = (
+    "falling back to zero",
+    "defaulted to zero",
+    "using zero fallback",
+    "Mass matrix is singular",
+)
+
+
 def _package_version() -> str:
     """Lazy lookup of the package version to dodge the circular import that
     would happen if we did ``from . import __version__`` at the module level
@@ -263,6 +283,8 @@ class PhysicsCompiler:
         self.compilation_time: Optional[float] = None
         self.equations: Optional[Any] = None
         self.use_hamiltonian_formulation: bool = False
+        # Non-fatal diagnostics from the mass-matrix conditioning check.
+        self.conditioning_warnings: List[str] = []
 
         # Memory management
         if config.enable_memory_monitoring:
@@ -306,6 +328,7 @@ class PhysicsCompiler:
         self.smoothing_length = 0.1
         self.equations = None
         self.use_hamiltonian_formulation = False
+        self.conditioning_warnings = []
 
         # Hamiltonian derived from a Lagrangian is cached on the instance; drop it
         if hasattr(self, "hamiltonian_expr"):
@@ -325,6 +348,10 @@ class PhysicsCompiler:
         self.simulator.coordinates = []
         self.simulator.use_hamiltonian = False
         self.simulator.hamiltonian_equations = None
+        self.simulator.use_mass_matrix = False
+        self.simulator._mm_M = None
+        self.simulator._mm_F = None
+        self.simulator._mm_n = 0
 
     def cleanup(self) -> None:
         """Cleanup resources and trigger garbage collection."""
@@ -527,6 +554,41 @@ class PhysicsCompiler:
             warnings_list: List[str] = []
             warnings_list.extend(getattr(self.symbolic, "last_solve_warnings", []) or [])
             warnings_list.extend(getattr(self.simulator, "last_compile_warnings", []) or [])
+            warnings_list.extend(self.conditioning_warnings)
+
+            # A degenerate symbolic solve (zero-acceleration fallback, singular
+            # mass matrix, lambdify zero fallback) means the derived dynamics
+            # are placeholders, not physics. Report that as a FAILURE rather
+            # than a success with an advisory note.
+            #
+            # This only applies to coordinates that are genuinely dynamical
+            # (their velocity appears in the Lagrangian). A declared variable
+            # with no kinetic term is an inert parameter that the coordinate
+            # heuristic misclassified; q̈ = 0 is the CORRECT answer for it, not
+            # a degeneracy, so it must not fail the compilation.
+            fatal = [
+                w for w in warnings_list
+                if any(marker in w for marker in _FATAL_WARNING_MARKERS)
+            ]
+            if fatal and not self._has_degenerate_dynamical_coordinate(equations):
+                logger.warning(
+                    "Zero-acceleration fallback affected only non-dynamical "
+                    "(kinetic-term-free) variables; treating as advisory."
+                )
+                fatal = []
+            if fatal:
+                self.compilation_time = time.time() - start_time
+                error_msg = (
+                    "Equation derivation degenerated; refusing to report "
+                    "success: " + " | ".join(fatal)
+                )
+                logger.error(error_msg)
+                return {
+                    "success": False,
+                    "error": error_msg,
+                    "warnings": warnings_list,
+                    "compilation_time": self.compilation_time,
+                }
 
             result = {
                 "success": True,
@@ -871,10 +933,110 @@ class PhysicsCompiler:
                     # Add to equation: EL_i + Q_dissip = 0 (dissipation opposes motion)
                     eq_list[i] = eq_list[i] - Q_dissip
 
-        # 4. Solve for accelerations (this will handle derivative replacement)
+        # 4. Extract the linear system M(q,q̇)·q̈ = F(q,q̇). Euler-Lagrange
+        # equations are always linear in the accelerations, so this is cheap
+        # and gives us both the conditioning diagnostic and the escape hatch
+        # for large systems.
+        M, F = self.symbolic.mass_matrix_form(eq_list, coordinates)
+
+        cond_warning = self._mass_matrix_conditioning_warning(M, coordinates)
+        if cond_warning:
+            self.conditioning_warnings.append(cond_warning)
+
+        # 5. Large coupled systems: symbolic inversion of M blows up
+        # factorially, so defer the M⁻¹ solve to numeric evaluation time.
+        if len(coordinates) >= NUMERIC_MASS_MATRIX_MIN_COORDS:
+            logger.info(
+                f"{len(coordinates)} coordinates >= "
+                f"{NUMERIC_MASS_MATRIX_MIN_COORDS}: deferring mass-matrix "
+                "inversion to numeric evaluation"
+            )
+            return {"__mass_matrix__": (M, F)}
+
+        # 6. Solve for accelerations (this will handle derivative replacement)
         accelerations = self.symbolic.solve_for_accelerations(eq_list, coordinates)
 
         return accelerations
+
+    def _has_degenerate_dynamical_coordinate(self, equations: Any) -> bool:
+        """
+        True if some genuinely dynamical coordinate ended up with an
+        identically-zero acceleration.
+
+        A coordinate is "dynamical" when its velocity actually appears in the
+        Lagrangian (∂L/∂q̇ ≠ 0). For such a coordinate, a zero acceleration
+        means the symbolic solve collapsed and the dynamics are fake. For a
+        variable with no kinetic term — typically a parameter that the
+        name-based coordinate heuristic misclassified — zero acceleration is
+        simply correct, and must not be reported as a failure.
+
+        Errs on the side of "degenerate" (True) if the check itself fails, so
+        that a genuine collapse is never silently accepted.
+        """
+        if not isinstance(equations, dict) or "__mass_matrix__" in equations:
+            return True
+        if self.lagrangian is None:
+            return True
+
+        try:
+            L = self.symbolic.ast_to_sympy(self.lagrangian)
+            for q in self.get_coordinates():
+                q_dot = self.symbolic.get_symbol(f"{q}_dot")
+                if sp.diff(L, q_dot) == 0:
+                    continue  # not a dynamical coordinate
+                accel = equations.get(f"{q}_ddot")
+                if accel is None or sp.simplify(accel) == 0:
+                    return True
+            return False
+        except Exception as e:
+            logger.debug(f"Degeneracy check failed ({e}); treating as degenerate")
+            return True
+
+    def _mass_matrix_conditioning_warning(
+        self, M: sp.Matrix, coordinates: List[str]
+    ) -> Optional[str]:
+        """
+        Estimate the mass matrix's condition number at the initial state and
+        return a warning string if it is ill-conditioned.
+
+        A nearly singular mass matrix produces correct symbolic equations whose
+        numerical integration drifts badly, which is otherwise invisible to the
+        user (the exactly-singular case is already caught by the solve
+        fallback). Never raises: any failure just skips the diagnostic.
+        """
+        try:
+            subs: Dict[Any, float] = {}
+            for name, info in self.parameters_def.items():
+                subs[self.symbolic.get_symbol(name)] = float(info["value"])
+            for q in coordinates:
+                subs[self.symbolic.get_symbol(q)] = float(
+                    self.initial_conditions.get(q, 0.0)
+                )
+                subs[self.symbolic.get_symbol(f"{q}_dot")] = float(
+                    self.initial_conditions.get(f"{q}_dot", 0.0)
+                )
+
+            M_num = M.subs(subs)
+            for leftover in M_num.free_symbols:
+                M_num = M_num.subs(leftover, 1.0)
+
+            M_arr = np.array(M_num.evalf().tolist(), dtype=float)
+            if not np.all(np.isfinite(M_arr)):
+                return None
+            cond = float(np.linalg.cond(M_arr))
+
+            if not np.isfinite(cond) or cond > MASS_MATRIX_CONDITION_WARN:
+                return (
+                    f"Mass matrix is ill-conditioned at the initial state "
+                    f"(condition number ~ {cond:.2e} > "
+                    f"{MASS_MATRIX_CONDITION_WARN:.0e}). The symbolic equations "
+                    "may be exact, but numerically integrated trajectories can "
+                    "drift (e.g. energy non-conservation). Consider rescaling "
+                    "coordinates, masses, or couplings."
+                )
+        except Exception as e:
+            logger.debug(f"Mass-matrix conditioning check skipped: {e}")
+        return None
 
     def derive_constrained_equations(self) -> Dict[str, sp.Expr]:
         """Derive equations with constraints using Lagrange multipliers"""
@@ -964,6 +1126,9 @@ class PhysicsCompiler:
         if self.use_hamiltonian_formulation:
             q_dots, p_dots = equations
             self.simulator.compile_hamiltonian_equations(q_dots, p_dots, coordinates)
+        elif isinstance(equations, dict) and "__mass_matrix__" in equations:
+            M, F = equations["__mass_matrix__"]
+            self.simulator.compile_mass_matrix_equations(M, F, coordinates)
         else:
             self.simulator.compile_equations(equations, coordinates)
 
@@ -1018,7 +1183,12 @@ class PhysicsCompiler:
         print(f"Formulation: {'Hamiltonian' if self.use_hamiltonian_formulation else 'Lagrangian'}")
         print(f"{'='*70}\n")
 
-        if self.use_hamiltonian_formulation:
+        if isinstance(self.equations, dict) and "__mass_matrix__" in self.equations:
+            M, F = self.equations["__mass_matrix__"]
+            print("Numeric mass-matrix formulation: M(q, q̇) · q̈ = F(q, q̇)")
+            print(f"M = {M}\n")
+            print(f"F = {F}\n")
+        elif self.use_hamiltonian_formulation:
             q_dots, p_dots = self.equations
             coords = self.get_coordinates()
             for i, q in enumerate(coords):
@@ -1094,6 +1264,14 @@ class PhysicsCompiler:
 
         if self.equations is None:
             raise ValueError("No equations derived. Call compile_dsl() first.")
+
+        if isinstance(self.equations, dict) and "__mass_matrix__" in self.equations:
+            raise ValueError(
+                "This system uses the numeric mass-matrix formulation (too many "
+                "coordinates for closed-form accelerations), which code "
+                "generators do not support. Reduce the number of coordinates "
+                f"below {NUMERIC_MASS_MATRIX_MIN_COORDS} to export."
+            )
 
         # Lazy import - keeps PhysicsCompiler import cheap.
         from . import codegen as _codegen
