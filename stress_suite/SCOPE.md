@@ -87,10 +87,13 @@ registered report, and pitching it as one invites rejection on thin evidence.
 
 ## Verify before quoting any number
 
-- `out/results.json` is stale. It predates the uncommitted fixes in `src/`, which
-  already repaired the Hamiltonian freeze. Re-run before citing anything from
-  `MASTER_REPORT.md`.
-- MechanicsDSL has an internal 5-second timeout that raises rather than returning
-  a failure — `dof_N3__hamiltonian` dies on it in ~5s, not the 180s the old run
-  recorded. Check whether it is silently truncating other cases.
-- You wrote MechanicsDSL. Say so plainly in the paper.
+- **The baseline is `RESULTS.md` at commit `d04207c`** — zero silent failures in
+  45 adjudicated cases, established 10 August. `MASTER_REPORT.md` describes the
+  pre-fix engine and must not be quoted as current; `FIXES.md` explains every
+  difference between them.
+- The engine is frozen from `d04207c`. If it changes, the baseline is void and
+  the suite has to be re-run before any number is cited again.
+- You are MechanicsDSL's maintainer and it is one of the engines under
+  measurement. Say so plainly in the paper — a maintainer measuring their own
+  tool is normal and defensible when disclosed, and indefensible when not.
+- Disclose AI assistance. It is permitted everywhere and concealing it is not.

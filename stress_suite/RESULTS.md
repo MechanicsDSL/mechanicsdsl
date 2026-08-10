@@ -1,12 +1,15 @@
 # Baseline results — 10 August 2026
 
-Measured at commit `e43def8`. Engine changes in `b582e4f`, suite fix in `e43def8`.
-This is the frozen baseline. Per `SCOPE.md`, MechanicsDSL does not change again
-until the study is finished.
+Measured at commit `d04207c`. This is the frozen baseline. Per `SCOPE.md`,
+MechanicsDSL does not change again until the study is finished.
+
+Supersedes the pre-fix run of 28 July, kept for comparison in
+`MASTER_REPORT.md` and `out/report_legacy_3way.md`. What changed in between is
+documented case by case in `FIXES.md`.
 
 ## The number
 
-**One silent failure in 45 adjudicated cases. About 2%.**
+**Zero silent failures in 45 adjudicated cases.**
 
 A silent failure is the engine handing you a wrong answer while reporting
 success. It's the only failure mode you can't defend against as a user, so it's
@@ -14,72 +17,88 @@ the number the whole study is built around.
 
 ## The tally
 
-55 cases run. 43 passed. 1 silent. 1 loud error. 10 never finished.
+55 cases. 44 passed. 1 refused. 10 never finished.
 
-The 10 that never finished are not counted as failures. They're missing answers,
-not wrong ones, and how many there are depends entirely on the time limit you
-picked — which is a fact about the test harness, not about the engine.
+Of the 45 cases where MechanicsDSL gave an answer, 44 were correct and 1 was an
+explicit refusal. It produced no wrong answers presented as right.
 
-## The one silent failure
+The 10 that never finished are not counted as failures — they're missing
+answers, and how many there are depends on the time limit chosen, which is a
+fact about the harness rather than the engine.
 
-A two-coordinate system whose mass matrix is almost singular (ε = 1e-8).
+**The check actually ran.** Every case where the independent ground-truth
+oracle was applicable was compared against it. This matters more than the zero:
+a silent-failure rate is worth exactly as much as the checks behind it, and an
+earlier version of this suite reported passes on cases where the strongest check
+had quietly failed to execute.
 
-The equations MechanicsDSL derived are **correct** — they match an independently
-written derivation to 7 parts in 10¹⁵. What goes wrong is the integration. The
-mass matrix has a condition number around 2×10⁸, which costs about eight of the
-sixteen decimal digits double precision gives you. Energy drifts 3.7% over the
-run, and the engine still reports success.
+## The one refusal
 
-It does now warn that the matrix is ill-conditioned. The warning is advisory and
-doesn't block the result, so it still counts as silent. That's the honest call:
-the user gets a wrong trajectory and a green light.
+`nearsing_e0` — a mass matrix that is exactly singular. The system is genuinely
+degenerate: the coordinates stop being independent, and there is no motion to
+compute. The engine fails at compile time and says so.
 
-## What got fixed since July
+That is the correct outcome. Refusing an impossible problem is good behaviour;
+the failure would be answering it anyway.
 
-All four engine fixes from the old master report are in.
+## What changed since July
 
-| Fix | Effect |
-|---|---|
-| Degenerate solves now fail | Exact singularity went from a silent wrong answer to a clean compile failure |
-| Momentum relations inverted together | The two-link Hamiltonian went from frozen-and-silent to correct |
-| Ill-conditioning warning | The near-singular case now says something instead of nothing |
-| Numeric mass-matrix path | **The Lagrangian scaling wall is gone** |
+Three silent failures existed on 28 July. All three are closed, each with an
+identified cause:
 
-That last one is the biggest change in the run. Four and five coupled pendulum
-links used to hit the 180-second limit and die. They now finish in 6.8 and 11.2
-seconds, correctly. Zero timeouts on that axis, down from 40%.
+| Was | Cause | Now |
+|---|---|---|
+| Two-link Hamiltonian froze, reported success | Velocities solved one at a time; breaks down when momenta couple | pass, 37s |
+| Exact singularity returned zero accelerations as success | Success not gated on degenerate solves | error — honest refusal |
+| ε=1e-8 drifted 3.7% in energy, no warning | Integration tolerance ignored the mass matrix conditioning | pass, drift 1.7e-6 |
+
+Four more cases were reported silent on the intermediate run and were never real
+— the suite was counting advisory warnings as evidence of wrong physics. Their
+equations matched the independent derivation to between 1e-25 and 1e-33.
+
+The scaling wall also moved: four and five coupled pendulum links used to exceed
+180 seconds and get killed. They now finish in 4.6 and 13.8 seconds, correctly
+and verified.
+
+## Accuracy
+
+Two separate things, both measured.
+
+**The equations it derives**, against an independently written SymPy derivation
+sampled at random states: agreement at or below 1e-15, with several cases exact
+to zero. Indistinguishable from a separate implementation of the same physics.
+
+**The trajectories it simulates**, by energy conservation over the full run:
+between roughly 1e-6 and 1e-10. The worst case in the suite loses about two
+ten-thousandths of a percent of its energy over ten thousand oscillations.
 
 ## Where it still stops
 
-- Hamiltonian path: walls at 3 linked pendulums.
-- Closed loops: wall at 4 nodes.
-- Nested-function potentials: wall at depth 16.
+| Pathway | Wall |
+|---|---|
+| Hamiltonian | 3 linked pendulums |
+| Closed loops | 4 nodes |
+| Nested-function potentials | depth 16 |
+| Near-singular | ε = 1e-11 |
 
-Not failures. It just stops answering, and says so by not returning.
+Not failures. It stops answering, and the absence of an answer is itself honest.
 
-## What we still don't know
+## What this does and does not claim
 
-- **Whether anything hides past the time limit.** Every timeout was at 180
-  seconds. If a pathway would return a *wrong* answer at 400 seconds, this run
-  can't see it. Three cases are worth probing individually: nested depth 16,
-  ε = 1e-11, and the 3-link Hamiltonian.
-- **Whether it stays correct.** Nothing here runs automatically. Correctness is
-  a thing that was true on 10 August, not a thing that's enforced. The Legendre
-  fix shipped with no tests.
-- **A speedup that's sitting in the timings.** N=3 takes 53s while N=4 takes 6.8s
-  and N=5 takes 11.2s. The bigger systems are faster because they cross the
-  threshold onto the numeric path and N=3 doesn't. Lowering that threshold is a
-  one-constant change. Do it *after* the study — the engine is frozen.
+It claims: across 55 cases spanning six stress axes, at commit `d04207c`, there
+is **no known case where MechanicsDSL returns a wrong answer while reporting
+success.**
 
-## Provenance
+It does not claim the engine is correct in general. Fifty-five cases is not a
+proof, and correctness here is established against one independent
+implementation plus conservation laws — if both implementations shared a
+conceptual error, neither would catch it. "No known silent failures" is the
+strongest claim this method supports, and it is the honest one.
 
-The raw run reported 39 pass and 5 silent. Four of those five were a bug in the
-suite, not the engine: the classifier treated *any* warning on a successful
-result as proof of wrong physics, which was right when the only warnings meant
-broken math, but wrong once the engine started emitting advisory
-ill-conditioning notices. Those four match the independent derivation to between
-1e-25 and 1e-33 and conserve energy to 5e-8. They are correct results that got
-flagged for being warned about.
+Two further limits worth stating plainly:
 
-Fixed in `e43def8` and each of the five re-verified individually. The figures
-above are the corrected ones.
+- The stiffness-detection fix (`FIXES.md` #7) is not exercised by any case in
+  this suite. It was fixed by inspection and remains untested.
+- Nothing here runs automatically. This is a measurement taken on 10 August, not
+  a property that is enforced going forward. Wiring a fast subset into CI is what
+  would turn it into one.
