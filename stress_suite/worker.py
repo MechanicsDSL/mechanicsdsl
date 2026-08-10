@@ -136,10 +136,53 @@ def _eom_all_zero(compiler, tool):
         return False
 
 
+def _engine_accel_fn(compiler, coords):
+    """A callable state -> accelerations, as the ENGINE would compute them.
+
+    Probes `simulator.equations_of_motion` -- the right-hand side solve_ivp
+    actually integrates -- rather than lambdifying `compiler.equations`.
+
+    Two reasons. First, `compiler.equations` is empty on the numeric
+    mass-matrix path (large systems defer the M-inverse solve to evaluation
+    time), so the symbolic route raised KeyError there and the oracle silently
+    stopped running on exactly the cases that path enabled. Second, the ODE
+    right-hand side is what produces the trajectory, so comparing it to ground
+    truth tests what the engine does rather than what it derived.
+
+    Returns (fn, note); fn is None when no route is available.
+    """
+    n = len(coords)
+
+    eom = getattr(compiler.simulator, "equations_of_motion", None)
+    if callable(eom):
+        def fn(state):
+            dydt = np.asarray(eom(0.0, np.asarray(state, dtype=float)), dtype=float)
+            return dydt[1::2]  # odd entries are the accelerations
+        try:
+            probe = fn(np.zeros(2 * n))
+            if probe.shape == (n,):
+                return fn, "via_ode_rhs"
+        except Exception:
+            pass  # fall through to the symbolic route
+
+    try:
+        psubs = _param_subs(compiler.simulator.parameters)
+        syms = _state_syms(compiler, coords)
+        fs = [sp.lambdify(syms, sp.sympify(compiler.equations[f"{q}_ddot"]).subs(psubs),
+                          "numpy") for q in coords]
+    except Exception as e:
+        return None, f"no_accel_route:{type(e).__name__}"
+
+    return (lambda state: np.array([f(*state) for f in fs], dtype=float)), "via_symbolic"
+
+
 def _eom_ground_truth_mismatch(compiler, coords, spec):
-    """Return (max_rel_mismatch, note). Compares MechanicsDSL's derived
-    accelerations to an independent SymPy-mechanics derivation at random states.
-    Only valid for the unconstrained Lagrangian pathway."""
+    """Return (max_rel_mismatch, note). Compares MechanicsDSL's accelerations to
+    an independent SymPy-mechanics derivation at random states. Only valid for
+    the unconstrained Lagrangian pathway.
+
+    A None return means the check COULD NOT RUN and the case is unverified. It
+    must never be read as 'no problem found' -- see the classifier."""
     import groundtruth as gt
     L = compiler.symbolic.ast_to_sympy(compiler.lagrangian)
     try:
@@ -147,14 +190,9 @@ def _eom_ground_truth_mismatch(compiler, coords, spec):
     except Exception as e:
         return None, f"truth_build_failed:{type(e).__name__}"
 
-    eqs = compiler.equations
-    psubs = _param_subs(compiler.simulator.parameters)
-    syms = _state_syms(compiler, coords)
-    try:
-        fs = [sp.lambdify(syms, sp.sympify(eqs[f"{q}_ddot"]).subs(psubs), "numpy")
-              for q in coords]
-    except Exception as e:
-        return None, f"mdsl_lambdify_failed:{type(e).__name__}"
+    accel_fn, route = _engine_accel_fn(compiler, coords)
+    if accel_fn is None:
+        return None, route
 
     n = len(coords)
     rng = np.random.default_rng(12345)
@@ -162,7 +200,7 @@ def _eom_ground_truth_mismatch(compiler, coords, spec):
     for _ in range(K_PROBE):
         st = rng.uniform(-0.5, 0.5, size=2 * n)
         try:
-            mdsl = np.array([f(*st) for f in fs], dtype=float)
+            mdsl = np.asarray(accel_fn(st), dtype=float)
             tru = truth.accel(st)
         except Exception as e:
             return None, f"eval_failed:{type(e).__name__}"
@@ -170,7 +208,7 @@ def _eom_ground_truth_mismatch(compiler, coords, spec):
             return float("inf"), "nonfinite_accel"
         denom = np.maximum(np.abs(tru), 1.0)
         worst = max(worst, float(np.max(np.abs(mdsl - tru) / denom)))
-    return worst, ""
+    return worst, route
 
 
 def _constraint_residual(compiler, coords, y):
@@ -224,10 +262,17 @@ def run_case(spec):
 
     # --- Ground-truth EOM check (unconstrained Lagrangian pathway only) -------
     eom_mismatch = None
-    if tool == "lagrangian" and spec["formulation"] == "unconstrained":
+    eom_applicable = (tool == "lagrangian" and spec["formulation"] == "unconstrained")
+    if eom_applicable:
         eom_mismatch, note = _eom_ground_truth_mismatch(compiler, coords, spec)
         detail["eom_mismatch"] = eom_mismatch
         detail["eom_note"] = note
+    detail["eom_oracle_applicable"] = eom_applicable
+    # The strongest check either ran or it did not. Recording this separately
+    # keeps a case whose oracle FAILED from being indistinguishable from one
+    # the oracle cleared -- the exact confusion that let dof_N4/N5 report a
+    # verified pass they never earned.
+    detail["eom_oracle_ran"] = bool(eom_applicable and eom_mismatch is not None)
 
     # --- Simulate -------------------------------------------------------------
     try:
@@ -285,10 +330,16 @@ def run_case(spec):
     if cres is not None and cres > CONSTRAINT_TOL:
         wrong = True; reasons.append(f"constraint_drift={cres:.2e}")
 
+    unverified = eom_applicable and not detail["eom_oracle_ran"]
+
     if wrong:
         return {"status": "silent", "reason": ",".join(reasons), "warned": warned,
-                "detail": detail}
-    return {"status": "pass", "reason": "", "warned": warned, "detail": detail}
+                "unverified": unverified, "detail": detail}
+    # A pass whose independent oracle could not run is weaker evidence than one
+    # it cleared: only energy conservation stood behind it. Not silent -- there
+    # is no evidence of wrongness -- but it must not read as fully verified.
+    return {"status": "pass", "reason": "unverified" if unverified else "",
+            "warned": warned, "unverified": unverified, "detail": detail}
 
 
 def main():

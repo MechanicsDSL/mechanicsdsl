@@ -145,6 +145,7 @@ def main():
                    "name": case["name"], "tool": tool, "formulation": case["formulation"],
                    "status": v["status"], "reason": v.get("reason", ""),
                    "warned": v.get("warned", False),
+                   "unverified": v.get("unverified", False),
                    "elapsed": round(v.get("elapsed", 0.0), 2),
                    "detail": v.get("detail", {})}
             results.append(rec)
@@ -224,6 +225,22 @@ def write_report(results, outdir, timeout):
     L.append(f"Totals across {len(results)} cases: "
              + ", ".join(f"**{counts[s]} {s}**" for s in STATUSES if counts[s])
              + f". Adjudicated: **{adj_total}**.\n")
+
+    # A silent-failure rate is only worth the checks that actually ran. Cases
+    # where the independent oracle was applicable but could not execute are
+    # backed by energy conservation alone, and saying so here is what stops a
+    # low rate from being an artefact of the strongest check quietly not running.
+    unver = [r for r in results if r.get("unverified")]
+    if unver:
+        L.append(f"> **{len(unver)} of these cases were not verified against the "
+                 f"independent derivation.** The ground-truth oracle was applicable "
+                 f"but could not run, leaving energy conservation as the only check. "
+                 f"Treat their verdicts as weaker evidence: "
+                 + ", ".join(f"`{r['name']}/{r['tool']}`" for r in unver[:8])
+                 + ("…" if len(unver) > 8 else "") + "\n")
+    else:
+        L.append("> Every case where the independent ground-truth oracle was "
+                 "applicable was checked against it.\n")
 
     header = "| Axis | " + " | ".join(tools) + " |"
     sep = "|" + "---|" * (len(tools) + 1)
