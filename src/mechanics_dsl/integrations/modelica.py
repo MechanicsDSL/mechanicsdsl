@@ -118,33 +118,51 @@ class ModelicaGenerator:
             self.parameters = {}
             self.initial_conditions = {}
 
+    @staticmethod
+    def _is_symbolic(value) -> bool:
+        """
+        True if value is convertible to Modelica source.
+
+        compiler.simulator.equations holds the *lambdified numeric* form of the
+        equations - plain Python callables. Handing one of those to
+        sympy_to_modelica raises SympifyError and emits a
+        MECHANICSDSL_CODEGEN_FAILED poison pill instead of a usable model, so
+        callables are rejected and a later symbolic source is tried instead.
+        """
+        return value is not None and not callable(value)
+
     def _extract_equations(self, compiler) -> None:
         """
         Extract acceleration equations from the compiler.
+
+        Sources are tried symbolic-first. A source that yields no usable
+        symbolic entries is skipped rather than accepted, so the numeric
+        simulator form can never shadow the symbolic one.
         """
-        if hasattr(compiler, "accelerations") and compiler.accelerations:
-            self.equations = dict(compiler.accelerations)
-            return
+        candidates = [
+            getattr(compiler, "accelerations", None),
+            # The symbolic dict, e.g. {'x_ddot': -1.0*k*x/m}. This is what the
+            # codegen backends use, and it must win over simulator.equations.
+            getattr(compiler, "equations", None),
+            getattr(getattr(compiler, "simulator", None), "equations", None),
+            getattr(compiler, "equations_of_motion", None),
+        ]
 
-        if hasattr(compiler, "simulator") and hasattr(compiler.simulator, "equations"):
-            eqs = compiler.simulator.equations
+        for eqs in candidates:
             if isinstance(eqs, dict):
-                self.equations = eqs
-                return
+                symbolic = {k: v for k, v in eqs.items() if self._is_symbolic(v)}
             elif isinstance(eqs, list) and SYMPY_AVAILABLE:
-                for i, eq in enumerate(eqs):
-                    if i < len(self.coordinates):
-                        self.equations[self.coordinates[i]] = eq
-                return
+                symbolic = {
+                    self.coordinates[i]: eq
+                    for i, eq in enumerate(eqs)
+                    if i < len(self.coordinates) and self._is_symbolic(eq)
+                }
+            else:
+                continue
 
-        if hasattr(compiler, "equations_of_motion") and compiler.equations_of_motion:
-            eom = compiler.equations_of_motion
-            if isinstance(eom, dict):
-                self.equations = eom
-            elif isinstance(eom, list) and SYMPY_AVAILABLE:
-                for i, eq in enumerate(eom):
-                    if i < len(self.coordinates):
-                        self.equations[self.coordinates[i]] = eq
+            if symbolic:
+                self.equations = symbolic
+                return
 
     def generate(self, output_file: Optional[str] = None) -> str:
         """Generate Modelica model."""

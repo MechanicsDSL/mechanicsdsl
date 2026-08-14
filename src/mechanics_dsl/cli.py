@@ -66,23 +66,32 @@ def cmd_compile(args):
     base_name = input_path.stem
     target = args.target.lower()
 
-    # Generate code for target
+    # Generate code for target.
+    #
+    # Values are (export target key, output filename). Dispatch goes through
+    # PhysicsCompiler.export(), which is the single registry of code
+    # generators; the compile_to_<lang> methods this table used to name do not
+    # exist for anything but C++.
     target_methods = {
-        "cpp": ("compile_to_cpp", f"{base_name}.cpp"),
-        "c++": ("compile_to_cpp", f"{base_name}.cpp"),
-        "cuda": ("compile_to_cuda", f"{base_name}.cu"),
-        "rust": ("compile_to_rust", f"{base_name}.rs"),
-        "julia": ("compile_to_julia", f"{base_name}.jl"),
-        "fortran": ("compile_to_fortran", f"{base_name}.f90"),
-        "matlab": ("compile_to_matlab", f"{base_name}.m"),
-        "javascript": ("compile_to_javascript", f"{base_name}.js"),
-        "js": ("compile_to_javascript", f"{base_name}.js"),
-        "wasm": ("compile_to_wasm", f"{base_name}.wat"),
-        "webassembly": ("compile_to_wasm", f"{base_name}.wat"),
-        "python": ("compile_to_python", f"{base_name}_sim.py"),
-        "py": ("compile_to_python", f"{base_name}_sim.py"),
-        "arduino": ("compile_to_arduino", f"{base_name}.ino"),
-        "openmp": ("compile_to_openmp", f"{base_name}_omp.cpp"),
+        "cpp": ("cpp", f"{base_name}.cpp"),
+        "c++": ("cpp", f"{base_name}.cpp"),
+        "cuda": ("cuda", f"{base_name}.cu"),
+        "rust": ("rust", f"{base_name}.rs"),
+        "julia": ("julia", f"{base_name}.jl"),
+        "fortran": ("fortran", f"{base_name}.f90"),
+        "matlab": ("matlab", f"{base_name}.m"),
+        "javascript": ("javascript", f"{base_name}.js"),
+        "js": ("javascript", f"{base_name}.js"),
+        # WasmGenerator emits emscripten C (plus index.html / build.sh
+        # alongside it), not .wat text. A non-".c" path would be treated as an
+        # output *directory* and silently create one named "<base>.wat".
+        "wasm": ("wasm", f"{base_name}_wasm.c"),
+        "webassembly": ("wasm", f"{base_name}_wasm.c"),
+        "python": ("python", f"{base_name}_sim.py"),
+        "py": ("python", f"{base_name}_sim.py"),
+        "arduino": ("arduino", f"{base_name}.ino"),
+        "openmp": ("openmp", f"{base_name}_omp.cpp"),
+        "arm": ("arm", f"{base_name}_arm.c"),
     }
 
     if target not in target_methods:
@@ -92,11 +101,10 @@ def cmd_compile(args):
         )
         return 1
 
-    method_name, default_filename = target_methods[target]
+    export_target, default_filename = target_methods[target]
     output_file = output_dir / default_filename
 
-    method = getattr(compiler, method_name)
-    method(str(output_file))
+    compiler.export(export_target, str(output_file))
 
     print(f"✓ Compiled to {output_file}")
     return 0

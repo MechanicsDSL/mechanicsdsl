@@ -107,6 +107,19 @@ _sessions: "OrderedDict[str, Any]" = OrderedDict()
 _sessions_lock = threading.Lock()
 
 
+def _export_targets() -> List[str]:
+    """
+    The code generation targets PhysicsCompiler.export() accepts.
+
+    Read off the compiler's registry rather than hardcoded, so a generator
+    added to the compiler is reachable over the API without a second edit
+    here. Returns [] when mechanics_dsl failed to import.
+    """
+    if PhysicsCompiler is None:
+        return []
+    return sorted(PhysicsCompiler._GENERATOR_REGISTRY)
+
+
 def get_or_create_compiler(session_id: Optional[str] = None) -> "PhysicsCompiler":
     """
     Get the compiler for a session, or create a fresh one for anonymous use.
@@ -215,20 +228,10 @@ if FASTAPI_AVAILABLE:
         """
         Export compiled system to target language.
         """
-        # SECURITY: Validate target against allowlist to prevent path traversal
-        ALLOWED_TARGETS = {
-            "cpp",
-            "python",
-            "rust",
-            "julia",
-            "matlab",
-            "fortran",
-            "javascript",
-            "cuda",
-            "openmp",
-            "wasm",
-            "arduino",
-        }
+        # SECURITY: Validate target against allowlist to prevent path traversal.
+        # Derived from the compiler's own registry so the API cannot silently
+        # drift out of sync with the set of generators that actually exist.
+        ALLOWED_TARGETS = set(_export_targets())
         target = request.target.lower().strip()
         if target not in ALLOWED_TARGETS:
             return ExportResponse(
@@ -248,8 +251,12 @@ if FASTAPI_AVAILABLE:
             "javascript": "js",
             "cuda": "cu",
             "openmp": "cpp",
-            "wasm": "wat",
+            # WasmGenerator emits emscripten C. A suffix other than ".c" makes
+            # it treat the path as an output directory, which collides with the
+            # already-created temp file below.
+            "wasm": "c",
             "arduino": "ino",
+            "arm": "c",
         }
         safe_extension = EXTENSION_MAP.get(target, "txt")
 
@@ -282,20 +289,7 @@ if FASTAPI_AVAILABLE:
     @router.get("/generators")
     async def list_generators():
         """List available code generators."""
-        generators = [
-            "cpp",
-            "python",
-            "rust",
-            "julia",
-            "matlab",
-            "fortran",
-            "javascript",
-            "cuda",
-            "openmp",
-            "wasm",
-            "arduino",
-        ]
-        return {"generators": generators}
+        return {"generators": _export_targets()}
 
     @router.delete("/session/{session_id}")
     async def clear_session(session_id: str):

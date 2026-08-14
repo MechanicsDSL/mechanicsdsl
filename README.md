@@ -12,7 +12,7 @@
 
 ---
 
-MechanicsDSL is a domain-specific language and compiler for physical systems. You write a Lagrangian or Hamiltonian in a LaTeX-inspired syntax; the symbolic engine (built on SymPy) derives the equations of motion automatically, and the compiler generates simulation code in your choice of thirteen target languages — from Python and C++ to CUDA, Rust, WebAssembly, and Arduino.
+MechanicsDSL is a domain-specific language and compiler for physical systems. You write a Lagrangian or Hamiltonian in a LaTeX-inspired syntax; the symbolic engine (built on SymPy) derives the equations of motion automatically, and the compiler generates simulation code in your choice of twelve target languages — from Python and C++ to CUDA, Rust, WebAssembly, and Arduino.
 
 The goal is to collapse the distance between textbook physics and a running simulation, while keeping the path to lower-level, performance-tuned code open through code generation.
 
@@ -40,7 +40,7 @@ compiler.plot(solution)
 | Component | Description |
 |-----------|-------------|
 | **Symbolic engine** | Derives equations of motion from Lagrangians or Hamiltonians, built on SymPy |
-| **Code generation** | Thirteen targets: C++, Python, Rust, Julia, CUDA, Fortran, MATLAB, JavaScript, OpenMP, WebAssembly, Arduino, ARM, Modelica |
+| **Code generation** | Twelve targets: C++, Python, Rust, Julia, CUDA, Fortran, MATLAB, JavaScript, OpenMP, WebAssembly, Arduino, ARM |
 | **JAX backend** | GPU acceleration with JIT compilation and automatic differentiation |
 | **Inverse problems** | Parameter estimation, sensitivity analysis, MCMC uncertainty quantification |
 | **Jupyter integration** | `%%mechanicsdsl` magic commands for interactive notebooks |
