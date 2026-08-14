@@ -15,10 +15,12 @@ Features:
 """
 
 import os
+import re
 from typing import Dict, List, Optional
 
 import sympy as sp
-from sympy.printing.c import ccode
+from sympy.codegen.ast import float32, real
+from sympy.printing.c import C99CodePrinter, ccode
 
 from ..utils import logger
 from .base import CodeGenerator
@@ -41,6 +43,92 @@ def sympy_to_c_arm(expr: sp.Expr) -> str:
     except Exception as e:
         logger.warning(f"Failed to convert expression to C: {e}")
         return f"0.0 /* ERROR: {e} */"
+
+
+# The bare-metal template compiles with -nostdlib, so libm is unavailable.
+# These are the only transcendental helpers it defines for itself.
+_EMBEDDED_MATH_FUNCTIONS = {
+    "sin": "arm_sinf",
+    "cos": "arm_cosf",
+    "sqrt": "arm_sqrtf",
+}
+
+# Any libm call still present after printing has no bare-metal implementation
+# and would fail at link time with an opaque message. Both the double and the
+# single-precision spellings are listed; the arm_* helpers are not matched
+# because the preceding underscore suppresses the word boundary.
+_UNSUPPORTED_LIBM = re.compile(
+    r"\b(pow|exp|log|log10|tan|asin|acos|atan|atan2|sinh|cosh|tanh|fmod|fabs)f?\s*\("
+)
+
+
+class _EmbeddedCPrinter(C99CodePrinter):
+    """
+    C printer for the bare-metal ARM target.
+
+    Differs from the stock printer in the two ways that matter under
+    ``-nostdlib``: small integer powers become explicit multiplication instead
+    of ``pow()``, and sin/cos/sqrt route to the template's own ``arm_*``
+    helpers.
+    """
+
+    MAX_INLINE_POWER = 8
+
+    def _print_Pow(self, expr: sp.Expr) -> str:
+        base, exp = expr.base, expr.exp
+
+        # sympy evaluates Float(1.0) == 1 as False, so normalise float
+        # exponents explicitly rather than relying on comparison.
+        if getattr(exp, "is_Float", False):
+            value = float(exp)
+            if value.is_integer():
+                exp = sp.Integer(int(value))
+            elif value == 0.5:
+                exp = sp.Rational(1, 2)
+            elif value == -0.5:
+                exp = sp.Rational(-1, 2)
+
+        if exp == sp.Rational(1, 2):
+            return f"arm_sqrtf({self._print(base)})"
+        if exp == sp.Rational(-1, 2):
+            return f"1.0F/arm_sqrtf({self._print(base)})"
+
+        if getattr(exp, "is_Integer", False) and 0 < abs(int(exp)) <= self.MAX_INLINE_POWER:
+            n = int(exp)
+            factor = self.parenthesize(base, 50)
+            product = "*".join([factor] * abs(n))
+            return product if n > 0 else f"1.0F/({product})"
+
+        return super()._print_Pow(expr)
+
+
+def sympy_to_c_arm_embedded(expr: Optional[sp.Expr]) -> str:
+    """
+    Convert a sympy expression to bare-metal ARM C.
+
+    Args:
+        expr: Sympy expression to convert.
+
+    Returns:
+        C code string. On failure this emits an undefined identifier rather
+        than a plausible number, so the generated file fails to compile
+        instead of silently simulating the wrong physics.
+    """
+    if expr is None:
+        return "MECHANICSDSL_CODEGEN_FAILED_NO_EXPRESSION"
+    try:
+        # float32 keeps literals single-precision; a Cortex-M without a
+        # double-precision FPU would otherwise promote the whole expression.
+        return _EmbeddedCPrinter(
+            {
+                "user_functions": _EMBEDDED_MATH_FUNCTIONS,
+                "type_aliases": {real: float32},
+            }
+        ).doprint(expr)
+    except Exception as e:
+        logger.error(f"sympy_to_c_arm_embedded: conversion failed for {expr!r}: {e}")
+        detail = re.sub(r"[^A-Za-z0-9_]+", "_", str(e))[:60]
+        return f"MECHANICSDSL_CODEGEN_FAILED_{detail}"
 
 
 class ARMGenerator(CodeGenerator):
@@ -226,6 +314,42 @@ float compute_energy(const float* state, int n) {{
                 lines.append(f"    dydt[{idx+1}] = 0.0;")
             idx += 2
         return "\n".join(lines)
+
+    def generate_embedded_derivatives(self) -> str:
+        """
+        Generate the bare-metal derivative block from the system's equations.
+
+        Writes every one of the DIM slots. The template this replaces
+        hardcoded a two-element pendulum right-hand side, so any system with
+        more than one coordinate left dydt[2:] holding uninitialised stack
+        memory, which the integration loop then accumulated into the state.
+        """
+        unpack = []
+        derivatives = []
+
+        for idx, coord in enumerate(self.coordinates):
+            pos, vel = 2 * idx, 2 * idx + 1
+            unpack.append(f"    float {coord} = state[{pos}];")
+            unpack.append(f"    float {coord}_dot = state[{vel}];")
+
+            derivatives.append(f"    dydt[{pos}] = {coord}_dot;  // d({coord})/dt")
+
+            expr = self.equations.get(f"{coord}_ddot") if self.equations else None
+            if expr is None:
+                # Integrating 0 here would silently produce a system that is
+                # not the one that was compiled.
+                derivatives.append(
+                    f"    dydt[{vel}] = MECHANICSDSL_NO_EQUATION_FOR_{coord};"
+                    f"  // d({coord}_dot)/dt"
+                )
+            else:
+                c_expr = sympy_to_c_arm_embedded(expr)
+                derivatives.append(f"    dydt[{vel}] = {c_expr};  // d({coord}_dot)/dt")
+
+        # Silence -Wunused-variable for coordinates no equation happens to read.
+        voids = [f"    (void){c}; (void){c}_dot;" for c in self.coordinates]
+
+        return "\n".join(unpack + voids + [""] + derivatives)
 
     def generate_initial_conditions(self) -> str:
         """Generate initial conditions as comma-separated values."""
@@ -439,12 +563,28 @@ int main(void) {{
 
     def _generate_embedded_code(self) -> str:
         """Generate bare-metal code for Cortex-M."""
+        # Emitted under the parameter's own name, not upper-cased: the printed
+        # expressions reference the sympy symbol names, so an upper-cased
+        # #define would leave every parameter reference undefined.
         param_lines = []
         for name, val in self.parameters.items():
-            param_lines.append(f"#define {name.upper()} {val}f")
+            param_lines.append(f"static const float {name} = {val}f;")
         param_str = "\n".join(param_lines)
 
         state_dim = len(self.coordinates) * 2
+
+        derivative_str = self.generate_embedded_derivatives()
+
+        unsupported = sorted(set(_UNSUPPORTED_LIBM.findall(derivative_str)))
+        if unsupported:
+            needed = ", ".join(f"{fn}()" for fn in unsupported)
+            libm_guard = (
+                f'#error "MechanicsDSL: {self.system_name} needs libm ({needed}), '
+                'which the bare-metal target does not provide. Regenerate with '
+                'embedded=False, or link libm and remove this #error."\n'
+            )
+        else:
+            libm_guard = ""
 
         init_vals = []
         for coord in self.coordinates:
@@ -492,17 +632,13 @@ static inline float arm_sqrtf(float x) {{
 // State
 static float state[DIM] = {{ {init_str} }};
 
+{libm_guard}
 // Step simulation (call from main loop)
 void physics_step(float dt) {{
     // Simplified Euler integration for embedded
     float dydt[DIM];
 
-    // Your equations here (simplified for embedded)
-    float theta = state[0];
-    float theta_dot = state[1];
-
-    dydt[0] = theta_dot;
-    dydt[1] = -9.81f * arm_sinf(theta);  // Example: pendulum
+{derivative_str}
 
     for (int i = 0; i < DIM; i++) {{
         state[i] += dydt[i] * dt;

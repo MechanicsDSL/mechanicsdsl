@@ -119,6 +119,92 @@ class TestARMGenerator:
             assert "arm_cosf" in code
             assert "physics_step" in code
 
+            # The derivative must come from the system's own equations, not a
+            # hardcoded example. -g/l*sin(theta) with l=0.5 must appear as a
+            # reference to the parameters, never as a baked-in constant.
+            assert "// Example: pendulum" not in code
+            assert "-9.81f * arm_sinf(theta)" not in code
+            assert "arm_sinf(theta)" in code
+            assert "static const float g = 9.81" in code
+            assert "static const float l = 0.5" in code
+
+    def test_embedded_writes_every_derivative_slot(self):
+        """
+        Every dydt slot must be assigned for a multi-coordinate system.
+
+        Regression test: the embedded template used to hardcode a two-element
+        pendulum right-hand side, so a 3-DOF system produced DIM 6 with only
+        dydt[0] and dydt[1] written. The remaining slots were uninitialised
+        stack memory that the integration loop accumulated into the state.
+        """
+        a, b, c = sp.symbols("a b c")
+        i1, i2, i3 = sp.symbols("I1 I2 I3")
+
+        generator = ARMGenerator(
+            system_name="attitude",
+            coordinates=["a", "b", "c"],
+            parameters={"I1": 2.0, "I2": 3.0, "I3": 4.0},
+            initial_conditions={
+                "a": 0.1, "a_dot": 0.0,
+                "b": 0.2, "b_dot": 0.0,
+                "c": 0.3, "c_dot": 0.0,
+            },
+            equations={"a_ddot": -a / i1, "b_ddot": -2 * b / i2, "c_ddot": -3 * c / i3},
+            target="cortex_m",
+            embedded=True,
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            result = generator.generate(os.path.join(tmpdir, "attitude_arm.c"))
+            with open(result, "r") as f:
+                code = f.read()
+
+        assert "#define DIM 6" in code
+
+        # All six slots assigned, so no slot is read while uninitialised.
+        for slot in range(6):
+            assert f"dydt[{slot}] =" in code, f"dydt[{slot}] never assigned"
+
+        # Each acceleration references its own parameter, not a pendulum.
+        assert "dydt[1] = -a/I1;" in code
+        assert "dydt[3] = -2*b/I2;" in code
+        assert "dydt[5] = -3*c/I3;" in code
+        assert "9.81" not in code
+
+    def test_embedded_avoids_libm(self):
+        """
+        Bare-metal output must not call libm, which -nostdlib cannot link.
+
+        Integer powers become multiplication, and anything genuinely needing
+        libm raises a #error at compile time rather than failing at link.
+        """
+        x = sp.Symbol("x")
+
+        def build(equation):
+            return ARMGenerator(
+                system_name="s",
+                coordinates=["x"],
+                parameters={},
+                initial_conditions={"x": 0.1, "x_dot": 0.0},
+                equations={"x_ddot": equation},
+                target="cortex_m",
+                embedded=True,
+            )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            inlined = build(x**3).generate(os.path.join(tmpdir, "a.c"))
+            with open(inlined, "r") as f:
+                code = f.read()
+            assert "dydt[1] = x*x*x;" in code
+            assert "pow" not in code
+            assert "#error" not in code
+
+            unsupported = build(sp.tan(x)).generate(os.path.join(tmpdir, "b.c"))
+            with open(unsupported, "r") as f:
+                code = f.read()
+            assert "#error" in code
+            assert "tan" in code
+
     def test_generate_neon_intrinsics(self, simple_pendulum):
         """Test NEON SIMD intrinsics generation."""
         neon_code = simple_pendulum._generate_neon_intrinsics()
