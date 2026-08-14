@@ -96,8 +96,13 @@ class _EmbeddedCPrinter(C99CodePrinter):
         if getattr(exp, "is_Integer", False) and 0 < abs(int(exp)) <= self.MAX_INLINE_POWER:
             n = int(exp)
             factor = self.parenthesize(base, 50)
-            product = "*".join([factor] * abs(n))
-            return product if n > 0 else f"1.0F/({product})"
+            if abs(n) == 1:
+                return factor if n > 0 else f"1.0F/{factor}"
+            # The product must be parenthesised: the Mul printer hands a
+            # denominator's base here and splices the result straight after a
+            # '/', so a bare x*x would render g/x**2 as g/x*x, which is g.
+            product = "(" + "*".join([factor] * abs(n)) + ")"
+            return product if n > 0 else f"1.0F/{product}"
 
         return super()._print_Pow(expr)
 
@@ -346,8 +351,11 @@ float compute_energy(const float* state, int n) {{
                 c_expr = sympy_to_c_arm_embedded(expr)
                 derivatives.append(f"    dydt[{vel}] = {c_expr};  // d({coord}_dot)/dt")
 
-        # Silence -Wunused-variable for coordinates no equation happens to read.
+        # Silence -Wunused-variable / -Wunused-const-variable for names no
+        # equation happens to read. A parameter can drop out legitimately: the
+        # pendulum's -g*sin(theta)/l never mentions its mass.
         voids = [f"    (void){c}; (void){c}_dot;" for c in self.coordinates]
+        voids += [f"    (void){name};" for name in self.parameters]
 
         return "\n".join(unpack + voids + [""] + derivatives)
 

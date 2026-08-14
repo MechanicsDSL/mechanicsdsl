@@ -195,7 +195,7 @@ class TestARMGenerator:
             inlined = build(x**3).generate(os.path.join(tmpdir, "a.c"))
             with open(inlined, "r") as f:
                 code = f.read()
-            assert "dydt[1] = x*x*x;" in code
+            assert "dydt[1] = (x*x*x);" in code
             assert "pow" not in code
             assert "#error" not in code
 
@@ -204,6 +204,36 @@ class TestARMGenerator:
                 code = f.read()
             assert "#error" in code
             assert "tan" in code
+
+    def test_embedded_parenthesises_inlined_powers(self):
+        """
+        An inlined power used as a denominator must stay parenthesised.
+
+        Regression test: the printer returned a bare ``b*b`` for ``b**2``, and
+        the Mul printer splices a denominator straight after '/', so ``a/b**2``
+        emitted ``a/b*b`` -- which evaluates to ``a``. It compiles cleanly, so
+        only the arithmetic reveals it.
+        """
+        a, b = sp.symbols("a b", positive=True)
+
+        generator = ARMGenerator(
+            system_name="ratio",
+            coordinates=["a"],
+            parameters={"b": 2.0},
+            initial_conditions={"a": 1.0, "a_dot": 0.0},
+            equations={"a_ddot": a / b**2},
+            target="cortex_m",
+            embedded=True,
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            result = generator.generate(os.path.join(tmpdir, "ratio_arm.c"))
+            with open(result, "r") as f:
+                code = f.read()
+
+        assert "dydt[1] = a/(b*b);" in code
+        assert "a/b*b" not in code
+        assert "pow" not in code
 
     def test_generate_neon_intrinsics(self, simple_pendulum):
         """Test NEON SIMD intrinsics generation."""
