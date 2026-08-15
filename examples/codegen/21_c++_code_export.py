@@ -1,4 +1,4 @@
-﻿"""
+"""
 Tutorial 21: C++ Code Export
 
 This tutorial demonstrates how to generate high-performance C++ code
@@ -9,6 +9,14 @@ from your DSL simulation. This is useful for:
 
 We'll use a double pendulum as an example of a system that benefits from speed.
 """
+
+# Ensure UTF-8 console output (Windows cp1252 cannot encode math symbols).
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 
 import os
 from mechanics_dsl import PhysicsCompiler

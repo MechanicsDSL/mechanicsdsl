@@ -1,4 +1,4 @@
-﻿"""
+"""
 Tutorial 07: 2D Motion (Projectile and Orbits)
 
 This tutorial covers motion in 2D:
@@ -10,6 +10,14 @@ Physics:
 - Projectile: x and y coordinates, gravity in y-direction
 - Orbits: Central force (gravity), polar coordinates (r, φ)
 """
+
+# Ensure UTF-8 console output (Windows cp1252 cannot encode math symbols).
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 
 import numpy as np
 import matplotlib.pyplot as plt

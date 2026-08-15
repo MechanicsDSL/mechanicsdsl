@@ -1,4 +1,4 @@
-﻿"""
+"""
 Tutorial 03: Simple Pendulum
 
 A pendulum is a mass suspended from a pivot point, swinging under gravity.
@@ -13,6 +13,14 @@ Physics:
 
 We'll compare small and large angle behavior.
 """
+
+# Ensure UTF-8 console output (Windows cp1252 cannot encode math symbols).
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 
 import numpy as np
 import matplotlib.pyplot as plt

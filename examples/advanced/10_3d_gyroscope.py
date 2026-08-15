@@ -1,4 +1,4 @@
-﻿"""
+"""
 Tutorial 10: 3D Gyroscope
 
 A gyroscope is a spinning top that exhibits fascinating precession and nutation.
@@ -11,6 +11,14 @@ Physics:
 - Precession: slow rotation of spin axis
 - Nutation: wobbling motion
 """
+
+# Ensure UTF-8 console output (Windows cp1252 cannot encode math symbols).
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 
 import numpy as np
 import matplotlib.pyplot as plt

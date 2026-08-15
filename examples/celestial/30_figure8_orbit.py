@@ -1,4 +1,4 @@
-﻿"""
+"""
 Tutorial 30: Figure-8 Three-Body Orbit
 
 The famous Chenciner-Montgomery periodic solution to the three-body problem.
@@ -9,6 +9,14 @@ Physics:
 - Discovered in 2000 by Chenciner & Montgomery
 - One of the most beautiful periodic solutions in celestial mechanics
 """
+
+# Ensure UTF-8 console output (Windows cp1252 cannot encode math symbols).
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 
 import numpy as np
 import matplotlib.pyplot as plt

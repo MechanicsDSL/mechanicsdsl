@@ -1,4 +1,4 @@
-﻿"""
+"""
 Tutorial 18: Export and Import Systems
 
 MechanicsDSL allows you to save and load system configurations.
@@ -10,6 +10,14 @@ This is useful for:
 
 We'll use the SystemSerializer class.
 """
+
+# Ensure UTF-8 console output (Windows cp1252 cannot encode math symbols).
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 
 import json
 import numpy as np

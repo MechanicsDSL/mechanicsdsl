@@ -1,4 +1,4 @@
-﻿"""
+"""
 Tutorial 14: Chaotic Systems - The Duffing Oscillator
 
 The Duffing oscillator is a classic example of a chaotic system.
@@ -9,6 +9,14 @@ Physics:
 - Shows period doubling route to chaos
 - Strange attractors in phase space
 """
+
+# Ensure UTF-8 console output (Windows cp1252 cannot encode math symbols).
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 
 import numpy as np
 import matplotlib.pyplot as plt

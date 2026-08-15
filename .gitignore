@@ -122,3 +122,12 @@ dmypy.json
 # Temporary files
 *.tmp
 *.log
+
+# Claude Code local state (worktrees, session data)
+.claude/
+
+# Local commit-log scratch file
+progress.txt
+
+# Generated example output (produced by running the embedded examples)
+examples/embedded/attitude_controller/

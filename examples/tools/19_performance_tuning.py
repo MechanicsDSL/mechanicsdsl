@@ -1,4 +1,4 @@
-﻿"""
+"""
 Tutorial 19: Performance Tuning
 
 Optimizing simulations for speed and accuracy.
@@ -10,6 +10,14 @@ Topics:
 - Profiling and benchmarking
 - When to use C++ code generation
 """
+
+# Ensure UTF-8 console output (Windows cp1252 cannot encode math symbols).
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 
 import numpy as np
 import matplotlib.pyplot as plt

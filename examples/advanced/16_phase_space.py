@@ -1,4 +1,4 @@
-﻿"""
+"""
 Tutorial 16: Phase Space Visualization
 
 Phase space is a powerful tool for understanding dynamics:
@@ -10,6 +10,14 @@ Phase space is a powerful tool for understanding dynamics:
 
 This tutorial shows various phase space visualizations.
 """
+
+# Ensure UTF-8 console output (Windows cp1252 cannot encode math symbols).
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 
 import numpy as np
 import matplotlib.pyplot as plt

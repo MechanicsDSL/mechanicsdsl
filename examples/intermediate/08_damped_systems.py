@@ -1,4 +1,4 @@
-﻿"""
+"""
 Tutorial 08: Damped Systems
 
 Real systems lose energy! This tutorial covers:
@@ -11,6 +11,14 @@ Physics:
 - Can be added via \\damping{} command
 - Three regimes based on damping coefficient b
 """
+
+# Ensure UTF-8 console output (Windows cp1252 cannot encode math symbols).
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 
 import numpy as np
 import matplotlib.pyplot as plt

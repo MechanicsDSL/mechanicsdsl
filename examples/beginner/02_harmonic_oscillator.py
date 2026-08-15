@@ -1,4 +1,4 @@
-﻿"""
+"""
 Tutorial 02: Harmonic Oscillator
 
 The harmonic oscillator is one of the most important systems in physics.
@@ -12,6 +12,14 @@ Physics:
 
 We'll simulate this and see the characteristic sinusoidal motion.
 """
+
+# Ensure UTF-8 console output (Windows cp1252 cannot encode math symbols).
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 
 import numpy as np
 import matplotlib.pyplot as plt

@@ -1,4 +1,4 @@
-﻿"""
+"""
 Tutorial 22: Advanced C++ Compilation Targets
 
 This tutorial demonstrates the "Physics Compiler" capabilities:
@@ -7,6 +7,14 @@ This tutorial demonstrates the "Physics Compiler" capabilities:
 3. Raylib (Interactive Visualization)
 4. Arduino (Embedded Code)
 """
+
+# Ensure UTF-8 console output (Windows cp1252 cannot encode math symbols).
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 
 import os
 from mechanics_dsl import PhysicsCompiler

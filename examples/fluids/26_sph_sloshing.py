@@ -1,4 +1,4 @@
-﻿"""
+"""
 Tutorial 26: SPH Sloshing Tank
 
 Simulating liquid sloshing in a moving container.
@@ -9,6 +9,14 @@ Physics:
 - Free surface waves develop
 - Resonance when forcing matches natural frequency
 """
+
+# Ensure UTF-8 console output (Windows cp1252 cannot encode math symbols).
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 
 import os
 import subprocess

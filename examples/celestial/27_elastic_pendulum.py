@@ -1,4 +1,4 @@
-﻿"""
+"""
 Tutorial 27: Elastic Pendulum (Spring Pendulum)
 
 A pendulum where the rod is replaced by a spring.
@@ -9,6 +9,14 @@ Physics:
 - Shows interesting energy transfer between modes
 - Can exhibit chaotic behavior
 """
+
+# Ensure UTF-8 console output (Windows cp1252 cannot encode math symbols).
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 
 import numpy as np
 import matplotlib.pyplot as plt

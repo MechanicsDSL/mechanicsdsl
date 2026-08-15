@@ -1,4 +1,4 @@
-﻿"""
+"""
 Tutorial 25: SPH Droplet Impact
 
 Simulating a water droplet falling and splashing on a surface.
@@ -9,6 +9,14 @@ Physics:
 - Surface tension effects (simplified)
 - Particle fragmentation during splash
 """
+
+# Ensure UTF-8 console output (Windows cp1252 cannot encode math symbols).
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 
 import os
 import subprocess

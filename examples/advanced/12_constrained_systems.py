@@ -1,4 +1,4 @@
-﻿"""
+"""
 Tutorial 12: Constrained Systems
 
 A bead sliding on a rotating hoop - a classic example of constrained motion.
@@ -9,6 +9,14 @@ Physics:
 - Only one degree of freedom: angle theta of bead from bottom
 - Shows interesting stability behavior at high rotation speeds
 """
+
+# Ensure UTF-8 console output (Windows cp1252 cannot encode math symbols).
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 
 import numpy as np
 import matplotlib.pyplot as plt

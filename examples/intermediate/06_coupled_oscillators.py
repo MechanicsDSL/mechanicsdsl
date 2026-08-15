@@ -1,4 +1,4 @@
-﻿"""
+"""
 Tutorial 06: Coupled Oscillators
 
 Two masses connected by springs create interesting dynamics:
@@ -11,6 +11,14 @@ Physics:
 - Each mass also connected to wall by springs k_1, k_2
 - Lagrangian includes coupling terms
 """
+
+# Ensure UTF-8 console output (Windows cp1252 cannot encode math symbols).
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 
 import numpy as np
 import matplotlib.pyplot as plt

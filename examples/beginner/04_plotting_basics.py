@@ -1,4 +1,4 @@
-﻿"""
+"""
 Tutorial 04: Plotting and Visualization Basics
 
 MechanicsDSL has built-in visualization tools! This tutorial shows:
@@ -10,6 +10,14 @@ MechanicsDSL has built-in visualization tools! This tutorial shows:
 
 We'll use a simple harmonic oscillator as our example.
 """
+
+# Ensure UTF-8 console output (Windows cp1252 cannot encode math symbols).
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 
 import numpy as np
 import matplotlib.pyplot as plt

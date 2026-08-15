@@ -1,4 +1,4 @@
-﻿"""
+"""
 Tutorial 15: Energy Analysis
 
 Energy conservation is a fundamental principle in physics.
@@ -10,6 +10,14 @@ This tutorial shows how to:
 
 We'll use the energy calculation utilities from MechanicsDSL.
 """
+
+# Ensure UTF-8 console output (Windows cp1252 cannot encode math symbols).
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 
 import numpy as np
 import matplotlib.pyplot as plt

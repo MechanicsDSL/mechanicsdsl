@@ -1,4 +1,4 @@
-﻿"""
+"""
 Tutorial 24: SPH Wave Tank
 
 Simulating waves in a tank using Smoothed Particle Hydrodynamics.
@@ -9,6 +9,14 @@ Physics:
 - Wave propagation and reflection
 - SPH kernel interpolation
 """
+
+# Ensure UTF-8 console output (Windows cp1252 cannot encode math symbols).
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 
 import os
 import subprocess

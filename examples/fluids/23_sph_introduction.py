@@ -1,6 +1,14 @@
-﻿"""
+"""
 Tutorial 23: The Dam Break (SPH Fluid Dynamics)
 """
+
+# Ensure UTF-8 console output (Windows cp1252 cannot encode math symbols).
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 import os
 import subprocess
 import matplotlib.pyplot as plt

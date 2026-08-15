@@ -1,4 +1,4 @@
-﻿"""
+"""
 Tutorial 13: Hamiltonian Formulation
 
 The Hamiltonian approach is an alternative to Lagrangian mechanics.
@@ -15,6 +15,14 @@ Physics:
 - Hamilton's equations: q̇ = ∂H/∂p, ṗ = -∂H/∂q
 - For conservative systems: H = T + V
 """
+
+# Ensure UTF-8 console output (Windows cp1252 cannot encode math symbols).
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 
 import numpy as np
 import matplotlib.pyplot as plt

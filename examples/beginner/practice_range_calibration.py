@@ -43,6 +43,14 @@ equals the total launch speed at that setting.
 Author: MechanicsDSL Examples
 """
 
+# Ensure UTF-8 console output (Windows cp1252 cannot encode math symbols).
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
+
 import csv
 import math
 import statistics

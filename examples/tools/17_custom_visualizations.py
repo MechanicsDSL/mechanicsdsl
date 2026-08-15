@@ -1,4 +1,4 @@
-﻿"""
+"""
 Tutorial 17: Custom Visualizations
 
 Advanced matplotlib techniques for physics visualization.
@@ -10,6 +10,14 @@ Topics:
 - 3D visualization with trails
 - Publication-quality figures
 """
+
+# Ensure UTF-8 console output (Windows cp1252 cannot encode math symbols).
+import sys as _sys
+try:
+    _sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 
 import numpy as np
 import matplotlib.pyplot as plt
