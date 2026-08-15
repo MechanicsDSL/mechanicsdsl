@@ -1,0 +1,1233 @@
+%% ============================================================================
+%%  The Math and Physics of MechanicsDSL
+%%  Compile with:  pdflatex MATH_AND_PHYSICS.tex   (run twice for the ToC)
+%% ============================================================================
+
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\let\Bbbk\relax                      % amssymb and newtxmath both define \Bbbk
+\usepackage{newtxtext,newtxmath}
+\usepackage[margin=1.05in]{geometry}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage[expansion=false]{microtype}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage[colorlinks=true,linkcolor=linknavy,urlcolor=linknavy,citecolor=linknavy]{hyperref}
+
+\definecolor{linknavy}{RGB}{20,60,110}
+\definecolor{codebg}{RGB}{247,247,244}
+\definecolor{coderule}{RGB}{205,205,198}
+\definecolor{codekey}{RGB}{25,80,140}
+
+%% --- Sectioning -------------------------------------------------------------
+\titleformat{\section}{\normalfont\Large\bfseries}{\thesection}{0.8em}{}
+\titleformat{\subsection}{\normalfont\large\bfseries}{\thesubsection}{0.7em}{}
+\titlespacing*{\section}{0pt}{2.2ex plus 1ex minus .2ex}{1.2ex plus .2ex}
+
+%% --- Tables -----------------------------------------------------------------
+\renewcommand{\arraystretch}{1.25}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+%% --- Code listings ----------------------------------------------------------
+\lstdefinestyle{dsl}{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{codekey}\bfseries,
+  backgroundcolor=\color{codebg},
+  frame=single,
+  rulecolor=\color{coderule},
+  framesep=6pt,
+  xleftmargin=10pt,
+  xrightmargin=10pt,
+  breaklines=true,
+  columns=fullflexible,
+  showstringspaces=false,
+  morekeywords={system,defvar,parameter,lagrangian,initial,force,rayleigh,constraint,hamiltonian}
+}
+\lstset{style=dsl}
+
+%% --- Convenience macros -----------------------------------------------------
+\newcommand{\ud}{\mathrm{d}}
+\newcommand{\dd}[2]{\frac{\partial #1}{\partial #2}}
+\newcommand{\ddt}[1]{\frac{\ud #1}{\ud t}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\title{\textbf{The Math and Physics of MechanicsDSL}}
+\author{}
+\date{}
+
+% ============================================================================
+\begin{document}
+% ============================================================================
+
+\maketitle
+\vspace{-3.2em}
+\begin{center}
+\large\itshape A complete account of what this library computes,\\ and why it is built the way it is.
+\end{center}
+\vspace{1.4em}
+
+\hrule
+\vspace{1.2em}
+
+\section*{How to read this document}
+\addcontentsline{toc}{section}{How to read this document}
+
+No prior calculus is assumed. Section~\ref{sec:notation} establishes the notation, and unfamiliar
+constructions are explained where they first appear. Readers already familiar with Lagrangian
+mechanics may proceed directly to Section~\ref{sec:engine}.
+
+The document divides in two:
+
+\begin{itemize}[leftmargin=1.4em,itemsep=0.3em]
+  \item \textbf{Sections \ref{sec:notation}--\ref{sec:energy}} describe the core engine and are
+        intended to be read in order.
+  \item \textbf{Section \ref{sec:domains}} is a reference catalog of the sixteen physics domains
+        the library implements. Each entry opens with a one-sentence statement of scope; the
+        material beneath documents coverage rather than inviting continuous reading.
+\end{itemize}
+
+\vspace{0.8em}
+\hrule
+\vspace{0.6em}
+
+\tableofcontents
+
+\vspace{1.2em}
+\hrule
+
+% ============================================================================
+\section{Notation}
+\label{sec:notation}
+% ============================================================================
+
+\textbf{Symbols denote quantities.} Here $m$ is mass, $l$ length, $g$ gravitational acceleration
+($9.81\ \mathrm{m/s^2}$ at Earth's surface), $t$ time, and $E$ energy. Greek letters follow the same
+convention: $\theta$ typically an angle, $\omega$ an angular frequency.
+
+\medskip
+\noindent\textbf{$q$ denotes a generalized coordinate} --- a single number specifying the
+configuration of a system. For a pendulum this might be the angle from vertical; for a block on a
+track, the distance along it. Where several are required they are indexed $q_1, q_2, \dots$. The
+term \emph{generalized} signals that no particular kind of coordinate is assumed: an angle and a
+distance are treated identically.
+
+\medskip
+\noindent\textbf{An overdot denotes differentiation with respect to time} --- the rate at which a
+quantity changes, per second.
+
+\begin{center}
+\begin{tabular}{@{}clL{7.6cm}@{}}
+\toprule
+\textbf{Symbol} & \textbf{Read as} & \textbf{Quantity} \\
+\midrule
+$q$        & ``$q$''              & Position \\
+$\dot{q}$  & ``$q$-dot''          & Velocity --- the rate of change of position \\
+$\ddot{q}$ & ``$q$-double-dot''   & Acceleration --- the rate of change of velocity \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent For a pendulum with angular coordinate $\theta$, then, $\dot\theta$ is its angular
+velocity and $\ddot\theta$ its angular acceleration. This is the entire convention.
+
+\medskip
+\noindent\textbf{The partial derivative $\partial f/\partial x$} measures how a quantity $f$
+responds to variation in $x$ while every other variable is held fixed. On a topographic map,
+$\partial(\text{elevation})/\partial(\text{easting})$ is the gradient one would measure walking due
+east; variation in the north--south direction contributes nothing. The notation isolates a single
+direction of dependence.
+
+\medskip
+\noindent\textbf{The operator $\ud/\ud t$} denotes the total rate of change with respect to time,
+accounting for every quantity that varies as time passes.
+
+\medskip
+\noindent\textbf{Additional notation:}
+
+\begin{center}
+\begin{tabular}{@{}cL{9.6cm}@{}}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+$\sum$        & Sum over the indicated terms \\
+$\int$        & Integral --- a continuous sum \\
+$\nabla$      & Gradient --- direction and magnitude of steepest increase \\
+$\approx$     & Approximately equal \\
+$\delta_{ij}$ & Equal to $1$ when $i = j$, otherwise $0$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Nothing beyond this is assumed.
+
+% ============================================================================
+\section{What the library does}
+\label{sec:what}
+% ============================================================================
+
+A physical system is specified by a single expression --- its \textbf{Lagrangian}. From that
+expression the library derives the equations of motion, integrates them numerically, and can
+translate them into thirteen target languages.
+
+A complete pendulum specification:
+
+\begin{lstlisting}
+\system{pendulum}
+\defvar{theta}{Angle}{rad}
+\parameter{m}{1.0}{kg}
+\parameter{l}{1.0}{m}
+\parameter{g}{9.81}{m/s^2}
+\lagrangian{\frac{1}{2}*m*l^2*\dot{theta}^2 - m*g*l*(1 - \cos{theta})}
+\initial{theta=0.5, theta_dot=0.0}
+\end{lstlisting}
+
+\noindent The declarations name the system, identify \code{theta} as the generalized coordinate,
+fix the physical parameters, state the Lagrangian, and set initial conditions. Everything
+downstream --- equations of motion, energy expressions, generated C\texttt{++} --- follows from the
+Lagrangian line alone. No per-system code is written by hand.
+
+The pipeline comprises five stages:
+
+\begin{center}
+\begin{tabular}{@{}lL{7.4cm}l@{}}
+\toprule
+\textbf{Stage} & \textbf{Function} & \textbf{Module} \\
+\midrule
+Parse      & Source text to abstract syntax tree        & \code{parser/core.py} \\
+Symbolize  & Syntax tree to symbolic algebra            & \code{symbolic.py} \\
+Derive     & Lagrangian to equations of motion          & \code{symbolic.py} \\
+Solve      & Equations to numerical trajectory          & \code{solver/} \\
+Emit       & Equations to source in a target language   & \code{codegen/} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================================
+\section{Energy formulations versus force formulations}
+\label{sec:formulations}
+% ============================================================================
+
+\subsection{The two approaches}
+
+Classical mechanics admits two equivalent formulations. They yield identical predictions and differ
+in what they require of the person applying them.
+
+\medskip
+\noindent\textbf{The Newtonian formulation} works with forces:
+\begin{equation}
+\vec{F} = m\vec{a}
+\end{equation}
+Applying it requires identifying every force acting on every body and resolving each into components
+along chosen axes. The bookkeeping is vectorial, and it is the user's responsibility: an omitted
+force yields a wrong answer with no indication that anything is missing.
+
+\medskip
+\noindent\textbf{The Lagrangian formulation} works with energy. Define a single scalar quantity, the
+Lagrangian:
+\begin{equation}
+L = T - V
+\end{equation}
+where $T$ is the kinetic energy --- the energy associated with motion --- and $V$ is the potential
+energy, the energy associated with configuration. A raised mass and a compressed spring both store
+potential energy; both convert it to kinetic energy when released.
+
+$L$ is a scalar. It has no direction and no components.
+
+\subsection{Why the difference rather than the sum}
+\label{sec:action}
+
+The subtraction is not a convention chosen for convenience; it is fixed by the variational principle
+underlying the formulation.
+
+Among all conceivable paths a system might follow between two configurations, the physical path is
+distinguished by a property of the \textbf{action} --- the integral of $L$ along the path. The
+physical path is the one for which the action is \textbf{stationary}: perturb the path
+infinitesimally in any direction and the action is unchanged to first order.
+
+The analogy is to a minimum of a function. A ball at the base of a bowl sits where displacement in
+any direction produces no first-order change in height. The physical trajectory occupies the
+analogous position within the space of all possible trajectories.
+
+Taking $T - V$ is what makes the stationary-action condition reproduce Newtonian dynamics. The
+result is the Euler--Lagrange equation, derived next.
+
+Using the library requires no commitment to this justification. It does explain the minus sign.
+
+\subsection{The Euler--Lagrange equation}
+
+For each generalized coordinate $q$, the equation of motion is
+\begin{equation}
+\ddt{}\left(\dd{L}{\dot q}\right) - \dd{L}{q} = 0
+\label{eq:el}
+\end{equation}
+
+\noindent Read from the inside outward, this prescribes three operations:
+
+\begin{enumerate}[leftmargin=1.8em,itemsep=0.25em]
+  \item $\partial L/\partial \dot q$ --- differentiate $L$ with respect to the velocity.
+  \item $\ud/\ud t\,(\cdot)$ --- differentiate that result with respect to time.
+  \item $\partial L/\partial q$ --- differentiate $L$ with respect to the coordinate itself, and
+        subtract.
+\end{enumerate}
+
+\noindent The procedure is purely mechanical and identical for every system and every coordinate.
+That invariance is what makes it automatable, and automating it is what this library is.
+
+\subsection{Worked example: the simple pendulum}
+\label{sec:worked}
+
+Applying the procedure once, in full, to the system specified in Section~\ref{sec:what}.
+
+\medskip
+\noindent\textbf{Setup.} A point mass $m$ on a rigid massless rod of length $l$, displaced by angle
+$\theta$ from vertical.
+
+The mass travels on a circular arc of radius $l$, so its speed is $l\dot\theta$. Kinetic energy is
+$\tfrac{1}{2}mv^2$:
+\begin{equation}
+T = \tfrac{1}{2}m l^2\dot\theta^2
+\end{equation}
+
+Displacement through angle $\theta$ raises the mass by $l(1 - \cos\theta)$, giving gravitational
+potential energy $mgh$:
+\begin{equation}
+V = mgl\,(1 - \cos\theta)
+\end{equation}
+
+The Lagrangian is their difference:
+\begin{equation}
+L = \tfrac{1}{2}m l^2\dot\theta^2 - mgl(1 - \cos\theta)
+\end{equation}
+
+\medskip
+\noindent\textbf{Step 1: differentiate with respect to $\dot\theta$.}
+Only the kinetic term depends on $\dot\theta$. Differentiating a squared quantity $x^2$ yields $2x$,
+so $\tfrac{1}{2}ml^2\dot\theta^2$ yields $\tfrac{1}{2}ml^2 \cdot 2\dot\theta$:
+\begin{equation}
+\dd{L}{\dot\theta} = m l^2 \dot\theta
+\end{equation}
+This quantity is the pendulum's \textbf{angular momentum}. It emerges from the procedure without
+having been sought.
+
+\medskip
+\noindent\textbf{Step 2: differentiate with respect to time.}
+Here $m$ and $l$ are constants, so only $\dot\theta$ varies; its time derivative is $\ddot\theta$:
+\begin{equation}
+\ddt{}\left(m l^2 \dot\theta\right) = m l^2 \ddot\theta
+\end{equation}
+
+\medskip
+\noindent\textbf{Step 3: differentiate with respect to $\theta$ and subtract.}
+Only the potential term depends on $\theta$. Expanding,
+$-mgl(1 - \cos\theta) = -mgl + mgl\cos\theta$; the constant contributes nothing, and the derivative
+of $\cos\theta$ is $-\sin\theta$:
+\begin{equation}
+\dd{L}{\theta} = -mgl\sin\theta
+\end{equation}
+
+Assembling:
+\begin{equation}
+m l^2 \ddot\theta + mgl\sin\theta = 0
+\end{equation}
+
+Dividing by $ml^2$:
+\begin{equation}
+\boxed{\ \ddot\theta = -\frac{g}{l}\sin\theta\ }
+\end{equation}
+
+\medskip
+\noindent\textbf{Interpretation.} Angular acceleration is proportional to $-\sin\theta$. The
+negative sign gives a restoring effect --- acceleration is always directed back toward vertical ---
+and the magnitude grows with displacement. Note that $m$ has cancelled: the period is independent of
+the mass, as observed.
+
+\medskip
+\noindent\textbf{Verification.} For small displacements $\sin\theta \approx \theta$, reducing the
+equation to $\ddot\theta = -(g/l)\theta$, the equation of simple harmonic motion with angular
+frequency $\omega = \sqrt{g/l}$ and period
+\begin{equation}
+T = 2\pi\sqrt{l/g}
+\end{equation}
+which is the standard result. It follows from the definition of $T - V$ and three differentiations.
+
+\medskip
+\noindent\emph{No force was identified at any point, and the rod's tension never appeared.} That
+observation motivates the next section.
+
+% ============================================================================
+\section{Why the Lagrangian formulation}
+\label{sec:why}
+% ============================================================================
+
+Both formulations are correct. The question is which can be carried out by software on the user's
+behalf. Six considerations follow, then the cases where the choice is a liability.
+
+\subsection{A scalar expression is representable as text}
+
+$L = T - V$ is a single algebraic expression. It can be tokenized, parsed, differentiated
+symbolically, and simplified by a computer algebra system.
+
+The Newtonian formulation requires that the analysis already be done: forces enumerated, components
+resolved, frame selected. There is no natural textual representation of ``the tension in the rod''
+from which software could infer the intended physics. There is a natural textual representation of
+kinetic energy.
+
+\subsection{Constraint forces do not appear}
+\label{sec:noconstraintforce}
+
+The rod in Section~\ref{sec:worked} exerts a tension on the mass. A Newtonian treatment must account
+for it --- despite its doing no work, having no influence on the period, and being irrelevant to the
+question asked. It would be solved for and then eliminated.
+
+In Section~\ref{sec:worked} it never entered the calculation. Because the configuration was
+described by the single quantity that can actually vary, the constraint was incorporated from the
+outset: motion the rod forbids is not expressible in the coordinate.
+
+The advantage compounds with system size. A double pendulum in Cartesian coordinates requires four
+position variables, two rigid-length constraints, and two unknown tensions. In generalized
+coordinates it requires two angles.
+
+\subsection{The formulation is coordinate-independent}
+
+The Euler--Lagrange equation takes the same form in every coordinate system --- Cartesian, polar,
+spherical, or arbitrary curvilinear.
+
+Newton's second law does not. Transforming to polar coordinates introduces centrifugal and Coriolis
+terms that must be derived separately and included by hand; omitting one produces an error that is
+difficult to detect.
+
+A domain-specific language cannot anticipate which coordinates a user will choose, so it requires a
+formulation indifferent to that choice. This is why \code{\textbackslash defvar\{theta\}} and
+\code{\textbackslash defvar\{x\}} are handled identically by the parser --- no stage downstream needs
+to distinguish them.
+
+\subsection{Coupling is derived rather than assembled}
+\label{sec:coupling}
+
+In a double pendulum each arm's angular acceleration depends on the other's. Extracting that
+dependence from a force analysis is lengthy and error-prone.
+
+From the Lagrangian it is automatic. A coupling term such as $\cos(\theta_1 - \theta_2)$ propagates
+correctly through the differentiation steps with no special handling.
+
+This is why \code{derive\_equations\_of\_motion} in \code{symbolic.py} promotes \emph{all}
+coordinates to functions of time simultaneously before differentiating. Treating them sequentially
+would drop the cross-terms and produce equations that are plausible and wrong.
+
+\subsection{The structures required downstream are already present}
+
+Available directly from the Lagrangian at no additional cost:
+
+\begin{itemize}[leftmargin=1.4em,itemsep=0.25em]
+  \item \textbf{Total energy}, $T + V$ --- and the code recovers $T$ and $V$ from $L$ automatically
+        (Section~\ref{sec:codegen}).
+  \item \textbf{Conjugate momentum}, $\partial L/\partial\dot q$ --- obtained incidentally in Step 1
+        of Section~\ref{sec:worked}.
+  \item \textbf{Conservation laws}, from the symmetries of $L$ (Section~\ref{sec:noether}).
+  \item \textbf{The symplectic structure} required by the integrators that prevent energy drift
+        (Section~\ref{sec:symplectic}).
+\end{itemize}
+
+A set of force vectors carries none of this. Each would require separate implementation per system.
+
+\subsection{The formulation generalizes}
+
+The same relation~\eqref{eq:el} applies to charged particles in electromagnetic fields, to
+relativistic particles, to continuous fields, and to geodesic motion in curved spacetime. This is how
+the \code{domains/} package spans sixteen fields on one engine. Newton's second law does not extend
+in this way.
+
+\subsection{Where the choice is a liability}
+
+The formulation is the weaker option when:
+
+\begin{itemize}[leftmargin=1.4em,itemsep=0.3em]
+  \item \textbf{A constraint force is the quantity of interest.} If the question is whether the rod
+        will fail, the tension is required --- and recovering what the formulation eliminated
+        requires the Lagrange multiplier machinery of Section~\ref{sec:constraints}.
+  \item \textbf{Non-conservative forces are present.} Friction and drag dissipate energy and admit no
+        potential, so they cannot be expressed within $T - V$ and must be reintroduced explicitly.
+        The DSL provides \code{\textbackslash force\{\}} and \code{\textbackslash rayleigh\{\}} for
+        this purpose (Section~\ref{sec:dissipation}).
+  \item \textbf{The system is trivial.} For a single particle in rectilinear motion, $F = ma$ is more
+        direct.
+\end{itemize}
+
+For the remaining majority of problems the scalar formulation is preferable because it can be
+mechanized --- and mechanization is the purpose of a compiler.
+
+% ============================================================================
+\section{The symbolic engine}
+\label{sec:engine}
+% ============================================================================
+
+\subsection{Deriving the equations}
+
+For each coordinate the engine executes the procedure of Section~\ref{sec:worked} symbolically:
+
+\begin{enumerate}[leftmargin=1.8em,itemsep=0.2em]
+  \item Promote every coordinate to a function of time --- \emph{all coordinates simultaneously},
+        preserving coupling (Section~\ref{sec:coupling}).
+  \item Differentiate with respect to velocity, then with respect to time.
+  \item Subtract the derivative with respect to position.
+  \item Substitute back to plain symbols and simplify.
+\end{enumerate}
+
+Simplification runs under a timeout, since symbolic simplification has no useful worst-case bound. On
+expiry the unsimplified expression is used --- less readable, equally correct.
+
+\subsection{Solving for accelerations: the mass matrix}
+\label{sec:massmatrix}
+
+The Euler--Lagrange equations are always \textbf{linear in the accelerations}: each $\ddot q$ appears
+to the first power, never squared or inside a transcendental function. The system therefore admits
+the compact form
+\begin{equation}
+M(q)\,\ddot{q} = F(q, \dot q, t)
+\end{equation}
+
+\begin{itemize}[leftmargin=1.4em,itemsep=0.3em]
+  \item $M$ is the \textbf{mass matrix}, an $n \times n$ array whose entry $M_{ij}$ is the
+        coefficient of $\ddot q_j$ in equation $i$. Diagonal entries express each coordinate's own
+        inertia; off-diagonal entries express inertial coupling --- the extent to which accelerating
+        one coordinate exerts an inertial effect on another. For a single particle it reduces to the
+        mass.
+  \item $F$ is the \textbf{generalized force vector}, comprising every term without an acceleration.
+\end{itemize}
+
+Solving requires inverting $M$. Two paths are implemented:
+
+\begin{itemize}[leftmargin=1.4em,itemsep=0.25em]
+  \item \textbf{One coordinate:} direct solution. Given $A\ddot q + B = 0$, then $\ddot q = -B/A$.
+  \item \textbf{Several coordinates:} simultaneous solution of the full linear system, with explicit
+        matrix inversion as a fallback. Sequential solution would be invalid, since each acceleration
+        appears in the others' equations.
+\end{itemize}
+
+If $\det M = 0$ the mass matrix is \textbf{singular} and the system has no unique solution.
+Physically this indicates a direction of motion carrying no inertia --- a degenerate Lagrangian. The
+condition is detected and reported rather than propagated.
+
+\subsection{The Hamiltonian formulation}
+\label{sec:hamiltonian}
+
+An alternative packaging of the same dynamics replaces velocity with momentum as the second state
+variable. The \textbf{conjugate momentum} is
+\begin{equation}
+p = \dd{L}{\dot q}
+\end{equation}
+which for an unconstrained particle reduces to $mv$, and for the pendulum of
+Section~\ref{sec:worked} gave $ml^2\dot\theta$.
+
+The change of variables is a \textbf{Legendre transform} --- a systematic method for re-expressing a
+function in terms of its own derivative --- and yields the \textbf{Hamiltonian}:
+\begin{equation}
+H = \sum_i p_i \dot q_i - L
+\end{equation}
+with every velocity eliminated in favour of momentum. For systems whose kinetic energy is quadratic
+in velocity, $H = T + V$: the total energy.
+
+The dynamics then take the symmetric first-order form of \textbf{Hamilton's equations}:
+\begin{equation}
+\dot q_i = \dd{H}{p_i}, \qquad \dot p_i = -\dd{H}{q_i}
+\end{equation}
+
+The motivation is geometric. The space of states $(q, p)$ --- \textbf{phase space}, in which a single
+point specifies the complete instantaneous state --- carries a structure (the symplectic form) that
+certain integrators preserve exactly. Preserving it is what bounds long-term energy error
+(Section~\ref{sec:symplectic}).
+
+\subsection{Constraints and Lagrange multipliers}
+\label{sec:constraints}
+
+A \textbf{holonomic constraint} restricts configuration alone and is written $g(q) = 0$ --- a bead
+confined to a wire, or two masses at fixed separation.
+
+It is imposed by augmenting the Lagrangian with the constraint and an undetermined coefficient:
+\begin{equation}
+L' = L + \sum_k \lambda_k\, g_k(q)
+\end{equation}
+
+Each multiplier $\lambda_k$ is an additional unknown. Solving for it yields more than the constraint:
+$\lambda$ is proportional to the constraint force, which is how the tension eliminated in
+Section~\ref{sec:noconstraintforce} is recovered when it is actually wanted.
+
+One point requires care in implementation. The constraint must be differentiated \emph{twice} with
+respect to time:
+\begin{equation}
+g = 0 \implies \dot g = 0 \implies \ddot g = 0
+\end{equation}
+If a separation is constant, its rate of change vanishes, as does the rate of change of that rate.
+Only the second derivative contains accelerations --- the unknowns being solved for. Stopping at the
+first leaves the multipliers undetermined, and they propagate into the accelerations as unbound
+symbols. Accelerations and multipliers are therefore solved as a single combined linear system.
+
+A \textbf{non-holonomic constraint} restricts velocities in a form that cannot be integrated to a
+configuration constraint:
+\begin{equation}
+\sum_j a_{ij}(q)\,\dot q_j + b_i(q,t) = 0
+\end{equation}
+Rolling without slipping is the standard case: the constraint restricts instantaneous velocity while
+leaving every position on the plane reachable. These are handled by the d'Alembert--Lagrange and
+Appell formulations.
+
+The \textbf{constraint Jacobian} $\partial g/\partial q$ is rank-checked. Rank below the number of
+constraints indicates redundancy --- the same restriction expressed more than once --- which makes
+the augmented system unsolvable.
+
+\subsection{Noether's theorem}
+\label{sec:noether}
+
+\emph{Every continuous symmetry of the action corresponds to a conserved quantity.}
+
+\begin{center}
+\begin{tabular}{@{}L{7.2cm}L{5.4cm}@{}}
+\toprule
+\textbf{Symmetry} & \textbf{Conserved quantity} \\
+\midrule
+Time translation ($L$ has no explicit $t$) & Energy \\
+Spatial translation                        & Linear momentum \\
+Rotation                                   & Angular momentum \\
+Galilean boost                             & Centre-of-mass motion \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Detection is direct. If a coordinate $q$ is absent from $L$ while its velocity $\dot q$ is present,
+then $\partial L/\partial q = 0$ and the Euler--Lagrange equation reduces to
+\begin{equation}
+\ddt{}\left(\dd{L}{\dot q}\right) = 0
+\end{equation}
+so the conjugate momentum is constant. Such a coordinate is termed \textbf{cyclic}, and the library
+identifies conservation laws by scanning for them.
+
+For a particle in a central potential the orbital angle is cyclic --- the potential is rotationally
+symmetric --- so angular momentum is conserved. This is Kepler's equal-areas law, obtained by
+inspecting which symbols occur in an expression.
+
+\subsection{Dissipation and applied forces}
+\label{sec:dissipation}
+
+Dissipative forces admit no potential and are introduced as additional terms:
+\begin{equation}
+\ddt{}\left(\dd{L}{\dot q_i}\right) - \dd{L}{q_i} + \dd{\mathcal{F}}{\dot q_i} = Q_i
+\end{equation}
+
+Here $\mathcal{F}$ is the \textbf{Rayleigh dissipation function}, typically $\tfrac{1}{2}b\dot q^2$
+for viscous damping. The associated generalized force is $-\partial\mathcal{F}/\partial\dot q_i$,
+whose sign guarantees opposition to the motion. The term $Q_i$ denotes externally applied generalized
+forces --- actuators, applied torques.
+
+Implemented friction models:
+
+\begin{center}
+\begin{tabular}{@{}lcL{6.6cm}@{}}
+\toprule
+\textbf{Model} & \textbf{Form} & \textbf{Regime} \\
+\midrule
+Viscous  & $F = -bv$                      & Resistance proportional to speed --- fluids \\
+Coulomb  & $F = -\mu N \,\mathrm{sgn}(v)$ & Constant magnitude opposing motion --- dry sliding \\
+Stribeck & Composite                      & Static, Coulomb and viscous combined; reproduces stick--slip \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Small oscillations and normal modes}
+
+Expanded to second order about a stable equilibrium, any system reduces to
+\begin{equation}
+M\ddot q + Kq = 0
+\end{equation}
+where $M$ is the mass matrix of Section~\ref{sec:massmatrix} and $K$ is the \textbf{stiffness
+matrix}, $K_{ij} = \partial^2 V/\partial q_i \partial q_j$ --- the curvature of the potential at the
+equilibrium.
+
+The \textbf{normal modes} are the configurations in which the entire system oscillates at a single
+frequency with fixed relative amplitudes. They are obtained from the \textbf{generalized eigenvalue
+problem}
+\begin{equation}
+K\phi = \omega^2 M \phi
+\end{equation}
+whose eigenvalues give the natural frequencies $\omega$ and whose eigenvectors $\phi$ give the mode
+shapes.
+
+Two pendulums coupled by a spring admit two modes: in-phase and out-of-phase oscillation. Any motion
+of the system is a superposition of these. The reduction of arbitrary coupled motion to a sum of
+independent oscillations is the reason normal-mode analysis is central to structural and molecular
+dynamics.
+
+\subsection{Stability and chaos}
+
+Equilibria are located by setting all derivatives to zero. The system is then linearized about each,
+and the eigenvalues of the resulting Jacobian classify it:
+
+\begin{center}
+\begin{tabular}{@{}L{6.2cm}L{6.4cm}@{}}
+\toprule
+\textbf{Eigenvalues} & \textbf{Classification} \\
+\midrule
+All real parts negative & \textbf{Stable} --- perturbations decay \\
+All purely imaginary    & \textbf{Marginally stable} --- perturbations persist without growth \\
+Any positive real part  & \textbf{Unstable} --- perturbations grow \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+For chaotic systems a sharper measure applies. The \textbf{largest Lyapunov exponent} $\lambda$
+characterizes the divergence of initially neighbouring trajectories:
+\begin{equation}
+\delta(t) \approx \delta_0\, e^{\lambda t}
+\end{equation}
+A positive $\lambda$ implies exponential sensitivity to initial conditions and a prediction horizon
+that degrades logarithmically with measurement precision. This is the operational definition of
+chaos, and it is why a double pendulum released twice from nominally identical states diverges within
+seconds. The exponent is estimated from trajectory data by Wolf's algorithm with periodic
+renormalization.
+
+\subsection{Singularity detection}
+
+Derived equations are analyzed before integration for conditions that will fail numerically:
+
+\begin{itemize}[leftmargin=1.4em,itemsep=0.25em]
+  \item \textbf{Division by zero} --- denominators possessing real roots.
+  \item \textbf{Trigonometric singularities} --- $\tan$ at $\pi/2$, $\cot$ at $0$.
+  \item \textbf{Singular mass matrix} --- configurations at which $\det M = 0$
+        (Section~\ref{sec:massmatrix}).
+  \item \textbf{Gimbal lock} --- in three-angle orientation representations, configurations where two
+        rotation axes become parallel and a degree of freedom is lost. The signature is a
+        $1/\cos\theta$ factor. The remedy is a quaternion representation
+        (Section~\ref{sec:rigidbody}).
+  \item \textbf{Dependent constraints} --- a rank-deficient constraint Jacobian.
+  \item \textbf{Unstable equilibria} --- stationary points at a maximum rather than a minimum of the
+        potential.
+\end{itemize}
+
+Each warning reports the condition, the coordinates involved, and a suggested remedy.
+
+\subsection{Dimensional analysis}
+
+Units are represented as exponent vectors over base dimensions together with a scale factor.
+Multiplication adds exponents; division subtracts them.
+
+This detects dimensionally inconsistent expressions --- a length added to a time --- at specification
+time rather than allowing them to reach the solver, where they would produce a numerically valid and
+physically meaningless result.
+
+% ============================================================================
+\section{Numerical integration}
+\label{sec:numerics}
+% ============================================================================
+
+An equation of motion gives the instantaneous acceleration. Obtaining a trajectory requires advancing
+the state in discrete steps, typically many thousands of them. The choice of stepping scheme
+materially affects the result.
+
+\subsection{General-purpose integration}
+
+The state vector interleaves positions and velocities as
+$[q_1, \dot q_1, q_2, \dot q_2, \dots]$, converting $n$ second-order equations into $2n$ first-order
+equations suitable for standard solvers.
+
+Available methods: \textbf{RK45} (adaptive Runge--Kutta, the default), \textbf{RK23},
+\textbf{DOP853} (eighth order), \textbf{Radau} and \textbf{BDF} (implicit), and \textbf{LSODA}
+(automatic switching).
+
+\textbf{Stiffness} warrants explanation. A system is stiff when it contains dynamics on widely
+separated timescales --- a fast oscillation superimposed on a slow evolution. Explicit methods must
+resolve the fastest timescale for stability reasons, even during intervals when it is dynamically
+irrelevant, making them prohibitively slow. Implicit methods remain stable at larger steps. The
+library performs a brief trial integration to detect stiffness and selects a method based on system
+size and integration span.
+
+\subsection{Symplectic integrators}
+\label{sec:symplectic}
+
+Conventional methods exhibit \textbf{energy drift}. Per-step truncation errors accumulate with a
+consistent bias, and over long integrations a bound orbit spirals inward or outward for reasons that
+are entirely numerical.
+
+\textbf{Symplectic integrators} eliminate this. Rather than minimizing local truncation error, they
+exactly preserve the geometric structure of phase space (Section~\ref{sec:hamiltonian}). The
+consequence is that energy error oscillates within a bounded envelope indefinitely rather than
+accumulating --- the property required for long-duration celestial mechanics.
+
+They operate on separable Hamiltonians $H(q,p) = T(p) + V(q)$ by composing two exactly integrable
+sub-flows:
+
+\begin{itemize}[leftmargin=1.4em,itemsep=0.2em]
+  \item a \textbf{kick}, advancing momentum under the potential, $p \to p - h\nabla V(q)$;
+  \item a \textbf{drift}, advancing position under the kinetic term, $q \to q + h\nabla T(p)$.
+\end{itemize}
+
+Higher order is achieved by composing these with coefficients chosen so that low-order error terms
+cancel.
+
+\begin{center}
+\begin{tabular}{@{}lcL{7.0cm}@{}}
+\toprule
+\textbf{Method} & \textbf{Order} & \textbf{Characteristics} \\
+\midrule
+St\"ormer--Verlet / Leapfrog & 2    & Explicit, time-reversible; the standard choice \\
+Ruth-3                       & 3    & Minimal stage count \\
+Yoshida-4                    & 4    & Triple-jump composition,
+                                      $c_1 = 1/(2 - 2^{1/3})$, $c_2 = -2^{1/3}/(2 - 2^{1/3})$ \\
+McLachlan-4                  & 4    & Five stages, reduced error constant \\
+PEFRL                        & 4    & Optimized coefficients; best long-term energy behaviour in
+                                      this class \\
+Yoshida-6, Yoshida-8         & 6, 8 & High-precision celestial mechanics \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Several compositions carry \textbf{negative coefficients}, meaning the integrator advances backward in
+time during intermediate stages. This is deliberate: the retrograde stage is what cancels the leading
+error terms.
+
+An \textbf{energy drift monitor} records initial and instantaneous energy throughout a run, reporting
+maximum relative error and peak-to-peak oscillation, so that conservation can be verified rather than
+assumed.
+
+\subsection{Variational integrators}
+
+A structurally different approach: rather than discretizing the equations of motion, discretize the
+variational principle of Section~\ref{sec:action} directly. The action integral becomes a sum over
+path segments,
+\begin{equation}
+S_d = \sum_k L_d(q_k, q_{k+1}, h)
+\end{equation}
+and requiring it to be stationary yields the \textbf{discrete Euler--Lagrange equation}
+\begin{equation}
+D_2 L_d(q_{k-1}, q_k) + D_1 L_d(q_k, q_{k+1}) = 0
+\end{equation}
+solved for $q_{k+1}$ at each step by Newton iteration.
+
+Because the scheme derives from a genuine variational principle, it inherits a discrete Noether
+theorem: momentum maps are conserved \emph{exactly}, to machine precision, rather than approximately.
+
+\begin{center}
+\begin{tabular}{@{}L{7.6cm}c@{}}
+\toprule
+\textbf{Discretization of $L_d$} & \textbf{Order} \\
+\midrule
+Midpoint rule                            & 2 \\
+Trapezoidal rule                         & 2 \\
+Galerkin, $s$ Gauss--Legendre points     & $2s$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The per-step nonlinear solve makes these more expensive than explicit methods, in exchange for exact
+structural conservation.
+
+\subsection{Generated code}
+\label{sec:codegen}
+
+The C\texttt{++}, Rust, Julia, Fortran, CUDA, MATLAB, JavaScript, WebAssembly, Arduino and ARM
+backends emit a fixed-step \textbf{fourth-order Runge--Kutta} integrator:
+\begin{equation}
+y_{n+1} = y_n + \tfrac{1}{6}\left(k_1 + 2k_2 + 2k_3 + k_4\right)
+\end{equation}
+with $k_1$ evaluated at the interval start, $k_2$ and $k_3$ at the midpoint, and $k_4$ at the end. It
+is fourth-order accurate and entirely self-contained --- the relevant property for a target with no
+runtime library. The Python backend calls SciPy instead, since it is available.
+
+Generated code also emits an energy function. Separating $T$ and $V$ from $L$ uses \textbf{Euler's
+theorem on homogeneous functions}: kinetic energy is quadratic in the velocities, so it satisfies
+$\sum \dot q\,\partial L/\partial \dot q = 2T$, which identifies it uniquely; $V$ is the remainder.
+
+\subsection{Inverse problems}
+
+Forward simulation maps parameters to trajectories. The inverse problem maps observed trajectories
+back to parameters --- recovering a physical pendulum's length from recorded motion, for instance.
+
+\begin{itemize}[leftmargin=1.4em,itemsep=0.3em]
+  \item \textbf{Parameter estimation} minimizes the residual between simulation and observation,
+        using local optimization (fast, requires a reasonable initial guess) or differential
+        evolution (global, no guess required). Returns covariance and confidence intervals rather
+        than point estimates alone.
+  \item \textbf{Sensitivity analysis} computes \textbf{Sobol indices}, which decompose output
+        variance among the inputs. First-order indices give each parameter's independent
+        contribution; total-order indices additionally capture its interactions.
+  \item \textbf{Uncertainty quantification} uses MCMC to sample the posterior distribution over
+        parameters, yielding credible intervals, and bootstrap resampling as an independent check.
+\end{itemize}
+
+% ============================================================================
+\section{Energy as a correctness criterion}
+\label{sec:energy}
+% ============================================================================
+
+Energy conservation is the primary validation check available, because a simulation that dissipates
+energy numerically produces trajectories that appear plausible and are wrong.
+
+For standard systems the library uses closed-form expressions.
+
+\medskip
+\noindent\textbf{Simple pendulum.}
+\begin{equation}
+T = \tfrac{1}{2}ml^2\dot\theta^2, \qquad V = -mgl\cos\theta
+\end{equation}
+
+\noindent\textbf{Double pendulum.}
+\begin{align}
+T &= \tfrac{1}{2}m_1 l_1^2\dot\theta_1^2
+   + \tfrac{1}{2}m_2\!\left(l_1^2\dot\theta_1^2 + l_2^2\dot\theta_2^2
+   + 2l_1 l_2 \dot\theta_1\dot\theta_2\cos(\theta_1 - \theta_2)\right) \\
+V &= -m_1 g l_1\cos\theta_1 - m_2 g\left(l_1\cos\theta_1 + l_2\cos\theta_2\right)
+\end{align}
+
+\noindent\textbf{Spherical pendulum.}
+\begin{equation}
+T = \tfrac{1}{2}ml^2\!\left(\dot\theta^2 + \sin^2\!\theta\,\dot\phi^2\right), \qquad
+V = mgl(1 - \cos\theta)
+\end{equation}
+
+\noindent\textbf{Harmonic oscillator.}
+\begin{equation}
+T = \tfrac{1}{2}mv^2, \qquad V = \tfrac{1}{2}kx^2
+\end{equation}
+
+\medskip
+The double pendulum's cross term $2l_1 l_2\dot\theta_1\dot\theta_2\cos(\theta_1 - \theta_2)$ is the
+inertial coupling between the arms, and it is the source of the system's chaotic behaviour. It
+follows immediately from writing down the kinetic energy; deriving it from a force analysis requires
+substantially more work.
+
+Potential energies are offset so that the minimum reads zero --- a pendulum at rest has $V = 0$. This
+affects only the plotted baseline, since potential energy is defined up to an additive constant and
+only differences are physically meaningful.
+
+% ============================================================================
+\section{Domain reference}
+\label{sec:domains}
+% ============================================================================
+
+The \code{domains/} package implements sixteen fields beyond the core engine. Each entry states its
+scope in one sentence; the material following documents coverage.
+
+\subsection{Kinematics}
+
+\textbf{Motion under constant acceleration, treated without reference to its causes.}
+
+Five equations describe all such motion:
+\begin{align}
+v   &= v_0 + at \\
+x   &= x_0 + v_0 t + \tfrac{1}{2}at^2 \\
+v^2 &= v_0^2 + 2a(x - x_0) \\
+x   &= x_0 + \tfrac{1}{2}(v + v_0)t \\
+x   &= x_0 + vt - \tfrac{1}{2}at^2
+\end{align}
+
+Each omits exactly one of the six quantities $\{x_0, x, v_0, v, a, t\}$, so any three knowns
+determine the rest. The solver selects the appropriate equation and reports the derivation steps ---
+the module is written for instructional use.
+
+Also implemented: one-dimensional motion (uniform, uniformly accelerated, free fall, vertical throw);
+two-dimensional motion by independent component decomposition; projectile motion with range, apex,
+flight time and impact velocity; and relative motion via $v_{AC} = v_{AB} + v_{BC}$.
+
+\subsection{Rigid body dynamics}
+\label{sec:rigidbody}
+
+\textbf{Bodies that rotate without deforming --- gyroscopes, spinning tops, spacecraft.}
+
+Orientation is represented in one of two ways:
+
+\begin{itemize}[leftmargin=1.4em,itemsep=0.3em]
+  \item \textbf{Euler angles} $(\phi, \theta, \psi)$: precession, nutation and spin, in the ZYZ
+        convention. Geometrically interpretable, but subject to gimbal lock at $\theta = 0, \pi$,
+        where two axes align and the parameterization degenerates.
+  \item \textbf{Quaternions} $(q_0, q_1, q_2, q_3)$: four parameters subject to the unit-norm
+        constraint $q_0^2 + q_1^2 + q_2^2 + q_3^2 = 1$. Singularity-free at every orientation, at the
+        cost of one redundant parameter and less direct interpretation.
+\end{itemize}
+
+The symmetric top has Lagrangian
+\begin{equation}
+L = \tfrac{1}{2}I_1\!\left(\dot\theta^2 + \dot\phi^2\sin^2\theta\right)
+  + \tfrac{1}{2}I_3\!\left(\dot\psi + \dot\phi\cos\theta\right)^2 - Mgl\cos\theta
+\end{equation}
+
+Rotational kinetic energy is $\tfrac{1}{2}\omega^{\mathsf{T}} I \omega$, where $I$ is the inertia
+tensor --- the rotational analogue of mass, encoding the distribution of mass about the rotation
+axes. Angular velocity from quaternion rates is $\omega = 2E\dot q$.
+
+\subsection{Central forces and orbital mechanics}
+
+\textbf{Motion under a force depending only on separation --- gravitation and electrostatics.}
+
+For $V(r)$ the Lagrangian is $\tfrac{1}{2}m(\dot r^2 + r^2\dot\phi^2) - V(r)$. The angle $\phi$ is
+cyclic, so angular momentum $L = mr^2\dot\phi$ is conserved (Section~\ref{sec:noether}), and the
+two-dimensional problem reduces to one-dimensional radial motion in the \textbf{effective potential}
+\begin{equation}
+V_{\mathrm{eff}}(r) = V(r) + \frac{L^2}{2mr^2}
+\end{equation}
+The second term is the \textbf{centrifugal barrier}, representing the angular momentum that must be
+overcome to approach the centre.
+
+Turning points satisfy $E = V_{\mathrm{eff}}(r)$, and their number and arrangement classify the orbit
+as circular, elliptical, parabolic or hyperbolic. Includes the Kepler problem and apsidal precession
+rates for non-inverse-square potentials.
+
+\subsection{Collisions and scattering}
+
+\textbf{Impulsive interactions and deflection by a potential.}
+
+Momentum is conserved in all collisions; kinetic energy only in elastic ones. The \textbf{coefficient
+of restitution} $e$ parameterizes the range: $e = 1$ elastic, $0 < e < 1$ inelastic, $e = 0$
+perfectly inelastic with the bodies coalescing. Includes centre-of-mass frame transformations and
+impulse calculations.
+
+Scattering treats a particle incident from infinity, deflected through angle $\theta$, departing to
+infinity. Covers the impact-parameter-to-angle relation, differential and total cross-sections, and
+Rutherford scattering.
+
+\subsection{Variable-mass systems}
+
+\textbf{Systems whose mass changes during motion --- principally rockets.}
+
+Newton's second law in the form $F = ma$ does not apply. The correct statement retains the momentum
+flux term:
+\begin{equation}
+F_{\mathrm{ext}} = m\frac{\ud v}{\ud t} + v_{\mathrm{rel}}\frac{\ud m}{\ud t}
+\end{equation}
+The second term accounts for momentum carried by mass entering or leaving the system. A rocket
+accelerates by expelling mass, not by reaction against an external medium. Includes the Tsiolkovsky
+equation, ejection and accretion, conveyor belts and chain dynamics.
+
+\subsection{Continuum mechanics and classical fields}
+
+\textbf{Systems with continuously distributed degrees of freedom --- strings, membranes, fields.}
+
+The configuration is a field $\phi(x, t)$ rather than finitely many coordinates, and the action
+becomes a double integral over space and time. The Euler--Lagrange equation generalizes to
+\begin{equation}
+\dd{\mathcal{L}}{\phi}
+  - \frac{\partial}{\partial t}\dd{\mathcal{L}}{\phi_t}
+  - \frac{\partial}{\partial x}\dd{\mathcal{L}}{\phi_x} = 0
+\end{equation}
+yielding the wave equation. Covers vibrating strings, membrane vibration and the stress--energy
+tensor.
+
+\subsection{Fluid dynamics}
+
+\textbf{Free-surface and splashing flows, by particle methods.}
+
+\textbf{Smoothed Particle Hydrodynamics} discretizes a fluid into particles whose properties are
+distributed over a finite smoothing radius $h$ rather than concentrated at points. Field values at
+any location are recovered by weighted summation over neighbours within that radius, which bounds the
+cost per particle. The method handles free surfaces and topological changes naturally, where grid
+methods require special treatment.
+
+Three kernels are used:
+
+\begin{center}
+\begin{tabular}{@{}lcl@{}}
+\toprule
+\textbf{Kernel} & \textbf{Form} & \textbf{Application} \\
+\midrule
+Poly6                & $\dfrac{315}{64\pi h^9}\left(h^2 - r^2\right)^3$ & Density \\[0.9em]
+Spiky gradient       & $-\dfrac{45}{\pi h^6}(h - r)^2\,\hat{r}$         & Pressure force \\[0.9em]
+Viscosity Laplacian  & $\dfrac{45}{\pi h^6}(h - r)$                     & Viscous force \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Density is $\rho_i = \sum_j m_j W(r_{ij}, h)$, with pressure from a Tait-form equation of state
+$p = k(\rho - \rho_0)$. Forces comprise pressure (pairwise symmetrized), viscosity and gravity;
+integration is semi-implicit Euler. Boundary conditions include no-slip and free-slip walls, periodic
+and open.
+
+\subsection{Electromagnetism}
+
+\textbf{Charged particle dynamics, wave propagation and plasma behaviour.}
+
+The charged-particle Lagrangian incorporates the scalar and vector potentials,
+\begin{equation}
+L = \tfrac{1}{2}mv^2 - q\varphi + q\,\vec{v}\cdot\vec{A}
+\end{equation}
+reproducing the \textbf{Lorentz force} $\vec F = q(\vec E + \vec v \times \vec B)$.
+
+The conjugate momentum is $\vec p = m\vec v + q\vec A$, not $m\vec v$ --- a direct illustration that
+momentum in this formalism is defined by $\partial L/\partial\dot q$ and need not coincide with the
+elementary definition.
+
+Also implemented: cyclotron frequency and Larmor radius; magnetic mirrors with loss cones; Penning
+traps (cyclotron, axial, magnetron and modified-cyclotron frequencies, and the invariance theorem);
+guiding-centre drifts (grad-$B$, curvature, polarization, $\vec E \times \vec B$); plasma frequency
+and Debye length; electromagnetic waves (impedance, intensity, energy density, radiation pressure);
+antennas (Hertzian and half-wave dipoles, gain, effective aperture); rectangular waveguides (cutoff
+frequencies, guide wavelength, phase and group velocity, TE/TM impedance); skin effect; and the
+Biot--Savart law.
+
+\subsection{Special relativity}
+
+\textbf{Dynamics at speeds comparable to $c$.}
+
+The relativistic Lagrangian $L = -mc^2\sqrt{1 - v^2/c^2} - V$ is equivalent to extremizing proper time
+along the worldline: of all paths between two events, the physical one maximizes the elapsed time
+measured by the traveller.
+
+The \textbf{Lorentz factor} $\gamma = 1/\sqrt{1 - v^2/c^2}$ governs all relativistic corrections,
+approaching $1$ at low speed and diverging as $v \to c$. Core relations: $p = \gamma mv$,
+$E = \gamma mc^2$, $T = (\gamma - 1)mc^2$, and the invariant $E^2 = (pc)^2 + (mc^2)^2$.
+
+Four-vectors are classified as timelike, spacelike or lightlike by the sign of their invariant. Also
+covers Lorentz boosts, relativistic velocity addition, time dilation, length contraction, rapidity,
+relativistic collisions and threshold energies, Mandelstam $s$, longitudinal and transverse Doppler
+shift, aberration, Compton scattering, synchrotron radiation, Thomas precession, and the twin paradox
+for both constant velocity and constant proper acceleration.
+
+\subsection{General relativity}
+
+\textbf{Gravitation as spacetime curvature; black holes and cosmology.}
+
+\textbf{Schwarzschild geometry} (static, spherically symmetric):
+\begin{equation}
+\ud s^2 = -\left(1 - \frac{r_s}{r}\right)c^2\ud t^2
+        + \left(1 - \frac{r_s}{r}\right)^{-1}\!\ud r^2 + r^2\,\ud\Omega^2
+\end{equation}
+with $r_s = 2GM/c^2$. Provides gravitational redshift, the photon sphere at $1.5\,r_s$, the innermost
+stable circular orbit at $3\,r_s$, tidal acceleration, surface gravity and Hawking temperature.
+Geodesics --- the trajectories of free particles, which are the straightest available paths in curved
+geometry --- are integrated from an effective potential, with separate treatment for massive and
+massless particles.
+
+\textbf{Kerr geometry} (rotating): inner and outer horizons, the ergosphere (within which frame
+dragging makes static observers impossible), frame-dragging rate, and spin-dependent prograde and
+retrograde ISCO radii.
+
+\textbf{Gravitational lensing}: deflection $\alpha = 4GM/(c^2 b)$, Einstein radius, magnification and
+time delay.
+
+\textbf{FLRW cosmology}: Hubble parameter as a function of redshift, Hubble time and distance,
+comoving, luminosity and angular-diameter distances, lookback time, cosmic age, critical density and
+the deceleration parameter.
+
+\subsection{Quantum mechanics}
+
+\textbf{Semiclassical methods --- the regime where classical quantities determine quantum results.}
+
+The \textbf{WKB approximation} treats the wavefunction as a slowly modulated wave with local
+wavenumber set by the classical momentum $p(x) = \sqrt{2m(E - V(x))}$. The \textbf{Bohr--Sommerfeld
+condition} then quantizes the classical action:
+\begin{equation}
+\oint p\,\ud x = \left(n + \tfrac{1}{2}\right)h
+\end{equation}
+Only orbits whose enclosed action is a half-integer multiple of Planck's constant are permitted,
+which is the origin of discrete energy levels. This is the point at which the classical machinery of
+the rest of the library yields quantum results.
+
+Exactly solved systems: the harmonic oscillator ($E_n = \hbar\omega(n + \tfrac{1}{2})$, Hermite
+wavefunctions, uncertainty products); infinite and finite square wells; step potentials;
+delta-function barriers; and the hydrogen atom ($E_n = -13.6\ \mathrm{eV}/n^2$, Bohr radii,
+degeneracy, transition wavelengths, spectral series).
+
+\textbf{Tunneling} --- transmission through a barrier exceeding the particle's energy, classically
+forbidden --- covers rectangular barriers, WKB transmission, the Gamow factor, alpha decay rates,
+double-well splitting and resonant tunneling. \textbf{Ehrenfest's theorem} propagates expectation
+values classically, establishing the correspondence limit.
+
+\subsection{Thermodynamics}
+
+\textbf{Heat engines, equations of state and phase behaviour.}
+
+\textbf{Carnot efficiency} $\eta = 1 - T_c/T_h$ bounds every heat engine operating between two
+reservoirs --- a consequence of the second law rather than an engineering limitation, and the reason
+thermal power generation necessarily rejects heat.
+
+Also implemented: the Otto cycle ($\eta = 1 - r^{1-\gamma}$, monotonic in compression ratio), Diesel
+and Rankine cycles; the van der Waals equation
+$\left(P + an^2/V^2\right)(V - nb) = nRT$ with critical point and compressibility factor;
+Redlich--Kwong; phase transitions via Clausius--Clapeyron; Debye and Einstein heat capacity models;
+and the four Maxwell relations.
+
+\subsection{Statistical mechanics}
+
+\textbf{Derivation of macroscopic thermodynamics from microscopic states.}
+
+The \textbf{Boltzmann distribution} assigns probability proportional to $e^{-E/k_B T}$, with the
+\textbf{partition function} $Z = \sum_i e^{-E_i/k_B T}$ as the generating quantity from which
+thermodynamic properties follow.
+
+Includes the Maxwell speed distribution with most-probable, mean and RMS speeds; ideal gas pressure,
+internal energy, heat capacities, Sackur--Tetrode entropy and free energies; quantum oscillator
+ensembles; the Ising model with Metropolis Monte Carlo and the exact two-dimensional critical
+temperature; and Fermi--Dirac and Bose--Einstein occupation statistics with Fermi energy and BEC
+critical temperature.
+
+\subsection{Solid mechanics}
+
+\textbf{Deformation and failure of engineering materials.}
+
+\begin{itemize}[leftmargin=1.4em,itemsep=0.35em]
+  \item \textbf{Elasticity} --- Hooke's law for isotropic, transversely isotropic, orthotropic,
+        monoclinic and triclinic symmetry classes.
+  \item \textbf{Stress and strain} --- principal stresses, invariants $I_1, I_2, I_3, J_2, J_3$, von
+        Mises and Tresca yield criteria, Mohr's circles in two and three dimensions, tensor
+        transformations, stress concentration factors and strain rosette reduction.
+  \item \textbf{Beams} --- Euler--Bernoulli theory for slender beams and Timoshenko theory where
+        shear deformation is significant; deflection, slope, bending moment and shear; composite,
+        tapered and curved beams.
+  \item \textbf{Plates} --- Kirchhoff--Love for thin plates and Mindlin--Reissner for thick;
+        rectangular and circular solutions, buckling and natural frequencies.
+  \item \textbf{Fracture} --- stress intensity factors for Modes I, II and III; energy release rate;
+        the $J$-integral; CTOD; the Griffith criterion (propagation when released strain energy
+        exceeds the surface energy cost); Paris law for fatigue crack growth; and plastic zone size.
+  \item \textbf{Fatigue} --- failure under cyclic loading below the static strength. S--N curves
+        $\sigma_a = \sigma_f'(2N_f)^b$, strain-life, mean stress correction and cumulative damage.
+  \item \textbf{Viscoelasticity} --- Maxwell, Kelvin--Voigt and Standard Linear Solid models;
+        generalized Maxwell via Prony series; creep and relaxation functions; complex modulus;
+        time--temperature superposition; and Boltzmann superposition.
+  \item \textbf{Thermal stress} --- $\varepsilon = \alpha\Delta T$ linear and $3\alpha\Delta T$
+        volumetric, with thermoelastic coupling. Constrained thermal expansion generates stress
+        independent of applied load.
+\end{itemize}
+
+\subsection{Optics}
+
+\textbf{Propagation, imaging and interference of light.}
+
+Geometric optics (ray tracing, Snell's law, reflection, thin and thick lenses), wave optics
+(interference and diffraction), polarization via Jones matrices and Stokes parameters, and fibre
+optics.
+
+\subsection{Acoustics}
+
+\textbf{Generation, propagation and confinement of sound.}
+
+Wave equation solutions in one, two and three dimensions; resonance and standing waves; acoustic
+impedance and boundary reflection; the Doppler effect; room acoustics and Sabine reverberation; and
+ultrasonics.
+
+% ============================================================================
+\section{Summary}
+% ============================================================================
+
+The library rests on a single organizing principle:
+
+\begin{quote}
+\itshape
+A mechanical system is specified by one scalar function --- kinetic energy minus potential energy ---
+and everything else follows by differentiation.
+\end{quote}
+
+Given $L = T - V$, a fixed procedure yields the equations of motion; inverting the mass matrix yields
+accelerations; a Legendre transform yields the energy; absent coordinates yield conservation laws;
+structure-preserving integrators yield trajectories that respect those conservation laws over
+arbitrarily long runs; and the same symbolic expressions compile to thirteen target languages.
+
+The Newtonian formulation yields identical predictions. It requires, however, that a person derive
+them --- once per system, once per coordinate choice, by hand, correctly.
+
+That is precisely the step a compiler cannot perform on the user's behalf, and it is why the library
+is built on the other formulation.
+
+\end{document}
