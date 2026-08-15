@@ -5,6 +5,154 @@ All notable changes to MechanicsDSL will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.3] - 2026-08-15
+
+### ⚠️ Correctness Release
+
+Three pathways produced wrong answers without saying so. **If you used the
+bare-metal ARM generator, the Hamiltonian formulation with coupled momenta, or
+relied on a `success` result from a system whose mass matrix is degenerate, the
+output you got from 2.1.2 and earlier on those paths may be wrong.** Re-run
+anything that matters. The rest of this release is the hardening that keeps the
+same class of failure from recurring silently.
+
+### Fixed
+
+- **The bare-metal ARM generator emitted a hardcoded pendulum for every
+  system, and left state uninitialised.** `codegen/arm.py`'s embedded
+  template ignored the compiled equations entirely and wrote a two-element
+  pendulum right-hand side with a literal `9.81`, whatever system you handed
+  it. A 3-DOF system produced `#define DIM 6` with only `dydt[0]` and
+  `dydt[1]` assigned; the integration loop then accumulated uninitialised
+  stack memory from `dydt[2:]` into the state on every step. Both the physics
+  and the memory safety were wrong, and the generated C compiled cleanly, so
+  nothing surfaced until you compared against a reference. Every derivative
+  slot is now emitted from the system's own equations.
+
+  Alongside that, a bare-metal C printer replaces the previous ad-hoc
+  conversion: small integer powers become repeated multiplication instead of
+  `pow()`, `sin`/`cos`/`sqrt` route to the template's `arm_*` helpers, and
+  literals stay single-precision. Anything that still genuinely requires libm
+  now emits an `#error` at compile time, naming the function, rather than
+  failing at link with an opaque message. Parameters are emitted under their
+  sympy symbol names rather than an upper-cased `#define` that nothing
+  referenced, and unused parameters get `(void)` casts so a parameter that
+  cancels out of the equations no longer trips `-Wunused-const-variable`.
+
+- **An inlined integer power in a denominator dropped its parentheses.** The
+  embedded printer returned a bare product for `x**n`, and sympy's `Mul`
+  printer splices a denominator's base directly after `/`, so `a/b**2`
+  emitted `a/b*b` — which evaluates to `a`. It compiled without a warning and
+  simulated a different system. Verified by randomised numerical comparison
+  against the symbolic source across squared and cubed denominators, roots
+  over powers, and sums raised to powers, and by cross-compiling for
+  Cortex-M4.
+
+- **The Hamiltonian pathway silently degenerated on coupled momenta.** The
+  Legendre transform solved each velocity from its own momentum relation one
+  at a time. That is only valid when the momenta are uncoupled; when they are
+  not, the substitution is partial and the resulting Hamiltonian is not the
+  system's. A two-link pendulum compiled, simulated, and never moved — it
+  reported success and returned a frozen trajectory. The full momentum system
+  is now inverted at once, and a non-invertible momentum relation raises
+  rather than producing a Hamiltonian built from partial substitutions.
+  `dof_N2` under the Hamiltonian tool goes from frozen to a 0.84 rad swing
+  conserving energy to 2.4e-7.
+
+- **Success was reported without consulting the warnings channel.**
+  Compilation returned `success=True` even when the symbolic solve had fallen
+  back to zero accelerations, leaving the caller holding a placeholder
+  instead of physics, with only an advisory note on a side channel to detect
+  it. A degenerate solve is now a failure. The one exception is a declared
+  variable with no kinetic term, where zero acceleration is the correct
+  answer rather than a degeneracy. Likewise, a mass matrix that goes singular
+  *during* integration was answered with a minimum-norm least-squares
+  solution — well defined mathematically, meaningless physically — logged and
+  returned under `success=True`. Those events are now counted and fail the
+  simulation.
+
+- **Codegen target list, CLI, and REST surface repaired.** The CLI dispatched
+  to `compile_to_<lang>` methods that only existed for C++, so 10 of 11
+  targets raised `AttributeError`; it now routes through
+  `PhysicsCompiler.export()`. The WASM filename ended in `.wat`, which
+  `WasmGenerator` treats as an output directory rather than a file. The REST
+  allowlist and `/generators` both omitted `arm` and were separately
+  hardcoded; both now derive from `_GENERATOR_REGISTRY` so they cannot drift.
+  `ModelicaGenerator` read `simulator.equations` — the lambdified numeric
+  form — and emitted a `MECHANICSDSL_CODEGEN_FAILED` poison pill as the
+  equation of motion; it now prefers the symbolic `compiler.equations` and
+  rejects callables.
+
+- **Generated Rust did not compile.** Parameter constants were emitted
+  upper-cased to match Rust convention while the generated equations still
+  referenced the original lower-case symbol, so every crate failed with
+  undefined-name errors. Names are kept as-is and the
+  `non_upper_case_globals` lint is silenced at the crate level.
+
+- **Constrained Lagrangian systems no longer freeze.** Only `dg/dt` was added
+  to the augmented system, which is identically zero for a position-only
+  constraint, so `lambda` leaked in as an unbound free symbol and the
+  compiled accelerations silently evaluated to zero. The acceleration-level
+  constraint (the second time derivative of `g`) is now derived and the
+  augmented system solved for accelerations and multipliers together.
+
+- **A coordinate named `y` broke C++, OpenMP, and Python codegen.** In C++ the
+  coordinate local redeclared the state-vector parameter in the same scope —
+  a hard error, not a shadow — so 2D-motion and projectile systems would not
+  build. The state parameter is renamed to a non-colliding name; output for
+  non-colliding systems is byte-identical to before. Python codegen also now
+  emits qualified `np.*` calls, where bare `sin()`/`cos()` had been a runtime
+  `NameError`.
+
+- **Signed numeric literals in `\initial` and `\parameter`.** A negative value
+  previously voided the entire directive rather than parsing.
+
+### Changed
+
+- **Integration tolerance scales with mass-matrix conditioning.** An
+  ill-conditioned mass matrix means a wide spread of normal-mode frequencies —
+  the fastest scales as `1/sqrt(det(M))` — so the system packs roughly
+  `sqrt(cond)` times more oscillation into the same span. Integrating that at
+  a tolerance chosen for benign problems accumulates truncation error per
+  oscillation and drifts. The engine already computed the condition number in
+  order to warn about it, then ignored it. Tolerance now scales by
+  `1/sqrt(cond)`, floored at 1e-13. Measured at cond 2e8: energy drift 3.7e-2
+  → 1.7e-6, for 2.1× the evaluations.
+
+- **Mass-matrix inversion is deferred past a coordinate threshold.** Symbolic
+  inversion blows up factorially, so beyond the threshold the M-inverse solve
+  is handed to a new mass-matrix ODE path evaluated numerically at solve time.
+  The same extraction yields a condition-number estimate at the initial state,
+  which now warns *before* accuracy degrades rather than only at exact
+  singularity.
+
+- **Stiffness detection actually runs.** It was gated on `method == "RK45"`,
+  but the adaptive selector had usually already chosen otherwise, so it
+  almost never executed; when it did, it logged a suggestion and then
+  integrated with the explicit method anyway. It now runs for any explicit
+  method and switches to LSODA.
+
+- **README lists twelve generation targets, not thirteen.** Modelica was
+  listed as a target; it is an integration that emits a `.mo` model for an
+  external tool, and was never in the generator registry.
+
+### Verification
+
+- Full suite: 2194 passed, 11 skipped.
+- The four embedded-ARM tests assert on slot coverage and per-coordinate
+  expressions rather than on substrings the hardcoded body happened to
+  contain. Run against the pre-fix generator they fail; the previous versions
+  of these tests passed against it.
+- Five representative systems (1-DOF oscillator, pendulum, 2-DOF coupled,
+  3-DOF attitude, power-in-denominator) cross-compiled for Cortex-M4 with
+  `arm-none-eabi-gcc -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16
+  -mfloat-abi=hard -Os -Wall -Wextra`, zero warnings; the libm case emits its
+  `#error` as intended.
+- Stress suite, previously-silent cases: `dof_N1`/`dof_N2` Hamiltonian and
+  `nearsing_e1e-08` all pass; zero silent failures. `dof_N3` Hamiltonian
+  remains a timeout at 600s — the symbolic scaling wall, unadjudicated rather
+  than wrong, and unchanged from the baseline.
+
 ## [2.1.2] - 2026-06-04
 
 ### 🧹 Cleanup & Latent-Bug Release

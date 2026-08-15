@@ -115,8 +115,12 @@ Any compiled system can be exported as standalone code in any of the supported t
 | OpenMP | Multi-threaded C++ |
 | WebAssembly | Emscripten WASM |
 | Arduino | `.ino` embedded sketch |
-| ARM | Raspberry Pi / NEON |
-| Modelica | Standards-based FMU |
+| ARM | Raspberry Pi / NEON, bare-metal Cortex-M |
+
+Twelve targets. Modelica is not among them: it is an *integration*
+(`mechanics_dsl.integrations.modelica`) that emits a `.mo` model for an external
+Modelica tool to compile, not a code generator registered with
+`PhysicsCompiler.export()`.
 
 ```python
 from mechanics_dsl.codegen.rust import RustGenerator

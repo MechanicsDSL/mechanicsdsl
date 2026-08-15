@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import Tuple
 
 # Version info
-__version__ = "2.1.2"
+__version__ = "2.1.3"
 
 
 def parse_t_span(t_span_str: str) -> Tuple[float, float]:
