@@ -87,12 +87,15 @@ registered report, and pitching it as one invites rejection on thin evidence.
 
 ## Verify before quoting any number
 
-- **The baseline is `RESULTS.md` at commit `d04207c`** — zero silent failures in
-  45 adjudicated cases, established 10 August. `MASTER_REPORT.md` describes the
-  pre-fix engine and must not be quoted as current; `FIXES.md` explains every
-  difference between them.
-- The engine is frozen from `d04207c`. If it changes, the baseline is void and
-  the suite has to be re-run before any number is cited again.
+- **The engine is frozen at `a8dc2b2`, tagged `v2.1.3`** — pinned 22 August,
+  recorded in `FREEZE.md`. That file is the anchor; check it before quoting
+  anything. If the engine moves again, the baseline is void and the suite has to
+  be re-run before any number is cited.
+- **The baseline in `RESULTS.md` — zero silent failures in 45 adjudicated cases
+  — was measured at the previous pin `d04207c` and is pending re-verification.**
+  Do not cite it until the sweep has been repeated at `a8dc2b2` and `FREEZE.md`
+  records the result. `MASTER_REPORT.md` describes the pre-fix engine and must
+  not be quoted as current; `FIXES.md` explains every difference between them.
 - You are MechanicsDSL's maintainer and it is one of the engines under
   measurement. Say so plainly in the paper — a maintainer measuring their own
   tool is normal and defensible when disclosed, and indefensible when not.

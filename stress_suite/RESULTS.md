@@ -1,7 +1,10 @@
 # Baseline results — 10 August 2026
 
-Measured at commit `d04207c`. This is the frozen baseline. Per `SCOPE.md`,
-MechanicsDSL does not change again until the study is finished.
+> **Pending re-verification.** The engine pin moved to `a8dc2b2` (`v2.1.3`) on
+> 22 August — see `FREEZE.md`. Every number below was measured at the previous
+> pin and must not be cited until the sweep is repeated at the current one.
+
+Measured at commit `d04207c`.
 
 Supersedes the pre-fix run of 28 July, kept for comparison in
 `MASTER_REPORT.md` and `out/report_legacy_3way.md`. What changed in between is
