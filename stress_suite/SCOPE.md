@@ -18,7 +18,9 @@ Three engines:
 
 1. **MechanicsDSL** — already wired up.
 2. **sympy.physics.mechanics** — pip, already installed, takes Lagrangians directly.
-3. **Pinocchio or Drake** — pick one. Install in Ubuntu WSL, not native Windows.
+3. **Drake** — chosen 22 August over Pinocchio. Install in Ubuntu WSL, not
+   native Windows. It is the heavier install of the two, so do it in the first
+   days of week 1 rather than discovering it on day four.
 
 Three is enough. One of them is done.
 
