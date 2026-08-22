@@ -49,17 +49,42 @@ into these seven commits.
 expect the re-run to reproduce, and if it does not, the discrepancy is a finding
 about the suite rather than about the seven commits.
 
-## Baseline status
+## Baseline status — CONFIRMED at this pin, 22 August 2026
 
-`RESULTS.md` reports zero silent failures in 45 adjudicated cases, measured at
-`d04207c`. Those numbers are **pending re-verification at `a8dc2b2`** and must
-not be cited as current until the sweep is repeated and this section says so.
+The sweep was repeated at `a8dc2b2` (180 s per-case timeout, 55 cases). It
+reproduced the `d04207c` baseline exactly.
+
+| Quantity | `d04207c` | `a8dc2b2` |
+|---|---|---|
+| pass / silent / error / timeout | 44 / 0 / 1 / 10 | 44 / 0 / 1 / 10 |
+| adjudicated | 45 | 45 |
+| oracle applicable / ran | 22 / 22 | 22 / 22 |
+| per-case status changes | — | **0 of 55** |
+| max change, any recorded metric | — | **0.0 (exact)** |
+
+**The baseline is zero silent failures in 45 adjudicated cases at `a8dc2b2`.**
+It may be cited at this pin. Not one case changed status and every recorded
+number — energy drift, EOM mismatch, constraint residual, position range — is
+bit-identical to the earlier run, so the two sweeps are the same measurement
+rather than merely compatible ones.
 
 Re-run with:
 
     cd stress_suite && python run.py --timeout 180
 
-The baseline is confirmed only if the four-box tally reproduces — in particular
-the silent count and the count of cases where the ground-truth oracle actually
-executed. A reproduced tally supersedes nothing; it re-anchors the same numbers
-to the new pin. A changed tally voids `RESULTS.md` outright.
+If the engine moves off `a8dc2b2`, this section is void again and the sweep has
+to be repeated before any number is cited.
+
+## Known limit on the number
+
+The independent ground-truth oracle applies to the unconstrained Lagrangian
+pathway only. Of the 45 adjudicated cases it covered 22; the other 23 —
+every Hamiltonian and every constrained case — rest on energy conservation,
+constraint residual, and structural checks alone.
+
+The oracle ran on every case where it was applicable, which is the property
+the harness was rebuilt to guarantee. But "zero silent failures in 45 cases"
+should be stated pathway-by-pathway rather than pooled. Extending the oracle to
+the Hamiltonian pathway is the first thing to do after the study closes — not
+during it, because changing the instrument mid-measurement is the same error as
+changing the engine.

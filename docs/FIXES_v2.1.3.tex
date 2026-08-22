@@ -1,0 +1,335 @@
+%% ============================================================================
+%%  MechanicsDSL --- Engine and Harness Corrections
+%%  Companion to BASELINE_FREEZE_v2.1.3.tex
+%%  Compile with:  pdflatex FIXES_v2.1.3.tex   (run twice for the ToC)
+%% ============================================================================
+
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\let\Bbbk\relax
+\usepackage{newtxtext,newtxmath}
+\usepackage[margin=1.05in]{geometry}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage[expansion=false]{microtype}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{titlesec}
+\usepackage[colorlinks=true,linkcolor=linknavy,urlcolor=linknavy,citecolor=linknavy]{hyperref}
+
+\definecolor{linknavy}{RGB}{20,60,110}
+\definecolor{codebg}{RGB}{247,247,244}
+\definecolor{coderule}{RGB}{205,205,198}
+\definecolor{codekey}{RGB}{25,80,140}
+\definecolor{warnrule}{RGB}{198,150,80}
+\definecolor{okgreen}{RGB}{30,110,60}
+
+\titleformat{\section}{\normalfont\Large\bfseries}{\thesection}{0.8em}{}
+\titleformat{\subsection}{\normalfont\large\bfseries}{\thesubsection}{0.7em}{}
+\titlespacing*{\section}{0pt}{2.2ex plus 1ex minus .2ex}{1.2ex plus .2ex}
+
+\renewcommand{\arraystretch}{1.25}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\lstdefinestyle{sh}{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{codekey}\bfseries,
+  backgroundcolor=\color{codebg},
+  frame=single,
+  rulecolor=\color{coderule},
+  framesep=6pt,
+  breaklines=true,
+  showstringspaces=false,
+  columns=fullflexible,
+}
+\lstset{style=sh}
+
+\newenvironment{callout}
+  {\par\medskip\noindent\begin{tabular}{@{}p{0.94\textwidth}@{}}
+   \arrayrulecolor{warnrule}\hline\rule{0pt}{2.6ex}}
+  {\\[0.8ex]\hline\arrayrulecolor{black}\end{tabular}\par\medskip}
+
+\newcommand{\gitsha}[1]{\texttt{#1}}
+\newcommand{\evidence}[1]{\emph{Evidence:} #1}
+\newcommand{\vconf}{\textcolor{okgreen}{\textbf{[verified]}}}
+
+\title{\textbf{MechanicsDSL}\\[0.4em]
+       \large Engine and Harness Corrections\\[0.2em]
+       \large Companion to the Baseline Freeze Record}
+\author{Noah Parsons}
+\date{10 August 2026 \quad$\cdot$\quad Typeset 22 August 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+Two kinds of change happened between the 28 July campaign and the current
+baseline. The engine got fixed, and the instrument measuring the engine got
+fixed. Both moved the reported numbers, and it matters a great deal which is
+which. This document separates them. Sections~\ref{sec:engine} and
+\ref{sec:harness} are the two categories; Section~\ref{sec:short} is the
+summary. Numerical evidence claims marked \vconf{} have been checked against
+the committed run record in \texttt{stress\_suite/out/results.json}.
+\end{abstract}
+
+\tableofcontents
+\bigskip
+
+\begin{callout}
+\textbf{Why the separation matters.} A reader who sees ``three silent failures
+became zero'' will naturally credit the engine fixes for all of it. Part of the
+improvement is the \emph{scoring} changing --- timeouts leaving the
+correctness denominator, and a classifier that had been counting advisory
+warnings as failures. Conflating the two would overstate the engine's
+improvement. Keeping them apart is the difference between a defensible result
+and one a reviewer can dismantle.
+\end{callout}
+
+% =============================================================================
+\section{Engine fixes}\label{sec:engine}
+% =============================================================================
+
+\subsection{A degenerate solve no longer reports success}
+
+When the symbolic solve gave up, it filled in zero accelerations and returned
+\texttt{success = True}, with a note buried in a warnings list that nothing
+checked. The caller received a placeholder and a green light.
+
+It now fails. One exception is preserved: a declared variable with no kinetic
+energy term is not a real coordinate, and zero acceleration is the correct
+answer for it, so that case still passes.
+
+\subsection{Coupled Hamiltonian systems no longer freeze}
+
+The Legendre transform solved for one velocity at a time. When momenta are
+coupled that is invalid, and a two-link pendulum would compile, simulate, and
+sit perfectly still while reporting success.
+
+The whole momentum system is now inverted at once, and relations that cannot be
+inverted raise an error rather than producing a half-built Hamiltonian.
+
+\evidence{the two-link pendulum went from frozen to a 0.84\,rad swing,
+conserving energy to $2.4\times10^{-7}$.} \vconf{} --- the committed record for
+\texttt{dof\_N2} under the Hamiltonian pathway gives
+\texttt{max\_position\_range} $= 0.8388846$ and \texttt{energy\_drift}
+$= 2.350\times10^{-7}$.
+
+\subsection{Large systems stopped hitting a wall}
+
+Inverting the mass matrix symbolically blows up as systems grow. Past a size
+threshold the engine now retains the matrix and solves $M\ddot{q} = F$
+numerically at each step instead.
+
+\evidence{four- and five-link coupled pendulums previously ran past the
+180\,s limit and were killed. On the \textbf{Lagrangian} pathway they now
+finish in 4.6\,s and 13.8\,s respectively, correctly.} \vconf{}
+
+\begin{callout}
+\textbf{Scope of this fix.} It rescues the \emph{Lagrangian} pathway only.
+\texttt{dof\_N4} and \texttt{dof\_N5} under the \emph{Hamiltonian} pathway
+still exhaust the 180\,s limit in the committed baseline. The improvement is
+real but partial, and should not be stated as ``four and five links now
+finish'' without naming the pathway.
+\end{callout}
+
+\subsection{Ill-conditioning is now detected}
+
+The engine estimates how badly conditioned the mass matrix is at the starting
+state and warns when it is poor --- well before it becomes exactly singular.
+
+\subsection{Integration accuracy now matches the problem}
+
+\noindent\emph{This is the fix that reached zero.}
+
+An ill-conditioned mass matrix means one vibration mode is far faster than the
+others. At $\varepsilon = 10^{-8}$ that mode runs at roughly
+$10^{4}$\,rad\,s$^{-1}$ --- about 16{,}000 oscillations over a ten-second run.
+Integrating that at the default accuracy setting accumulates a little error per
+oscillation, and it compounds.
+
+The engine was already computing the number that predicts this (fix 4) and then
+integrating at a setting meant for easy problems regardless.
+
+The accuracy setting now scales with the conditioning, with a floor at
+$10^{-13}$; past that one is chasing round-off, and the system needs rescaling
+rather than smaller steps.
+
+\evidence{energy drift on that case went from 3.7\,\% to 0.00017\,\% --- a
+factor of roughly 21{,}000 --- for $2.1\times$ the computation. Other cases
+became more accurate at no measurable cost.} \vconf{} --- the committed record
+for \texttt{nearsing\_e1e-08} gives \texttt{energy\_drift}
+$= 1.7285\times10^{-6}$, i.e.\ 0.00017\,\%.
+
+\subsection{A singular mass matrix mid-run is no longer papered over}
+
+If the matrix went singular partway through a simulation, the solver quietly
+substituted a least-squares answer. That is a mathematically well-defined
+solution to a question the model does not actually pose --- a plausible
+trajectory that is not the system's motion. It was mentioned only in a log
+nobody reads.
+
+Those events are now counted and fail the simulation, with a message naming the
+likely causes.
+
+\subsection{Stiffness detection actually does something}
+
+It ran a trial integration, concluded that the system was stiff, logged
+\emph{``consider using LSODA or Radau''} --- and then integrated with the
+original method anyway. It was additionally gated so that it usually never ran
+at all.
+
+It now runs for any explicit method, and switches.
+
+\begin{callout}
+\textbf{Untested.} No case in this suite triggers it. This is a fix by
+inspection, and is reported as such rather than as a measured improvement.
+\end{callout}
+
+\subsection{Generated Rust compiles}
+
+Parameter constants were being upper-cased to match Rust convention while the
+generated equations still referred to the original lower-case name, so the
+output did not build. Unrelated to the physics.
+
+% =============================================================================
+\section{Harness fixes}\label{sec:harness}
+% =============================================================================
+
+\noindent These changed the reported numbers \textbf{without changing the
+engine at all}, which is exactly why they are listed separately.
+
+\subsection{Timeouts are no longer counted as failures}
+
+Statuses were pass / silent / loud, with timeouts folded in with real failures.
+That made the headline rate a function of the time limit chosen --- a fact
+about the harness, not about the engine.
+
+The scheme is now \textbf{pass}, \textbf{silent}, \textbf{error},
+\textbf{timeout}. A timeout is a missing answer rather than a wrong one, so it
+sits outside the correctness denominator and is reported separately as the
+scaling wall.
+
+\subsection{A warning is no longer treated as proof of wrong physics}
+
+The classifier flagged \emph{any} warning on a successful result as a silent
+failure. That was correct when the only warnings meant broken mathematics ---
+but once the engine began emitting advisory ill-conditioning notices (fix 4),
+the suite punished it for communicating.
+
+\emph{Impact:} four mass-ratio cases matching the independent derivation to
+$10^{-25}$ and conserving energy to $5\times10^{-8}$ were being scored as
+silent failures purely for having been warned about. Only genuine degeneracy
+markers count now.
+
+\begin{callout}
+\textbf{Timing note.} This miscount arose \emph{after} the 28 July campaign,
+because the warnings that triggered it were introduced by fix 4. The 28 July
+report shows the mass-ratio axis at 0\,\% on both pathways, so these four cases
+never appear as silent failures in that printed report. They should not be
+added to its total of three.
+\end{callout}
+
+\subsection{The independent check now actually runs}
+
+The strongest oracle --- comparison against a separately written derivation ---
+worked by reading the engine's symbolic equations. On the numeric path
+introduced by fix 3 there are no symbolic equations to read, so it errored,
+returned nothing, and the classifier read \emph{nothing} as \emph{nothing
+wrong}.
+
+The two cases fix 3 had just rescued were reporting verified passes backed by
+energy conservation alone.
+
+It now probes the actual equations of motion the integrator runs, which works
+on both paths and tests what the engine \emph{does} rather than what it
+derived.
+
+\evidence{those two cases now check out at $0.0$ and $1.8\times10^{-15}$, and
+where both methods apply they agree exactly --- which is how we know the new
+probe is sound.} \vconf{} --- committed \texttt{eom\_mismatch} values are
+$0.0$ for \texttt{dof\_N4} and $1.776\times10^{-15}$ for \texttt{dof\_N5}, both
+on the Lagrangian pathway.
+
+\subsection{A check that could not run is now visible}
+
+Following from the previous item: if the independent oracle was applicable but
+failed, the case is flagged \texttt{unverified} and called out in the report. A
+silent-failure rate is only worth the checks that actually ran, and this makes
+a hollow 0\,\% impossible to report by accident.
+
+\begin{callout}
+\textbf{This fix worked, and it also exposed a limit.} In the committed
+baseline the oracle ran on every one of the 22 cases where it was applicable
+--- no unverified passes. But it is applicable only to the unconstrained
+Lagrangian pathway: of 45 adjudicated cases, 22 carry an independent derivation
+check and 23 do not. See the coverage discussion in the baseline freeze record.
+\end{callout}
+
+% =============================================================================
+\section{The short version}\label{sec:short}
+% =============================================================================
+
+Three silent failures existed. All three are gone, and the cause of each is
+known:
+
+\begin{center}
+\begin{tabular}{@{}L{0.30\textwidth}L{0.36\textwidth}c@{}}
+\toprule
+\textbf{Silent failure} & \textbf{Cause} & \textbf{Fixed by} \\
+\midrule
+Two-link Hamiltonian froze        & Velocities solved one at a time            & \S1.2 \\
+Exact singularity returned zeros  & Success not gated on degeneracy            & \S1.1 \\
+Near-singular drifted 3.7\,\%     & Accuracy setting ignored the conditioning  & \S1.5 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Four further cases were never real failures --- the harness was
+miscounting advisory warnings (\S2.2). Those four arose after the 28 July
+report and are not part of its total.
+
+Two latent problems were found by reading the code rather than by testing, and
+corrected before they ever bit: the least-squares substitution (\S1.6) and the
+inert stiffness detection (\S1.7). The second of these remains untested by any
+case in the suite.
+
+% =============================================================================
+\section{What was verified for this typesetting}\label{sec:verif}
+% =============================================================================
+
+\noindent Every numerical evidence claim above was checked against the run
+record committed at \gitsha{d0d954e}
+(\texttt{stress\_suite/out/results.json}).
+
+\begin{center}
+\begin{tabular}{@{}L{0.30\textwidth}L{0.30\textwidth}c@{}}
+\toprule
+\textbf{Claim} & \textbf{Record} & \textbf{Status} \\
+\midrule
+0.84\,rad swing, energy $2.4\times10^{-7}$ & $0.8388846$, $2.350\times10^{-7}$ & Confirmed \\
+Energy drift 0.00017\,\%                   & $1.7285\times10^{-6}$             & Confirmed \\
+EOM check $0.0$ and $1.8\times10^{-15}$    & $0.0$, $1.776\times10^{-15}$      & Confirmed \\
+Overall tally 44 pass / 1 error / 10 timeout & Identical                       & Confirmed \\
+\midrule
+``finish in 6.8\,s and 11.2\,s''           & $4.63$\,s and $13.81$\,s          & \textbf{Corrected} \\
+``four and five links now finish''         & Lagrangian only; Hamiltonian still times out & \textbf{Qualified} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The two amended items are recorded here rather than silently
+changed. The original timing figures appear to come from an earlier run than
+the one committed as the baseline; wall-clock timings vary between runs and
+machines, and the committed record is the citable source. The pathway
+qualification is a substantive correction, because the unqualified phrasing
+claims more than the data supports.
+
+\end{document}

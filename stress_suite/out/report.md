@@ -63,22 +63,22 @@ Reported separately from correctness. The parenthesised value is the smallest kn
 
 | tool | knob | status | reason | warned | time |
 |---|---|---|---|---|---|
-| hamiltonian | 1 | pass |  |  | 1.8s |
-| hamiltonian | 2 | pass |  |  | 37.0s |
-| hamiltonian | 3 | timeout | timeout>180s |  | 180.0s |
+| hamiltonian | 1 | pass |  |  | 4.1s |
+| hamiltonian | 2 | pass |  |  | 63.5s |
+| hamiltonian | 3 | timeout | timeout>180s |  | 180.1s |
 | hamiltonian | 4 | timeout | timeout>180s |  | 180.0s |
 | hamiltonian | 5 | timeout | timeout>180s |  | 180.0s |
-| lagrangian | 1 | pass |  |  | 1.8s |
-| lagrangian | 2 | pass |  |  | 3.6s |
-| lagrangian | 3 | pass |  |  | 27.8s |
-| lagrangian | 4 | pass |  |  | 4.6s |
-| lagrangian | 5 | pass |  |  | 13.8s |
+| lagrangian | 1 | pass |  |  | 4.0s |
+| lagrangian | 2 | pass |  |  | 7.0s |
+| lagrangian | 3 | pass |  |  | 56.0s |
+| lagrangian | 4 | pass |  |  | 17.9s |
+| lagrangian | 5 | pass |  |  | 20.9s |
 
 ### loops
 
 | tool | knob | status | reason | warned | time |
 |---|---|---|---|---|---|
-| constrained | 3 | pass |  |  | 4.9s |
+| constrained | 3 | pass |  |  | 7.5s |
 | constrained | 4 | timeout | timeout>180s |  | 180.1s |
 | constrained | 5 | timeout | timeout>180s |  | 180.1s |
 
@@ -86,60 +86,60 @@ Reported separately from correctness. The parenthesised value is the smallest kn
 
 | tool | knob | status | reason | warned | time |
 |---|---|---|---|---|---|
-| constrained | 0 | pass |  |  | 3.0s |
-| constrained | 1 | pass |  |  | 2.3s |
-| constrained | 2 | pass |  |  | 1.8s |
-| constrained | 3 | pass |  |  | 2.5s |
-| constrained | 4 | pass |  |  | 3.1s |
-| constrained | 6 | pass |  |  | 2.7s |
-| constrained | 8 | pass |  |  | 2.4s |
+| constrained | 0 | pass |  |  | 4.1s |
+| constrained | 1 | pass |  |  | 4.0s |
+| constrained | 2 | pass |  |  | 4.2s |
+| constrained | 3 | pass |  |  | 3.9s |
+| constrained | 4 | pass |  |  | 4.3s |
+| constrained | 6 | pass |  |  | 4.5s |
+| constrained | 8 | pass |  |  | 4.5s |
 
 ### near_singular
 
 | tool | knob | status | reason | warned | time |
 |---|---|---|---|---|---|
-| lagrangian | 0.1 | pass |  |  | 2.4s |
-| lagrangian | 0.01 | pass |  |  | 2.5s |
-| lagrangian | 0.001 | pass |  |  | 2.7s |
-| lagrangian | 1e-05 | pass |  |  | 3.8s |
-| lagrangian | 1e-08 | pass |  | y | 46.9s |
+| lagrangian | 0.1 | pass |  |  | 4.2s |
+| lagrangian | 0.01 | pass |  |  | 4.2s |
+| lagrangian | 0.001 | pass |  |  | 4.1s |
+| lagrangian | 1e-05 | pass |  |  | 6.5s |
+| lagrangian | 1e-08 | pass |  | y | 83.1s |
 | lagrangian | 1e-11 | timeout | timeout>180s |  | 180.0s |
-| lagrangian | 0 | error | compile_failed | y | 2.0s |
+| lagrangian | 0 | error | compile_failed | y | 3.4s |
 
 ### mass_ratio
 
 | tool | knob | status | reason | warned | time |
 |---|---|---|---|---|---|
-| hamiltonian | 1 | pass |  |  | 2.8s |
-| hamiltonian | 1000 | pass |  |  | 2.6s |
-| hamiltonian | 1e+06 | pass |  |  | 3.0s |
-| hamiltonian | 1e+09 | pass |  |  | 2.8s |
-| hamiltonian | 1e+12 | pass |  |  | 1.8s |
-| hamiltonian | 1e+14 | pass |  |  | 2.8s |
-| hamiltonian | 1e+16 | pass |  |  | 2.9s |
-| lagrangian | 1 | pass |  |  | 2.1s |
-| lagrangian | 1000 | pass |  |  | 2.8s |
-| lagrangian | 1e+06 | pass |  |  | 2.8s |
-| lagrangian | 1e+09 | pass |  | y | 3.0s |
-| lagrangian | 1e+12 | pass |  | y | 2.7s |
-| lagrangian | 1e+14 | pass |  | y | 2.1s |
-| lagrangian | 1e+16 | pass |  | y | 3.0s |
+| hamiltonian | 1 | pass |  |  | 4.1s |
+| hamiltonian | 1000 | pass |  |  | 2.9s |
+| hamiltonian | 1e+06 | pass |  |  | 4.0s |
+| hamiltonian | 1e+09 | pass |  |  | 4.1s |
+| hamiltonian | 1e+12 | pass |  |  | 4.1s |
+| hamiltonian | 1e+14 | pass |  |  | 4.2s |
+| hamiltonian | 1e+16 | pass |  |  | 4.1s |
+| lagrangian | 1 | pass |  |  | 4.2s |
+| lagrangian | 1000 | pass |  |  | 3.7s |
+| lagrangian | 1e+06 | pass |  |  | 4.1s |
+| lagrangian | 1e+09 | pass |  | y | 4.2s |
+| lagrangian | 1e+12 | pass |  | y | 4.3s |
+| lagrangian | 1e+14 | pass |  | y | 4.3s |
+| lagrangian | 1e+16 | pass |  | y | 4.0s |
 
 ### symbolic
 
 | tool | knob | status | reason | warned | time |
 |---|---|---|---|---|---|
-| hamiltonian | 1 | pass |  |  | 2.9s |
-| hamiltonian | 2 | pass |  |  | 2.9s |
-| hamiltonian | 4 | pass |  |  | 3.0s |
-| hamiltonian | 8 | pass |  |  | 2.5s |
-| hamiltonian | 12 | pass |  |  | 15.3s |
+| hamiltonian | 1 | pass |  |  | 4.2s |
+| hamiltonian | 2 | pass |  |  | 4.2s |
+| hamiltonian | 4 | pass |  |  | 3.9s |
+| hamiltonian | 8 | pass |  |  | 5.7s |
+| hamiltonian | 12 | pass |  |  | 30.6s |
 | hamiltonian | 16 | timeout | timeout>180s |  | 180.1s |
 | hamiltonian | 24 | timeout | timeout>180s |  | 180.0s |
-| lagrangian | 1 | pass |  |  | 2.7s |
-| lagrangian | 2 | pass |  |  | 2.8s |
-| lagrangian | 4 | pass |  |  | 2.9s |
-| lagrangian | 8 | pass |  |  | 4.8s |
-| lagrangian | 12 | pass |  |  | 55.3s |
+| lagrangian | 1 | pass |  |  | 4.0s |
+| lagrangian | 2 | pass |  |  | 4.1s |
+| lagrangian | 4 | pass |  |  | 4.5s |
+| lagrangian | 8 | pass |  |  | 7.8s |
+| lagrangian | 12 | pass |  |  | 85.1s |
 | lagrangian | 16 | timeout | timeout>180s |  | 180.1s |
-| lagrangian | 24 | timeout | timeout>180s |  | 180.1s |
+| lagrangian | 24 | timeout | timeout>180s |  | 180.0s |

@@ -1,0 +1,882 @@
+%% ============================================================================
+%%  MechanicsDSL --- Engine Reference and Baseline Freeze Record
+%%  Silent-failure study, pin v2.1.3 (a8dc2b2)
+%%  Compile with:  pdflatex BASELINE_FREEZE_v2.1.3.tex   (run twice for the ToC)
+%% ============================================================================
+
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\let\Bbbk\relax                      % amssymb and newtxmath both define \Bbbk
+\usepackage{newtxtext,newtxmath}
+\usepackage[margin=1.05in]{geometry}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage[expansion=false]{microtype}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{titlesec}
+\usepackage[colorlinks=true,linkcolor=linknavy,urlcolor=linknavy,citecolor=linknavy]{hyperref}
+
+\definecolor{linknavy}{RGB}{20,60,110}
+\definecolor{codebg}{RGB}{247,247,244}
+\definecolor{coderule}{RGB}{205,205,198}
+\definecolor{codekey}{RGB}{25,80,140}
+\definecolor{warnrule}{RGB}{198,150,80}
+
+%% --- Sectioning -------------------------------------------------------------
+\titleformat{\section}{\normalfont\Large\bfseries}{\thesection}{0.8em}{}
+\titleformat{\subsection}{\normalfont\large\bfseries}{\thesubsection}{0.7em}{}
+\titlespacing*{\section}{0pt}{2.2ex plus 1ex minus .2ex}{1.2ex plus .2ex}
+
+%% --- Tables -----------------------------------------------------------------
+\renewcommand{\arraystretch}{1.25}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+%% --- Code listings ----------------------------------------------------------
+\lstdefinestyle{sh}{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{codekey}\bfseries,
+  backgroundcolor=\color{codebg},
+  frame=single,
+  rulecolor=\color{coderule},
+  framesep=6pt,
+  breaklines=true,
+  showstringspaces=false,
+  columns=fullflexible,
+}
+\lstset{style=sh}
+
+%% --- Callout box ------------------------------------------------------------
+\newenvironment{callout}
+  {\par\medskip\noindent\begin{tabular}{@{}p{0.94\textwidth}@{}}
+   \arrayrulecolor{warnrule}\hline\rule{0pt}{2.6ex}}
+  {\\[0.8ex]\hline\arrayrulecolor{black}\end{tabular}\par\medskip}
+
+\newcommand{\gitsha}[1]{\texttt{#1}}
+
+\title{\textbf{MechanicsDSL}\\[0.4em]
+       \large Engine Reference and Baseline Freeze Record\\[0.2em]
+       \large for the Silent-Failure Study}
+\author{Noah Parsons}
+\date{Pin \gitsha{a8dc2b2} (\texttt{v2.1.3}) \quad$\cdot$\quad Frozen 22 August 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+This document is the reference record for the engine under measurement in the
+silent-failure study. It fixes the exact revision of MechanicsDSL that the
+study's numbers describe, enumerates every change between the previous pin
+\gitsha{d04207c} and the current pin \gitsha{a8dc2b2}, establishes which of
+those changes can and cannot reach the measured code paths, describes the
+engine's architecture and the subset of it the measurement exercises, and
+records the resulting baseline. Its purpose is falsifiability: a reader should
+be able to reconstruct the measured artefact exactly and check every number
+against it. Where a claim in this document rests on inference rather than
+observation, it is labelled as such.
+\end{abstract}
+
+\tableofcontents
+\bigskip
+
+% =============================================================================
+\section{How to read this document}
+% =============================================================================
+
+The study this document supports asks one question:
+
+\begin{quote}
+\emph{Does a physics engine tell you when it is wrong, or does it hand you a
+wrong answer and claim it worked?}
+\end{quote}
+
+A number answering that question is worth exactly as much as the provenance
+behind it. Two facts have to hold before any such number means anything: the
+engine measured must be identifiable to the commit, and the checks behind the
+verdict must have actually executed. Section~\ref{sec:pin} establishes the
+first. Section~\ref{sec:instrument} establishes the second.
+
+Three claim strengths are used throughout, and are always marked:
+
+\begin{itemize}[leftmargin=1.4em,itemsep=0.25em]
+  \item \textbf{Observed} --- read directly from the repository, the run
+        artefacts, or the interpreter. Reproducible by the commands in
+        Appendix~\ref{app:repro}.
+  \item \textbf{Derived} --- follows from observed facts by stated reasoning.
+        The reasoning is given so it can be attacked.
+  \item \textbf{Expected} --- a prediction not yet confirmed by measurement.
+        Never load-bearing for a reported number.
+\end{itemize}
+
+% =============================================================================
+\section{The pin}\label{sec:pin}
+% =============================================================================
+
+\subsection{What is frozen}
+
+\noindent\textbf{Observed.}
+
+\begin{center}
+\begin{tabular}{@{}lL{0.63\textwidth}@{}}
+\toprule
+\textbf{Field} & \textbf{Value} \\
+\midrule
+Commit      & \gitsha{a8dc2b27ab1110d1f08dd24d0d6a6bdd994b4599} \\
+Short       & \gitsha{a8dc2b2} \\
+Tag         & \texttt{v2.1.3} (annotated) \\
+Authored    & 2026-08-15 11:44:07 $-$0600 \\
+Author      & Noah Parsons \\
+Subject     & \texttt{release: v2.1.3 - correctness release for ARM, Hamiltonian, and degenerate solves} \\
+Package     & \texttt{mechanicsdsl-core} 2.1.3 \\
+Repository  & \url{https://github.com/MechanicsDSL/mechanicsdsl} \\
+Frozen on   & 2026-08-22 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The freeze is recorded in the repository at \texttt{stress\_suite/FREEZE.md},
+which is the operative anchor; this document is its expanded form. Where the
+two disagree, \texttt{FREEZE.md} governs, because it is the file the sweep
+harness and the scope document both point at.
+
+\subsection{Provenance of the pin}
+
+\noindent\textbf{Observed.} The engine has been pinned twice.
+
+\begin{center}
+\begin{tabular}{@{}llL{0.44\textwidth}@{}}
+\toprule
+\textbf{Pin} & \textbf{Date} & \textbf{Status} \\
+\midrule
+\gitsha{d04207c} & 10 Aug 2026 & Superseded. Baseline measured here is
+                                 archived in \texttt{RESULTS.md} and marked
+                                 pending re-verification. \\
+\gitsha{a8dc2b2} & 22 Aug 2026 & Current. Baseline in
+                                 Section~\ref{sec:results}. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The governing scope document states that any engine change voids the baseline
+and requires a re-run before any number is cited again. Seven commits landed
+after \gitsha{d04207c}. The pin was therefore moved deliberately and the sweep
+repeated, rather than allowing the recorded pin to drift away from the
+measured artefact. Section~\ref{sec:delta} is the accounting of what moved.
+
+\subsection{Reproducing the frozen engine}
+
+\begin{lstlisting}
+git clone https://github.com/MechanicsDSL/mechanicsdsl.git
+cd mechanicsdsl
+git checkout v2.1.3
+\end{lstlisting}
+
+\noindent\textbf{Observed.} At the time of freezing, the working tree matched
+\gitsha{a8dc2b2} for all of \texttt{src/} and \texttt{pyproject.toml}. One
+untracked file, \texttt{RELEASE\_NOTES\_v2.1.3.md}, was present; it is release
+prose and contains no executable code, so it cannot affect the measurement.
+
+\subsection{Measurement environment}
+
+\noindent\textbf{Observed.}
+
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Component} & \textbf{Version} \\
+\midrule
+Operating system  & Windows 11 Home 10.0.26200 \\
+Python            & 3.14.0 \\
+\texttt{sympy}    & 1.14.0 \\
+\texttt{numpy}    & 2.3.5 \\
+MechanicsDSL      & 2.1.3, loaded from \texttt{src/} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{A reproducibility hazard worth recording}\label{sec:hazard}
+
+\noindent\textbf{Observed.} The measurement host also has MechanicsDSL
+\textbf{2.0.6} installed into \texttt{site-packages}. A bare interpreter on
+this host resolves \texttt{import mechanics\_dsl} to that stale copy:
+
+\begin{lstlisting}
+$ python -c "import mechanics_dsl as m; print(m.__version__, m.__file__)"
+2.0.6  C:\Python314\Lib\site-packages\mechanics_dsl\__init__.py
+\end{lstlisting}
+
+The sweep harness defeats this. \texttt{run.py} prepends the repository's
+\texttt{src/} directory to \texttt{PYTHONPATH} in the environment it hands to
+each worker subprocess, and \texttt{PYTHONPATH} precedes \texttt{site-packages}
+on \texttt{sys.path}. Under that environment the same import resolves
+correctly:
+
+\begin{lstlisting}
+$ PYTHONPATH=.../mechanicsdsl-main/src python -c "..."
+2.1.3  C:\Users\...\mechanicsdsl-main\src\mechanics_dsl\__init__.py
+\end{lstlisting}
+
+\noindent This was verified explicitly rather than assumed, because the failure
+it guards against is precisely the failure the study is about: the sweep would
+have measured 2.0.6, reported success, and labelled the result 2.1.3. It would
+have been a silent failure in the instrument rather than in the engine, and
+nothing in the output would have revealed it. Anyone reproducing this work on a
+host with MechanicsDSL installed should confirm the resolved version before
+trusting a result.
+
+% =============================================================================
+\section{The delta: \gitsha{d04207c} to \gitsha{a8dc2b2}}\label{sec:delta}
+% =============================================================================
+
+\subsection{Commits}
+
+\noindent\textbf{Observed.} Seven commits, all authored by Noah Parsons.
+\gitsha{d0d954e} is the first commit \emph{after} the old pin;
+\gitsha{a8dc2b2} is the new pin. An eighth commit, \gitsha{9552c7d}, records
+the pin move itself and touches only \texttt{stress\_suite/} documentation.
+
+\begin{center}
+\begin{longtable}{@{}llL{0.46\textwidth}@{}}
+\toprule
+\textbf{Commit} & \textbf{Date} & \textbf{Subject} \\
+\midrule
+\endhead
+\gitsha{d0d954e} & 10 Aug & \texttt{stress\_suite}: zero-silent-failure baseline at \gitsha{d04207c} \\
+\gitsha{04a7a3b} & 14 Aug & \texttt{fix(codegen)}: correct target count and repair CLI, REST, and Modelica export \\
+\gitsha{71173e4} & 14 Aug & \texttt{fix(arm)}: generate embedded derivatives from the system's equations \\
+\gitsha{0e64268} & 14 Aug & \texttt{fix(arm)}: parenthesise inlined integer powers \\
+\gitsha{9b46781} & 15 Aug & \texttt{examples}: force UTF-8 stdout and drop BOMs \\
+\gitsha{7b7198c} & 15 Aug & \texttt{docs}: add the mathematical and physical formulation writeup \\
+\gitsha{a8dc2b2} & 15 Aug & \texttt{release}: v2.1.3 \\
+\midrule
+\gitsha{9552c7d} & 22 Aug & \texttt{stress\_suite}: move the engine freeze to \gitsha{a8dc2b2} \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\subsection{Source changes}
+
+\noindent\textbf{Observed.} Restricted to \texttt{src/}, the delta is five
+files, 241 insertions against 77 deletions.
+
+\begin{center}
+\begin{tabular}{@{}lrL{0.38\textwidth}@{}}
+\toprule
+\textbf{File} & \textbf{Lines} & \textbf{Change} \\
+\midrule
+\texttt{codegen/arm.py}           & 160 & Embedded derivative generation; bare-metal C printer; integer-power parenthesisation \\
+\texttt{cli.py}                   & 48  & Target count; dispatch routed through \texttt{PhysicsCompiler.export()} \\
+\texttt{integrations/modelica.py} & 56  & Export repair \\
+\texttt{server/routes.py}         & 52  & REST export repair \\
+\texttt{\_\_init\_\_.py}          & 2   & \texttt{\_\_version\_\_} 2.1.2 $\rightarrow$ 2.1.3 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Outside \texttt{src/}: one test file (\texttt{tests/unit/test\_codegen\_arm.py},
+$+116$ lines), \texttt{pyproject.toml} (version), \texttt{CHANGELOG.md},
+\texttt{CITATION.cff}, \texttt{README.md}, the new
+\texttt{docs/MATH\_AND\_PHYSICS.\{tex,pdf\}}, and 43 example scripts re-encoded
+to UTF-8 without BOM.
+
+\subsection{Reachability: can the delta affect the measurement?}\label{sec:reach}
+
+This is the load-bearing question of the whole freeze, so the reasoning is
+given in full.
+
+\noindent\textbf{Observed.} The sweep reaches the engine through exactly one
+import, in \texttt{stress\_suite/worker.py}:
+
+\begin{lstlisting}
+from mechanics_dsl import PhysicsCompiler
+\end{lstlisting}
+
+\noindent The worker does not invoke the command-line interface, does not start
+the REST server, does not call any code generator, and does not touch the
+Modelica integration. It compiles a DSL source string and integrates the
+result.
+
+\noindent\textbf{Derived.} Mapping the five changed files against that path:
+
+\begin{center}
+\begin{tabular}{@{}lL{0.30\textwidth}c@{}}
+\toprule
+\textbf{File} & \textbf{Role} & \textbf{On the measured path?} \\
+\midrule
+\texttt{codegen/arm.py}           & Bare-metal ARM C emission & No \\
+\texttt{cli.py}                   & Console entry point       & No \\
+\texttt{server/routes.py}         & HTTP surface              & No \\
+\texttt{integrations/modelica.py} & Modelica export           & No \\
+\texttt{\_\_init\_\_.py}          & Version string only       & Immaterial \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+No symbolic, solver, parser, compiler, or domain module changed between the two
+pins. The conclusion --- that the sweep should reproduce the prior tally --- is
+therefore \textbf{expected}, not established, and Section~\ref{sec:results}
+reports what measurement actually returned. The prediction is stated here so
+that a divergence would be a finding about the instrument rather than a
+surprise absorbed into the result.
+
+\subsection{Clarifying the release title}\label{sec:titletrap}
+
+\begin{callout}
+\textbf{A reader comparing the release title to the delta will find an apparent
+contradiction.} The v2.1.3 release is titled \emph{correctness release for
+ARM, Hamiltonian, and degenerate solves}, yet no Hamiltonian or solver file
+appears in the \gitsha{d04207c}\,$\rightarrow$\,\gitsha{a8dc2b2} delta above.
+The resolution is that those two fixes predate the old pin.
+\end{callout}
+
+\noindent\textbf{Observed.} The Hamiltonian and degeneracy fixes are carried by
+two commits between tag \texttt{v2.1.2} (\gitsha{f4706e5}) and the old pin
+\gitsha{d04207c}:
+
+\begin{center}
+\begin{tabular}{@{}lL{0.55\textwidth}@{}}
+\toprule
+\textbf{Commit} & \textbf{Subject} \\
+\midrule
+\gitsha{b582e4f} & \texttt{fix}: make degenerate solves fail loudly and defer large mass-matrix inversion \\
+\gitsha{ac23ff9} & \texttt{fix(solver)}: scale integration tolerance to mass-matrix conditioning, fail on runtime degeneracy \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\gitsha{b582e4f} touches \texttt{compiler.py} ($+182$),
+\texttt{symbolic.py} ($\pm160$), and \texttt{solver/core.py} ($+64$). It
+contains the simultaneous momentum inversion described in the changelog: the
+Legendre transform previously solved each velocity from its own momentum
+relation independently, which is valid only for uncoupled kinetic terms, and
+now inverts the momentum system as a whole and raises on a non-invertible
+relation instead of returning a Hamiltonian assembled from partial
+substitutions.
+
+\noindent\textbf{Derived.} Both commits are ancestors of \gitsha{d04207c},
+verified by \texttt{git merge-base -{}-is-ancestor}. They were therefore
+already present in the engine when the 10 August baseline was measured. The
+release notes group them under 2.1.3 because 2.1.3 is the release that
+\emph{ships} them, not because they landed in the delta. \textbf{The changelog
+describes a release; this document describes a diff.} They answer different
+questions and both are correct.
+
+This distinction matters beyond bookkeeping. The prior baseline is sometimes
+read as measuring a pre-fix engine; it does not. It measured an engine that
+already contained the Hamiltonian and degeneracy corrections, which is part of
+why the tally it reported was as clean as it was.
+
+% =============================================================================
+\section{MechanicsDSL}\label{sec:engine}
+% =============================================================================
+
+\subsection{What it is}
+
+\noindent\textbf{Observed.} MechanicsDSL is a domain-specific language and
+transpiler for classical mechanics, distributed as \texttt{mechanicsdsl-core}
+under the MIT licence. A user writes a mechanical system in LaTeX-inspired
+notation --- coordinates, parameters, and a Lagrangian or Hamiltonian --- and
+the toolchain derives the equations of motion symbolically, integrates them
+numerically, and optionally emits standalone source for one of twelve
+code-generation targets.
+
+\noindent The twelve targets are enumerated in
+\texttt{PhysicsCompiler.\_GENERATOR\_REGISTRY}: \texttt{cpp}, \texttt{python},
+\texttt{rust}, \texttt{julia}, \texttt{matlab}, \texttt{fortran},
+\texttt{javascript}, \texttt{cuda}, \texttt{openmp}, \texttt{wasm},
+\texttt{arduino}, and \texttt{arm}. They are \emph{targets} rather than twelve
+distinct languages: \texttt{cuda} and \texttt{openmp} are C/C++ dialects,
+\texttt{arduino} is C++ for a specific platform, \texttt{arm} is bare-metal C,
+and \texttt{wasm} is a compilation target rather than a source language.
+
+\begin{center}
+\begin{tabular}{@{}lL{0.55\textwidth}@{}}
+\toprule
+\textbf{Field} & \textbf{Value} \\
+\midrule
+Distribution   & \texttt{mechanicsdsl-core} \\
+Version        & 2.1.3 \\
+Licence        & MIT \\
+Python         & $\geq$ 3.9 \\
+Core deps      & \texttt{numpy}$\geq$1.20, \texttt{scipy}$\geq$1.7, \texttt{sympy}$\geq$1.8, \texttt{matplotlib}$\geq$3.4, \texttt{tqdm}$\geq$4.60 \\
+Maturity       & Declared \emph{Production/Stable} \\
+Source size    & 53{,}500 lines across 137 Python modules \\
+Test files     & 108 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{The pipeline}
+
+\noindent\textbf{Observed.} A compilation proceeds through five stages.
+
+\begin{enumerate}[leftmargin=1.6em,itemsep=0.35em]
+  \item \textbf{Parse} (\texttt{parser/}, 2{,}108 lines) --- tokenise the DSL
+        source and build an AST. Entry points \texttt{tokenize} and
+        \texttt{MechanicsParser}.
+  \item \textbf{Compile} (\texttt{compiler.py}, 1{,}460 lines) --- the
+        orchestrator. \texttt{PhysicsCompiler} is the sole public entry point
+        used by the measurement.
+  \item \textbf{Derive} (\texttt{symbolic.py}, 931 lines, plus
+        \texttt{domains/classical/}) --- form the Euler--Lagrange or Hamilton
+        equations and solve for accelerations. The mass matrix is assembled and
+        the acceleration system solved \emph{simultaneously}, not
+        coordinate-by-coordinate.
+  \item \textbf{Integrate} (\texttt{solver/}, 2{,}273 lines across
+        \texttt{core}, \texttt{symplectic}, \texttt{variational}) ---
+        numerical integration, with optional Numba-JIT and JAX backends.
+  \item \textbf{Emit} (\texttt{codegen/}, twelve targets) --- optional export
+        to C++, Python, Rust, Julia, MATLAB, Fortran, JavaScript, CUDA,
+        OpenMP, WASM, Arduino, and bare-metal ARM.
+\end{enumerate}
+
+\noindent\textbf{Only stages 1--4 are exercised by this study.} Stage 5 is
+where the delta's largest change lives, and it is not measured here.
+
+\subsection{Subsystem inventory}
+
+\noindent\textbf{Observed.} Largest modules, by line count.
+
+\begin{center}
+\begin{tabular}{@{}lrL{0.34\textwidth}@{}}
+\toprule
+\textbf{Module} & \textbf{Lines} & \textbf{Role} \\
+\midrule
+\texttt{compiler.py}                 & 1460 & Pipeline orchestration \\
+\texttt{domains/quantum/core.py}     & 1262 & Quantum domain \\
+\texttt{domains/kinematics/projectile.py} & 1140 & Projectile kinematics \\
+\texttt{solver/core.py}              & 1089 & Numerical integration \\
+\texttt{domains/solid\_mechanics/beam\_theory.py} & 1082 & Beam theory \\
+\texttt{domains/solid\_mechanics/elasticity.py} & 1052 & Elasticity \\
+\texttt{domains/electromagnetic/core.py} & 971 & Electromagnetism \\
+\texttt{symbolic.py}                 & 931  & Symbolic derivation \\
+\texttt{parser/core.py}              & 891  & Tokeniser and parser \\
+\texttt{parser/ast\_nodes.py}        & 857  & AST \\
+\texttt{codegen/cpp.py}              & 833  & C++ emission \\
+\texttt{codegen/arm.py}              & 761  & Bare-metal ARM emission \\
+\texttt{solver/symplectic.py}        & 722  & Symplectic integrators \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The breadth is worth noting honestly: the package spans quantum,
+relativistic, general-relativistic, electromagnetic, thermodynamic, statistical,
+fluid, and solid-mechanics domains in addition to classical mechanics. The
+study measures the classical Lagrangian, Hamiltonian, and constrained pathways
+only. \textbf{No claim in the study extends to the other domains}, and the
+inventory is given here so that the scope limit is visible rather than implied.
+
+\subsection{Surrounding infrastructure}
+
+\noindent\textbf{Observed.} Beyond the pipeline, the package ships a REPL, a
+Language Server Protocol implementation, a FastAPI server with WebSocket
+support, Jupyter magics and display hooks, a plugin registry and loader,
+inverse-problem tooling (parameter estimation, sensitivity, uncertainty),
+visualisation and phase-space plotting, a units system, and integrations for
+ROS2, Unity, Unreal, OpenMDAO, and Modelica. None of these are on the measured
+path.
+
+\subsection{Test suite}
+
+\noindent\textbf{Observed.} 108 test files.
+
+\begin{center}
+\begin{tabular}{@{}lr@{}}
+\toprule
+\textbf{Directory} & \textbf{Files} \\
+\midrule
+\texttt{tests/unit}           & 48 \\
+\texttt{tests/physics}        & 37 \\
+\texttt{tests/integration}    & 6 \\
+\texttt{tests/} (top level)   & 5 \\
+\texttt{tests/property}       & 3 \\
+\texttt{tests/validation}     & 3 \\
+\texttt{tests/performance}    & 2 \\
+\texttt{tests/security}       & 2 \\
+\texttt{tests/edge\_cases}    & 1 \\
+\texttt{tests/test\_backends} & 1 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The existence of this suite is not evidence against silent failure.
+Every defect corrected in \gitsha{b582e4f} and \gitsha{71173e4} was present
+while the suite passed. That is the study's premise rather than a criticism of
+the suite: a test asserts what its author thought to assert, and a silent
+failure is by construction the case nobody thought to assert.
+
+% =============================================================================
+\section{The measuring instrument}\label{sec:instrument}
+% =============================================================================
+
+\subsection{Design}
+
+\noindent\textbf{Observed.} \texttt{run.py} generates a specification file per
+case, executes \texttt{worker.py} as a \emph{subprocess} under a wall-clock
+timeout, and classifies the outcome. Subprocess isolation is deliberate: a
+segmentation fault or a hang in the engine must be recorded as a data point,
+not take down the harness.
+
+\subsection{Scoring}
+
+\noindent\textbf{Observed.} Four outcomes.
+
+\begin{center}
+\begin{tabular}{@{}lL{0.62\textwidth}@{}}
+\toprule
+\textbf{Box} & \textbf{Meaning} \\
+\midrule
+\textbf{pass}    & Correct answer. \\
+\textbf{silent}  & \emph{Wrong answer reported as success.} The quantity of interest. \\
+\textbf{error}   & Wrong or impossible, and said so. Acceptable behaviour. \\
+\textbf{timeout} & Never returned. A missing answer, not a wrong one. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Timeouts are deliberately \emph{not} folded into \texttt{error}. An
+errored case is one the engine adjudicated; a timed-out case is one it never
+answered. Folding them together would make the reported failure rate a function
+of the chosen timeout, which is a property of the harness rather than of the
+engine. The denominator for the silent-failure rate is therefore
+$\mathrm{pass} + \mathrm{silent} + \mathrm{error}$, and the timeout count is
+reported separately as a scaling-wall result.
+
+\subsection{Oracles}
+
+\noindent\textbf{Observed.} A verdict rests on independent checks, not on the
+engine's own report.
+
+\begin{center}
+\begin{tabular}{@{}lL{0.42\textwidth}r@{}}
+\toprule
+\textbf{Check} & \textbf{Method} & \textbf{Tolerance} \\
+\midrule
+Equations of motion & Engine's ODE right-hand side compared against an
+independent ground-truth derivation at $K=12$ randomised states & $10^{-6}$ rel. \\
+Energy conservation & Relative drift over the trajectory & $10^{-2}$ \\
+Constraint residual & Absolute growth in the constraint residual & $10^{-2}$ \\
+Structural          & NaN/Inf trajectories, all-zero equations of motion,
+frozen-when-displaced, and solve-fallback warnings riding on
+\texttt{success=True} & --- \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The right-hand-side probe is the strongest of these, and its
+introduction in \gitsha{d04207c} was itself prompted by a defect in an earlier
+version of this harness, which reported passes on cases where the strongest
+check had quietly failed to execute. The harness now surfaces unverified passes
+explicitly. \textbf{A silent-failure rate is worth exactly as much as the
+checks behind it}, so the count of cases where the oracle actually ran is
+reported alongside the headline number in Section~\ref{sec:results}.
+
+\subsection{Oracle coverage is uneven, and this bounds the claim}
+\label{sec:coverage}
+
+\begin{callout}
+\textbf{The strong oracle covers under half the adjudicated cases.} It applies
+to the unconstrained Lagrangian pathway only. Hamiltonian and constrained cases
+are adjudicated by energy conservation, constraint residual, and the structural
+checks --- all weaker instruments.
+\end{callout}
+
+\noindent\textbf{Observed.} Coverage in the prior baseline run, computed
+directly from \texttt{out/results.json}:
+
+\begin{center}
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Pathway} & \textbf{Adjudicated} & \textbf{Strong oracle ran} \\
+\midrule
+\texttt{lagrangian}  & 23 & 22 \\
+\texttt{hamiltonian} & 14 & 0 \\
+\texttt{constrained} & 8  & 0 \\
+\midrule
+\textbf{Total}       & \textbf{45} & \textbf{22} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Two separate facts live in that table, and they pull in opposite
+directions.
+
+The reassuring one: the oracle ran on \emph{every} case where it was
+applicable --- 22 applicable, 22 executed. This is the specific failure the
+harness was rebuilt to prevent, and the rebuild worked. It is what licenses the
+statement in \texttt{RESULTS.md} that the check actually ran.
+
+The limiting one: \textbf{23 of 45 adjudicated cases carry no independent
+derivation check at all.} A headline of ``zero silent failures in 45 cases''
+is, more precisely, zero silent failures in 22 cases checked against an
+independent derivation plus 23 cases checked only for energy drift, constraint
+drift, and structural pathology.
+
+This bound deserves emphasis because of where it falls. The most serious silent
+failure in the engine's history --- the two-link Hamiltonian that compiled,
+reported success, and sat motionless --- was on the pathway that receives
+\emph{zero} strong-oracle coverage. That particular defect is caught by the
+frozen-when-displaced structural check, so it is not invisible to the harness.
+But a Hamiltonian system that moves plausibly while solving the wrong equations
+would pass energy conservation and every structural check, and nothing in the
+current suite would contradict it.
+
+\noindent\textbf{Derived.} The claim this evidence supports is therefore
+pathway-dependent, and should be stated that way rather than pooled:
+
+\begin{itemize}[leftmargin=1.4em,itemsep=0.25em]
+  \item \textbf{Lagrangian:} no silent failures, verified against an
+        independent derivation.
+  \item \textbf{Hamiltonian and constrained:} no silent failures detected by
+        energy, constraint, and structural checks. Weaker evidence, and it
+        should not be pooled with the above into a single number without the
+        qualifier.
+\end{itemize}
+
+\noindent Extending the ground-truth oracle to the Hamiltonian pathway is the
+single highest-value improvement available to this suite. It is out of scope
+for the current freeze --- the engine cannot change once measurement starts,
+and neither should the instrument --- but it is recorded here as the first
+thing to do after the study closes.
+
+\subsection{Case matrix}
+
+\noindent\textbf{Observed.} Six axes, three formulation pathways
+(\texttt{lagrangian}, \texttt{hamiltonian}, \texttt{constrained}), 55
+(system, tool) cases.
+
+\begin{center}
+\begin{tabular}{@{}lL{0.26\textwidth}lr@{}}
+\toprule
+\textbf{Axis} & \textbf{Knob values} & \textbf{Tools} & \textbf{Cases} \\
+\midrule
+\texttt{dof}            & $N = 1,2,3,4,5$                             & lag, ham    & 10 \\
+\texttt{loops}          & $N = 3,4,5$                                 & constrained & 3 \\
+\texttt{redundancy}     & $R = 0,1,2,3,4,6,8$                         & constrained & 7 \\
+\texttt{near\_singular} & $\varepsilon = 10^{-1}\ldots10^{-11},\,0$   & lag         & 7 \\
+\texttt{mass\_ratio}    & $10^{0}\ldots10^{16}$                       & lag, ham    & 14 \\
+\texttt{symbolic}       & depth $= 1,2,4,8,12,16,24$                  & lag, ham    & 14 \\
+\midrule
+\multicolumn{3}{r}{\textbf{Total}} & \textbf{55} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent\textbf{Observed.} The skip list (\texttt{KNOWN\_SLOW}) is empty by
+deliberate choice. It was previously populated on the belief that high-DOF
+Hamiltonian cases hang past 600\,s; the belief did not survive the data, as
+\texttt{dof\_N4} and \texttt{dof\_N5} on the Lagrangian side went from timing
+out at 180\,s to finishing in under 12\,s once the mass-matrix path changed.
+Every case is measured.
+
+\begin{callout}
+\textbf{Scope note.} Four of these axes --- degrees of freedom, near-singular
+inertia, mass ratio, and degenerate starting positions --- are portable across
+engines and form the basis of the cross-engine claim. The remaining two,
+\texttt{symbolic} nesting depth and hand-built \texttt{redundancy}, apply only
+to engines that consume raw Lagrangians. They are recorded here for
+single-engine characterisation and cannot support a cross-engine comparison.
+\end{callout}
+
+% =============================================================================
+\section{Baseline}\label{sec:results}
+% =============================================================================
+
+\subsection{Result}
+
+\noindent\textbf{Observed.} Sweep executed 22 August 2026 at pin
+\gitsha{a8dc2b2}, 180\,s per-case wall-clock timeout, 55 cases.
+
+\begin{center}
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Outcome} & \textbf{Count} & \textbf{Share of adjudicated} \\
+\midrule
+pass    & 44 & 97.8\,\% \\
+silent  & \textbf{0}  & \textbf{0.0\,\%} \\
+error   & 1  & 2.2\,\% \\
+\midrule
+\multicolumn{3}{@{}l}{\emph{Adjudicated total:} \textbf{45}} \\
+\midrule
+timeout & 10 & --- (reported separately) \\
+\midrule
+\textbf{Total cases} & \textbf{55} & \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{callout}
+\textbf{The baseline: zero silent failures in 45 adjudicated cases}, at pin
+\gitsha{a8dc2b2} (\texttt{v2.1.3}), with the independent ground-truth oracle
+executing on all 22 cases where it was applicable. Ten cases did not finish
+within 180\,s and are excluded from the denominator as missing answers rather
+than wrong ones.
+\end{callout}
+
+\subsection{Reproduction against the prior pin}
+
+\noindent\textbf{Observed.} The prediction in Section~\ref{sec:reach} was that
+the sweep would reproduce, because no module on the measured path changed
+between the pins. It did, and more exactly than anticipated.
+
+\begin{center}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Quantity} & \textbf{\gitsha{d04207c}} & \textbf{\gitsha{a8dc2b2}} \\
+\midrule
+pass / silent / error / timeout & 44 / 0 / 1 / 10 & 44 / 0 / 1 / 10 \\
+Adjudicated cases               & 45 & 45 \\
+Oracle applicable / ran         & 22 / 22 & 22 / 22 \\
+Per-case status changes         & \multicolumn{2}{c}{\textbf{0 of 55}} \\
+Max change, any recorded metric & \multicolumn{2}{c}{\textbf{$0.0$ (exact)}} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Not one case changed status, and every recorded numeric quantity ---
+energy drift, equation-of-motion mismatch, constraint residual, position range
+--- is identical to the last bit. The engine is deterministic across runs on
+this host, and the \gitsha{d04207c}$\rightarrow$\gitsha{a8dc2b2} delta is
+confirmed inert with respect to the measured path.
+
+\noindent\textbf{Derived.} Two consequences follow.
+
+First, the \gitsha{d04207c} baseline and the \gitsha{a8dc2b2} baseline are the
+same measurement, not merely compatible ones. The reasoning in
+Section~\ref{sec:reach} is now supported by observation rather than standing
+alone, and the numbers archived in \texttt{RESULTS.md} may be cited at the
+current pin.
+
+Second, exact reproduction is itself a small result about the instrument.
+A harness that returned bit-identical values across two independent
+invocations twelve days apart has no hidden run-to-run variation --- no
+unseeded randomness in the oracle's probe states, no timing-dependent
+branch --- which is a precondition for any comparison the study later makes
+between engines.
+
+\begin{callout}
+\textbf{Interpretation.} A zero here means \emph{no silent failure was observed
+in this case set}, not that the engine does not produce them. See
+Section~\ref{sec:coverage} on which cases carry an independent derivation
+check, and Section~\ref{sec:threats}, item~3, for the statistical bound.
+\end{callout}
+
+\subsection{Prior baseline, for comparison}
+
+\noindent\textbf{Observed.} The 10 August sweep at pin \gitsha{d04207c}
+reported \textbf{zero silent failures in 45 adjudicated cases}: of 55 cases, 44
+passed, 1 was an explicit refusal, and 10 did not finish. The single refusal was
+\texttt{nearsing\_e0}, an exactly singular mass matrix --- a genuinely
+degenerate system in which the coordinates cease to be independent and there is
+no motion to compute. The engine fails at compile time and says so, which is
+correct behaviour and is scored \texttt{error}, not \texttt{silent}.
+
+% =============================================================================
+\section{Threats to validity}\label{sec:threats}
+% =============================================================================
+
+\begin{enumerate}[leftmargin=1.6em,itemsep=0.4em]
+
+  \item \textbf{The author maintains one of the engines measured.}
+        MechanicsDSL is the author's own project. This is disclosed here and
+        must be disclosed in any publication drawing on these numbers. A
+        maintainer measuring their own tool is normal and defensible when
+        stated, and indefensible when concealed. The concrete mitigation is
+        that verdicts rest on an independent ground-truth oracle and on
+        cross-engine disagreement rather than on the engine's self-report.
+
+  \item \textbf{Single-engine results do not support the cross-engine claim.}
+        The claim the study defends --- that engines disagree on the same
+        system and some do not warn you --- requires the other two engines.
+        This document records one engine's baseline only. Nothing here is
+        evidence for or against the comparative claim.
+
+  \item \textbf{A zero is a weak observation.} Zero silent failures over 45
+        cases bounds the rate loosely, not tightly. With 45 adjudicated trials
+        and no events, the one-sided 95\,\% upper bound on the underlying rate
+        is roughly $1 - 0.05^{1/45} \approx 6.4\,\%$. The honest statement is
+        that no silent failure was observed in this case set, not that the
+        engine does not produce them.
+
+  \item \textbf{The case set is adversarial, not representative.} Axes were
+        chosen because they are known ways to break solvers. Rates measured
+        here do not transfer to typical use.
+
+  \item \textbf{Timeout choice shifts the denominator.} At 180\,s per case, 10
+        cases did not finish under the prior pin. A shorter timeout moves cases
+        from the adjudicated pool into the timeout pool and changes the
+        denominator. The timeout is therefore reported with every tally.
+
+  \item \textbf{The oracle shares a symbolic library with the engine.} Both the
+        ground-truth derivation and the engine depend on \texttt{sympy}. A
+        defect in \texttt{sympy} itself could in principle affect both and
+        escape detection. Energy conservation is a partially independent check,
+        because it does not require agreement on the derivation, only on the
+        physics.
+
+  \item \textbf{AI assistance was used} in preparing this analysis and
+        document. It is permitted in the venues targeted, and is disclosed.
+
+\end{enumerate}
+
+% =============================================================================
+\appendix
+\section{Reproduction}\label{app:repro}
+% =============================================================================
+
+\noindent Every \textbf{observed} claim in this document is reproducible with
+the following.
+
+\medskip\noindent\textbf{The pin and the delta:}
+\begin{lstlisting}
+git rev-parse v2.1.3^{commit}
+git log --oneline d04207c..a8dc2b2
+git diff --stat d04207c..a8dc2b2 -- src/
+git merge-base --is-ancestor b582e4f d04207c && echo "predates old pin"
+\end{lstlisting}
+
+\noindent\textbf{The environment:}
+\begin{lstlisting}
+python -c "import sys, sympy, numpy; print(sys.version, sympy.__version__, numpy.__version__)"
+PYTHONPATH=./src python -c "import mechanics_dsl as m; print(m.__version__, m.__file__)"
+\end{lstlisting}
+
+\noindent\textbf{The sweep:}
+\begin{lstlisting}
+cd stress_suite
+python run.py --timeout 180
+\end{lstlisting}
+
+\noindent Artefacts are written to \texttt{stress\_suite/out/}:
+\texttt{results.json} (per-case records) and \texttt{report.md} (tally). The
+report may be regenerated from existing records without re-running any case:
+
+\begin{lstlisting}
+python run.py --report-only
+\end{lstlisting}
+
+\medskip\noindent\textbf{Governing documents in the repository:}
+\begin{center}
+\begin{tabular}{@{}lL{0.52\textwidth}@{}}
+\toprule
+\textbf{File} & \textbf{Authority} \\
+\midrule
+\texttt{stress\_suite/SCOPE.md}   & The study plan. Authoritative on scope. \\
+\texttt{stress\_suite/FREEZE.md}  & The engine pin. Authoritative on what was measured. \\
+\texttt{stress\_suite/RESULTS.md} & The baseline tally. \\
+\texttt{stress\_suite/FIXES.md}   & Case-by-case account of pre- and post-fix differences. \\
+\texttt{stress\_suite/MASTER\_REPORT.md} & Historical, 28 July. Describes a pre-fix engine and \emph{must not} be quoted as current. \\
+\texttt{docs/MATH\_AND\_PHYSICS.tex} & The engine's mathematical formulation. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}

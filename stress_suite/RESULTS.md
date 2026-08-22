@@ -1,10 +1,18 @@
 # Baseline results — 10 August 2026
 
-> **Pending re-verification.** The engine pin moved to `a8dc2b2` (`v2.1.3`) on
-> 22 August — see `FREEZE.md`. Every number below was measured at the previous
-> pin and must not be cited until the sweep is repeated at the current one.
+> **Re-verified 22 August 2026 at pin `a8dc2b2` (`v2.1.3`).** The sweep was
+> repeated at the current pin and reproduced every number below exactly — zero
+> per-case status changes across all 55 cases, and no recorded metric changed
+> by any amount. These numbers are current and citable. See `FREEZE.md`.
+>
+> **One qualifier before quoting the headline:** the independent ground-truth
+> oracle covered **22 of the 45** adjudicated cases — all on the Lagrangian
+> pathway. The remaining **23** rest on energy, constraint, and structural
+> checks alone: every Hamiltonian case (14), every constrained case (8), and
+> one Lagrangian case where the oracle did not apply. State the result by
+> pathway rather than pooling it.
 
-Measured at commit `d04207c`.
+Originally measured at commit `d04207c`; re-measured unchanged at `a8dc2b2`.
 
 Supersedes the pre-fix run of 28 July, kept for comparison in
 `MASTER_REPORT.md` and `out/report_legacy_3way.md`. What changed in between is
