@@ -1,0 +1,127 @@
+%% ============================================================================
+%%  Silent-Failure Study --- One-Page Status
+%%  Compile with:  pdflatex STUDY_STATUS.tex
+%% ============================================================================
+
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\let\Bbbk\relax
+\usepackage{newtxtext,newtxmath}
+\usepackage[margin=0.85in,top=0.7in,bottom=0.7in]{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage[expansion=false]{microtype}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{titlesec}
+
+\definecolor{okgreen}{RGB}{30,110,60}
+\definecolor{nextblue}{RGB}{20,60,110}
+\definecolor{holdred}{RGB}{150,45,45}
+\definecolor{rulegrey}{RGB}{190,190,185}
+
+\titleformat{\section}{\normalfont\large\bfseries}{}{0em}{}
+\titlespacing*{\section}{0pt}{1.6ex plus .3ex}{0.7ex}
+
+\renewcommand{\arraystretch}{1.15}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\newcommand{\done}{\textcolor{okgreen}{\textbf{\checkmark}}}
+\newcommand{\todo}{\textcolor{nextblue}{$\square$}}
+
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+
+\begin{document}
+
+{\LARGE\bfseries Silent-Failure Study}\\[0.3em]
+{\large Status as of 22 August 2026}\\[0.2em]
+{\color{rulegrey}\hrule height 1pt}
+
+\vspace{0.9em}
+
+{\large\bfseries Where you are:} \textbf{the baseline is locked.} Week 1 begins.\\[0.3em]
+The measurement of your own engine is finished and reproducible. Everything
+remaining is about the other two engines.
+
+\vspace{0.5em}
+
+% ---------------------------------------------------------------------------
+\section{Done}
+
+\begin{tabular}{@{}cL{0.88\textwidth}@{}}
+\done & \textbf{Engine frozen} at commit \texttt{a8dc2b2}, tag \texttt{v2.1.3}. Recorded in \texttt{stress\_suite/FREEZE.md}. \\
+\done & \textbf{Baseline measured and re-verified.} 55 cases: 44 pass, \textbf{0 silent}, 1 error, 10 timeout. 45 adjudicated. \\
+\done & \textbf{Reproduction confirmed.} Re-run at the new pin returned bit-identical results to the 10 August run --- zero status changes across 55 cases, no metric changed by any amount. \\
+\done & \textbf{Third engine chosen:} Drake, over Pinocchio. Recorded in \texttt{SCOPE.md}. \\
+\done & \textbf{Documentation:} baseline freeze record (13\,pp) and engine/harness fixes writeup (5\,pp), both printed. \\
+\end{tabular}
+
+% ---------------------------------------------------------------------------
+\section{Next --- Week 1: adapters}
+
+\textit{This is the hard part and where all the risk lives. Budget the whole week.}
+
+\vspace{0.3em}
+\begin{tabular}{@{}cL{0.88\textwidth}@{}}
+\todo & \textbf{Install Drake in Ubuntu WSL.} Not native Windows. It is the heavier of the two candidates --- do this in the first days, not on day four. \\
+\todo & \textbf{SymPy adapter.} Express the pendulum chain via \texttt{sympy.physics.mechanics}. Already installed. \\
+\todo & \textbf{Drake adapter.} Same chain, same knobs. \\
+\todo & \textbf{The gate:} all three engines agree on one easy case you can check by hand. Do not proceed past this until they do. \\
+\end{tabular}
+
+\vspace{0.6em}
+\textbf{Then --- Week 2:} sweep all three, build the comparison table, write.
+
+% ---------------------------------------------------------------------------
+\section{Rules in force until the study closes}
+
+\begin{tabular}{@{}cL{0.88\textwidth}@{}}
+\textcolor{holdred}{\textbf{!}} & \textbf{The engine does not change.} Fixing MechanicsDSL mid-study is what makes the numbers meaningless. If it moves off \texttt{a8dc2b2}, the baseline is void and the sweep must be repeated. \\
+\textcolor{holdred}{\textbf{!}} & \textbf{The instrument does not change either.} Same reasoning. Improvements to the harness are recorded, not applied. \\
+\textcolor{holdred}{\textbf{!}} & \textbf{Quote numbers only from \texttt{RESULTS.md}.} The 28 July report describes a pre-fix engine and must never be cited as current. \\
+\end{tabular}
+
+% ---------------------------------------------------------------------------
+\section{Known limit on the headline}
+
+The independent ground-truth oracle covered \textbf{22 of the 45} adjudicated
+cases, all on the Lagrangian pathway. The other 23 --- every Hamiltonian case
+(14), every constrained case (8), and one Lagrangian case where it did not
+apply --- rest on energy, constraint, and structural checks alone.
+
+\vspace{0.3em}
+State the result \textbf{by pathway}, not pooled. Extending the oracle to the
+Hamiltonian pathway is the first thing to do \emph{after} the study closes.
+
+% ---------------------------------------------------------------------------
+\section{At a glance}
+
+\begin{tabular}{@{}lL{0.62\textwidth}@{}}
+\toprule
+Pin              & \texttt{a8dc2b2} \quad tag \texttt{v2.1.3} \quad (\texttt{git checkout v2.1.3}) \\
+Headline         & Zero silent failures in 45 adjudicated cases \\
+Caveat           & Independent oracle covers 22 of those 45 \\
+Timeout          & 180\,s per case \\
+Engines          & MechanicsDSL \done \quad SymPy \todo \quad Drake \todo \\
+Paper            & Short or workshop paper. \emph{Not} a registered report. \\
+\midrule
+Plan             & \texttt{stress\_suite/SCOPE.md} \\
+Pin record       & \texttt{stress\_suite/FREEZE.md} \\
+Numbers          & \texttt{stress\_suite/RESULTS.md} \\
+Why they changed & \texttt{stress\_suite/FIXES.md} \\
+Repository       & \texttt{Desktop\textbackslash mechanicsdsl-main} \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.7em}
+{\color{rulegrey}\hrule height 0.5pt}
+\vspace{0.4em}
+{\footnotesize Disclose in the paper: you maintain one of the engines measured,
+and AI assistance was used. Both are permitted; concealing either is not.}
+
+\end{document}
