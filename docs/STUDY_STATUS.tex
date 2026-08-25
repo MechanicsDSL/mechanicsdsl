@@ -10,7 +10,7 @@
 \usepackage{amsmath,amssymb}
 \let\Bbbk\relax
 \usepackage{newtxtext,newtxmath}
-\usepackage[margin=0.85in,top=0.7in,bottom=0.7in]{geometry}
+\usepackage[margin=0.6in,top=0.55in,bottom=0.5in]{geometry}
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage[expansion=false]{microtype}
@@ -25,9 +25,9 @@
 \definecolor{rulegrey}{RGB}{190,190,185}
 
 \titleformat{\section}{\normalfont\large\bfseries}{}{0em}{}
-\titlespacing*{\section}{0pt}{1.6ex plus .3ex}{0.7ex}
+\titlespacing*{\section}{0pt}{1.1ex plus .2ex}{0.45ex}
 
-\renewcommand{\arraystretch}{1.15}
+\renewcommand{\arraystretch}{1.05}
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 
 \newcommand{\done}{\textcolor{okgreen}{\textbf{\checkmark}}}
@@ -37,6 +37,7 @@
 \setlength{\parindent}{0pt}
 
 \begin{document}
+\small
 
 {\LARGE\bfseries Silent-Failure Study}\\[0.3em]
 {\large Status as of 22 August 2026}\\[0.2em]
@@ -54,11 +55,10 @@ remaining is about the other two engines.
 \section{Done}
 
 \begin{tabular}{@{}cL{0.88\textwidth}@{}}
-\done & \textbf{Engine frozen} at commit \texttt{a8dc2b2}, tag \texttt{v2.1.3}. Recorded in \texttt{stress\_suite/FREEZE.md}. \\
-\done & \textbf{Baseline measured and re-verified.} 55 cases: 44 pass, \textbf{0 silent}, 1 error, 10 timeout. 45 adjudicated. \\
-\done & \textbf{Reproduction confirmed.} Re-run at the new pin returned bit-identical results to the 10 August run --- zero status changes across 55 cases, no metric changed by any amount. \\
-\done & \textbf{Third engine chosen:} Drake, over Pinocchio. Recorded in \texttt{SCOPE.md}. \\
-\done & \textbf{Documentation:} baseline freeze record (13\,pp) and engine/harness fixes writeup (5\,pp), both printed. \\
+\done & \textbf{Engine frozen} at \texttt{a8dc2b2}, tag \texttt{v2.1.3} (\texttt{FREEZE.md}). \\
+\done & \textbf{Baseline measured and re-verified.} 55 cases: 44 pass, \textbf{0 silent}, 1 error, 10 timeout; 45 adjudicated. \\
+\done & \textbf{Reproduction confirmed} --- bit-identical to the 10 August run. Zero status changes, no metric changed at all. This also forecloses ``could that be harness noise?'' against the week-2 comparison. \\
+\done & \textbf{Third engine chosen:} Drake. \quad \done~\textbf{Documented:} freeze record (16\,pp) + fixes writeup (5\,pp). \\
 \end{tabular}
 
 % ---------------------------------------------------------------------------
@@ -68,11 +68,19 @@ remaining is about the other two engines.
 
 \vspace{0.3em}
 \begin{tabular}{@{}cL{0.88\textwidth}@{}}
-\todo & \textbf{Install Drake in Ubuntu WSL.} Not native Windows. It is the heavier of the two candidates --- do this in the first days, not on day four. \\
-\todo & \textbf{SymPy adapter.} Express the pendulum chain via \texttt{sympy.physics.mechanics}. Already installed. \\
-\todo & \textbf{Drake adapter.} Same chain, same knobs. \\
-\todo & \textbf{The gate:} all three engines agree on one easy case you can check by hand. Do not proceed past this until they do. \\
+\todo & \textbf{1. Library-independent $N$-link reference} (\texttt{numpy} only). Closed-form $M(q)\ddot q + C(q,\dot q)\dot q + g(q) = 0$. \textbf{Do this first} --- it is the ground truth the SymPy column needs, since a SymPy oracle checking a SymPy engine is near self-consistency. Doubles as the gate case. \\
+\todo & \textbf{2. SymPy adapter.} Pendulum chain via \texttt{sympy.physics.mechanics}. Already installed, so it is the smaller of the two. \\
+\todo & \textbf{3. Install Drake in Ubuntu WSL.} Not native Windows. The heavier install --- start it early, in parallel with steps 1--2. \\
+\todo & \textbf{4. Drake adapter.} Same chain, same knobs. \\
+\todo & \textbf{5. The gate:} all three engines agree with the reference on a hand-checked $N=2$ case. Do not proceed past this until they do. \\
 \end{tabular}
+
+\vspace{0.4em}
+\textbf{Two decisions owed in week 1:} whether the \texttt{loops} axis enters
+the cross-engine claim (three constrained cases, currently zero strong-oracle
+coverage); and whether to pin one integrator family and tolerance across all
+three engines, since otherwise cross-engine energy drift measures the
+integrator rather than the engine.
 
 \vspace{0.6em}
 \textbf{Then --- Week 2:} sweep all three, build the comparison table, write.
@@ -82,21 +90,29 @@ remaining is about the other two engines.
 
 \begin{tabular}{@{}cL{0.88\textwidth}@{}}
 \textcolor{holdred}{\textbf{!}} & \textbf{The engine does not change.} Fixing MechanicsDSL mid-study is what makes the numbers meaningless. If it moves off \texttt{a8dc2b2}, the baseline is void and the sweep must be repeated. \\
-\textcolor{holdred}{\textbf{!}} & \textbf{The instrument does not change either.} Same reasoning. Improvements to the harness are recorded, not applied. \\
+\textcolor{holdred}{\textbf{!}} & \textbf{The scoring path and case matrix are frozen} --- but \textbf{the harness may grow}. Adapters, dispatch, and new oracles are additive. The gate: re-run the frozen matrix at \texttt{a8dc2b2} and confirm it still returns 44/0/1/10 bit-identically. Extending coverage is allowed; revising judgement is not. \\
 \textcolor{holdred}{\textbf{!}} & \textbf{Quote numbers only from \texttt{RESULTS.md}.} The 28 July report describes a pre-fix engine and must never be cited as current. \\
 \end{tabular}
 
 % ---------------------------------------------------------------------------
 \section{Known limit on the headline}
 
-The independent ground-truth oracle covered \textbf{22 of the 45} adjudicated
-cases, all on the Lagrangian pathway. The other 23 --- every Hamiltonian case
-(14), every constrained case (8), and one Lagrangian case where it did not
-apply --- rest on energy, constraint, and structural checks alone.
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Pathway} & \textbf{Cases} & \textbf{Timed out} & \textbf{Adjudicated} & \textbf{Strong oracle} \\
+\midrule
+lagrangian & 26 & 3 & 23 & 22 \\
+hamiltonian & 19 & 5 & 14 & 0 \\
+constrained & 10 & 2 & 8 & 0 \\
+\midrule
+\textbf{Total} & \textbf{55} & \textbf{10} & \textbf{45} & \textbf{22} \\
+\bottomrule
+\end{tabular}
 
 \vspace{0.3em}
-State the result \textbf{by pathway}, not pooled. Extending the oracle to the
-Hamiltonian pathway is the first thing to do \emph{after} the study closes.
+\textbf{33 of 55 cases (60\%) carry no independent derivation check}, and 7 of
+those returned no answer at all. The oracle gap and the timeout wall fall in
+the \emph{same} place. State the result \textbf{by pathway}, never pooled.
 
 % ---------------------------------------------------------------------------
 \section{At a glance}

@@ -84,7 +84,45 @@ constraint residual, and structural checks alone.
 
 The oracle ran on every case where it was applicable, which is the property
 the harness was rebuilt to guarantee. But "zero silent failures in 45 cases"
-should be stated pathway-by-pathway rather than pooled. Extending the oracle to
-the Hamiltonian pathway is the first thing to do after the study closes — not
-during it, because changing the instrument mid-measurement is the same error as
-changing the engine.
+should be stated pathway-by-pathway rather than pooled.
+
+Counting the timeouts alongside the oracle gap — they fall in the same place —
+gives the honest shape of the evidence:
+
+| Pathway | Cases | Timed out | Adjudicated | Strong oracle |
+|---|---|---|---|---|
+| lagrangian | 26 | 3 | 23 | 22 |
+| hamiltonian | 19 | 5 | 14 | 0 |
+| constrained | 10 | 2 | 8 | 0 |
+| **Total** | **55** | **10** | **45** | **22** |
+
+**33 of 55 cases (60%) carry no independent derivation check**, and 7 of those
+produced no answer at all.
+
+## What is frozen, and what may grow
+
+An earlier version of this file said the instrument must not change either.
+That was too broad: week 1 is two engine adapters and a dispatch layer, all of
+it harness work, so the rule forbade the plan. Correctly scoped:
+
+**Frozen** — the engine at `a8dc2b2`; the MechanicsDSL scoring path; the case
+matrix of six axes and 55 cases.
+
+**May grow** — new engine adapters, multi-engine dispatch, and new oracles that
+*add* adjudication where there was none.
+
+**The gate on any harness change:** re-run the frozen matrix at `a8dc2b2` and
+confirm it still returns 44/0/1/10 with every metric bit-identical. That test
+is enforceable because reproduction was shown to be exact, and it makes the
+instrument self-checking.
+
+The line that matters is between *extending coverage* and *revising judgement*.
+Adding a check to a pathway that had none can only turn an unverified pass into
+a verified pass or a caught failure. Loosening a tolerance, reclassifying a
+warning, or dropping an awkward case after seeing its result is revision, and
+stays forbidden.
+
+A library-independent reference implementation of the N-link chain is the
+highest-value extension available: it closes the Hamiltonian coverage gap and
+is a hard prerequisite for the SymPy column, whose oracle would otherwise be
+SymPy checking SymPy.

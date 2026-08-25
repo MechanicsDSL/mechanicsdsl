@@ -641,11 +641,61 @@ pathway-dependent, and should be stated that way rather than pooled:
         qualifier.
 \end{itemize}
 
-\noindent Extending the ground-truth oracle to the Hamiltonian pathway is the
-single highest-value improvement available to this suite. It is out of scope
-for the current freeze --- the engine cannot change once measurement starts,
-and neither should the instrument --- but it is recorded here as the first
-thing to do after the study closes.
+\subsection{Where the gaps fall, jointly}\label{sec:jointgap}
+
+\noindent\textbf{Observed.} The oracle gap and the timeout wall are usually
+reported separately. They should not be, because they fall in the same place
+and compound.
+
+\begin{center}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Pathway} & \textbf{Cases} & \textbf{Timed out} & \textbf{Adjudicated} & \textbf{Strong oracle} \\
+\midrule
+\texttt{lagrangian}  & 26 & 3  & 23 & 22 \\
+\texttt{hamiltonian} & 19 & 5  & 14 & 0 \\
+\texttt{constrained} & 10 & 2  & 8  & 0 \\
+\midrule
+\textbf{Total}       & \textbf{55} & \textbf{10} & \textbf{45} & \textbf{22} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent\textbf{Derived.} \textbf{Thirty-three of the 55 cases --- 60\,\% of
+the matrix --- carry no independent derivation check.} Of those, seven produced
+no answer at all. Non-Lagrangian evidence therefore amounts to 22 cases
+adjudicated at the weak tier, with the region past three Hamiltonian links and
+four loop nodes entirely dark.
+
+Stated separately, the two caveats sound like minor qualifications. Stated
+jointly, they define the actual shape of the evidence: one pathway is well
+covered, and the other two are thinly covered and go blind exactly where the
+systems get hard. This is the honest bound, and it belongs in the paper in this
+form.
+
+\subsection{The remedy, and why it is affordable}\label{sec:remedy}
+
+\noindent A single artefact closes both gaps: \textbf{a library-independent
+reference implementation of the planar $N$-link chain.} The planar chain has a
+closed-form mass matrix, Coriolis term, and gravity vector,
+\begin{equation}
+M(q)\,\ddot{q} + C(q,\dot{q})\,\dot{q} + g(q) = 0,
+\end{equation}
+requiring no symbolic algebra --- a few hundred lines of \texttt{numpy} with a
+hand-checkable $N=2$ case.
+
+Such a reference shares no library with any of the three engines. That matters
+most for the SymPy column: a hand-rolled SymPy derivation checked against
+SymPy's \texttt{LagrangesMethod} exercises different code paths but shares
+\texttt{diff}, \texttt{simplify}, \texttt{solve}, and the assumptions
+machinery beneath them. Agreement under those conditions is close to a
+self-consistency test, and asymmetric evidence across the three columns is the
+one defect a comparison table cannot survive.
+
+The same artefact extends strong-oracle adjudication to the Hamiltonian
+pathway on the portable family, and doubles as the Week~1 hand-checked gate
+case --- which has to be written regardless. The marginal cost is generalising
+that gate case in $N$.
 
 \subsection{Case matrix}
 
@@ -678,13 +728,40 @@ out at 180\,s to finishing in under 12\,s once the mass-matrix path changed.
 Every case is measured.
 
 \begin{callout}
-\textbf{Scope note.} Four of these axes --- degrees of freedom, near-singular
-inertia, mass ratio, and degenerate starting positions --- are portable across
-engines and form the basis of the cross-engine claim. The remaining two,
-\texttt{symbolic} nesting depth and hand-built \texttt{redundancy}, apply only
-to engines that consume raw Lagrangians. They are recorded here for
-single-engine characterisation and cannot support a cross-engine comparison.
+\textbf{Scope note.} Portability across engines splits the six axes as
+follows.
 \end{callout}
+
+\begin{center}
+\begin{tabular}{@{}lL{0.52\textwidth}@{}}
+\toprule
+\textbf{Axis} & \textbf{Cross-engine status} \\
+\midrule
+\texttt{dof}            & Portable. Every engine expresses an $N$-link chain. \\
+\texttt{near\_singular} & Portable. A near-zero inertia is a number in a model file. \\
+\texttt{mass\_ratio}    & Portable. Likewise. \\
+\midrule
+\texttt{loops}          & \textbf{Undecided.} Closed kinematic chains are well supported by Drake and expressible in SymPy via Lagrange multipliers, so this axis is arguably portable. It is not yet committed to the cross-engine claim. \\
+\midrule
+\texttt{symbolic}       & Not portable. Nesting depth in a Lagrangian expression is only meaningful to an engine that consumes raw Lagrangians. \\
+\texttt{redundancy}     & Not portable. Hand-built redundant constraint sets, same reasoning. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent\textbf{An earlier version of this section was wrong}, and the error
+is recorded rather than quietly corrected. It listed four portable axes
+including ``degenerate starting positions,'' which is not one of the six axes
+at all --- it is one of the four \emph{knobs} named in \texttt{SCOPE.md}. The
+two taxonomies are different: \texttt{SCOPE.md} describes what is dialled, the
+suite describes how cases are grouped. Conflating them also caused
+\texttt{loops} to be omitted from both lists.
+
+\noindent\textbf{The \texttt{loops} decision is load-bearing and must be made
+before the adapters are written.} If the constrained pathway enters the
+cross-engine claim, three more cases join a pathway that currently has zero
+strong-oracle coverage (Section~\ref{sec:coverage}). If it does not, the claim
+covers unconstrained dynamics only and should say so.
 
 % =============================================================================
 \section{Baseline}\label{sec:results}
@@ -755,12 +832,26 @@ Section~\ref{sec:reach} is now supported by observation rather than standing
 alone, and the numbers archived in \texttt{RESULTS.md} may be cited at the
 current pin.
 
-Second, exact reproduction is itself a small result about the instrument.
-A harness that returned bit-identical values across two independent
-invocations twelve days apart has no hidden run-to-run variation --- no
-unseeded randomness in the oracle's probe states, no timing-dependent
-branch --- which is a precondition for any comparison the study later makes
-between engines.
+Second --- and this is the more useful consequence --- exact reproduction
+\textbf{forecloses an entire class of objection to the cross-engine
+comparison before it can be raised.} The natural challenge to any Week~2
+result is that observed differences between engines might be run-to-run noise
+in the harness rather than genuine disagreement. That challenge is now
+answerable with a null result measured on exactly the right question: 55 cases,
+two independent invocations twelve days apart, zero variation in any recorded
+metric. There is no unseeded randomness in the oracle's probe states and no
+timing-dependent branch, so any difference the comparison later shows is
+attributable to the engines.
+
+This belongs in the paper, not only in this record. A reviewer who asks
+``how do you know that isn't noise?'' should be met with a measurement rather
+than an argument.
+
+\noindent It also supplies something the study needs operationally: a
+\textbf{bit-exact regression test on the instrument itself}. Any future
+extension of the harness can be validated by re-running the frozen case matrix
+and confirming it still returns 44/0/1/10 with identical metrics. See
+Section~\ref{sec:governance}.
 
 \begin{callout}
 \textbf{Interpretation.} A zero here means \emph{no silent failure was observed
@@ -778,6 +869,68 @@ passed, 1 was an explicit refusal, and 10 did not finish. The single refusal was
 degenerate system in which the coordinates cease to be independent and there is
 no motion to compute. The engine fails at compile time and says so, which is
 correct behaviour and is scored \texttt{error}, not \texttt{silent}.
+
+% =============================================================================
+\section{Governance: what is frozen, and what may grow}\label{sec:governance}
+% =============================================================================
+
+\begin{callout}
+\textbf{An earlier statement of the freeze rule was too broad and would have
+blocked the study's own next step.} It read: \emph{the instrument does not
+change either; improvements to the harness are recorded, not applied.} Week~1
+consists of two new engine adapters and a multi-engine dispatch layer --- all
+of it harness work. The rule and the plan contradicted each other.
+\end{callout}
+
+\noindent The rule was over-tightened by analogy: because the engine must not
+change mid-measurement, it seemed to follow that nothing may change. That does
+not follow. The reason for freezing the engine is that a moving engine makes
+the numbers describe no particular artefact. The harness has a different
+property --- it can be extended and then \emph{proved} not to have disturbed
+what came before.
+
+\subsection{The rule, correctly scoped}
+
+\begin{center}
+\begin{tabular}{@{}L{0.29\textwidth}L{0.60\textwidth}@{}}
+\toprule
+\textbf{Frozen} & \textbf{Why} \\
+\midrule
+The engine at \gitsha{a8dc2b2} & A moving engine makes the numbers describe nothing in particular. \\
+The MechanicsDSL scoring path & The classifier that produced 44/0/1/10 must not be re-tuned after seeing results. \\
+The case matrix (six axes, 55 cases) & Adding or dropping cases after the fact is selection on the outcome. \\
+\midrule
+\textbf{May grow} & \textbf{Condition} \\
+\midrule
+New engine adapters (SymPy, Drake) & Additive. Cannot alter the MechanicsDSL column. \\
+Multi-engine dispatch & Same. \\
+New oracles (e.g.\ the $N$-link reference of Section~\ref{sec:remedy}) & May \emph{add} adjudication where there was none; may not re-adjudicate an existing verdict. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{The re-validation gate}
+
+\noindent Every extension of the harness must satisfy one condition before it
+is trusted:
+
+\begin{quote}
+Re-run the frozen case matrix at \gitsha{a8dc2b2}. It must still return
+\textbf{44 pass / 0 silent / 1 error / 10 timeout}, with every recorded metric
+bit-identical to the committed baseline.
+\end{quote}
+
+\noindent This is enforceable rather than aspirational precisely because
+reproduction was shown to be exact (Section~\ref{sec:results}). A harness
+change that perturbs the MechanicsDSL column announces itself immediately. One
+that does not is additive by demonstration.
+
+\noindent\textbf{The distinction that matters} is between extending coverage
+and revising judgement. Adding an independent check to a pathway that had none
+is extension: it can only turn an unverified pass into a verified pass or a
+detected failure. Loosening a tolerance, reclassifying a warning, or dropping
+an inconvenient case after seeing its result is revision, and remains
+forbidden for the duration.
 
 % =============================================================================
 \section{Threats to validity}\label{sec:threats}
@@ -815,12 +968,39 @@ correct behaviour and is scored \texttt{error}, not \texttt{silent}.
         from the adjudicated pool into the timeout pool and changes the
         denominator. The timeout is therefore reported with every tally.
 
-  \item \textbf{The oracle shares a symbolic library with the engine.} Both the
-        ground-truth derivation and the engine depend on \texttt{sympy}. A
-        defect in \texttt{sympy} itself could in principle affect both and
-        escape detection. Energy conservation is a partially independent check,
-        because it does not require agreement on the derivation, only on the
-        physics.
+  \item \textbf{The oracle shares a symbolic library with the engine, and this
+        becomes acute for the SymPy column.} Both the ground-truth derivation
+        and MechanicsDSL depend on \texttt{sympy}; a defect in \texttt{sympy}
+        could affect both and escape detection. For MechanicsDSL this is a
+        modest concern, mitigated by energy conservation, which requires
+        agreement on the physics rather than on the derivation.
+
+        \textbf{It is not a modest concern for the second engine.} When the
+        engine under test \emph{is} \texttt{sympy.physics.mechanics}, the
+        strong oracle becomes a hand-rolled SymPy derivation checked against
+        SymPy's \texttt{LagrangesMethod}. These are different code paths, so
+        it is not strictly circular --- but they share \texttt{diff},
+        \texttt{simplify}, \texttt{solve}, and the assumptions machinery
+        beneath them, which makes agreement closer to a self-consistency test
+        than to independent confirmation.
+
+        The consequence is asymmetric evidence across the three columns: the
+        MechanicsDSL column adjudicated independently on the Lagrangian
+        pathway, the SymPy column adjudicated by something notably weaker on
+        the same pathway, reported side by side under one heading. A
+        comparison table does not survive that. The library-independent
+        reference of Section~\ref{sec:remedy} is the remedy, and it is a
+        Week~1 dependency rather than a later improvement.
+
+  \item \textbf{Cross-engine energy drift may measure the integrator rather
+        than the engine.} Drake's default integrator and error control are not
+        \texttt{scipy}'s. On the Hamiltonian and constrained pathways, where
+        drift is the only real oracle, comparing drift across engines risks
+        attributing an integrator choice to engine correctness. Either pin the
+        integrator family and tolerance across all three engines, or restrict
+        cross-engine claims to the pathway where the ground-truth probe
+        adjudicates. This must be decided in Week~1; discovering it in Week~2
+        is far more expensive.
 
   \item \textbf{AI assistance was used} in preparing this analysis and
         document. It is permitted in the venues targeted, and is disclosed.
@@ -846,6 +1026,11 @@ git merge-base --is-ancestor b582e4f d04207c && echo "predates old pin"
 \noindent\textbf{The environment:}
 \begin{lstlisting}
 python -c "import sys, sympy, numpy; print(sys.version, sympy.__version__, numpy.__version__)"
+
+# Resolved engine version. The measurement host is Windows, so both forms:
+#   PowerShell
+$env:PYTHONPATH = ".\src"; python -c "import mechanics_dsl as m; print(m.__version__, m.__file__)"
+#   POSIX shell (Git Bash, WSL, Linux, macOS)
 PYTHONPATH=./src python -c "import mechanics_dsl as m; print(m.__version__, m.__file__)"
 \end{lstlisting}
 
