@@ -154,6 +154,76 @@ class NLinkChain:
                 f"cond={np.linalg.cond(M):.3e}"
             ) from None
 
+    # -- canonical (Hamiltonian) side ---------------------------------------
+    #
+    # The engine's Hamiltonian pathway integrates (q, p), not (q, q_dot), and
+    # its ODE right-hand side returns (q_dot, p_dot). Comparing that against
+    # accelerations is a category error which happens to vanish at N=1, where
+    # M = m l^2 = 1 makes p numerically equal to q_dot. The methods below let
+    # the reference be compared on the engine's own terms.
+
+    def momentum(self, th: np.ndarray, w: np.ndarray) -> np.ndarray:
+        """p = M(th) w -- the conjugate momenta."""
+        return self.mass_matrix(th) @ np.asarray(w, dtype=float)
+
+    def velocity_from_momentum(self, th: np.ndarray, p: np.ndarray) -> np.ndarray:
+        """w = M(th)^{-1} p -- Hamilton's first equation, dH/dp."""
+        return np.linalg.solve(self.mass_matrix(th), np.asarray(p, dtype=float))
+
+    def mass_matrix_dot(self, th: np.ndarray, w: np.ndarray) -> np.ndarray:
+        """dM/dt = sum_k (dM/dth_k) w_k.
+
+        With M_ij = a_ij cos(th_i - th_j),
+            dM_ij/dt = -a_ij sin(th_i - th_j) (w_i - w_j).
+        """
+        th = np.asarray(th, dtype=float)
+        w = np.asarray(w, dtype=float)
+        return -self._a * np.sin(th[:, None] - th[None, :]) * (w[:, None] - w[None, :])
+
+    def momentum_rate(self, th: np.ndarray, w: np.ndarray) -> np.ndarray:
+        """p_dot = M a + M_dot w, equivalently -dH/dq.
+
+        Derived from p = M w rather than from H directly, so it stays
+        consistent with the Lagrangian side by construction. The two routes
+        are cross-checked in `_test_canonical_consistency`.
+        """
+        th = np.asarray(th, dtype=float)
+        w = np.asarray(w, dtype=float)
+        state = np.empty(2 * self.N)
+        state[0::2], state[1::2] = th, w
+        a = self.accel(state)
+        return self.mass_matrix(th) @ a + self.mass_matrix_dot(th, w) @ w
+
+    def canonical_state(self, state: np.ndarray) -> np.ndarray:
+        """(q, q_dot) interleaved -> (q, p) interleaved, for feeding the engine."""
+        th, w = self.split(state)
+        out = np.empty(2 * self.N, dtype=float)
+        out[0::2] = th
+        out[1::2] = self.momentum(th, w)
+        return out
+
+    def canonical_rhs(self, state_qp: np.ndarray) -> np.ndarray:
+        """(q, p) interleaved -> (q_dot, p_dot) interleaved.
+
+        This is what the engine's Hamiltonian `equations_of_motion` returns,
+        so it is the correct object to compare against.
+        """
+        s = np.asarray(state_qp, dtype=float)
+        th, p = s[0::2].copy(), s[1::2].copy()
+        w = self.velocity_from_momentum(th, p)
+        pdot = self.momentum_rate(th, w)
+        out = np.empty(2 * self.N, dtype=float)
+        out[0::2] = w
+        out[1::2] = pdot
+        return out
+
+    def hamiltonian(self, state_qp: np.ndarray) -> float:
+        """H = 1/2 p^T M^{-1} p + V. Equals total energy for this system."""
+        s = np.asarray(state_qp, dtype=float)
+        th, p = s[0::2], s[1::2]
+        w = self.velocity_from_momentum(th, p)
+        return 0.5 * float(p @ w) + float(np.sum(self._gcoef * (1.0 - np.cos(th))))
+
     def rhs(self, _t: float, state: np.ndarray) -> np.ndarray:
         """ODE right-hand side, for handing to an integrator."""
         th, w = self.split(state)
@@ -196,6 +266,107 @@ class NLinkChain:
 
 class SingularMassMatrix(RuntimeError):
     """Raised when M(th) cannot be solved. Loud by design."""
+
+
+class LinearSystem:
+    """Constant-coefficient system  M q_ddot + K q = 0.
+
+    WHY THIS IS HERE
+    ----------------
+    `SCOPE.md` describes the study as one family -- a pendulum chain -- with
+    four knobs dialled on it. The implemented suite does not do that. Only the
+    `dof` axis is the angular chain; `near_singular` and `mass_ratio` are
+    two-degree-of-freedom systems in Cartesian x/y with springs. They are
+    different physical systems, not the chain with different numbers.
+
+    That is not a defect -- both are portable across engines, which is what the
+    cross-engine claim needs -- but it means `NLinkChain` cannot adjudicate
+    them. Fortunately both are LINEAR with constant mass matrices, so their
+    closed form is exact and trivial, and full library-independent coverage of
+    all three portable axes costs almost nothing.
+    """
+
+    def __init__(self, M: np.ndarray, K: np.ndarray, name: str = "") -> None:
+        self.M = np.asarray(M, dtype=float)
+        self.K = np.asarray(K, dtype=float)
+        self.n = self.M.shape[0]
+        self.name = name
+        if self.M.shape != self.K.shape or self.M.ndim != 2:
+            raise ValueError("M and K must be square and the same shape")
+
+    def accel(self, state: np.ndarray) -> np.ndarray:
+        s = np.asarray(state, dtype=float)
+        q = s[0::2]
+        try:
+            return np.linalg.solve(self.M, -self.K @ q)
+        except np.linalg.LinAlgError:
+            raise SingularMassMatrix(
+                f"{self.name}: mass matrix singular, "
+                f"det={np.linalg.det(self.M):.3e}") from None
+
+    def rhs(self, _t: float, state: np.ndarray) -> np.ndarray:
+        s = np.asarray(state, dtype=float)
+        out = np.empty_like(s)
+        out[0::2] = s[1::2]
+        out[1::2] = self.accel(s)
+        return out
+
+    def energy(self, state: np.ndarray) -> float:
+        s = np.asarray(state, dtype=float)
+        q, w = s[0::2], s[1::2]
+        return 0.5 * float(w @ self.M @ w) + 0.5 * float(q @ self.K @ q)
+
+    def condition_number(self) -> float:
+        return float(np.linalg.cond(self.M))
+
+    def __repr__(self) -> str:
+        return f"LinearSystem({self.name!r}, n={self.n})"
+
+
+def near_singular_system(eps: float, m: float = 1.0, k: float = 1.0) -> LinearSystem:
+    """Matches `systems.near_singular_dsl(eps)`.
+
+        L = 1/2 m xdot^2 + 1/2 m ydot^2 + (1-eps) m xdot ydot
+            - 1/2 k x^2 - 1/2 k y^2
+
+    so M = m[[1, c], [c, 1]] with c = 1 - eps, and K = k I.
+    det M = m^2 (2 eps - eps^2), which vanishes exactly at eps = 0 -- the
+    genuinely degenerate case the engine is expected to refuse.
+    """
+    c = 1.0 - eps
+    M = m * np.array([[1.0, c], [c, 1.0]])
+    K = k * np.eye(2)
+    return LinearSystem(M, K, name=f"nearsing_e{eps:g}")
+
+
+def mass_ratio_system(ratio: float, m1: float = 1.0, k: float = 1.0,
+                      k1: float = 1.0) -> LinearSystem:
+    """Matches `systems.mass_ratio_dsl(ratio)`.
+
+        L = 1/2 m1 xdot^2 + 1/2 m2 ydot^2 - 1/2 k (x-y)^2 - 1/2 k1 x^2
+
+    so M = diag(m1, m2) and, from dV/dx = k(x-y) + k1 x, dV/dy = -k(x-y),
+    K = [[k + k1, -k], [-k, k]].
+    """
+    M = np.diag([m1, float(ratio)])
+    K = np.array([[k + k1, -k], [-k, k]])
+    return LinearSystem(M, K, name=f"massratio_{ratio:g}")
+
+
+def reference_for_case(case: dict):
+    """Return a reference object for a suite case, or None if none applies.
+
+    Covers all three portable axes. The non-portable axes (`symbolic`,
+    `redundancy`) and `loops` are not handled here.
+    """
+    axis = case.get("axis")
+    if axis == "dof":
+        return NLinkChain(int(case["knob"]))
+    if axis == "near_singular":
+        return near_singular_system(float(case["knob"]))
+    if axis == "mass_ratio":
+        return mass_ratio_system(float(case["knob"]))
+    return None
 
 
 def chain_for_case(case: dict) -> Optional[NLinkChain]:
@@ -355,14 +526,121 @@ def _test_symmetry_and_shape() -> None:
           f"(min eigenvalue {ev.min():.3f})")
 
 
+def _test_canonical_consistency() -> None:
+    """p_dot from p = M w must equal -dH/dq computed by finite differences.
+
+    The Lagrangian and Hamiltonian sides of this module are derived from the
+    same M, so a bug in one could hide in the other. This checks p_dot against
+    an independent route: numerically differentiating H with respect to q.
+    """
+    rng = np.random.default_rng(99)
+    for N in (1, 2, 3, 4):
+        c = NLinkChain(N)
+        for _ in range(25):
+            th = rng.uniform(-1.5, 1.5, size=N)
+            w = rng.uniform(-1.5, 1.5, size=N)
+            p = c.momentum(th, w)
+            qp = np.empty(2 * N)
+            qp[0::2], qp[1::2] = th, p
+            want = c.momentum_rate(th, w)
+
+            # -dH/dq at fixed p, by central differences.
+            got = np.zeros(N)
+            h = 1e-6
+            for k in range(N):
+                up, dn = qp.copy(), qp.copy()
+                up[2 * k] += h
+                dn[2 * k] -= h
+                got[k] = -(c.hamiltonian(up) - c.hamiltonian(dn)) / (2 * h)
+            err = float(np.max(np.abs(got - want)))
+            scale = max(1.0, float(np.max(np.abs(want))))
+            assert err / scale < 1e-5, f"N={N} p_dot vs -dH/dq: {err:.3e}"
+    print("  [ok] p_dot matches -dH/dq by finite differences for N=1..4")
+
+
+def _test_roundtrip() -> None:
+    """(q,w) -> (q,p) -> (q,w) must be the identity, and H must equal E."""
+    rng = np.random.default_rng(5)
+    for N in (1, 2, 3, 5):
+        c = NLinkChain(N)
+        for _ in range(20):
+            s = np.empty(2 * N)
+            s[0::2] = rng.uniform(-2, 2, size=N)
+            s[1::2] = rng.uniform(-2, 2, size=N)
+            qp = c.canonical_state(s)
+            back = c.velocity_from_momentum(qp[0::2], qp[1::2])
+            assert np.max(np.abs(back - s[1::2])) < 1e-12, "roundtrip failed"
+            assert abs(c.hamiltonian(qp) - c.energy(s)) < 1e-12, "H != E"
+    print("  [ok] (q,w) <-> (q,p) roundtrip exact, and H == E")
+
+
+def _test_linear_systems() -> None:
+    """Linear references: analytic normal modes, energy, and the eps=0 refusal."""
+    import scipy.linalg as sla
+    from scipy.integrate import solve_ivp
+
+    # near_singular: det M = m^2 (2 eps - eps^2). Check the determinant law and
+    # that eps = 0 is refused loudly rather than least-squared.
+    # det M = 1 - (1-eps)^2 is catastrophic cancellation: the naive float
+    # evaluation carries absolute error ~1e-16 regardless of eps, so by
+    # eps=1e-8 the RELATIVE error is already ~5e-9 and by eps=1e-11 it is
+    # ~5e-6. Test against absolute error, which is the honest bound -- and
+    # note that this loss is a property of the system, not of the reference.
+    # It is exactly the conditioning the axis exists to probe.
+    for eps in (1e-1, 1e-3, 1e-8):
+        s = near_singular_system(eps)
+        want = 1.0 * (2 * eps - eps ** 2)
+        assert abs(np.linalg.det(s.M) - want) < 1e-15, (eps, np.linalg.det(s.M), want)
+    try:
+        near_singular_system(0.0).accel(np.array([1.0, 0.0, 0.0, 0.0]))
+        raise AssertionError("eps=0 should have raised SingularMassMatrix")
+    except SingularMassMatrix:
+        pass
+    print("  [ok] near-singular determinant law holds; eps=0 refused loudly")
+
+    # mass_ratio: frequencies must match the generalised eigenproblem, and
+    # energy must hold under integration even at extreme ratios.
+    for ratio in (1e0, 1e6, 1e12):
+        s = mass_ratio_system(ratio)
+        ev = np.sort(np.real(sla.eigvals(s.K, s.M)))
+        assert np.all(ev > 0), f"ratio={ratio:g} not positive definite: {ev}"
+        y0 = np.array([1.0, 0.0, 0.0, 0.0])
+        E0 = s.energy(y0)
+        sol = solve_ivp(s.rhs, (0.0, 20.0), y0, method="DOP853",
+                        rtol=1e-12, atol=1e-12)
+        assert sol.success
+        drift = max(abs(s.energy(sol.y[:, i]) - E0) / abs(E0)
+                    for i in range(sol.y.shape[1]))
+        assert drift < 1e-8, f"ratio={ratio:g} drift {drift:.3e}"
+    print("  [ok] mass-ratio modes positive and energy held to 1e-8 "
+          "at ratios 1e0, 1e6, 1e12")
+
+    # Dispatch must return the right kind of object for each portable axis.
+    import systems as _sys
+    got = {}
+    for case in _sys.all_cases():
+        r = reference_for_case(case)
+        got.setdefault(case["axis"], set()).add(type(r).__name__)
+    assert got.get("dof") == {"NLinkChain"}, got.get("dof")
+    assert got.get("near_singular") == {"LinearSystem"}, got.get("near_singular")
+    assert got.get("mass_ratio") == {"LinearSystem"}, got.get("mass_ratio")
+    covered = sum(1 for c in _sys.all_cases() if reference_for_case(c) is not None)
+    total = len(_sys.all_cases())
+    print(f"  [ok] dispatch covers {covered}/{total} suite systems "
+          f"({covered / total:.0%} of the case families)")
+
+
 def main() -> int:
-    print("reference.py self-tests -- planar N-link chain\n")
+    print("reference.py self-tests -- portable-axis references\n")
     _test_simple_pendulum()
     _test_double_pendulum()
     _test_coriolis_identity()
     _test_symmetry_and_shape()
     _test_small_oscillation()
     _test_energy_conservation()
+    _test_roundtrip()
+    _test_canonical_consistency()
+    _test_linear_systems()
     print("\nAll self-tests passed.")
     return 0
 
