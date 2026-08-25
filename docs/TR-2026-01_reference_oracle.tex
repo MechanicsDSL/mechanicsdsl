@@ -1,0 +1,494 @@
+%% ============================================================================
+%%  Technical Report TR-2026-01
+%%  A Library-Independent Reference Oracle for Cross-Engine Adjudication
+%%  Compile with:  pdflatex TR-2026-01_reference_oracle.tex   (twice for ToC)
+%% ============================================================================
+
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\let\Bbbk\relax
+\usepackage{newtxtext,newtxmath}
+\usepackage[margin=1.05in]{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage[expansion=false]{microtype}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage[colorlinks=true,linkcolor=linknavy,urlcolor=linknavy,citecolor=linknavy]{hyperref}
+
+\definecolor{linknavy}{RGB}{20,60,110}
+\definecolor{codebg}{RGB}{247,247,244}
+\definecolor{coderule}{RGB}{205,205,198}
+\definecolor{warnrule}{RGB}{198,150,80}
+
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection}{0.7em}{}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{0.6em}{}
+\titlespacing*{\section}{0pt}{2.0ex plus .4ex}{1.0ex}
+
+\renewcommand{\arraystretch}{1.2}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\lstdefinestyle{sh}{
+  basicstyle=\ttfamily\small, backgroundcolor=\color{codebg},
+  frame=single, rulecolor=\color{coderule}, framesep=6pt,
+  breaklines=true, showstringspaces=false, columns=fullflexible,
+}
+\lstset{style=sh}
+
+\newenvironment{callout}
+  {\par\medskip\noindent\begin{tabular}{@{}p{0.94\textwidth}@{}}
+   \arrayrulecolor{warnrule}\hline\rule{0pt}{2.6ex}}
+  {\\[0.8ex]\hline\arrayrulecolor{black}\end{tabular}\par\medskip}
+
+\newcommand{\gitsha}[1]{\texttt{#1}}
+
+%% --- Running heads ----------------------------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\footnotesize TR-2026-01}
+\chead{\footnotesize Library-Independent Reference Oracle}
+\rhead{\footnotesize \thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancypagestyle{plain}{\fancyhf{}\renewcommand{\headrulewidth}{0pt}}
+
+\begin{document}
+
+\begin{titlepage}
+\centering
+\vspace*{2.5cm}
+{\footnotesize\bfseries TECHNICAL REPORT TR-2026-01}\\[0.4em]
+{\footnotesize Silent-Failure Study \quad$\cdot$\quad Week 1}\\[2.2cm]
+{\LARGE\bfseries A Library-Independent Reference Oracle\\[0.35em]
+ for Cross-Engine Dynamics Adjudication}\\[1.6cm]
+{\large Noah Parsons}\\[0.6cm]
+{\normalsize 22 August 2026}\\[2.2cm]
+\begin{minipage}{0.82\textwidth}
+\small
+\textbf{Engine under measurement:} MechanicsDSL 2.1.3, commit \gitsha{a8dc2b2}
+(tag \texttt{v2.1.3}), frozen 22 August 2026.\\[0.4em]
+\textbf{Artefacts:} \texttt{stress\_suite/reference.py},
+\texttt{stress\_suite/validate\_reference.py}. Committed at \gitsha{584b3eb}.\\[0.4em]
+\textbf{Disclosure:} the author maintains one of the engines measured. AI
+assistance was used in this work. Both are disclosed in
+Section~\ref{sec:disclosure}.
+\end{minipage}
+\vfill
+\end{titlepage}
+
+\begin{abstract}
+\noindent
+The silent-failure study compares three dynamics engines on the same mechanical
+systems, and adjudicates disagreement with an independent derivation of the
+equations of motion. The existing oracle is built on
+\texttt{sympy.physics.mechanics}, which is adequate while MechanicsDSL is the
+only engine under test but becomes near-circular once SymPy itself is a
+contestant. This report describes a replacement oracle derived in closed form
+using \texttt{numpy} alone, sharing no library with any engine under test. The
+reference reproduces the equations of motion of all three portable test
+families, is validated by eleven internal consistency checks, and agrees with
+both the existing SymPy oracle and with MechanicsDSL to machine precision
+($\leq 5.5\times10^{-15}$ relative) across every case both engines can compute.
+Independent adjudication coverage rises from 22 to 31 of the suite's 55 cases,
+and for the first time extends to the Hamiltonian pathway. The report also
+records a false positive encountered during validation --- an apparent silent
+failure of magnitude $4.53$ that proved to be a state-convention mismatch ---
+together with the diagnostic that distinguished it, since the same trap is
+latent in the existing harness. Three incidental findings about the study's
+scope and about the engine's scaling behaviour are documented in
+Section~\ref{sec:incidental}.
+\end{abstract}
+
+\tableofcontents
+\bigskip
+
+% ===========================================================================
+\section{Motivation}
+% ===========================================================================
+
+A verdict in this study rests on comparing an engine's answer against an
+independent derivation. The independence of that derivation is therefore the
+load-bearing assumption, and it does not survive the study's own design.
+
+The current oracle, \texttt{groundtruth.py}, derives the equations of motion
+with \texttt{sympy.physics.mechanics.LagrangesMethod}. Measured against
+MechanicsDSL this is a genuinely separate code path and a fair referee. But the
+study's second engine \emph{is} \texttt{sympy.physics.mechanics}. Adjudicating
+that column with a hand-rolled SymPy derivation would mean checking SymPy
+against SymPy: different functions, but shared \texttt{diff}, shared
+\texttt{simplify}, shared \texttt{solve}, and a shared assumptions system
+underneath. Agreement under those conditions is closer to a self-consistency
+check than to confirmation.
+
+The consequence is not merely a weak check on one column. It is
+\emph{asymmetric evidence across columns} --- one adjudicated independently,
+another adjudicated by something weaker, reported side by side under a single
+heading. A reviewer need not demonstrate an error to reject such a table; it is
+enough to observe the asymmetry.
+
+A second, independent motivation is coverage. The SymPy oracle applies only to
+the unconstrained Lagrangian pathway. Of the suite's 55 cases, 33 (60\,\%)
+carry no independent derivation check at all, and the gap coincides with the
+timeout wall: the Hamiltonian and constrained pathways are both thinly covered
+and go blind exactly where the systems become difficult.
+
+Both problems have one solution: a reference that shares no library with any
+contestant, and that works from state rather than from symbolic equations.
+
+% ===========================================================================
+\section{The reference}
+% ===========================================================================
+
+\subsection{Scope}
+
+The suite's portable axes rest on three distinct physical systems
+(Section~\ref{sec:scope-finding}). All three are implemented:
+
+\begin{center}
+\begin{tabular}{@{}lL{0.36\textwidth}l@{}}
+\toprule
+\textbf{Axis} & \textbf{System} & \textbf{Class} \\
+\midrule
+\texttt{dof}            & Planar $N$-link pendulum chain          & \texttt{NLinkChain} \\
+\texttt{near\_singular} & Two masses, near-degenerate coupling     & \texttt{LinearSystem} \\
+\texttt{mass\_ratio}    & Two masses and springs, ratio $10^{k}$   & \texttt{LinearSystem} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Derivation for the chain}
+
+The chain has $N$ point masses $m$ on massless rods of length $l$, angles
+measured from the downward vertical. Its mass matrix follows directly from the
+kinetic term,
+\begin{equation}
+M_{ij}(\theta) = a_{ij}\cos(\theta_i - \theta_j),
+\qquad a_{ij} = \big(N - \max(i,j)\big)\,m\,l^{2}.
+\end{equation}
+For a Lagrangian $L = \tfrac12\dot\theta^{\top}M(\theta)\dot\theta - V(\theta)$,
+the Euler--Lagrange equations give
+\begin{equation}
+\sum_j M_{ij}\ddot\theta_j
+ + \sum_{j,k}\Big[\frac{\partial M_{ij}}{\partial\theta_k}
+                  - \tfrac12\frac{\partial M_{jk}}{\partial\theta_i}\Big]
+   \dot\theta_j\dot\theta_k
+ + \frac{\partial V}{\partial\theta_i} = 0 .
+\label{eq:el}
+\end{equation}
+Substituting $\partial M_{ij}/\partial\theta_k
+= -a_{ij}\sin(\theta_i-\theta_j)(\delta_{ik}-\delta_{jk})$ into the bracket,
+the cross terms cancel and the double sum collapses to a single sum of squared
+velocities:
+\begin{equation}
+C_i(\theta,\dot\theta) = \sum_j a_{ij}\sin(\theta_i-\theta_j)\,\dot\theta_j^{2}.
+\label{eq:coriolis}
+\end{equation}
+With $G_i(\theta) = (N-i)\,mgl\sin\theta_i$, the equation of motion is
+$M\ddot\theta + C + G = 0$, solved numerically for $\ddot\theta$ at each
+evaluation. The mass matrix is never inverted symbolically: that is precisely
+the operation which fails to scale in the engines under test, and performing it
+in the referee would import their scaling limit into the adjudicator.
+
+The cancellation yielding~\eqref{eq:coriolis} is the reason this family is
+worth deriving by hand at all --- it reduces to a few lines of array
+arithmetic. It is also the step at which a sign error would hide, and is
+therefore verified numerically rather than trusted (Section~\ref{sec:selftest}).
+
+\subsection{The canonical pathway}
+
+The engine's Hamiltonian pathway integrates $(q,p)$ and returns
+$(\dot q,\dot p)$. To be comparable there, the reference also provides
+\begin{equation}
+p = M(\theta)\dot\theta, \qquad
+\dot p = M\ddot\theta + \dot M\dot\theta, \qquad
+\dot M_{ij} = -a_{ij}\sin(\theta_i-\theta_j)(\dot\theta_i - \dot\theta_j),
+\end{equation}
+together with $H = \tfrac12 p^{\top}M^{-1}p + V$. Deriving $\dot p$ from
+$p = M\dot\theta$ rather than from $H$ directly keeps the two sides mutually
+consistent by construction; they are cross-checked against each other in
+Section~\ref{sec:selftest}.
+
+\subsection{The linear systems}
+
+Both remaining portable systems reduce to $M\ddot q + Kq = 0$ with constant
+coefficients:
+\begin{align}
+\text{\texttt{near\_singular}}(\varepsilon):\quad
+  & M = m\begin{pmatrix}1 & 1-\varepsilon\\ 1-\varepsilon & 1\end{pmatrix},
+  & K &= k\,I, \\[0.3em]
+\text{\texttt{mass\_ratio}}(r):\quad
+  & M = \operatorname{diag}(m_1,\,r),
+  & K &= \begin{pmatrix}k+k_1 & -k\\ -k & k\end{pmatrix}.
+\end{align}
+Here $\det M = m^{2}(2\varepsilon - \varepsilon^{2})$, vanishing exactly at
+$\varepsilon = 0$ --- the genuinely degenerate case the engine is expected to
+refuse. A singular mass matrix raises rather than falling back to a
+least-squares solution, since substituting a well-defined answer to a different
+question is the exact failure mode this study measures.
+
+% ===========================================================================
+\section{Internal validation}\label{sec:selftest}
+% ===========================================================================
+
+Eleven checks run via \texttt{python reference.py}; all pass.
+
+\begin{center}
+\begin{tabular}{@{}L{0.42\textwidth}L{0.44\textwidth}@{}}
+\toprule
+\textbf{Check} & \textbf{Result} \\
+\midrule
+$N=1$ against the analytic simple pendulum & exact to $10^{-13}$ \\
+$N=2$ against a separately hand-written double pendulum & worst $3.55\times10^{-15}$ over 500 random states \\
+Coriolis identity~\eqref{eq:coriolis} against finite-difference evaluation of the bracket in~\eqref{eq:el} & agrees for $N = 2,3,5$ \\
+Mass matrix symmetry and positive definiteness & holds \\
+Small-oscillation frequencies against the generalised eigenproblem & agrees for $N=1\ldots4$ \\
+Energy conservation under integration & $5.1\times10^{-12}$, $2.5\times10^{-13}$, $3.0\times10^{-13}$ for $N=1,2,3$ \\
+$(q,\dot q)\leftrightarrow(q,p)$ roundtrip; $H = E$ & exact \\
+$\dot p$ against $-\partial H/\partial q$ by finite differences & agrees for $N=1\ldots4$ \\
+Near-singular determinant law; refusal at $\varepsilon=0$ & holds; raises \\
+Mass-ratio modes and energy at $r = 10^{0},10^{6},10^{12}$ & positive definite; drift $<10^{-8}$ \\
+Dispatch over the suite's case list & 19 of 36 systems \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The double-pendulum comparison is written from the standard textbook form
+rather than from the module's general code, so agreement is a genuine
+cross-check rather than a restatement.
+
+One check initially failed at $\varepsilon = 10^{-8}$ because
+$\det M = 1-(1-\varepsilon)^{2}$ suffers catastrophic cancellation: the naive
+floating-point evaluation carries absolute error of order $10^{-16}$
+irrespective of $\varepsilon$, so the relative error is already $\sim
+5\times10^{-9}$ there. The tolerance was wrong, not the reference. The loss is
+a property of the system --- indeed it is the conditioning that axis exists to
+probe --- and the test now bounds absolute rather than relative error.
+
+% ===========================================================================
+\section{Cross-validation}\label{sec:xval}
+% ===========================================================================
+
+Three derivations were compared at 24 pseudorandom states per case (seed
+\texttt{20260822}), states drawn uniformly from $[-0.5,0.5]$: the closed-form
+reference, the SymPy oracle, and MechanicsDSL at the frozen pin. Each pathway
+is compared on its own terms --- full right-hand side against full right-hand
+side, in the coordinates that pathway uses.
+
+\begin{center}
+\begin{tabular}{@{}llrrr@{}}
+\toprule
+\textbf{Pathway} & \textbf{$N$} & \textbf{ref\,$\sim$\,engine} & \textbf{ref\,$\sim$\,sympy} & \textbf{sympy\,$\sim$\,engine} \\
+\midrule
+lagrangian  & 1 & $0.000$          & $0.000$          & $0.000$ \\
+lagrangian  & 2 & $1.78\!\times\!10^{-15}$ & $0.000$  & $1.78\!\times\!10^{-15}$ \\
+lagrangian  & 3 & $1.89\!\times\!10^{-15}$ & $1.78\!\times\!10^{-15}$ & $1.60\!\times\!10^{-15}$ \\
+lagrangian  & 4 & $0.000$          & $0.000$          & $0.000$ \\
+lagrangian  & 5 & $5.54\!\times\!10^{-15}$ & $5.54\!\times\!10^{-15}$ & $9.42\!\times\!10^{-16}$ \\
+\midrule
+hamiltonian & 1 & $0.000$          & ---              & --- \\
+hamiltonian & 2 & $7.77\!\times\!10^{-16}$ & ---      & --- \\
+hamiltonian & $\geq 3$ & \multicolumn{3}{l}{engine does not return; see Section~\ref{sec:wall}} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+All three derivations agree to machine precision wherever all three can be
+evaluated. Because the reference and the SymPy oracle share no library, their
+agreement validates the closed-form algebra independently of SymPy; and
+MechanicsDSL agreeing with both is the strongest statement the suite can
+presently make about the engine on these families.
+
+% ===========================================================================
+\section{A false positive, and the diagnostic that caught it}\label{sec:falsepos}
+% ===========================================================================
+
+\begin{callout}
+The first Hamiltonian comparison reported a relative mismatch of \textbf{4.53}
+on \texttt{dof\_N2} --- a case the baseline scores \texttt{pass}, on the
+pathway with no independent coverage, while the two reference derivations
+agreed with each other exactly. It presented as a textbook silent failure. It
+was not one.
+\end{callout}
+
+The engine's Hamiltonian pathway integrates $(q,p)$ and returns
+$(\dot q, \dot p)$. Extracting the odd entries of the right-hand side and
+treating them as accelerations therefore compares $\dot p$ against $\ddot q$.
+
+The diagnostic was the failure's dependence on system size: $N=1$ agreed
+exactly while $N=2$ did not. A genuine derivation error rarely switches on at a
+specific $N$; a convention mismatch does, because degenerate cases make
+different conventions coincide. Here $M = ml^{2} = 1$ at $N=1$, making $p$ and
+$\dot\theta$ numerically identical. The confirming test distinguishes the
+conventions directly: under the Lagrangian convention $\dot q$ must equal the
+state's own odd entries, whereas under the canonical convention it equals
+$M^{-1}p$. Observed at $N=2$:
+
+\begin{lstlisting}
+dy[0::2]  = [0.028159  0.422372]
+state_odd = [0.450464  0.448649]   <- Lagrangian convention: no
+Minv*odd  = [0.028159  0.422372]   <- canonical convention: yes, exactly
+\end{lstlisting}
+
+With the reference extended to momenta, the mismatch fell from $4.53$ to
+$7.77\times10^{-16}$.
+
+\medskip
+\noindent\textbf{The same assumption is latent in the harness.}
+\texttt{worker.py} extracts \texttt{dydt[1::2]} and documents it as ``the
+accelerations.'' This is correct on the Lagrangian pathway and a category error
+on the canonical one. It produces no incorrect verdicts at present only because
+the oracle never runs on that pathway --- but extending coverage there in the
+obvious way, which is the study's stated next improvement, would yield
+mismatches of order unity and a reported silent failure that does not exist. In
+a study whose subject is false negatives, publishing a false positive of this
+kind would be difficult to recover from.
+
+% ===========================================================================
+\section{Coverage}
+% ===========================================================================
+
+\begin{center}
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Cases with independent adjudication} & \textbf{Before} & \textbf{After} \\
+\midrule
+\texttt{dof} (both pathways)            & 5  & 10 \\
+\texttt{near\_singular}                  & 7  & 7 \\
+\texttt{mass\_ratio} (both pathways)     & 7  & 14 \\
+Other axes                               & 3  & 0\rlap{$^{*}$} \\
+\midrule
+\textbf{Total, of 55}                    & \textbf{22} & \textbf{31} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+{\footnotesize $^{*}$The reference deliberately does not cover
+\texttt{symbolic}, \texttt{redundancy}, or \texttt{loops}; the first two are
+not portable across engines, and the third is an open scope question.}
+
+\medskip
+\noindent The gain is not only in count. The prior oracle could adjudicate the
+Lagrangian pathway alone; the reference adjudicates any pathway that can be
+asked for a state derivative, which closes the Hamiltonian gap identified as
+the suite's highest-value outstanding improvement.
+
+% ===========================================================================
+\section{Incidental findings}\label{sec:incidental}
+% ===========================================================================
+
+\subsection{The study's scope document describes a different design}
+\label{sec:scope-finding}
+
+\texttt{SCOPE.md} states that the study uses \emph{one} test family --- a
+pendulum chain --- with four knobs dialled on it. The implemented suite does
+not. Only the \texttt{dof} axis is that chain; \texttt{near\_singular} and
+\texttt{mass\_ratio} are two-degree-of-freedom Cartesian systems with springs.
+These are different physical systems, not one system with different parameters.
+
+This is not a defect in the suite. All three remain portable across engines,
+which is what the cross-engine claim requires, and both spring systems are
+linear with constant mass matrices, so exact references for them are trivial
+--- which is why coverage rose to 31 cases rather than 10. But the scope
+document makes a false statement about the study it governs, and that statement
+would otherwise propagate into the paper.
+
+\subsection{The Hamiltonian scaling wall is at $N = 3$}\label{sec:wall}
+
+The baseline records \texttt{dof\_N3}, \texttt{dof\_N4}, and \texttt{dof\_N5}
+on the Hamiltonian pathway as timeouts at the 180\,s limit. Re-running
+\texttt{dof\_N3} for this report with a 400\,s budget did not change the
+outcome. The wall is therefore a property of the engine on that pathway rather
+than an artefact of the chosen limit, at least up to $2.2\times$ the budget ---
+a useful answer to the predictable reviewer question of whether a longer
+timeout would alter the reported numbers.
+
+\subsection{Cost on the Lagrangian pathway is non-monotonic in $N$}
+
+\begin{center}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+& $N=3$ & $N=4$ & $N=5$ \\
+\midrule
+Wall-clock (Lagrangian) & $56.0$\,s & $17.9$\,s & $20.9$\,s \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The three-link system costs roughly three times the five-link system. This is
+the symbolic-to-numeric threshold documented as fix~3 in \texttt{FIXES.md}:
+past a size bound the engine stops inverting the mass matrix symbolically and
+solves $M\ddot q = F$ numerically instead. $N=3$ is the last case on the
+symbolic side. The behaviour contradicts the natural assumption that cost rises
+with system size and should be stated explicitly in any scaling discussion.
+
+% ===========================================================================
+\section{Status and open decisions}
+% ===========================================================================
+
+\noindent\textbf{Complete.} The reference is implemented, internally validated,
+cross-validated against two independent derivations, and committed at
+\gitsha{584b3eb}. It is additive to the harness: it adds adjudication where
+there was none and alters no existing verdict, satisfying the re-validation
+condition on harness growth.
+
+\noindent\textbf{Outstanding, and required before the SymPy adapter:}
+
+\begin{enumerate}[leftmargin=1.5em,itemsep=0.3em]
+  \item \textbf{Adapter fidelity.} The SymPy column may be written
+        \emph{idiomatically} --- using \texttt{LagrangesMethod} as the
+        documentation directs, and scoring the result --- or \emph{carefully},
+        avoiding symbolic inversion as \texttt{groundtruth.py} does. The former
+        measures the tool as its users encounter it, which matches the study's
+        question, but may record failures a careful user would avoid; that must
+        then be disclosed. Undecided.
+  \item \textbf{The \texttt{loops} axis.} Whether closed kinematic chains enter
+        the cross-engine claim. Drake supports them and SymPy can express them
+        via Lagrange multipliers, so the axis is arguably portable. Admitting
+        it adds three constrained cases to a pathway with no independent
+        coverage. Undecided.
+  \item \textbf{Integrator pinning.} Drake's default integrator and error
+        control differ from \texttt{scipy}'s. On pathways where energy drift is
+        the only oracle, comparing drift across engines risks measuring the
+        integrator rather than the engine. Either pin one integrator family and
+        tolerance across all three, or confine cross-engine claims to pathways
+        the reference adjudicates. Undecided.
+\end{enumerate}
+
+% ===========================================================================
+\section{Disclosure}\label{sec:disclosure}
+% ===========================================================================
+
+The author is the maintainer of MechanicsDSL, one of the three engines under
+measurement. This is disclosed here and in every document of the study. The
+mitigation is structural: verdicts rest on independent derivations and on
+cross-engine disagreement, never on an engine's self-report, and the work of
+this report strengthens that mitigation by removing the study's remaining
+dependence on a shared symbolic library.
+
+AI assistance was used in the derivation, implementation, validation, and
+preparation of this report. All numerical results reported here were produced
+by executing the committed code and are reproducible via the commands in
+Section~\ref{sec:repro}.
+
+% ===========================================================================
+\section{Reproduction}\label{sec:repro}
+% ===========================================================================
+
+\begin{lstlisting}
+git checkout v2.1.3
+cd stress_suite
+python reference.py            # eleven internal self-tests
+python validate_reference.py   # three-way cross-validation
+\end{lstlisting}
+
+\noindent Both scripts prepend the repository's \texttt{src/} directory to the
+module search path and abort if the engine resolves elsewhere, guarding against
+a stale installed copy being validated in place of the pinned source.
+
+\end{document}
