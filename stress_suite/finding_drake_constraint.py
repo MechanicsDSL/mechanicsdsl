@@ -31,60 +31,64 @@ With a discrete plant the same model is correct: the rod length is held to
 several dead-centre crossings, the error scaling with the step as expected. The
 dynamics are not in question; the model-building API is.
 
-PROVENANCE: THIS IS A REGRESSION, WITH A DATE AND A PR
------------------------------------------------------
-Drake DID guard against this call, for three years, and the guard was removed.
-Established from a full clone of RobotLocomotion/drake, not from documentation
-and not from a search snippet:
+PROVENANCE, INTENT, AND WHAT IS ACTUALLY WRONG
+---------------------------------------------
+Established from a full clone of RobotLocomotion/drake and from the PR
+discussion, not from documentation and not from a search snippet.
 
-  2022-12-07  baeadb5a4  #18196  "Implements support for fixed-distance
-                                  constraints with SAP"
-              introduces AddDistanceConstraint together with
+VERSION RANGE, from tags rather than from release dates:
 
-                  if (!is_discrete()) {
-                    throw std::runtime_error(
-                        "Currently distance constraints are only supported "
-                        "for discrete MultibodyPlant models.");
-                  }
+    git tag --contains baeadb5a4  ->  first release WITH the guard:    v1.11.0
+    git tag --contains 73c987a60  ->  first release WITHOUT it:        v1.51.0
 
-  2026-02-17  73c987a60  #24079  "[multibody] Refine continuous mode feature
-                                  support checks"  (Rick Poyner)
-              REMOVES that guard, replacing it with
+  2022-12-07  baeadb5a4  #18196   AddDistanceConstraint introduced together
+                                  with `if (!is_discrete()) throw ...`
+  2026-02-17  73c987a60  #24079   that build-time throw removed
 
-                  if (is_discrete()) { switch (get_discrete_contact_solver())
-                                       { ... TAMSI throw ... } }
-                  // Feature support for continuous time plants depends on
-                  // the integrator used.
+  Guard present v1.11.0 through v1.50.0; absent v1.51.0 onward, including
+  1.56.0 and master. Note #24079 merged the same day v1.50.0 released and did
+  NOT make that cut -- which date arithmetic could not have settled.
 
-              so the TAMSI check now sits inside a discrete-only branch and
-              nothing rejects a continuous plant. The same edit was applied to
-              AddCouplerConstraint, and the identical comment appears at five
-              sites in master (lines 514, 558, 669, 712, 758), so the change is
-              systematic and deliberate rather than an oversight.
+THE REMOVAL WAS DELIBERATE, AND THE RISK WAS ANTICIPATED
+--------------------------------------------------------
+PR #24079's discussion states the reasoning. To let a continuous-time plant be
+used with CENIC, the constraint-adding methods cannot throw at build time. The
+maintainers identified the consequence themselves: with the build-time throw
+gone, every continuous-time dynamics method that is sensitive to a constraint
+must throw instead, or the plant will compute what one maintainer called
+"wrong answers" (Jeremy Nimmer, #24079, 2026-02-09). The PR added such a throw
+to `EvalTimeDerivatives`, and the discussion explicitly notes that other
+constraint-aware methods still need the same treatment -- naming acceleration
+methods and the residual -- with a manifest opened to work through the public
+API.
 
-Between those dates Drake refused this exact call with a clear message. Since
-2026-02-17 it accepts it and silently omits the constraint from continuous-mode
-dynamics. Verified absent from the 1.56.0 wheel and from master's source.
+So this is not a guard dropped carelessly. It is a deliberate migration whose
+completion was planned and is incomplete.
 
-THE CLAIM, SCOPED BY WHAT WAS ACTUALLY RUN
-------------------------------------------
-    Measured: in Drake 1.56.0, the latest release at time of testing, a
-    distance constraint added to a continuous MultibodyPlant is accepted and
-    then silently omitted from the dynamics.
+THE ACTUAL GAP, MEASURED IN 1.56.0
+----------------------------------
+On a continuous plant carrying a distance constraint:
 
-    Read, not run: master's source contains no continuous-mode rejection
-    either, so the behaviour appears current. Master was READ, not RUN, and
-    #24079's comment implies continuous-time support is integrator-dependent,
-    which cannot be settled by reading at all. Any claim about master needs a
-    master build.
+    EvalTimeDerivatives            -> THROWS   (the guard #24079 added)
+    CalcMassMatrix                 -> returns, no guard
+    CalcBiasTerm                   -> returns, no guard
+    CalcGravityGeneralizedForces   -> returns, no guard
 
-THE QUESTION TO ASK UPSTREAM
-----------------------------
-Not "you dropped a guard" -- #24079 is titled "refine" and is systematic, so
-the removal was intended. The question is whether the intended consequence was
-that constraints are silently ignored on continuous plants while the feature
-remains unimplemented there, and if so whether the comment at line 558 should
-be an exception instead.
+The high-level entry point is protected. The three lower-level accessors are
+not, and composing them -- solve(M, tau_g - Cv), the standard way to obtain
+accelerations -- silently yields the dynamics of the unconstrained system.
+
+This matters for how reachable the trap is. This study's own Drake adapter
+reached for exactly those three accessors, because that is the natural route
+when you want accelerations rather than a simulation. Had it used
+`EvalTimeDerivatives`, Drake would have caught the misuse immediately.
+
+THE UPSTREAM QUESTION
+---------------------
+Not "you removed a guard". It is: the migration begun in #24079 protects
+`EvalTimeDerivatives` but not `CalcMassMatrix`, `CalcBiasTerm`, or
+`CalcGravityGeneralizedForces`, six months and six releases later; are those
+three on the manifest, and is composing them expected to be safe meanwhile?
 
 A NOTE ON METHOD, RECORDED BECAUSE IT WAS GOT WRONG FIVE TIMES
 --------------------------------------------------------------
