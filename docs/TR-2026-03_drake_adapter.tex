@@ -1,0 +1,274 @@
+%% ============================================================================
+%%  Technical Report TR-2026-03 -- The Drake Engine Adapter
+%% ============================================================================
+
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\let\Bbbk\relax
+\usepackage{newtxtext,newtxmath}
+\usepackage[margin=1.0in]{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage[expansion=false]{microtype}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage[colorlinks=true,linkcolor=linknavy,urlcolor=linknavy]{hyperref}
+
+\definecolor{linknavy}{RGB}{20,60,110}
+\definecolor{codebg}{RGB}{247,247,244}
+\definecolor{coderule}{RGB}{205,205,198}
+\definecolor{warnrule}{RGB}{198,150,80}
+
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection}{0.7em}{}
+\titlespacing*{\section}{0pt}{1.8ex plus .4ex}{0.9ex}
+\renewcommand{\arraystretch}{1.18}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\lstdefinestyle{sh}{basicstyle=\ttfamily\small,
+  backgroundcolor=\color{codebg}, frame=single,
+  rulecolor=\color{coderule}, framesep=6pt, breaklines=true,
+  showstringspaces=false, columns=fullflexible}
+\lstset{style=sh}
+
+\newenvironment{callout}
+  {\par\medskip\noindent\begin{tabular}{@{}p{0.94\textwidth}@{}}
+   \arrayrulecolor{warnrule}\hline\rule{0pt}{2.6ex}}
+  {\\[0.8ex]\hline\arrayrulecolor{black}\end{tabular}\par\medskip}
+
+\newcommand{\gitsha}[1]{\texttt{#1}}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\footnotesize TR-2026-03}
+\chead{\footnotesize The Drake Engine Adapter}
+\rhead{\footnotesize \thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\begin{document}
+
+\begin{center}
+{\footnotesize\bfseries TECHNICAL REPORT TR-2026-03}\\[0.3em]
+{\footnotesize Silent-Failure Study \quad$\cdot$\quad Week 1}\\[1.0em]
+{\LARGE\bfseries The Drake Engine Adapter}\\[0.7em]
+{\large Noah Parsons}\\[0.3em]
+{\small 25 August 2026}
+\end{center}
+
+\vspace{0.8em}
+\hrule
+\vspace{1.2em}
+
+\begin{abstract}
+\noindent
+This report documents the third and final engine column: Drake 1.56.0, driven
+through \texttt{MultibodyPlant}. It records the installation, the modelling of
+the $N$-link chain as a rigid-body mechanism, and validation against the
+library-independent reference, which Drake matches to $7.2\times10^{-14}$ across
+$N = 1\ldots5$. All three engines now agree. Two findings are recorded: a
+coordinate-convention error of the same class as the one in TR-2026-01, caught
+by the same diagnostic; and the conclusion that only one of the three
+nominally portable axes transcribes directly into a rigid-body engine, which is
+a scope question the study must settle before Week 2.
+\end{abstract}
+
+% ===========================================================================
+\section{Installation}
+% ===========================================================================
+
+Drake was installed into a virtual environment under WSL Ubuntu 24.04.3 LTS
+(Python 3.12.3, \texttt{x86\_64}):
+
+\begin{lstlisting}
+python3 -m venv ~/drake-venv
+~/drake-venv/bin/pip install drake numpy scipy sympy
+\end{lstlisting}
+
+\noindent Result: \texttt{drake 1.56.0}. No \texttt{sudo} was required, since a
+virtual environment sidesteps the PEP 668 restriction that Ubuntu 24.04 places
+on system-wide \texttt{pip} installation.
+
+\subsection{The execution boundary}
+
+Drake runs on Ubuntu; the rest of the harness runs on native Windows. The
+adapter is therefore written to stand alone --- it imports only \texttt{numpy},
+\texttt{pydrake}, and \texttt{reference}, and emits JSON for the Windows side
+to merge. This works because \texttt{reference.py} needs nothing but
+\texttt{numpy} in its core path, so the same referee adjudicates Drake as
+adjudicates the other two engines, on both sides of the boundary.
+
+% ===========================================================================
+\section{Modelling}
+% ===========================================================================
+
+The suite's chain is $N$ point masses on massless rods. As a Drake mechanism:
+
+\begin{itemize}[leftmargin=1.4em,itemsep=0.25em]
+  \item Body $i$'s frame origin sits at joint $i$; its point mass sits at
+        $(0,0,-l)$ in that frame, at the far end of link $i$.
+  \item Joint $i+1$ is placed at $(0,0,-l)$ in body $i$'s frame --- the
+        position of mass $i$ --- so each link pivots about the previous mass.
+  \item The revolute axis is $+y$ and gravity is $-z$, so a link hangs along
+        $-z$ at zero angle, matching the suite's convention of measuring from
+        the downward vertical.
+\end{itemize}
+
+\noindent Two API details are worth recording, as both cost time. Drake 1.56
+has removed \texttt{SpatialInertia.PointMass}; the current equivalent is
+\texttt{MakeFromCentralInertia} with a zero \texttt{RotationalInertia}. And
+\texttt{RevoluteJoint} requires its two frames to be coincident, so the pivot
+offset cannot be passed to the constructor --- each joint past the first needs
+an explicit \texttt{FixedOffsetFrame} on the parent body.
+
+Drake exposes the mass matrix, the bias term, and generalised gravity
+separately, so the adapter solves
+\begin{equation}
+M(q)\,a = \tau_g(q) - C(q,v)\,v ,
+\end{equation}
+which carries the same content as the reference's $Ma = -(C+G)$.
+
+% ===========================================================================
+\section{A second convention trap}\label{sec:convention}
+% ===========================================================================
+
+\begin{callout}
+The first validation showed Drake disagreeing with the reference by $2.5$ to
+$6.4$ relative, \textbf{with the error growing in $N$}, while passing exactly
+at $N=1$. This is the second occurrence of the same failure shape recorded in
+TR-2026-01 \S5, and it was again a defect in the comparison rather than in the
+engine.
+\end{callout}
+
+The suite's Lagrangian uses \textbf{absolute} angles measured from the downward
+vertical --- its kinetic coupling $\cos(\theta_j-\theta_k)$ is only meaningful
+for absolute angles. A chain of Drake revolute joints reports \textbf{relative}
+angles: joint $i$ rotates its body with respect to its \emph{parent}, not with
+respect to the world. The two coincide for the first link and diverge
+increasingly thereafter.
+
+The map is linear, constant, and lower triangular,
+\begin{equation}
+q_0 = \theta_0, \qquad q_i = \theta_i - \theta_{i-1}
+\qquad\Longleftrightarrow\qquad
+\theta = \operatorname{cumsum}(q),
+\end{equation}
+and because it is constant the same relation carries the velocities and
+accelerations. Applying it on the way in and out reduced the worst mismatch
+from $6.4$ to $7.2\times10^{-14}$.
+
+\medskip
+\noindent\textbf{The diagnostic generalises.} Two of the three adapters
+harboured a convention mismatch invisible at the smallest system size --- the
+canonical $(q,p)$ state in one case, relative joint angles in the other. In
+both, the tell was identical: exact agreement at $N=1$, growing disagreement
+beyond. A genuine derivation error rarely switches on at a particular system
+size; a convention mismatch characteristically does, because degenerate cases
+make differing conventions coincide. \emph{Any} apparent cross-engine
+disagreement should be tested against this pattern before it is reported as a
+finding.
+
+% ===========================================================================
+\section{Validation}
+% ===========================================================================
+
+Sixteen pseudorandom states per case, seed \texttt{20260822}, tolerance
+$10^{-8}$ relative.
+
+\begin{center}
+\begin{tabular}{@{}rlr@{}}
+\toprule
+\textbf{$N$} & \textbf{Status} & \textbf{vs.\ reference} \\
+\midrule
+1 & pass & $0.00$ \\
+2 & pass & $2.05\times10^{-15}$ \\
+3 & pass & $1.07\times10^{-14}$ \\
+4 & pass & $3.83\times10^{-14}$ \\
+5 & pass & $7.21\times10^{-14}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Drake's residual grows gently with $N$ --- roughly linearly ---
+consistent with accumulation in a recursive rigid-body algorithm, against the
+reference's direct closed form. At $7\times10^{-14}$ it is six orders of
+magnitude inside tolerance and carries no consequence for adjudication.
+
+% ===========================================================================
+\section{Portability: only one axis transcribes}\label{sec:portability}
+% ===========================================================================
+
+Three axes were classified as portable in TR-2026-01. Building the Drake column
+shows that classification was too generous.
+
+\begin{center}
+\begin{tabular}{@{}lL{0.56\textwidth}@{}}
+\toprule
+\textbf{Axis} & \textbf{Status in a rigid-body engine} \\
+\midrule
+\texttt{dof} & \textbf{Directly portable.} An $N$-link chain is a mechanism, and all three engines express it natively. \\
+\texttt{mass\_ratio} & Expressible as prismatic joints with force elements, but it is a spring network rather than a mechanism. The translation is a modelling choice rather than a transcription. \\
+\texttt{near\_singular} & Requires the mass matrix $\left[\begin{smallmatrix} m & cm \\ cm & m\end{smallmatrix}\right]$. A rigid-body engine yields a diagonal mass matrix for two independent prismatic degrees of freedom; the off-diagonal term can only be induced geometrically, via two prismatic axes at angle $\arccos c$ separated by a \emph{massless} intermediate body. That is expressible but contrived --- and a massless body is itself the class of degeneracy under study, so the construction would change what the axis tests. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{callout}
+\textbf{The consequence is that \texttt{dof} may be the study's only genuine
+three-way axis} --- ten of the fifty-five cases. This must be settled before
+Week 2, because it determines the width of the cross-engine claim.
+\end{callout}
+
+\noindent Three responses are available, and the choice is the study's to make.
+Restrict the cross-engine claim to \texttt{dof} and report the remaining axes as
+single-engine characterisation. Or re-express the two spring systems on the
+pendulum chain, which is what \texttt{SCOPE.md} describes in the first place
+(TR-2026-01 \S7.1) and would make them mechanisms rather than abstract
+Lagrangians. Or admit the contrived Drake constructions and disclose that the
+translation is not faithful. The second is the most defensible and the most
+work.
+
+% ===========================================================================
+\section{Status}
+% ===========================================================================
+
+\begin{center}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+ & \textbf{MechanicsDSL} & \textbf{SymPy} & \textbf{Drake} \\
+\midrule
+Adapter                  & native & \checkmark & \checkmark \\
+Agrees with reference    & yes & yes & yes \\
+Worst residual, \texttt{dof} & $3.6\times10^{-15}$ & $6.1\times10^{-15}$ & $7.2\times10^{-14}$ \\
+Known scaling wall       & Hamiltonian $N{=}3$ & none at $N\leq5$ & none at $N\leq5$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent\textbf{All three columns exist, and all three agree.} The Week 1
+objective --- the same system expressed three ways, agreeing on a case
+checkable by hand --- is met.
+
+\medskip
+\noindent\textbf{What has not been tested.} Every result so far compares
+\emph{derivations}: each engine is asked for its equations of motion and
+checked against the reference. None of it integrates anything. The ten timeouts
+in the frozen baseline all occur during simulation, so the half of the pipeline
+where the known failures live remains unexercised across engines. That is the
+next measurement, and the likeliest place for a genuine disagreement to appear.
+
+\medskip
+\noindent\textbf{Artefacts.} \texttt{stress\_suite/adapter\_drake.py},
+\texttt{stress\_suite/out/drake.json}. Committed at \gitsha{47b29bb}.
+
+\medskip
+\noindent\textbf{Disclosure.} The author maintains one of the engines measured.
+AI assistance was used in this work. All figures were produced by executing the
+committed code.
+
+\end{document}
