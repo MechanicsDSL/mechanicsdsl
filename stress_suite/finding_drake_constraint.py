@@ -31,48 +31,89 @@ With a discrete plant the same model is correct: the rod length is held to
 several dead-centre crossings, the error scaling with the step as expected. The
 dynamics are not in question; the model-building API is.
 
-VERSION SCOPE -- BROADER THAN FIRST BELIEVED
--------------------------------------------
-An earlier draft of this file asserted that a guard
+PROVENANCE: THIS IS A REGRESSION, WITH A DATE AND A PR
+-----------------------------------------------------
+Drake DID guard against this call, for three years, and the guard was removed.
+Established from a full clone of RobotLocomotion/drake, not from documentation
+and not from a search snippet:
 
-    if (!is_discrete()) { throw ... "only supported for discrete
-                                     MultibodyPlant models"; }
+  2022-12-07  baeadb5a4  #18196  "Implements support for fixed-distance
+                                  constraints with SAP"
+              introduces AddDistanceConstraint together with
 
-exists on Drake master and merely postdates 1.56.0, making this defect
-version-scoped to released versions. THAT IS FALSE, and it was accepted from a
-secondary description without being checked against the source -- the same
-error, a third time, that this file already records twice.
+                  if (!is_discrete()) {
+                    throw std::runtime_error(
+                        "Currently distance constraints are only supported "
+                        "for discrete MultibodyPlant models.");
+                  }
 
-Checked against master directly (raw.githubusercontent.com,
-multibody/plant/multibody_plant.cc, 198316 bytes, master HEAD dated
-2026-08-31):
+  2026-02-17  73c987a60  #24079  "[multibody] Refine continuous mode feature
+                                  support checks"  (Rick Poyner)
+              REMOVES that guard, replacing it with
 
-  * the string "only supported for discrete" appears ZERO times in the file;
-  * `AddDistanceConstraint` (line 536) contains exactly one `throw`, and it is
-    the TAMSI message, nested INSIDE `if (is_discrete())` -- so it cannot fire
-    for a continuous plant at all;
-  * what follows for the continuous case is a bare comment, line 558:
-        // Feature support for continuous time plants depends on the
-        // integrator used.
-    repeated identically at lines 514, 669, 712 and 758 for the sibling
-    constraint-adding methods;
-  * the constraint is then stored in `distance_constraints_params_` and an id
-    returned, with no further validation.
+                  if (is_discrete()) { switch (get_discrete_contact_solver())
+                                       { ... TAMSI throw ... } }
+                  // Feature support for continuous time plants depends on
+                  // the integrator used.
 
-So there is no continuous-mode rejection on master either. The comment at 558
-acknowledges that continuous support is conditional; it does not enforce
-anything.
+              so the TAMSI check now sits inside a discrete-only branch and
+              nothing rejects a continuous plant. The same edit was applied to
+              AddCouplerConstraint, and the identical comment appears at five
+              sites in master (lines 514, 558, 669, 712, 758), so the change is
+              systematic and deliberate rather than an oversight.
 
-THE CLAIM, SCOPED BY MEASUREMENT
---------------------------------
-    A distance constraint added to a continuous MultibodyPlant is accepted and
-    then silently omitted from the dynamics. Measured in Drake 1.56.0, the
-    latest release at time of testing. The relevant code path on master shows
-    no guard against it either, so this is current behaviour and not a defect
-    already fixed upstream.
+Between those dates Drake refused this exact call with a clear message. Since
+2026-02-17 it accepts it and silently omits the constraint from continuous-mode
+dynamics. Verified absent from the 1.56.0 wheel and from master's source.
 
-The honest limitation on that second sentence: master was read, not run. The
-source shows no rejection; only the 1.56.0 wheel was executed.
+THE CLAIM, SCOPED BY WHAT WAS ACTUALLY RUN
+------------------------------------------
+    Measured: in Drake 1.56.0, the latest release at time of testing, a
+    distance constraint added to a continuous MultibodyPlant is accepted and
+    then silently omitted from the dynamics.
+
+    Read, not run: master's source contains no continuous-mode rejection
+    either, so the behaviour appears current. Master was READ, not RUN, and
+    #24079's comment implies continuous-time support is integrator-dependent,
+    which cannot be settled by reading at all. Any claim about master needs a
+    master build.
+
+THE QUESTION TO ASK UPSTREAM
+----------------------------
+Not "you dropped a guard" -- #24079 is titled "refine" and is systematic, so
+the removal was intended. The question is whether the intended consequence was
+that constraints are silently ignored on continuous plants while the feature
+remains unimplemented there, and if so whether the comment at line 558 should
+be an exception instead.
+
+A NOTE ON METHOD, RECORDED BECAUSE IT WAS GOT WRONG FIVE TIMES
+--------------------------------------------------------------
+  1. "Documented limitation, correctly signposted."  Inference, not
+     measurement. Wrong.
+  2. "Drake documents a guard that checks the wrong predicate."  Read the
+     pydrake docstring, which is generated from Doxygen @throws annotations
+     and does not enumerate every throw in the body. Checking documentation
+     twice is not checking twice. Wrong.
+  3. "The guard exists on master and postdates 1.56.0."  Accepted from a
+     secondary description without checking the source. Wrong -- and it was
+     wrong because the description came from a cached search snippet of a blob
+     page, which reflects when the crawler last visited, not HEAD.
+  4. "The guard never existed."  git log -S returned empty, and the null was
+     believed. Wrong: the search had been run seconds after cloning while git
+     was auto-packing, so blob fetches failed silently and returned a false
+     negative.
+  5. The control for (4) was run later, on a settled repository -- so it
+     validated a DIFFERENT run than the one it existed to validate. The right
+     answer arrived from the control's own output by luck, not from the search
+     it was meant to check. A control must run under the same conditions as
+     the measurement it validates.
+
+Only (6), a full clone with the repository packed and the instrument validated
+under the same conditions, produced the history above. The pattern across all
+five: every wrong version looked obviously right and survived until something
+independent was consulted, and each correction moved one step closer to the
+artefact -- inference, then docs, then a snippet, then an unvalidated tool,
+then a mis-scoped control, then the object itself.
 
 THE CLOSED-FORM COMPARISON
 --------------------------
