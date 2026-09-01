@@ -17,7 +17,14 @@ This study measures how often engines do the second thing.
 Three engines:
 
 1. **MechanicsDSL** — already wired up.
-2. **sympy.physics.mechanics** — pip, already installed, takes Lagrangians directly.
+2. **sympy.physics.mechanics** — pip, already installed, takes Lagrangians
+   directly. **Driven idiomatically** (decided 25 August): the documented path
+   of `LagrangesMethod` → `form_lagranges_equations()` → `rhs()`, scored as-is.
+   The study asks what a tool tells its users, so it must be used the way its
+   users are told to use it. A second "careful" mode exists — holding the mass
+   matrix numerically instead of letting `rhs()` invert it symbolically — and
+   was checked across every portable system: it changes no verdict, only
+   compile time (up to 27×). Say both were run and that they agreed.
 3. **Drake** — chosen 22 August over Pinocchio. Install in Ubuntu WSL, not
    native Windows. It is the heavier install of the two, so do it in the first
    days of week 1 rather than discovering it on day four.

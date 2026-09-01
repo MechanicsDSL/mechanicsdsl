@@ -1,0 +1,270 @@
+%% ============================================================================
+%%  Technical Report TR-2026-02
+%%  The SymPy Engine Adapter
+%% ============================================================================
+
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\let\Bbbk\relax
+\usepackage{newtxtext,newtxmath}
+\usepackage[margin=1.0in]{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage[expansion=false]{microtype}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage[colorlinks=true,linkcolor=linknavy,urlcolor=linknavy]{hyperref}
+
+\definecolor{linknavy}{RGB}{20,60,110}
+\definecolor{codebg}{RGB}{247,247,244}
+\definecolor{coderule}{RGB}{205,205,198}
+\definecolor{warnrule}{RGB}{198,150,80}
+
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection}{0.7em}{}
+\titlespacing*{\section}{0pt}{1.8ex plus .4ex}{0.9ex}
+\renewcommand{\arraystretch}{1.18}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\lstdefinestyle{sh}{basicstyle=\ttfamily\small,
+  backgroundcolor=\color{codebg}, frame=single,
+  rulecolor=\color{coderule}, framesep=6pt, breaklines=true,
+  showstringspaces=false, columns=fullflexible}
+\lstset{style=sh}
+
+\newenvironment{callout}
+  {\par\medskip\noindent\begin{tabular}{@{}p{0.94\textwidth}@{}}
+   \arrayrulecolor{warnrule}\hline\rule{0pt}{2.6ex}}
+  {\\[0.8ex]\hline\arrayrulecolor{black}\end{tabular}\par\medskip}
+
+\newcommand{\gitsha}[1]{\texttt{#1}}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\footnotesize TR-2026-02}
+\chead{\footnotesize The SymPy Engine Adapter}
+\rhead{\footnotesize \thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\begin{document}
+
+\begin{center}
+{\footnotesize\bfseries TECHNICAL REPORT TR-2026-02}\\[0.3em]
+{\footnotesize Silent-Failure Study \quad$\cdot$\quad Week 1}\\[1.0em]
+{\LARGE\bfseries The SymPy Engine Adapter}\\[0.7em]
+{\large Noah Parsons}\\[0.3em]
+{\small 25 August 2026}
+\end{center}
+
+\vspace{0.8em}
+\hrule
+\vspace{1.2em}
+
+\begin{abstract}
+\noindent
+This report documents the second column of the cross-engine comparison: an
+adapter presenting \texttt{sympy.physics.mechanics} as a scored contestant. It
+records the distinction between this adapter and the study's SymPy-based
+oracle, which must not be conflated; the decision to drive the library
+idiomatically and the evidence behind it; and validation against the
+library-independent reference across all nineteen portable systems, in both
+fidelity modes, with agreement to $1.1\times10^{-14}$. The principal empirical
+finding is that the two fidelity modes never disagree on any verdict within the
+frozen case matrix, differing only in compile time by up to a factor of 27.5,
+which reduces a contested design decision to a documented non-issue.
+\end{abstract}
+
+% ===========================================================================
+\section{Adapter versus oracle}
+% ===========================================================================
+
+The study already contains SymPy code: \texttt{groundtruth.py} derives
+equations of motion with \texttt{LagrangesMethod} and serves as an oracle. The
+new \texttt{adapter\_sympy.py} uses the same library for the opposite purpose.
+
+\begin{center}
+\begin{tabular}{@{}lL{0.31\textwidth}L{0.31\textwidth}@{}}
+\toprule
+ & \textbf{\texttt{groundtruth.py}} & \textbf{\texttt{adapter\_sympy.py}} \\
+\midrule
+Role      & Oracle: establishes truth      & Contestant: is scored \\
+Written to be & As careful as possible; deliberately avoids operations that break & Representative of ordinary use \\
+Mass matrix & Held numerically, never inverted symbolically & Inverted symbolically, per the documentation \\
+Failure means & The oracle is unavailable  & A data point \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{callout}
+These must never be merged. An oracle written to dodge a library's weak spots
+cannot also be evidence about whether that library warns you when you hit them.
+The distinction is stated at the head of both modules.
+\end{callout}
+
+\noindent A consequence follows for adjudication. Because the contestant is
+SymPy, the oracle may not be SymPy; the referee throughout is the
+library-independent reference of TR-2026-01. No engine adjudicates itself, and
+neither engine adjudicates the other.
+
+% ===========================================================================
+\section{The fidelity decision}
+% ===========================================================================
+
+\subsection{What was at stake}
+
+There are two defensible ways to drive this library.
+
+\begin{description}[leftmargin=1.6em,style=nextline,itemsep=0.35em]
+\item[\normalfont\texttt{idiomatic}] The documented path:
+  \texttt{LagrangesMethod} $\rightarrow$
+  \texttt{form\_lagranges\_equations()} $\rightarrow$ \texttt{rhs()}.
+\item[\normalfont\texttt{careful}] Retain \texttt{mass\_matrix\_full} and
+  \texttt{forcing\_full} symbolically, lambdify both, and solve
+  $M\ddot q = F$ numerically at each evaluation.
+\end{description}
+
+\noindent The difference is not stylistic. Inspection of the installed source
+confirms that \texttt{rhs()} evaluates
+
+\begin{lstlisting}
+self._rhs = self.mass_matrix_full.LUsolve(self.forcing_full)
+\end{lstlisting}
+
+\noindent --- a \emph{symbolic} linear solve, and precisely the operation whose
+cost grows sharply with coordinate count. The idiomatic path therefore walks
+into the known scaling cliff; the careful path defers the same solve to numeric
+evaluation and avoids it.
+
+\subsection{The decision}
+
+\textbf{Idiomatic}, decided 25 August and recorded in \texttt{SCOPE.md}. The
+study's question is whether an engine tells a user when it is wrong, which is a
+question about the tool as encountered. Measuring a library driven by an expert
+who already knows where its cliff lies would answer a different question.
+
+The obligation this creates is disclosure: some failures recorded in the SymPy
+column may be avoidable by an informed user, and the paper must say so.
+
+\subsection{Why the decision turned out not to matter}
+
+Both modes were implemented and run across all nineteen portable systems.
+
+\begin{center}
+\begin{tabular}{@{}lr@{}}
+\toprule
+\textbf{Measurement} & \textbf{Result} \\
+\midrule
+Systems where the modes disagree on compile success & \textbf{0} \\
+Systems refused by both modes & 1 (\texttt{nearsing\_e0}) \\
+Worst idiomatic\,/\,careful compile-time ratio & $27.5\times$ \\
+Worst disagreement with the reference, either mode & $1.1\times10^{-14}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The documented path costs materially more time but reaches identical
+verdicts everywhere in the frozen case matrix. The matrix stops at $N=5$, and
+SymPy clears $N=5$ by either route in under two seconds.
+
+The reportable position is therefore stronger than either choice alone: the
+study used the idiomatic path, verified the careful path, and found no verdict
+depended on the difference.
+
+% ===========================================================================
+\section{Validation}
+% ===========================================================================
+
+Each system was built natively in \texttt{sympy.physics.mechanics} --- not
+translated from MechanicsDSL's input language, which SymPy cannot read --- and
+compared against the closed-form reference at 16 pseudorandom states per case.
+
+\begin{center}
+\begin{tabular}{@{}llrr@{}}
+\toprule
+\textbf{System} & \textbf{Mode} & \textbf{Compile} & \textbf{vs.\ reference} \\
+\midrule
+\texttt{dof} $N=1$      & idiomatic & $0.52$\,s & $0.00$ \\
+\texttt{dof} $N=3$      & idiomatic & $0.14$\,s & $2.62\times10^{-14}$ \\
+\texttt{dof} $N=5$      & idiomatic & $1.82$\,s & $1.15\times10^{-14}$ \\
+\texttt{dof} $N=5$      & careful   & $0.24$\,s & $2.67\times10^{-15}$ \\
+\texttt{nearsing} $10^{-8}$ & idiomatic & $0.02$\,s & $5.81\times10^{-16}$ \\
+\texttt{massratio} $10^{12}$ & idiomatic & $0.02$\,s & $7.57\times10^{-29}$ \\
+\midrule
+\texttt{nearsing\_e0}   & idiomatic & $0.02$\,s & \emph{refused} \\
+\texttt{nearsing\_e0}   & careful   & $0.02$\,s & \emph{refused} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The exactly-singular system is refused loudly by both routes ---
+\texttt{NonInvertibleMatrixError} symbolically, \texttt{LinAlgError}
+numerically. This matches MechanicsDSL, which also refuses it at compile time.
+Both engines behave correctly on the one genuinely degenerate case in the
+portable set: a refusal is the right answer, and both give it.
+
+% ===========================================================================
+\section{Implementation notes}
+% ===========================================================================
+
+\begin{itemize}[leftmargin=1.4em,itemsep=0.3em]
+  \item \textbf{State layout.} The suite interleaves state as
+        $[q_0,\dot q_0,q_1,\dot q_1,\dots]$; \texttt{sympy.physics.mechanics}
+        orders it as $[q_0\ldots q_n,u_0\ldots u_n]$. The mapping is handled
+        inside the adapter. Note that \texttt{rhs()} returns
+        $\mathrm{d}/\mathrm{d}t\,[q,u]$, so the accelerations are its second
+        block --- not its odd entries. Extracting odd entries here would
+        reproduce, in a new place, the convention error documented in
+        TR-2026-01 \S5.
+  \item \textbf{Compile-time probing.} After building, the adapter evaluates
+        the accelerations once at the initial state and reports a
+        non-finite result as a compile failure. A latent defect that would
+        otherwise surface as a corrupt trajectory is thereby attributed to
+        compilation, where it belongs.
+  \item \textbf{Failures are recorded, not raised.} Every exception is caught
+        and returned as an outcome, because a refusal is a data point in this
+        study rather than an error condition.
+\end{itemize}
+
+% ===========================================================================
+\section{Status}
+% ===========================================================================
+
+\begin{center}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+ & \textbf{MechanicsDSL} & \textbf{SymPy} & \textbf{Drake} \\
+\midrule
+Adapter                & native & \checkmark & --- \\
+Validated vs.\ reference & 31/55 cases & 19/19 portable systems & --- \\
+Known scaling wall     & Hamiltonian $N=3$ & none at $N\leq5$ & --- \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Two of three columns are in place. Drake remains, and is the heavier
+installation; it requires Ubuntu under WSL rather than native Windows.
+
+\medskip
+\noindent\textbf{Open decisions}, unchanged by this work: whether the
+\texttt{loops} axis enters the cross-engine claim, and whether to pin a single
+integrator family and tolerance across all three engines. The second becomes
+concrete once Drake exists, since that is where the integrator genuinely
+differs.
+
+\medskip
+\noindent\textbf{Artefacts.} \texttt{stress\_suite/adapter\_sympy.py},
+\texttt{stress\_suite/compare\_engines.py}. Committed at \gitsha{10b0eff}.
+Self-test: \texttt{python adapter\_sympy.py}.
+
+\medskip
+\noindent\textbf{Disclosure.} The author maintains one of the engines measured.
+AI assistance was used in this work. All figures were produced by executing the
+committed code.
+
+\end{document}
