@@ -1,0 +1,98 @@
+[
+  {
+    "N": 1,
+    "engine": "reference",
+    "ok": true,
+    "drift": 5.698209648763505e-10,
+    "diverge": null,
+    "seconds": 0.018844127655029297
+  },
+  {
+    "N": 1,
+    "engine": "MechanicsDSL",
+    "ok": true,
+    "drift": 5.698209648763505e-10,
+    "diverge": null,
+    "seconds": 0.0166318416595459
+  },
+  {
+    "N": 1,
+    "engine": "SymPy",
+    "ok": true,
+    "drift": 5.698209648763505e-10,
+    "diverge": null,
+    "seconds": 0.009310483932495117
+  },
+  {
+    "N": 1,
+    "engine": "Drake",
+    "ok": true,
+    "drift": 5.698209648763505e-10,
+    "diverge": null,
+    "seconds": 0.024865150451660156
+  },
+  {
+    "N": 2,
+    "engine": "reference",
+    "ok": true,
+    "drift": 1.6313738374481088e-10,
+    "diverge": null,
+    "seconds": 0.06283926963806152
+  },
+  {
+    "N": 2,
+    "engine": "MechanicsDSL",
+    "ok": true,
+    "drift": 1.631372711979268e-10,
+    "diverge": null,
+    "seconds": 0.08191967010498047
+  },
+  {
+    "N": 2,
+    "engine": "SymPy",
+    "ok": true,
+    "drift": 1.6313535790089757e-10,
+    "diverge": null,
+    "seconds": 0.04605221748352051
+  },
+  {
+    "N": 2,
+    "engine": "Drake",
+    "ok": true,
+    "drift": 1.631355829946657e-10,
+    "diverge": null,
+    "seconds": 0.07844281196594238
+  },
+  {
+    "N": 3,
+    "engine": "reference",
+    "ok": true,
+    "drift": 6.117519334144448e-11,
+    "diverge": null,
+    "seconds": 0.08076906204223633
+  },
+  {
+    "N": 3,
+    "engine": "MechanicsDSL",
+    "ok": true,
+    "drift": 6.117060373056862e-11,
+    "diverge": null,
+    "seconds": 0.22112631797790527
+  },
+  {
+    "N": 3,
+    "engine": "SymPy",
+    "ok": true,
+    "drift": 6.117883803243414e-11,
+    "diverge": null,
+    "seconds": 0.20407485961914062
+  },
+  {
+    "N": 3,
+    "engine": "Drake",
+    "ok": true,
+    "drift": 6.227858979142323e-11,
+    "diverge": null,
+    "seconds": 0.09684205055236816
+  }
+]

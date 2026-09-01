@@ -1,0 +1,98 @@
+[
+  {
+    "N": 1,
+    "engine": "reference",
+    "ok": true,
+    "drift": 2.823764600848165e-10,
+    "diverge": null,
+    "seconds": 0.028940200805664062
+  },
+  {
+    "N": 1,
+    "engine": "MechanicsDSL",
+    "ok": true,
+    "drift": 2.823764600848165e-10,
+    "diverge": null,
+    "seconds": 0.025693178176879883
+  },
+  {
+    "N": 1,
+    "engine": "SymPy",
+    "ok": true,
+    "drift": 2.823764600848165e-10,
+    "diverge": null,
+    "seconds": 0.013883829116821289
+  },
+  {
+    "N": 1,
+    "engine": "Drake",
+    "ok": true,
+    "drift": 2.823764600848165e-10,
+    "diverge": null,
+    "seconds": 0.03352999687194824
+  },
+  {
+    "N": 2,
+    "engine": "reference",
+    "ok": true,
+    "drift": 5.38912015353085e-10,
+    "diverge": null,
+    "seconds": 0.10358548164367676
+  },
+  {
+    "N": 2,
+    "engine": "MechanicsDSL",
+    "ok": true,
+    "drift": 5.389115300550933e-10,
+    "diverge": 9.933288859239493,
+    "seconds": 0.13926410675048828
+  },
+  {
+    "N": 2,
+    "engine": "SymPy",
+    "ok": true,
+    "drift": 5.389127433000727e-10,
+    "diverge": null,
+    "seconds": 0.08548927307128906
+  },
+  {
+    "N": 2,
+    "engine": "Drake",
+    "ok": true,
+    "drift": 5.389061917771838e-10,
+    "diverge": 9.479653102068045,
+    "seconds": 0.136138916015625
+  },
+  {
+    "N": 3,
+    "engine": "reference",
+    "ok": true,
+    "drift": 3.0357961464305496e-10,
+    "diverge": null,
+    "seconds": 0.17560672760009766
+  },
+  {
+    "N": 3,
+    "engine": "MechanicsDSL",
+    "ok": true,
+    "drift": 3.03560930670372e-10,
+    "diverge": 6.964643095396931,
+    "seconds": 0.5084247589111328
+  },
+  {
+    "N": 3,
+    "engine": "SymPy",
+    "ok": true,
+    "drift": 3.036124935819971e-10,
+    "diverge": 6.277518345563709,
+    "seconds": 0.4734077453613281
+  },
+  {
+    "N": 3,
+    "engine": "Drake",
+    "ok": true,
+    "drift": 3.0421074468134634e-10,
+    "diverge": 5.690460306871247,
+    "seconds": 0.2195749282836914
+  }
+]
