@@ -131,3 +131,9 @@ progress.txt
 
 # Generated example output (produced by running the embedded examples)
 examples/embedded/attitude_controller/
+
+# Per-release notes are generated for the GitHub release page and duplicate the
+# corresponding CHANGELOG.md section verbatim. Kept out of the repo so the two
+# copies cannot drift apart; RELEASE_NOTES_v1.6.0.md was removed for the same
+# reason in 8ea017a.
+RELEASE_NOTES_*.md
