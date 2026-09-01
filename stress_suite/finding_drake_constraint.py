@@ -1,220 +1,239 @@
+#!/usr/bin/env python3
 """
-FINDING: Drake's continuous-mode dynamics API silently ignores a registered
-holonomic constraint, and returns the dynamics of a different mechanism.
+Drake 1.56.0: a distance constraint on a CONTINUOUS MultibodyPlant is accepted
+and then silently omitted from the dynamics.
 
-This is the first engine-DISTINGUISHING silent failure found in the study.
-Every previous result had all three engines behaving identically.
+STANDALONE. Imports numpy and pydrake and nothing else -- no part of the study
+that found it. Run it against a stock `pip install drake` and it reproduces the
+whole arc in one process:
 
-WHAT HAPPENS
-------------
-Build a slider-crank as a MultibodyPlant in continuous mode (time_step = 0):
-a revolute crank, a prismatic slider, and a distance constraint standing in for
-the connecting rod. Then:
+    python3 finding_drake_constraint.py
 
-    plant.AddDistanceConstraint(...)   accepted, returns a constraint id
-    plant.Finalize()                   succeeds
-    plant.num_constraints()            reports 1
-    plant.time_step()                  reports 0.0  (continuous)
-    plant.CalcMassMatrix(context)      returns a DIAGONAL matrix
+SUMMARY
+-------
+Build a slider-crank: a revolute crank, a prismatic slider, and a distance
+constraint standing in for the connecting rod that couples them.
 
-The mass matrix has no off-diagonal coupling, so the crank and the slider are
-dynamically independent: the rod is absent from the equations. The computed
-slider acceleration is exactly 0.0 -- gravity acts along -y and nothing pushes
-the slider along x, because as far as the continuous solver is concerned
-nothing connects it to the crank.
+With `MultibodyPlant(0.0)` (continuous):
 
-No exception is raised. No warning is emitted. The API returns a mass matrix, a
-bias term, and generalised forces for a mechanism that is not the one the user
-described.
+    AddDistanceConstraint(...)      accepted, returns a constraint id
+    Finalize()                      succeeds
+    num_constraints()               reports 1
+    CalcMassMatrix(context)         returns a DIAGONAL matrix
 
-IS THIS FAIR TO DRAKE? -- VERSION-SCOPED, AND THE SCOPE MATTERS
---------------------------------------------------------------
-Used correctly Drake is EXCELLENT here: `main()` below shows the discrete SAP
-solver maintaining the rod length to about 1e-8 through a second of simulation,
-across several dead-centre crossings. The algorithms are not in question.
+The mass matrix has no off-diagonal term, so the crank and slider are
+dynamically independent and the rod is absent from the equations. The computed
+slider acceleration is exactly 0.0, against -0.993 from the closed-form
+solution derived below. No exception is raised and no warning is emitted.
 
-Drake's `AddDistanceConstraint` on master carries two checks in sequence:
+With a discrete plant the same model is correct: the rod length is held to
+~1e-5 at dt=1e-3 and ~1e-8 at dt=1e-4, through a second of simulation across
+several dead-centre crossings, the error scaling with the step as expected. The
+dynamics are not in question; the model-building API is.
+
+VERSION SCOPE
+-------------
+Drake's `AddDistanceConstraint` on master carries
 
     if (!is_discrete()) { throw ... "only supported for discrete
-                                     MultibodyPlant models" }
-    if (get_discrete_contact_solver() == DiscreteContactSolver::kTamsi) { ... }
+                                     MultibodyPlant models"; }
 
-The first is exactly the predicate that would catch this misuse.
+ahead of its TAMSI solver check. That guard is the right predicate and would
+reject this call. It is NOT in 1.56.0:
 
-VERIFIED AGAINST THE INSTALLED BINARY, not the docstring:
+  * the string "only supported for discrete" appears nowhere in the 1.56.0
+    wheel, while "Finalize" returns 413 hits and "is_discrete" 20, so the
+    binary-safe search does work;
+  * `MultibodyPlant.is_discrete()` is not exposed in 1.56.0's Python API;
+  * the bare call below is accepted.
 
-  1. The string "only supported for discrete" does NOT appear anywhere in the
-     drake 1.56.0 wheel. (Control: "Finalize" returns 413 hits and
-     "is_discrete" 20, so the binary-safe search does work. The only
-     distance-constraint guard string present is the TAMSI one.)
-  2. A bare call in a clean process -- two bodies, nothing else loaded --
-     ACCEPTS the constraint on a continuous plant and returns an id.
-  3. `MultibodyPlant.is_discrete()` is not even exposed in 1.56.0's Python
-     API, so the predicate the master guard uses is absent from this release.
+The only distance-constraint guard in 1.56.0 is the TAMSI check, which cannot
+fire here: a continuous plant reports `get_discrete_contact_solver() == kSap`,
+identically to a discrete one, because that field records which discrete solver
+*would* run and defaults to SAP regardless.
 
-So the `is_discrete()` guard postdates 1.56.0. What 1.56.0 has is only the
-TAMSI check, and that cannot help: a continuous plant reports
-`get_discrete_contact_solver() == kSap`, identical to a discrete one, because
-the field records which discrete solver *would* run and defaults to SAP
-regardless. Nothing rejects the constraint, and it is then absent from the
-continuous-mode dynamics with no exception and no warning.
+1.56.0 was the latest release on PyPI at the time of testing (1.22.0-1.56.0
+available). The claim is therefore scoped: accepted-and-dropped in every
+released version tested, with a guard on master that is in none of them.
 
-THE CLAIM, PRECISELY SCOPED
----------------------------
-    In Drake 1.56.0 -- the latest released version at the time of testing,
-    with 1.22.0 through 1.56.0 the full set available on PyPI -- a distance
-    constraint added to a continuous MultibodyPlant is accepted and then
-    silently omitted from the dynamics. A guard for this exists on master and
-    is not in any released version tested.
+THE CLOSED-FORM COMPARISON
+--------------------------
+Crank pivot at the origin, crank length r, angle th from +x, crank pin at
+P = (r cos th, r sin th). Slider at S = (x, 0) on the x-axis. Massless rod of
+length l joins P to S. Coordinates q = (th, x); one constraint; one degree of
+freedom.
 
-Any write-up must state the version and must state that the fix is on master.
-Without that, the claim is false about future Drake and unfair about present
-Drake.
+    g = |S - P|^2 - l^2 = x^2 - 2 r x cos(th) + r^2 - l^2
 
-A NOTE ON METHOD, RECORDED BECAUSE IT WAS GOT WRONG TWICE
----------------------------------------------------------
-The first account of this finding said "documented limitation, correctly
-signposted." That was inference, not measurement.
+the sin^2 + cos^2 collapsing to a constant. Then
 
-The second account read the pydrake docstring, found the TAMSI guard, and
-concluded that Drake had written a guard for this case which checked the wrong
-predicate. Also wrong -- the docstring is generated from Doxygen `@throws`
-annotations, which do not enumerate every `throw` in the function body, so an
-undocumented guard is invisible there. Checking documentation twice is not
-checking twice.
+    J     = [ 2 r x sin(th),  2x - 2 r cos(th) ]
+    gamma = -( 2 xdot^2 + 4 r xdot sin(th) thdot + 2 r x cos(th) thdot^2 )
 
-Only the third account went to the binary and to a bare call, and that is the
-one that holds. The lesson generalises to the whole study: when a claim
-concerns what a program DOES, the docstring is a secondary source.
+Crank as a point mass m_c at the pin, slider a point mass m_s, rod massless:
 
-The trap is reachable by an ordinary route, not a perverse one. This study's own
-`adapter_drake.py` uses exactly this continuous-mode pattern --
-CalcMassMatrix / CalcBiasTerm / CalcGravityGeneralizedForces -- and it is
-correct there, because the pendulum chain has no constraints. A user who
-validates that pattern on an open chain and then adds a closed loop walks
-directly into wrong physics reported as success.
+    M = diag(m_c r^2, m_s),   F = (-m_c g r cos(th), 0)
 
-WHY IT MATTERS TO THE STUDY
----------------------------
-The study distinguishes two claims:
+and (qddot, lambda) solve
 
-  (A) engines can report success while returning wrong physics, unwarned;
-  (B) engines DIFFER in whether they do this.
-
-(A) was already supported by the inverted-equilibrium result, but weakly: every
-engine and the reference failed identically there, because the cause was
-finite-precision arithmetic at an unstable equilibrium rather than anything
-about the engines.
-
-This result supports (B). On the same mechanism, in each engine's ordinary mode
-of use, MechanicsDSL and sympy.physics.mechanics both produce correct
-constrained dynamics -- agreeing with the independent reference to 7e-15 --
-while Drake's continuous API produces the dynamics of an unconstrained system
-and says nothing.
-
-Run:  PYTHONPATH=<repo>/src ~/drake-venv/bin/python finding_drake_constraint.py
+    [ M   J^T ] [ qddot ]   [ F     ]
+    [ J   0   ] [ lam   ] = [ gamma ]
 """
 
-from __future__ import annotations
-
 import math
-import os
-import sys
-
-HERE = os.path.dirname(os.path.abspath(__file__))
-if HERE not in sys.path:
-    sys.path.insert(0, HERE)
 
 import numpy as np
-from pydrake.all import (MultibodyPlant, SpatialInertia, RotationalInertia,
-                         RevoluteJoint, PrismaticJoint, Simulator)
+from pydrake.multibody.plant import MultibodyPlant
+from pydrake.multibody.tree import (SpatialInertia, RotationalInertia,
+                                    RevoluteJoint, PrismaticJoint)
+from pydrake.systems.analysis import Simulator
 
-import reference_slidercrank as RSC
+# Mechanism parameters.
+R, L = 1.0, 3.0            # crank length, rod length
+M_C, M_S = 1.0, 100.0      # crank mass, slider mass
+G = 9.81
 
 
-def build(sc: RSC.SliderCrank, time_step: float) -> MultibodyPlant:
+# --------------------------------------------------------------------------
+# Closed-form reference. numpy only, no symbolic algebra, nothing imported.
+# --------------------------------------------------------------------------
+
+def slider_position(th):
+    return R * math.cos(th) + math.sqrt(max(L * L - (R * math.sin(th)) ** 2, 0.0))
+
+
+def slider_velocity(th, thd):
+    x = slider_position(th)
+    return -R * x * math.sin(th) * thd / (x - R * math.cos(th))
+
+
+def reference_accel(th, thd, x, xd):
+    M = np.diag([M_C * R * R, M_S])
+    F = np.array([-M_C * G * R * math.cos(th), 0.0])
+    J = np.array([[2.0 * R * x * math.sin(th), 2.0 * x - 2.0 * R * math.cos(th)]])
+    gamma = np.array([-(2.0 * xd * xd
+                        + 4.0 * R * xd * math.sin(th) * thd
+                        + 2.0 * R * x * math.cos(th) * thd * thd)])
+    K = np.zeros((3, 3))
+    K[:2, :2] = M
+    K[:2, 2:] = J.T
+    K[2:, :2] = J
+    return np.linalg.solve(K, np.concatenate([F, gamma]))[:2]
+
+
+def rod_length(th, x):
+    return math.hypot(x - R * math.cos(th), R * math.sin(th))
+
+
+# --------------------------------------------------------------------------
+
+def build(time_step):
     p = MultibodyPlant(time_step)
     zI = RotationalInertia(0.0, 0.0, 0.0)
     crank = p.AddRigidBody("crank", SpatialInertia.MakeFromCentralInertia(
-        sc.m_c, np.array([sc.r, 0.0, 0.0]), zI))
+        M_C, np.array([R, 0.0, 0.0]), zI))
     slider = p.AddRigidBody("slider", SpatialInertia.MakeFromCentralInertia(
-        sc.m_s, np.zeros(3), zI))
+        M_S, np.zeros(3), zI))
     p.AddJoint(RevoluteJoint("jc", p.world_frame(), crank.body_frame(),
                              np.array([0.0, 0.0, 1.0])))
     p.AddJoint(PrismaticJoint("js", p.world_frame(), slider.body_frame(),
                               np.array([1.0, 0.0, 0.0])))
-    p.AddDistanceConstraint(crank, np.array([sc.r, 0.0, 0.0]),
-                            slider, np.zeros(3), sc.l)
-    p.mutable_gravity_field().set_gravity_vector([0.0, -sc.g, 0.0])
+    cid = p.AddDistanceConstraint(crank, np.array([R, 0.0, 0.0]),
+                                  slider, np.zeros(3), L)
+    p.mutable_gravity_field().set_gravity_vector([0.0, -G, 0.0])
     p.Finalize()
-    return p
+    return p, cid
 
 
-def rod_length(sc, th, x):
-    return math.hypot(x - sc.r * math.cos(th), sc.r * math.sin(th))
+def main():
+    import pydrake.common
+    try:
+        import importlib.metadata as md
+        version = md.version("drake")
+    except Exception:
+        version = "unknown"
 
+    th0, thd0 = 0.3, 4.0
+    x0 = slider_position(th0)
+    xd0 = slider_velocity(th0, thd0)
+    q0, v0 = np.array([th0, x0]), np.array([thd0, xd0])
 
-def main() -> int:
-    sc = RSC.SliderCrank(3.0, mass_ratio=100.0)
-    st = sc.initial_state()
-
-    print("Drake constraint handling: continuous vs discrete")
-    print(f"  mechanism : slider-crank, l/r={sc.ratio:g}, "
-          f"m_s/m_c={sc.mass_ratio:g}\n")
+    print(f"Drake {version} -- distance constraint on a continuous plant")
+    print(f"  slider-crank: r={R:g}, l={L:g}, m_crank={M_C:g}, "
+          f"m_slider={M_S:g}")
+    print(f"  state: th={th0:g}, thdot={thd0:g}, x={x0:.6f}, "
+          f"xdot={xd0:.6f}  (on the constraint manifold)\n")
 
     # ---- continuous ------------------------------------------------------
-    print("--- CONTINUOUS mode (time_step = 0) ---")
-    p = build(sc, 0.0)
-    ctx = p.CreateDefaultContext()
-    p.SetPositions(ctx, st[0::2])
-    p.SetVelocities(ctx, st[1::2])
-    M = p.CalcMassMatrix(ctx)
-    a = np.linalg.solve(M, p.CalcGravityGeneralizedForces(ctx)
-                        - p.CalcBiasTerm(ctx))
-    ref = sc.accel(st)
+    print("=" * 66)
+    print("CONTINUOUS  MultibodyPlant(0.0)")
+    print("=" * 66)
+    p, cid = build(0.0)
+    print(f"  AddDistanceConstraint   -> ACCEPTED, id={cid}")
+    print(f"  Finalize()              -> succeeded")
+    print(f"  num_constraints()       -> {p.num_constraints()}")
+    print(f"  time_step()             -> {p.time_step()}")
+    print(f"  is_discrete()           -> "
+          f"{'absent from this API' if not hasattr(p, 'is_discrete') else p.is_discrete()}")
+    print(f"  get_discrete_contact_solver() -> "
+          f"{p.get_discrete_contact_solver()}   (same on a discrete plant)")
+    print(f"  exception or warning    -> none")
 
-    print(f"  constraint registered      : num_constraints() = "
-          f"{p.num_constraints()}")
-    print(f"  solver mode                : time_step() = {p.time_step()}")
-    print(f"  exception or warning       : none")
-    print(f"  mass matrix off-diagonal   : {abs(M[0, 1]):.1e}   "
-          f"<- zero, so the rod is absent")
-    print(f"  Drake accelerations        : {np.round(a, 6)}")
-    print(f"  reference accelerations    : {np.round(ref, 6)}")
-    print(f"  slider acceleration        : Drake {a[1]:.6f}  vs  "
-          f"reference {ref[1]:.6f}")
-    wrong = np.max(np.abs(a - ref) / np.maximum(np.abs(ref), 1.0))
-    print(f"  worst relative error       : {wrong:.3e}")
+    ctx = p.CreateDefaultContext()
+    p.SetPositions(ctx, q0)
+    p.SetVelocities(ctx, v0)
+    M = p.CalcMassMatrix(ctx)
+    a_drake = np.linalg.solve(
+        M, p.CalcGravityGeneralizedForces(ctx) - p.CalcBiasTerm(ctx))
+    a_ref = reference_accel(th0, thd0, x0, xd0)
+
+    print(f"\n  CalcMassMatrix:")
+    print(f"      [[{M[0,0]:12.6f} {M[0,1]:12.6f}]")
+    print(f"       [{M[1,0]:12.6f} {M[1,1]:12.6f}]]")
+    print(f"      off-diagonal = {abs(M[0,1]):.1e}  <- zero: the rod is not "
+          f"in the equations")
+    print(f"\n  {'':22}{'crank thddot':>15}{'slider xddot':>15}")
+    print(f"  {'Drake':22}{a_drake[0]:15.6f}{a_drake[1]:15.6f}")
+    print(f"  {'closed form':22}{a_ref[0]:15.6f}{a_ref[1]:15.6f}")
+    rel = np.max(np.abs(a_drake - a_ref) / np.maximum(np.abs(a_ref), 1.0))
+    print(f"\n  worst relative error    -> {rel:.3e}")
+    print(f"  slider acceleration     -> Drake {a_drake[1]:.1f} exactly; "
+          f"the slider is free")
 
     # ---- discrete --------------------------------------------------------
-    print("\n--- DISCRETE mode (SAP, dt = 1e-4) ---")
-    pd = build(sc, 1e-4)
+    print("\n" + "=" * 66)
+    print("DISCRETE  MultibodyPlant(1e-3), SAP")
+    print("=" * 66)
+    pd, _ = build(1e-3)
     cd = pd.CreateDefaultContext()
-    pd.SetPositions(cd, st[0::2])
-    pd.SetVelocities(cd, st[1::2])
+    pd.SetPositions(cd, q0)
+    pd.SetVelocities(cd, v0)
     sim = Simulator(pd, cd)
     sim.Initialize()
-    print(f"  {'t (s)':>7}{'rod length':>13}{'target':>10}{'error':>12}")
+    print(f"  {'t (s)':>8}{'rod length':>14}{'target':>10}{'error':>12}")
     worst = 0.0
     for t in (0.0, 0.25, 0.5, 1.0):
         sim.AdvanceTo(t)
         q = pd.GetPositions(sim.get_context())
-        L = rod_length(sc, q[0], q[1])
-        worst = max(worst, abs(L - sc.l))
-        print(f"  {t:7.2f}{L:13.6f}{sc.l:10.3f}{abs(L - sc.l):12.2e}")
-    print(f"\n  worst rod-length error     : {worst:.2e}   "
-          f"<- the constraint IS enforced here")
+        Lr = rod_length(q[0], q[1])
+        worst = max(worst, abs(Lr - L))
+        print(f"  {t:8.2f}{Lr:14.6f}{L:10.3f}{abs(Lr - L):12.2e}")
+    print(f"\n  worst rod-length error  -> {worst:.2e}   "
+          f"the constraint IS enforced")
 
     # ---- verdict ---------------------------------------------------------
-    print("\n" + "=" * 62)
-    print("  Same mechanism, same engine, two supported construction modes.")
-    print("  Discrete : constraint honoured to ~1e-8.")
-    print("  Continuous: constraint silently dropped; wrong physics returned")
-    print("              as success, with the plant reporting that the")
-    print("              constraint exists and that it is in continuous mode.")
-    print("\n  MechanicsDSL and sympy.physics.mechanics both model this")
-    print("  mechanism correctly in their ordinary mode of use, agreeing with")
-    print("  the independent reference to 7e-15.")
+    print("\n" + "=" * 66)
+    print("  Same model, same version, two supported construction modes.")
+    print(f"  Discrete   : correct, rod held to {worst:.0e} at dt=1e-3")
+    print("               (and to ~1e-8 at dt=1e-4; the error scales with")
+    print("               the step, as expected for a discrete solver).")
+    print("  Continuous : constraint accepted, silently dropped, wrong")
+    print("               dynamics returned as success, no diagnostic.")
+    print()
+    print("  This is an API GUARD failure, not a dynamics failure. Drake's")
+    print("  articulated-body algorithms are correct; the model-building API")
+    print("  accepted a model it does not implement. The guard that catches")
+    print("  it exists on master and in no released version tested.")
     return 0
 
 
