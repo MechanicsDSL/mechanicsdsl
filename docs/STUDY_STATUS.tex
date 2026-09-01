@@ -1,6 +1,5 @@
 %% ============================================================================
 %%  Silent-Failure Study --- One-Page Status
-%%  Compile with:  pdflatex STUDY_STATUS.tex
 %% ============================================================================
 
 \documentclass[10pt,a4paper]{article}
@@ -10,7 +9,7 @@
 \usepackage{amsmath,amssymb}
 \let\Bbbk\relax
 \usepackage{newtxtext,newtxmath}
-\usepackage[margin=0.6in,top=0.55in,bottom=0.5in]{geometry}
+\usepackage[margin=0.58in,top=0.5in,bottom=0.45in]{geometry}
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage[expansion=false]{microtype}
@@ -25,9 +24,9 @@
 \definecolor{rulegrey}{RGB}{190,190,185}
 
 \titleformat{\section}{\normalfont\large\bfseries}{}{0em}{}
-\titlespacing*{\section}{0pt}{1.1ex plus .2ex}{0.45ex}
+\titlespacing*{\section}{0pt}{1.0ex plus .2ex}{0.4ex}
 
-\renewcommand{\arraystretch}{1.05}
+\renewcommand{\arraystretch}{1.04}
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 
 \newcommand{\done}{\textcolor{okgreen}{\textbf{\checkmark}}}
@@ -40,104 +39,99 @@
 \small
 
 {\LARGE\bfseries Silent-Failure Study}\\[0.3em]
-{\large Status as of 22 August 2026}\\[0.2em]
+{\large Status as of 25 August 2026 \quad$\cdot$\quad \textbf{Week 1 complete}}\\[0.2em]
 {\color{rulegrey}\hrule height 1pt}
 
-\vspace{0.9em}
+\vspace{0.7em}
 
-{\large\bfseries Where you are:} \textbf{the baseline is locked.} Week 1 begins.\\[0.3em]
-The measurement of your own engine is finished and reproducible. Everything
-remaining is about the other two engines.
+{\large\bfseries Where you are:} all three engines are built, validated, and
+compared.\\[0.2em]
+\textbf{No engine ever returned a wrong answer.} The study's original claim ---
+that engines fail silently --- is so far unsupported. What was found instead is
+a clean capability difference and a well-evidenced null result.
 
-\vspace{0.5em}
+\vspace{0.4em}
 
 % ---------------------------------------------------------------------------
 \section{Done}
 
-\begin{tabular}{@{}cL{0.88\textwidth}@{}}
-\done & \textbf{Engine frozen} at \texttt{a8dc2b2}, tag \texttt{v2.1.3} (\texttt{FREEZE.md}). \\
-\done & \textbf{Baseline measured and re-verified.} 55 cases: 44 pass, \textbf{0 silent}, 1 error, 10 timeout; 45 adjudicated. \\
-\done & \textbf{Reproduction confirmed} --- bit-identical to the 10 August run. Zero status changes, no metric changed at all. This also forecloses ``could that be harness noise?'' against the week-2 comparison. \\
-\done & \textbf{Third engine chosen:} Drake. \quad \done~\textbf{Documented:} freeze record (16\,pp) + fixes writeup (5\,pp). \\
+\begin{tabular}{@{}cL{0.90\textwidth}@{}}
+\done & \textbf{Engine frozen} at \texttt{a8dc2b2} / \texttt{v2.1.3}; baseline re-measured and \textbf{bit-identical} to the 10 August run (44 pass / 0 silent / 1 error / 10 timeout). \\
+\done & \textbf{Independent referee built} --- \texttt{reference.py}, closed form, \texttt{numpy} only, sharing no library with any engine. Eleven self-tests. Needed because a SymPy oracle cannot judge a SymPy engine. \\
+\done & \textbf{Three engine adapters}: MechanicsDSL (native), \texttt{sympy.physics.mechanics} (idiomatic), Drake 1.56 (WSL). \\
+\done & \textbf{Compared on derivation} --- all three agree with the referee to $\leq7\times10^{-14}$. \\
+\done & \textbf{Compared on integration}, regular \emph{and} chaotic regimes, one pinned integrator. Energy drift identical across engines. \\
+\done & \textbf{Amplitude axis added} after measurement showed the suite had only tested the chain where it is well behaved (perturbations grew $2$--$22\times$; at $3$\,rad they grow $10^{11}\times$). 24 engine--amplitude pairs, zero failures. \\
+\done & \textbf{Scaling walls measured} to 30 links --- the study's first genuine disagreement. \\
 \end{tabular}
 
 % ---------------------------------------------------------------------------
-\section{Next --- Week 1: adapters}
+\section{The headline result}
 
-\textit{This is the hard part and where all the risk lives. Budget the whole week.}
+\begin{minipage}[t]{0.46\textwidth}
+\vspace{0.2em}
+\textbf{Largest chain each engine will answer:}
 
-\vspace{0.3em}
-\begin{tabular}{@{}cL{0.88\textwidth}@{}}
-\todo & \textbf{1. Library-independent $N$-link reference} (\texttt{numpy} only). Closed-form $M(q)\ddot q + C(q,\dot q)\dot q + g(q) = 0$. \textbf{Do this first} --- it is the ground truth the SymPy column needs, since a SymPy oracle checking a SymPy engine is near self-consistency. Doubles as the gate case. \\
-\todo & \textbf{2. SymPy adapter.} Pendulum chain via \texttt{sympy.physics.mechanics}. Already installed, so it is the smaller of the two. \\
-\todo & \textbf{3. Install Drake in Ubuntu WSL.} Not native Windows. The heavier install --- start it early, in parallel with steps 1--2. \\
-\todo & \textbf{4. Drake adapter.} Same chain, same knobs. \\
-\todo & \textbf{5. The gate:} all three engines agree with the reference on a hand-checked $N=2$ case. Do not proceed past this until they do. \\
+\begin{tabular}{@{}lcc@{}}
+\toprule
+ & \textbf{Lagr.} & \textbf{Hamil.} \\
+\midrule
+SymPy (idiomatic) & 5  & --- \\
+MechanicsDSL      & 12 & 3 \\
+Drake             & \textbf{30} & --- \\
+referee           & $\geq30$ & $\geq30$ \\
+\bottomrule
 \end{tabular}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.50\textwidth}
+\vspace{0.2em}
+Drake's cost is \emph{flat} at $0.23$\,s from 5 links to 30. The two symbolic
+engines slow down and then stop.
 
 \vspace{0.4em}
-\textbf{Two decisions owed in week 1:} whether the \texttt{loops} axis enters
-the cross-engine claim (three constrained cases, currently zero strong-oracle
-coverage); and whether to pin one integrator family and tolerance across all
-three engines, since otherwise cross-engine energy drift measures the
-integrator rather than the engine.
-
-\vspace{0.6em}
-\textbf{Then --- Week 2:} sweep all three, build the comparison table, write.
+\textbf{But every engine that answered, answered correctly}, and every engine
+that could not simply never returned. Timing out is the \emph{loud} failure
+mode --- the acceptable one. The engines differ in reach, not in honesty.
+\end{minipage}
 
 % ---------------------------------------------------------------------------
-\section{Rules in force until the study closes}
+\section{Also found}
 
-\begin{tabular}{@{}cL{0.88\textwidth}@{}}
-\textcolor{holdred}{\textbf{!}} & \textbf{The engine does not change.} Fixing MechanicsDSL mid-study is what makes the numbers meaningless. If it moves off \texttt{a8dc2b2}, the baseline is void and the sweep must be repeated. \\
-\textcolor{holdred}{\textbf{!}} & \textbf{The scoring path and case matrix are frozen} --- but \textbf{the harness may grow}. Adapters, dispatch, and new oracles are additive. The gate: re-run the frozen matrix at \texttt{a8dc2b2} and confirm it still returns 44/0/1/10 bit-identically. Extending coverage is allowed; revising judgement is not. \\
-\textcolor{holdred}{\textbf{!}} & \textbf{Quote numbers only from \texttt{RESULTS.md}.} The 28 July report describes a pre-fix engine and must never be cited as current. \\
+\begin{tabular}{@{}cL{0.90\textwidth}@{}}
+\textcolor{holdred}{\textbf{!}} & At the inverted equilibrium ($\theta=\pi$) all three engines \emph{and} the referee report success while producing $\sim$20\,rad of motion where the exact answer is none. Cause is $\sin\pi = 1.22\times10^{-16}$ in float64, amplified by an unstable equilibrium. Not an engine defect --- but nobody warns you. A shared blind spot. \\
+\textcolor{holdred}{\textbf{!}} & Two apparent silent failures were \emph{my} coordinate-convention errors, not engine defects: the canonical $(q,p)$ state, and Drake's relative joint angles. Both vanished at $N{=}1$ and grew with $N$ --- the signature of a convention mismatch. Check that pattern before reporting any disagreement. \\
+\textcolor{holdred}{\textbf{!}} & Three study documents described the study inaccurately and were corrected: \texttt{SCOPE.md} claims one test family (there are three); the portable-axes list named a non-existent axis; the instrument-freeze rule forbade Week 1. \\
 \end{tabular}
 
 % ---------------------------------------------------------------------------
-\section{Known limit on the headline}
+\section{Rules still in force}
 
-\begin{tabular}{@{}lrrrr@{}}
-\toprule
-\textbf{Pathway} & \textbf{Cases} & \textbf{Timed out} & \textbf{Adjudicated} & \textbf{Strong oracle} \\
-\midrule
-lagrangian & 26 & 3 & 23 & 22 \\
-hamiltonian & 19 & 5 & 14 & 0 \\
-constrained & 10 & 2 & 8 & 0 \\
-\midrule
-\textbf{Total} & \textbf{55} & \textbf{10} & \textbf{45} & \textbf{22} \\
-\bottomrule
+\begin{tabular}{@{}cL{0.90\textwidth}@{}}
+\textcolor{holdred}{\textbf{!}} & \textbf{Engine, scoring path, and the 55-case matrix are frozen.} The harness may grow; the gate is that the frozen matrix still returns 44/0/1/10 bit-identically. Extending coverage is allowed, revising judgement is not. \\
+\textcolor{holdred}{\textbf{!}} & \textbf{Quote numbers only from \texttt{RESULTS.md}}, and state them \emph{by pathway} --- the strong oracle covered 22 of 45 adjudicated cases. The 28 July report describes a pre-fix engine. \\
+\textcolor{holdred}{\textbf{!}} & \textbf{Do not claim MechanicsDSL outperforms Drake.} Identical energy drift under a \emph{pinned} integrator cannot rank engines, and a $0.2\,\%$ difference is noise. Reaching 12 links against idiomatic SymPy's 5 is defensible; Drake reaches 30. \\
+\end{tabular}
+
+% ---------------------------------------------------------------------------
+\section{The decision waiting for you}
+
+\begin{tabular}{@{}cL{0.90\textwidth}@{}}
+\todo & \textbf{Report the null result.} Three independent engines, adjudicated by a fourth derivation sharing no library, agreeing to machine precision across an adversarial set spanning both dynamical regimes. Real, well supported, and a different paper from the one planned. \\
+\todo & \textbf{Or keep hunting} in the untested ground: the constrained pathway and the \texttt{loops} axis, neither yet compared across engines. \\
 \end{tabular}
 
 \vspace{0.3em}
-\textbf{33 of 55 cases (60\%) carry no independent derivation check}, and 7 of
-those returned no answer at all. The oracle gap and the timeout wall fall in
-the \emph{same} place. State the result \textbf{by pathway}, never pooled.
+Still open either way: whether \texttt{loops} enters the cross-engine claim, and
+whether to re-express the two spring systems as pendulum chains so they become
+portable to a rigid-body engine.
 
-% ---------------------------------------------------------------------------
-\section{At a glance}
-
-\begin{tabular}{@{}lL{0.62\textwidth}@{}}
-\toprule
-Pin              & \texttt{a8dc2b2} \quad tag \texttt{v2.1.3} \quad (\texttt{git checkout v2.1.3}) \\
-Headline         & Zero silent failures in 45 adjudicated cases \\
-Caveat           & Independent oracle covers 22 of those 45 \\
-Timeout          & 180\,s per case \\
-Engines          & MechanicsDSL \done \quad SymPy \todo \quad Drake \todo \\
-Paper            & Short or workshop paper. \emph{Not} a registered report. \\
-\midrule
-Plan             & \texttt{stress\_suite/SCOPE.md} \\
-Pin record       & \texttt{stress\_suite/FREEZE.md} \\
-Numbers          & \texttt{stress\_suite/RESULTS.md} \\
-Why they changed & \texttt{stress\_suite/FIXES.md} \\
-Repository       & \texttt{Desktop\textbackslash mechanicsdsl-main} \\
-\bottomrule
-\end{tabular}
-
-\vspace{0.7em}
+\vspace{0.5em}
 {\color{rulegrey}\hrule height 0.5pt}
-\vspace{0.4em}
-{\footnotesize Disclose in the paper: you maintain one of the engines measured,
-and AI assistance was used. Both are permitted; concealing either is not.}
+\vspace{0.3em}
+{\footnotesize \textbf{Reports:} TR-2026-01 referee $\cdot$ 02 SymPy $\cdot$ 03
+Drake $\cdot$ 04 Week 1 findings. \quad
+\textbf{Disclose:} you maintain one of the engines measured, and AI assistance
+was used. Both permitted; concealing either is not.}
 
 \end{document}
