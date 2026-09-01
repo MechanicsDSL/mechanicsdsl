@@ -1,0 +1,308 @@
+[
+  {
+    "engine": "MechanicsDSL",
+    "pathway": "lagrangian",
+    "N": 1,
+    "status": "ok",
+    "build_s": 1.5697941780090332,
+    "total_s": 1.5710766315460205,
+    "err": 0.0
+  },
+  {
+    "engine": "SymPy",
+    "pathway": "lagrangian",
+    "N": 1,
+    "status": "ok",
+    "build_s": 0.3262796401977539,
+    "total_s": 0.32650303840637207,
+    "err": 0.0
+  },
+  {
+    "engine": "Drake",
+    "pathway": "lagrangian",
+    "N": 1,
+    "status": "ok",
+    "build_s": 0.43131518363952637,
+    "total_s": 0.43941235542297363,
+    "err": 0.0
+  },
+  {
+    "engine": "MechanicsDSL",
+    "pathway": "lagrangian",
+    "N": 2,
+    "status": "ok",
+    "build_s": 2.166231870651245,
+    "total_s": 2.1664814949035645,
+    "err": 1.2348903243852199e-16
+  },
+  {
+    "engine": "SymPy",
+    "pathway": "lagrangian",
+    "N": 2,
+    "status": "ok",
+    "build_s": 0.37973904609680176,
+    "total_s": 0.38001155853271484,
+    "err": 3.9160679840170766e-16
+  },
+  {
+    "engine": "Drake",
+    "pathway": "lagrangian",
+    "N": 2,
+    "status": "ok",
+    "build_s": 0.2298736572265625,
+    "total_s": 0.23624682426452637,
+    "err": 1.9580339920085383e-16
+  },
+  {
+    "engine": "MechanicsDSL",
+    "pathway": "lagrangian",
+    "N": 3,
+    "status": "ok",
+    "build_s": 21.62806010246277,
+    "total_s": 21.6283917427063,
+    "err": 4.020456510251911e-16
+  },
+  {
+    "engine": "SymPy",
+    "pathway": "lagrangian",
+    "N": 3,
+    "status": "ok",
+    "build_s": 0.5892355442047119,
+    "total_s": 0.5895633697509766,
+    "err": 8.442958671529013e-15
+  },
+  {
+    "engine": "Drake",
+    "pathway": "lagrangian",
+    "N": 3,
+    "status": "ok",
+    "build_s": 0.23949646949768066,
+    "total_s": 0.24504375457763672,
+    "err": 6.4327304164030576e-15
+  },
+  {
+    "engine": "MechanicsDSL",
+    "pathway": "lagrangian",
+    "N": 5,
+    "status": "ok",
+    "build_s": 7.448754787445068,
+    "total_s": 7.448950529098511,
+    "err": 1.8248958282191341e-16
+  },
+  {
+    "engine": "SymPy",
+    "pathway": "lagrangian",
+    "N": 5,
+    "status": "ok",
+    "build_s": 2.57757830619812,
+    "total_s": 2.5790371894836426,
+    "err": 1.1577806590857592e-15
+  },
+  {
+    "engine": "Drake",
+    "pathway": "lagrangian",
+    "N": 5,
+    "status": "ok",
+    "build_s": 0.23875045776367188,
+    "total_s": 0.24407267570495605,
+    "err": 7.134823311615992e-14
+  },
+  {
+    "engine": "MechanicsDSL",
+    "pathway": "lagrangian",
+    "N": 8,
+    "status": "ok",
+    "build_s": 42.027815103530884,
+    "total_s": 42.02802920341492,
+    "err": 1.6871230862679542e-15
+  },
+  {
+    "engine": "SymPy",
+    "pathway": "lagrangian",
+    "N": 8,
+    "status": "TIMEOUT",
+    "total_s": 117.05226516723633
+  },
+  {
+    "engine": "Drake",
+    "pathway": "lagrangian",
+    "N": 8,
+    "status": "ok",
+    "build_s": 0.21263337135314941,
+    "total_s": 0.21750187873840332,
+    "err": 5.051514762044462e-14
+  },
+  {
+    "engine": "MechanicsDSL",
+    "pathway": "lagrangian",
+    "N": 12,
+    "status": "ok",
+    "build_s": 64.42844319343567,
+    "total_s": 64.42874526977539,
+    "err": 6.411537967210279e-15
+  },
+  {
+    "engine": "Drake",
+    "pathway": "lagrangian",
+    "N": 12,
+    "status": "ok",
+    "build_s": 0.21580290794372559,
+    "total_s": 0.22057700157165527,
+    "err": 9.500178421717465e-13
+  },
+  {
+    "engine": "MechanicsDSL",
+    "pathway": "lagrangian",
+    "N": 20,
+    "status": "TIMEOUT",
+    "total_s": 117.03095436096191
+  },
+  {
+    "engine": "Drake",
+    "pathway": "lagrangian",
+    "N": 20,
+    "status": "ok",
+    "build_s": 0.22757863998413086,
+    "total_s": 0.23268818855285645,
+    "err": 1.25010002349768e-11
+  },
+  {
+    "engine": "Drake",
+    "pathway": "lagrangian",
+    "N": 30,
+    "status": "ok",
+    "build_s": 0.22597551345825195,
+    "total_s": 0.2313370704650879,
+    "err": 5.70533065236134e-11
+  },
+  {
+    "engine": "MechanicsDSL",
+    "pathway": "hamiltonian",
+    "N": 1,
+    "status": "ok",
+    "build_s": 1.102034091949463,
+    "total_s": 1.1023356914520264,
+    "err": 0.0
+  },
+  {
+    "engine": "SymPy",
+    "pathway": "hamiltonian",
+    "N": 1,
+    "status": "n/a"
+  },
+  {
+    "engine": "Drake",
+    "pathway": "hamiltonian",
+    "N": 1,
+    "status": "n/a"
+  },
+  {
+    "engine": "MechanicsDSL",
+    "pathway": "hamiltonian",
+    "N": 2,
+    "status": "ok",
+    "build_s": 15.83327317237854,
+    "total_s": 15.833602666854858,
+    "err": 1.7910062785572988e-16
+  },
+  {
+    "engine": "SymPy",
+    "pathway": "hamiltonian",
+    "N": 2,
+    "status": "n/a"
+  },
+  {
+    "engine": "Drake",
+    "pathway": "hamiltonian",
+    "N": 2,
+    "status": "n/a"
+  },
+  {
+    "engine": "MechanicsDSL",
+    "pathway": "hamiltonian",
+    "N": 3,
+    "status": "ok",
+    "build_s": 28.301818132400513,
+    "total_s": 28.302913188934326,
+    "err": 4.621669559753604e-16
+  },
+  {
+    "engine": "SymPy",
+    "pathway": "hamiltonian",
+    "N": 3,
+    "status": "n/a"
+  },
+  {
+    "engine": "Drake",
+    "pathway": "hamiltonian",
+    "N": 3,
+    "status": "n/a"
+  },
+  {
+    "engine": "MechanicsDSL",
+    "pathway": "hamiltonian",
+    "N": 5,
+    "status": "TIMEOUT",
+    "total_s": 116.92810153961182
+  },
+  {
+    "engine": "SymPy",
+    "pathway": "hamiltonian",
+    "N": 5,
+    "status": "n/a"
+  },
+  {
+    "engine": "Drake",
+    "pathway": "hamiltonian",
+    "N": 5,
+    "status": "n/a"
+  },
+  {
+    "engine": "SymPy",
+    "pathway": "hamiltonian",
+    "N": 8,
+    "status": "n/a"
+  },
+  {
+    "engine": "Drake",
+    "pathway": "hamiltonian",
+    "N": 8,
+    "status": "n/a"
+  },
+  {
+    "engine": "SymPy",
+    "pathway": "hamiltonian",
+    "N": 12,
+    "status": "n/a"
+  },
+  {
+    "engine": "Drake",
+    "pathway": "hamiltonian",
+    "N": 12,
+    "status": "n/a"
+  },
+  {
+    "engine": "SymPy",
+    "pathway": "hamiltonian",
+    "N": 20,
+    "status": "n/a"
+  },
+  {
+    "engine": "Drake",
+    "pathway": "hamiltonian",
+    "N": 20,
+    "status": "n/a"
+  },
+  {
+    "engine": "SymPy",
+    "pathway": "hamiltonian",
+    "N": 30,
+    "status": "n/a"
+  },
+  {
+    "engine": "Drake",
+    "pathway": "hamiltonian",
+    "N": 30,
+    "status": "n/a"
+  }
+]

@@ -402,6 +402,75 @@ this report.
         baseline. It is a different paper from the one planned.
 \end{enumerate}
 
+\subsection{Where the engines are not equivalent: the scaling walls}
+\label{sec:walls}
+
+Following path~1 above, each engine was climbed up a ladder of system sizes to
+$N=30$ --- the figure named in \texttt{SCOPE.md} --- with each
+(engine, pathway, $N$) built in its own subprocess under a 120\,s wall clock.
+Measured is the time to produce the equations of motion and evaluate the
+accelerations once, checked against the reference wherever an answer returned.
+
+\begin{center}
+\begin{tabular}{@{}rlll@{}}
+\toprule
+\textbf{$N$} & \textbf{MechanicsDSL} & \textbf{SymPy} & \textbf{Drake} \\
+\midrule
+1  & $1.57$\,s  & $0.33$\,s  & $0.44$\,s \\
+3  & $21.63$\,s & $0.59$\,s  & $0.25$\,s \\
+5  & $7.45$\,s  & $2.58$\,s  & $0.24$\,s \\
+8  & $42.03$\,s & \textbf{TIMEOUT} & $0.22$\,s \\
+12 & $64.43$\,s & ---        & $0.22$\,s \\
+20 & \textbf{TIMEOUT} & ---  & $0.23$\,s \\
+30 & ---        & ---        & $0.23$\,s \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Largest $N$ answered} & \textbf{Lagrangian} & \textbf{Hamiltonian} \\
+\midrule
+SymPy (idiomatic)  & 5  & --- \\
+MechanicsDSL       & 12 & 3 \\
+Drake              & 30 & --- \\
+reference          & $\geq30$ & $\geq30$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent\textbf{This is the study's first genuine disagreement.} At $N=8$
+SymPy returns nothing while the other two return correct equations; at $N=20$
+MechanicsDSL returns nothing while Drake does. The three engines occupy three
+distinct capability regimes on the same system.
+
+Three observations follow.
+
+\begin{itemize}[leftmargin=1.4em,itemsep=0.3em]
+  \item \textbf{Drake is in a different class.} Its cost is flat at
+        $\approx0.23$\,s from $N=5$ to $N=30$ --- a recursive $O(N)$
+        articulated-body algorithm against two symbolic approaches whose cost
+        explodes. Its residual grows with size, from $6\times10^{-15}$ at
+        $N=3$ to $6\times10^{-11}$ at $N=30$, still four orders inside
+        tolerance.
+  \item \textbf{MechanicsDSL reaches further than idiomatic SymPy}, 12 links
+        against 5. This is a defensible comparative claim, and it is against
+        \texttt{sympy.physics.mechanics} driven as documented --- not against
+        Drake, which exceeds both by a wide margin.
+  \item \textbf{The non-monotonicity persists.} $N=3$ costs $21.6$\,s and
+        $N=5$ costs $7.5$\,s, the symbolic-to-numeric threshold of
+        \texttt{FIXES.md} item~3 showing through again.
+\end{itemize}
+
+\begin{callout}
+\textbf{But no engine gave a wrong answer.} Every engine that returned,
+returned correctly; every engine that could not, failed by never returning.
+Timing out is the \emph{loud} failure mode --- the acceptable one. So the
+engines differ in reach, not in honesty, and the study's original claim, that
+some engines fail silently, remains unsupported across every axis measured.
+\end{callout}
+
 \subsection{Open decisions}
 
 Unchanged: whether the \texttt{loops} axis enters the cross-engine claim, and
