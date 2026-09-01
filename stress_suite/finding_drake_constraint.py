@@ -31,30 +31,48 @@ With a discrete plant the same model is correct: the rod length is held to
 several dead-centre crossings, the error scaling with the step as expected. The
 dynamics are not in question; the model-building API is.
 
-VERSION SCOPE
--------------
-Drake's `AddDistanceConstraint` on master carries
+VERSION SCOPE -- BROADER THAN FIRST BELIEVED
+-------------------------------------------
+An earlier draft of this file asserted that a guard
 
     if (!is_discrete()) { throw ... "only supported for discrete
                                      MultibodyPlant models"; }
 
-ahead of its TAMSI solver check. That guard is the right predicate and would
-reject this call. It is NOT in 1.56.0:
+exists on Drake master and merely postdates 1.56.0, making this defect
+version-scoped to released versions. THAT IS FALSE, and it was accepted from a
+secondary description without being checked against the source -- the same
+error, a third time, that this file already records twice.
 
-  * the string "only supported for discrete" appears nowhere in the 1.56.0
-    wheel, while "Finalize" returns 413 hits and "is_discrete" 20, so the
-    binary-safe search does work;
-  * `MultibodyPlant.is_discrete()` is not exposed in 1.56.0's Python API;
-  * the bare call below is accepted.
+Checked against master directly (raw.githubusercontent.com,
+multibody/plant/multibody_plant.cc, 198316 bytes, master HEAD dated
+2026-08-31):
 
-The only distance-constraint guard in 1.56.0 is the TAMSI check, which cannot
-fire here: a continuous plant reports `get_discrete_contact_solver() == kSap`,
-identically to a discrete one, because that field records which discrete solver
-*would* run and defaults to SAP regardless.
+  * the string "only supported for discrete" appears ZERO times in the file;
+  * `AddDistanceConstraint` (line 536) contains exactly one `throw`, and it is
+    the TAMSI message, nested INSIDE `if (is_discrete())` -- so it cannot fire
+    for a continuous plant at all;
+  * what follows for the continuous case is a bare comment, line 558:
+        // Feature support for continuous time plants depends on the
+        // integrator used.
+    repeated identically at lines 514, 669, 712 and 758 for the sibling
+    constraint-adding methods;
+  * the constraint is then stored in `distance_constraints_params_` and an id
+    returned, with no further validation.
 
-1.56.0 was the latest release on PyPI at the time of testing (1.22.0-1.56.0
-available). The claim is therefore scoped: accepted-and-dropped in every
-released version tested, with a guard on master that is in none of them.
+So there is no continuous-mode rejection on master either. The comment at 558
+acknowledges that continuous support is conditional; it does not enforce
+anything.
+
+THE CLAIM, SCOPED BY MEASUREMENT
+--------------------------------
+    A distance constraint added to a continuous MultibodyPlant is accepted and
+    then silently omitted from the dynamics. Measured in Drake 1.56.0, the
+    latest release at time of testing. The relevant code path on master shows
+    no guard against it either, so this is current behaviour and not a defect
+    already fixed upstream.
+
+The honest limitation on that second sentence: master was read, not run. The
+source shows no rejection; only the 1.56.0 wheel was executed.
 
 THE CLOSED-FORM COMPARISON
 --------------------------
