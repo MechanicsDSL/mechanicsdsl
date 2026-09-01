@@ -27,38 +27,65 @@ No exception is raised. No warning is emitted. The API returns a mass matrix, a
 bias term, and generalised forces for a mechanism that is not the one the user
 described.
 
-IS THIS FAIR TO DRAKE?
-----------------------
-Yes, and more pointedly than first assumed.
-
+IS THIS FAIR TO DRAKE? -- VERSION-SCOPED, AND THE SCOPE MATTERS
+--------------------------------------------------------------
 Used correctly Drake is EXCELLENT here: `main()` below shows the discrete SAP
 solver maintaining the rod length to about 1e-8 through a second of simulation,
 across several dead-centre crossings. The algorithms are not in question.
 
-The defect is in the precondition check. `AddDistanceConstraint` documents a
-guard against exactly this misuse:
+Drake's `AddDistanceConstraint` on master carries two checks in sequence:
 
-    Raises: RuntimeError if `this` MultibodyPlant's underlying contact
-            solver is not SAP.
-            (i.e. get_discrete_contact_solver() != DiscreteContactSolver::kSap)
+    if (!is_discrete()) { throw ... "only supported for discrete
+                                     MultibodyPlant models" }
+    if (get_discrete_contact_solver() == DiscreteContactSolver::kTamsi) { ... }
 
-so Drake intends to refuse the constraint when the solver cannot honour it.
-The guard does not fire, and measurement shows why:
+The first is exactly the predicate that would catch this misuse.
 
-    MultibodyPlant(0.0)    time_step=0.0    get_discrete_contact_solver() = kSap
-    MultibodyPlant(1e-3)   time_step=1e-3   get_discrete_contact_solver() = kSap
+VERIFIED AGAINST THE INSTALLED BINARY, not the docstring:
 
-A CONTINUOUS plant reports the same contact solver as a discrete one, because
-that field records which discrete solver *would* be used and defaults to SAP
-whether or not any discrete solver will ever run. The documented check
-therefore passes vacuously in the one case where it is most needed: the
-predicate tested ("which discrete solver is configured") is not the predicate
-that matters ("will a discrete solver run at all").
+  1. The string "only supported for discrete" does NOT appear anywhere in the
+     drake 1.56.0 wheel. (Control: "Finalize" returns 413 hits and
+     "is_discrete" 20, so the binary-safe search does work. The only
+     distance-constraint guard string present is the TAMSI one.)
+  2. A bare call in a clean process -- two bodies, nothing else loaded --
+     ACCEPTS the constraint on a continuous plant and returns an id.
+  3. `MultibodyPlant.is_discrete()` is not even exposed in 1.56.0's Python
+     API, so the predicate the master guard uses is absent from this release.
 
-So the guard Drake documents for this situation cannot catch it, and the
-constraint is dropped from the continuous-mode dynamics with no exception and
-no warning. This is not a limitation that is correctly signposted; it is a
-signpost that does not work.
+So the `is_discrete()` guard postdates 1.56.0. What 1.56.0 has is only the
+TAMSI check, and that cannot help: a continuous plant reports
+`get_discrete_contact_solver() == kSap`, identical to a discrete one, because
+the field records which discrete solver *would* run and defaults to SAP
+regardless. Nothing rejects the constraint, and it is then absent from the
+continuous-mode dynamics with no exception and no warning.
+
+THE CLAIM, PRECISELY SCOPED
+---------------------------
+    In Drake 1.56.0 -- the latest released version at the time of testing,
+    with 1.22.0 through 1.56.0 the full set available on PyPI -- a distance
+    constraint added to a continuous MultibodyPlant is accepted and then
+    silently omitted from the dynamics. A guard for this exists on master and
+    is not in any released version tested.
+
+Any write-up must state the version and must state that the fix is on master.
+Without that, the claim is false about future Drake and unfair about present
+Drake.
+
+A NOTE ON METHOD, RECORDED BECAUSE IT WAS GOT WRONG TWICE
+---------------------------------------------------------
+The first account of this finding said "documented limitation, correctly
+signposted." That was inference, not measurement.
+
+The second account read the pydrake docstring, found the TAMSI guard, and
+concluded that Drake had written a guard for this case which checked the wrong
+predicate. Also wrong -- the docstring is generated from Doxygen `@throws`
+annotations, which do not enumerate every `throw` in the function body, so an
+undocumented guard is invisible there. Checking documentation twice is not
+checking twice.
+
+Only the third account went to the binary and to a bare call, and that is the
+one that holds. The lesson generalises to the whole study: when a claim
+concerns what a program DOES, the docstring is a secondary source.
 
 The trap is reachable by an ordinary route, not a perverse one. This study's own
 `adapter_drake.py` uses exactly this continuous-mode pattern --
