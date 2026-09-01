@@ -232,6 +232,72 @@ portable set: a refusal is the right answer, and both give it.
 \end{itemize}
 
 % ===========================================================================
+\section{First cross-engine result}\label{sec:xengine}
+% ===========================================================================
+
+With two columns in place, both engines were run over the portable axes with
+the reference as referee. No engine adjudicates itself, and neither adjudicates
+the other. Lagrangian pathway, 16 probe states per system:
+
+\begin{center}
+\begin{tabular}{@{}lr@{}}
+\toprule
+\textbf{Outcome} & \textbf{Systems} \\
+\midrule
+Both engines answered, both correct & 18 \\
+Both engines refused                & 1 \\
+Engines disagreed (one answered, one refused) & \textbf{0} \\
+An engine gave a wrong answer       & \textbf{0} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The single refusal is \texttt{nearsing\_e0}, the exactly-singular
+system, where refusal is the correct response. Both engines give it.
+
+\subsection{What this does and does not establish}
+
+\begin{callout}
+\textbf{This measures derivation, not integration.} The comparison asks each
+engine for the equations of motion and checks them against the reference. It
+does not integrate them. The timeouts recorded in the frozen baseline occur
+during simulation, not compilation --- \texttt{nearsing\_e1e-11}, for instance,
+compiles here in $0.1$\,s while timing out in the baseline's ten-second run.
+Agreement on the equations is therefore not yet agreement on the trajectories.
+\end{callout}
+
+\noindent Two differences visible in the run are worth recording even though
+neither is a failure.
+
+\begin{itemize}[leftmargin=1.4em,itemsep=0.3em]
+  \item \textbf{Accuracy on ill-conditioned systems.} At
+        \texttt{nearsing\_e1e-05}, MechanicsDSL matches the reference to
+        $5.0\times10^{-12}$ while SymPy reaches $1.7\times10^{-15}$ ---
+        roughly three orders of magnitude apart. Both pass the $10^{-8}$
+        threshold comfortably, so this is a difference in margin, not a
+        disagreement in verdict.
+  \item \textbf{Cost.} On \texttt{dof\_N3}, MechanicsDSL takes $25.7$\,s
+        against SymPy's $0.3$\,s. The non-monotonicity noted in TR-2026-01
+        \S7.3 reappears: $N=3$ costs $25.7$\,s and $N=4$ costs $2.9$\,s.
+\end{itemize}
+
+\subsection{Implication for the study's claim}
+
+The claim the study defends is that engines disagree on the same system and
+some do not warn you. \textbf{On these axes, at this stage, there is no
+disagreement to report.} That is a good result for both pieces of software and
+an inconvenient one for the paper, and it should be stated plainly rather than
+worked around.
+
+Three places remain where disagreement may yet appear: the integration
+behaviour these tests do not exercise; the pathways and knob settings where one
+engine times out and the other does not, which is a form of disagreement even
+without a wrong answer; and the third engine. If none of them produces
+disagreement, the honest result is a null one --- three independent engines
+agreeing on a deliberately adversarial case set --- which is publishable as
+such, but is a different paper from the one currently planned.
+
+% ===========================================================================
 \section{Status}
 % ===========================================================================
 
