@@ -471,6 +471,87 @@ engines differ in reach, not in honesty, and the study's original claim, that
 some engines fail silently, remains unsupported across every axis measured.
 \end{callout}
 
+\subsection{The last blind spot: the constrained pathway}\label{sec:constrained}
+
+Of the 45 adjudicated cases in the frozen baseline, 8 are constrained, and none
+had ever been checked against an independent derivation. They were scored on
+energy conservation and constraint residual alone --- the weakest instruments
+in the suite. Since a silent failure is by construction the case nobody thought
+to check for, the least-checked corner is where one would still be hiding.
+
+A closed-form reference for both constrained families was therefore written,
+again in \texttt{numpy} alone. Both have a constant diagonal mass matrix and
+holonomic constraints, so the accelerations and multipliers solve the
+saddle-point system
+\begin{equation}
+\begin{bmatrix} M & J^{\top} \\ J & 0 \end{bmatrix}
+\begin{bmatrix} \ddot q \\ \lambda \end{bmatrix}
+=
+\begin{bmatrix} F(q) \\ -\dot J \dot q \end{bmatrix},
+\end{equation}
+and both $J$ and $\dot J\dot q$ have closed forms for the quadratic rod and
+circle constraints involved. No symbolic algebra is required.
+
+\begin{center}
+\begin{tabular}{@{}lrrl@{}}
+\toprule
+\textbf{Case} & \textbf{Coords} & \textbf{Constraints} & \textbf{vs.\ reference} \\
+\midrule
+\texttt{loops\_N3}  & 4 & 3 & $5.79\times10^{-16}$ \\
+\texttt{redund\_R0} & 2 & 1 & $1.96\times10^{-16}$ \\
+\texttt{redund\_R1} & 2 & 2 & $1.08\times10^{-15}$ \\
+\texttt{redund\_R2} & 2 & 3 & $1.23\times10^{-14}$ \\
+\texttt{redund\_R3} & 2 & 4 & $2.55\times10^{-15}$ \\
+\texttt{redund\_R4} & 2 & 5 & $2.00\times10^{-15}$ \\
+\texttt{redund\_R6} & 2 & 7 & $3.27\times10^{-15}$ \\
+\texttt{redund\_R8} & 2 & 9 & $7.23\times10^{-15}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent \textbf{All eight agree, worst case $1.2\times10^{-14}$.} The
+redundancy family is the more interesting half: its constraint Jacobian keeps
+rank 1 while its row count grows to 9, so the multipliers become
+underdetermined while the accelerations stay unique. The engine tracks the
+reference throughout. An exactly redundant constraint set does not determine
+how the constraint force is shared out, only its total, and neither the engine
+nor the reference is troubled by that.
+
+\medskip
+\noindent Three points are recorded rather than corrected.
+
+\begin{itemize}[leftmargin=1.4em,itemsep=0.3em]
+  \item \textbf{\texttt{loops\_N4} and \texttt{loops\_N5} are baseline
+        timeouts}, not adjudicated cases; they are already counted among the
+        ten. Given time well past the 180\,s wall, \texttt{loops\_N4} agrees at
+        $7.7\times10^{-15}$ --- so its timeout is a cost limit, not an
+        inability.
+  \item \textbf{The suite's constrained initial conditions are rounded to four
+        decimal places}, so every constrained case begins about $10^{-4}$ off
+        its own constraint manifold. This is harmless, because the classifier
+        measures residual \emph{drift} from $t=0$ rather than its absolute
+        value, but a reader checking the residual directly would find a
+        violation and reasonably suspect the engine.
+  \item \textbf{The reference is deliberately left unstabilised} --- no
+        Baumgarte term, no projection --- because a stabilised reference would
+        be solving different equations from the ones the engines are asked for.
+        The resulting drift of order $10^{-4}$ over three seconds is the cost
+        of that choice, and it does not affect the derivation comparison, which
+        evaluates accelerations at given states.
+\end{itemize}
+
+\begin{callout}
+With this, \textbf{every adjudicated case in the study that can be checked
+against an independent derivation has been.} Coverage rises from the original
+\textbf{22 of 45} to \textbf{35 of 45}, counted directly from the run record:
+\texttt{dof} 7, \texttt{mass\_ratio} 14, \texttt{redundancy} 7,
+\texttt{near\_singular} 6, \texttt{loops} 1. The ten that remain are the whole
+of the \texttt{symbolic} axis, which is non-portable by construction --- nested
+cosine depth is only meaningful to an engine that consumes raw Lagrangians, so
+no library-independent reference for it can exist. No disagreement was found
+anywhere.
+\end{callout}
+
 \subsection{Open decisions}
 
 Unchanged: whether the \texttt{loops} axis enters the cross-engine claim, and
