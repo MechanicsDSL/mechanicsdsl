@@ -29,19 +29,36 @@ described.
 
 IS THIS FAIR TO DRAKE?
 ----------------------
-Yes, with the qualification stated plainly, and the qualification does not
-dissolve the finding.
+Yes, and more pointedly than first assumed.
 
-Constraints in Drake are supported by the discrete (SAP) solver, not the
-continuous one. That is documented, so this is a documented limitation rather
-than an algorithmic defect -- and used correctly Drake is EXCELLENT here:
-`main()` below shows the discrete solver maintaining the rod length to about
-1e-8 through a second of simulation, across several dead-centre crossings.
+Used correctly Drake is EXCELLENT here: `main()` below shows the discrete SAP
+solver maintaining the rod length to about 1e-8 through a second of simulation,
+across several dead-centre crossings. The algorithms are not in question.
 
-But the failure is silent, and the plant holds every piece of information
-needed to detect it: it knows a constraint is registered (num_constraints()
-== 1) and it knows it is in continuous mode (time_step() == 0.0). It could
-refuse, or warn, at Finalize() or at the first dynamics query. It does neither.
+The defect is in the precondition check. `AddDistanceConstraint` documents a
+guard against exactly this misuse:
+
+    Raises: RuntimeError if `this` MultibodyPlant's underlying contact
+            solver is not SAP.
+            (i.e. get_discrete_contact_solver() != DiscreteContactSolver::kSap)
+
+so Drake intends to refuse the constraint when the solver cannot honour it.
+The guard does not fire, and measurement shows why:
+
+    MultibodyPlant(0.0)    time_step=0.0    get_discrete_contact_solver() = kSap
+    MultibodyPlant(1e-3)   time_step=1e-3   get_discrete_contact_solver() = kSap
+
+A CONTINUOUS plant reports the same contact solver as a discrete one, because
+that field records which discrete solver *would* be used and defaults to SAP
+whether or not any discrete solver will ever run. The documented check
+therefore passes vacuously in the one case where it is most needed: the
+predicate tested ("which discrete solver is configured") is not the predicate
+that matters ("will a discrete solver run at all").
+
+So the guard Drake documents for this situation cannot catch it, and the
+constraint is dropped from the continuous-mode dynamics with no exception and
+no warning. This is not a limitation that is correctly signposted; it is a
+signpost that does not work.
 
 The trap is reachable by an ordinary route, not a perverse one. This study's own
 `adapter_drake.py` uses exactly this continuous-mode pattern --
