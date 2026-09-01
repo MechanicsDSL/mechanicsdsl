@@ -1,0 +1,434 @@
+%% ============================================================================
+%%  Technical Report TR-2026-04 -- Week 1 Findings
+%% ============================================================================
+
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\let\Bbbk\relax
+\usepackage{newtxtext,newtxmath}
+\usepackage[margin=1.0in]{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage[expansion=false]{microtype}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage[colorlinks=true,linkcolor=linknavy,urlcolor=linknavy]{hyperref}
+
+\definecolor{linknavy}{RGB}{20,60,110}
+\definecolor{codebg}{RGB}{247,247,244}
+\definecolor{coderule}{RGB}{205,205,198}
+\definecolor{warnrule}{RGB}{198,150,80}
+
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection}{0.7em}{}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{0.6em}{}
+\titlespacing*{\section}{0pt}{1.9ex plus .4ex}{0.9ex}
+\renewcommand{\arraystretch}{1.18}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\lstdefinestyle{sh}{basicstyle=\ttfamily\small,
+  backgroundcolor=\color{codebg}, frame=single,
+  rulecolor=\color{coderule}, framesep=6pt, breaklines=true,
+  showstringspaces=false, columns=fullflexible}
+\lstset{style=sh}
+
+\newenvironment{callout}
+  {\par\medskip\noindent\begin{tabular}{@{}p{0.94\textwidth}@{}}
+   \arrayrulecolor{warnrule}\hline\rule{0pt}{2.6ex}}
+  {\\[0.8ex]\hline\arrayrulecolor{black}\end{tabular}\par\medskip}
+
+\newcommand{\gitsha}[1]{\texttt{#1}}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\footnotesize TR-2026-04}
+\chead{\footnotesize Week 1 Findings}
+\rhead{\footnotesize \thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancypagestyle{plain}{\fancyhf{}\renewcommand{\headrulewidth}{0pt}}
+
+\begin{document}
+
+\begin{titlepage}
+\centering
+\vspace*{2.2cm}
+{\footnotesize\bfseries TECHNICAL REPORT TR-2026-04}\\[0.4em]
+{\footnotesize Silent-Failure Study \quad$\cdot$\quad Week 1 Summary}\\[2.0cm]
+{\LARGE\bfseries Three Engines, One System:\\[0.35em]
+ Integration Behaviour and the Amplitude Axis}\\[1.5cm]
+{\large Noah Parsons}\\[0.5cm]
+{\normalsize 25 August 2026}\\[2.0cm]
+\begin{minipage}{0.82\textwidth}
+\small
+\textbf{Engines:} MechanicsDSL 2.1.3 (\gitsha{a8dc2b2}),
+\texttt{sympy.physics.mechanics} 1.14.0, Drake 1.56.0.\\[0.4em]
+\textbf{Referee:} \texttt{reference.py} --- closed form, \texttt{numpy} only,
+sharing no library with any engine under test.\\[0.4em]
+\textbf{Disclosure:} the author maintains one of the engines measured. AI
+assistance was used. See Section~\ref{sec:disclosure}.
+\end{minipage}
+\vfill
+\end{titlepage}
+
+\begin{abstract}
+\noindent
+Week 1 of the study is complete: the same mechanical system is expressed in
+three engines, all three agree with an independent closed-form reference, and
+all three have now been compared on integration as well as on derivation. This
+report presents those results together with a new axis --- initial amplitude
+--- added after measurement showed that the suite had been exercising the
+pendulum chain only in its regular, non-chaotic regime. Across eight
+amplitudes spanning the quiescent to the inverted configuration, and across the
+chaotic regime at three degrees of freedom, no engine produced a wrong answer
+and no engine failed. One shared behaviour is recorded at the inverted
+equilibrium, where every engine \emph{and the independent reference} return
+success while producing motion the exact solution does not have. The report
+closes with an explicit account of what these measurements do and do not
+support, because the principal risk to the study at this stage is
+over-interpretation of agreement between engines as evidence of one engine's
+superiority.
+\end{abstract}
+
+\tableofcontents
+\bigskip
+
+% ===========================================================================
+\section{The amplitude axis}
+% ===========================================================================
+
+\subsection{Why it was added}
+
+\texttt{SCOPE.md} names four knobs, one of which is ``degenerate starting
+positions --- links perfectly aligned or fully extended.'' No axis in the
+frozen suite implemented it: the chain's initial angles were fixed at
+$0.3$\,rad for the first link and $0.15$ for the remainder.
+
+Measurement showed the cost of that omission. Perturbing the reference by
+$10^{-10}$ and integrating for ten seconds:
+
+\begin{center}
+\begin{tabular}{@{}llr@{}}
+\toprule
+\textbf{Initial amplitude} & \textbf{Chain} & \textbf{Perturbation growth} \\
+\midrule
+$0.3 / 0.15$\,rad (suite default) & $N=1$ & $2.1\times$ \\
+$0.3 / 0.15$\,rad                 & $N=3$ & $10.4\times$ \\
+$0.3 / 0.15$\,rad                 & $N=5$ & $21.7\times$ \\
+\midrule
+$3.0$\,rad                        & $N=2$ & $1.2\times10^{8}$ \\
+$3.0$\,rad                        & $N=3$ & $1.7\times10^{11}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Growth of order $10^{1}$ is polynomial: the motion is regular and
+quasi-periodic. Growth of order $10^{11}$ is exponential: the motion is
+chaotic. \textbf{The suite had been testing the chain only where it is well
+behaved}, in a study whose stated method is to dial knobs until things break.
+
+Amplitude is the cheapest hard knob available. It is a number in the initial
+conditions, so it transcribes into every engine without a modelling decision
+--- unlike \texttt{mass\_ratio} and \texttt{near\_singular}, which do not
+survive translation into a rigid-body engine (TR-2026-03 \S5). It is therefore
+the only axis besides \texttt{dof} that is portable to all three engines by
+direct transcription.
+
+\subsection{Relationship to the freeze}
+
+\begin{callout}
+\textbf{The frozen case matrix is untouched.} \texttt{systems.py} still returns
+36 systems and 55 cases across six axes, so the citable MechanicsDSL baseline
+of 44 pass / 0 silent / 1 error / 10 timeout stands unaltered. The new axis
+lives in its own module.
+\end{callout}
+
+\noindent Under the governance rule of the freeze record, harness growth is
+permitted when it adds adjudication without revising existing verdicts. Adding
+an axis \emph{prospectively}, declared before measurement, is extension.
+Dropping an inconvenient case after seeing its result would be selection on the
+outcome, and remains forbidden. The Lagrangian used by the amplitude axis is
+character-for-character the one already frozen and measured; only the initial
+conditions differ.
+
+% ===========================================================================
+\section{Results}
+% ===========================================================================
+
+\subsection{The amplitude sweep}
+
+Three-link chain, eight amplitudes, three engines, 16 probe states per case for
+the equation check, and a single pinned \texttt{DOP853} integration
+($\mathrm{rtol}=10^{-10}$, $\mathrm{atol}=10^{-12}$) for the energy check.
+
+\begin{center}
+\begin{tabular}{@{}rlrrrr@{}}
+\toprule
+\textbf{amp} & \textbf{regime} & \textbf{growth} & \multicolumn{3}{c}{\textbf{energy drift}} \\
+\cmidrule(l){4-6}
+(rad) & & & MechanicsDSL & SymPy & Drake \\
+\midrule
+$0.50$ & regular & $3.9$              & $2.201\!\times\!10^{-11}$ & $2.201\!\times\!10^{-11}$ & $2.201\!\times\!10^{-11}$ \\
+$1.00$ & regular & $3.8$              & $2.702\!\times\!10^{-11}$ & $2.702\!\times\!10^{-11}$ & $5.123\!\times\!10^{-11}$ \\
+$1.50$ & chaotic & $3.5\times10^{4}$  & $1.723\!\times\!10^{-10}$ & $1.723\!\times\!10^{-10}$ & $2.860\!\times\!10^{-10}$ \\
+$2.00$ & chaotic & $1.1\times10^{7}$  & $2.137\!\times\!10^{-10}$ & $2.137\!\times\!10^{-10}$ & $2.139\!\times\!10^{-10}$ \\
+$2.50$ & chaotic & $2.8\times10^{10}$ & $4.737\!\times\!10^{-10}$ & $4.767\!\times\!10^{-10}$ & $7.783\!\times\!10^{-10}$ \\
+$3.00$ & chaotic & $1.7\times10^{11}$ & $3.036\!\times\!10^{-10}$ & $3.036\!\times\!10^{-10}$ & $3.042\!\times\!10^{-10}$ \\
+$\pi$  & chaotic & $5.4\times10^{11}$ & $2.737\!\times\!10^{-10}$ & $2.737\!\times\!10^{-10}$ & $2.737\!\times\!10^{-10}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Equation-of-motion residuals against the reference were constant
+across the axis, as expected --- the equations do not depend on where the
+system starts: MechanicsDSL $1.89\times10^{-15}$, Drake $1.07\times10^{-14}$,
+SymPy $2.62\times10^{-14}$.
+
+\medskip
+\noindent\textbf{Twenty-four engine--amplitude pairs. Zero refusals. Zero wrong
+equations. Zero integration failures.} Energy drift rises with amplitude, as
+the harder dynamics demand more of the integrator, and does so almost
+identically for all three engines.
+
+\subsection{Integration in the chaotic regime}
+
+Separately, at three degrees of freedom with all links started at $3.0$\,rad
+(perturbation growth $1.3\times10^{11}$ over ten seconds):
+
+\begin{center}
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Engine} & \textbf{Energy drift} & \textbf{Trajectory diverges} \\
+\midrule
+reference    & $3.036\times10^{-10}$ & --- \\
+MechanicsDSL & $3.036\times10^{-10}$ & $6.96$\,s \\
+SymPy        & $3.036\times10^{-10}$ & $6.28$\,s \\
+Drake        & $3.042\times10^{-10}$ & $5.69$\,s \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Section~\ref{sec:interpretation} explains why the second column of
+this table is not a ranking.
+
+% ===========================================================================
+\section{The inverted equilibrium}\label{sec:equilibrium}
+% ===========================================================================
+
+At $\theta_i = \pi$ for all $i$ with zero velocity, the chain stands inverted.
+Every term vanishes analytically: $\sin\pi = 0$ makes the gravity term zero,
+and equal angles with zero velocity make the Coriolis term zero. The exact
+solution does not move.
+
+\begin{callout}
+\textbf{All three engines --- and the independent reference --- produce roughly
+20 radians of motion, and all four report success.}
+\end{callout}
+
+\noindent The mechanism is arithmetic, not algorithmic. In binary64,
+$\sin(\pi) = 1.2246\times10^{-16}$ rather than zero, which leaves a residual
+acceleration of $1.20\times10^{-15}$. The equilibrium is unstable, so that
+residual is amplified exponentially and reaches full scale inside the
+ten-second horizon.
+
+Because \texttt{reference.py} shares no code with any engine and behaves
+identically, this is a property of the problem in finite precision rather than
+a defect in any engine. \textbf{No finite-precision computation can remain at an
+unstable equilibrium.}
+
+\subsection{Why the case is kept}
+
+What it exposes is real and shared: every engine returns success and hands back
+a large trajectory where the exact answer is no motion at all, and none warns
+that the initial condition is an unstable equilibrium whose evolution is
+dominated by round-off. That is the study's thesis appearing as a
+\emph{universal blind spot} rather than as a difference between engines. It is
+a weaker result than a disagreement, and an honest one.
+
+\subsection{A correction}
+
+The axis was written with the expectation that ``an engine that reports motion
+there is wrong; an engine that reports no motion is right.'' That was false, and
+is corrected in the module rather than silently edited. The error is worth
+recording because it is the third instance in this study of an expectation that
+looked obviously right and was not --- the earlier two being the canonical
+$(q,p)$ state convention (TR-2026-01 \S5) and relative joint angles
+(TR-2026-03 \S3).
+
+% ===========================================================================
+\section{What these measurements do and do not support}\label{sec:interpretation}
+% ===========================================================================
+
+\begin{callout}
+The principal risk to the study at this stage is not a missing measurement. It
+is over-reading agreement between engines as evidence that one of them is
+better --- specifically, reading the table in \S2.2 as showing that
+MechanicsDSL outperforms established software.
+\end{callout}
+
+\noindent That reading does not survive examination, for three reasons.
+
+\subsection{The integrator was pinned, which removes the variable}
+
+Every engine supplied only its right-hand side. The integration was a single
+\texttt{scipy} \texttt{DOP853} call with identical tolerances for all of them.
+Energy drift is therefore dominated by the integrator they \emph{shared}, not
+by the engines. Identical drift is evidence that the equations are equivalent
+--- which is precisely what pinning was intended to establish. The measurement
+is structurally incapable of ranking the engines, and that was the point:
+without pinning, Drake's native integrator would have been compared against
+\texttt{scipy}'s and the difference attributed to the engine.
+
+\subsection{The differences are not differences}
+
+At $N=3$, chaotic: $3.036\times10^{-10}$, $3.036\times10^{-10}$,
+$3.042\times10^{-10}$. Drake differs by $0.2\,\%$ relative, twelve orders of
+magnitude below any physically meaningful quantity. Across the whole amplitude
+axis the worst values are $4.74$, $4.77$, and $7.78\times10^{-10}$ --- the same
+number to within a factor of $1.6$.
+
+\subsection{Divergence time is a restatement, not a ranking}
+
+In a chaotic system, the time at which one trajectory departs from another is
+set by the size of the initial difference between their right-hand sides, which
+was measured directly. With a Lyapunov rate $\lambda \approx 2.56\,$s$^{-1}$
+implied by the measured growth, the predicted crossing of a $10^{-6}$ threshold
+is $t = \lambda^{-1}\ln(10^{-6}/s)$ for a seed $s$:
+
+\begin{center}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Engine} & \textbf{RHS residual $s$} & \textbf{Predicted} & \textbf{Observed} \\
+\midrule
+MechanicsDSL & $3.6\times10^{-15}$ & $7.6$\,s & $6.96$\,s \\
+SymPy        & $6.1\times10^{-15}$ & $7.4$\,s & $6.28$\,s \\
+Drake        & $7.2\times10^{-14}$ & $6.4$\,s & $5.69$\,s \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The ordering and the magnitudes follow from the residuals alone.
+Divergence time carries no information that the residual column does not
+already carry.
+
+\subsection{Why Drake's residual is larger, and why it is not worse}
+
+Drake evaluates dynamics with a recursive articulated-body algorithm built for
+arbitrary topologies, contact, and real-time control. The reference and the
+symbolic engines perform a direct solve of one hand-derived Lagrangian for one
+fixed topology. More arithmetic operations accumulate more rounding. At
+$7\times10^{-14}$ this is a deliberate generality-for-precision trade, not a
+defect, and it is six orders of magnitude inside the adjudication tolerance.
+
+\subsection{Where the engines genuinely differ, MechanicsDSL is behind}
+
+\begin{center}
+\begin{tabular}{@{}lL{0.55\textwidth}@{}}
+\toprule
+\textbf{Measurement} & \textbf{Result} \\
+\midrule
+Compile time, \texttt{dof\_N3} & MechanicsDSL $25.7$\,s vs.\ SymPy $0.3$\,s --- roughly $85\times$ slower \\
+Hamiltonian pathway            & MechanicsDSL times out from $N=3$; SymPy and Drake do not \\
+Accuracy, \texttt{nearsing\_e1e-05} & MechanicsDSL $5.0\times10^{-12}$ vs.\ SymPy $1.7\times10^{-15}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{What can be claimed}
+
+\begin{quote}
+MechanicsDSL's equations of motion for the planar $N$-link chain agree with an
+independent closed-form derivation, with \texttt{sympy.physics.mechanics}, and
+with Drake to within $4\times10^{-15}$, and conserve energy indistinguishably
+from both under a pinned integrator, across amplitudes spanning the regular and
+chaotic regimes.
+\end{quote}
+
+\noindent That is a genuine, independently adjudicated correctness result, and
+it is defensible. A claim of superiority would rest on a $0.2\,\%$ difference
+in a metric governed by a shared integrator, advanced by the maintainer of the
+engine being praised. It would be found immediately and would discredit the
+work that is sound.
+
+% ===========================================================================
+\section{Status and outlook}
+% ===========================================================================
+
+\noindent\textbf{Week 1 is complete.} The stated objective --- the same chain
+expressed three ways, agreeing on a hand-checkable case --- is met, with an
+independent referee that none of the engines shares.
+
+\begin{center}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+ & \textbf{MechanicsDSL} & \textbf{SymPy} & \textbf{Drake} \\
+\midrule
+Derivation agrees with reference & yes & yes & yes \\
+Integration agrees, regular      & yes & yes & yes \\
+Integration agrees, chaotic      & yes & yes & yes \\
+Failures across the amplitude axis & 0 & 0 & 0 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{The standing problem}
+
+The claim the study set out to defend is that engines disagree on the same
+system and some do not warn you. \textbf{After derivation tests, integration
+tests, and a new axis reaching into the chaotic regime, no disagreement has been
+found.} The one shared finding, at the inverted equilibrium, is a blind spot
+common to all three engines and to the reference, so it does not separate them.
+
+Two honest paths remain, and the choice belongs to the study rather than to
+this report.
+
+\begin{enumerate}[leftmargin=1.5em,itemsep=0.35em]
+  \item \textbf{Look where the engines are not equivalent.} The remaining
+        untested ground is the constrained pathway, the \texttt{loops} axis,
+        and the region past the scaling walls, where MechanicsDSL returns no
+        answer and the others do. A timeout is a form of disagreement --- an
+        absence of an answer rather than a wrong one --- and the study's
+        scoring already treats it as a separate category.
+  \item \textbf{Report the null result.} Three independently developed engines,
+        adjudicated by a fourth derivation sharing no library with any of them,
+        agreeing to machine precision across an adversarial case set spanning
+        both dynamical regimes. That is a real and unusually well-supported
+        finding, strengthened by the bit-exact reproduction of the frozen
+        baseline. It is a different paper from the one planned.
+\end{enumerate}
+
+\subsection{Open decisions}
+
+Unchanged: whether the \texttt{loops} axis enters the cross-engine claim, and
+whether to re-express the two spring systems as pendulum chains so they become
+portable to a rigid-body engine (TR-2026-03 \S5). Integrator pinning is now
+settled in practice --- it is used, and \S4.1 records why.
+
+% ===========================================================================
+\section{Artefacts and disclosure}\label{sec:disclosure}
+% ===========================================================================
+
+\noindent\textbf{Artefacts.} \texttt{stress\_suite/axis\_amplitude.py},
+\texttt{sweep\_amplitude.py}, \texttt{compare\_trajectories.py},
+\texttt{out/amplitude.json}, \texttt{out/traj\_chaotic.json}. Committed at
+\gitsha{eb4ec64}.
+
+\begin{lstlisting}
+# inside WSL, where all three engines import in one process
+PYTHONPATH=<repo>/src ~/drake-venv/bin/python sweep_amplitude.py
+PYTHONPATH=<repo>/src ~/drake-venv/bin/python compare_trajectories.py --amp 3.0
+\end{lstlisting}
+
+\noindent\textbf{Disclosure.} The author is the maintainer of MechanicsDSL, one
+of the three engines measured. This is disclosed in every document of the
+study. The mitigation is structural: no engine adjudicates itself or any other,
+and the referee shares no library with any of them. AI assistance was used in
+the derivation, implementation, measurement, and preparation of this report.
+Every figure was produced by executing the committed code.
+
+\end{document}
