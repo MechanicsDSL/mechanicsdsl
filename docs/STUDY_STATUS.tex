@@ -45,10 +45,14 @@
 \vspace{0.7em}
 
 {\large\bfseries Where you are:} all three engines are built, validated, and
-compared.\\[0.2em]
-\textbf{No engine ever returned a wrong answer.} The study's original claim ---
-that engines fail silently --- is so far unsupported. What was found instead is
-a clean capability difference and a well-evidenced null result.
+compared. Two claims, and they came out differently:\\[0.3em]
+\textbf{(A) Engines can report success while returning wrong physics, unwarned
+--- \textcolor{okgreen}{SUPPORTED}.} At the inverted equilibrium all three
+engines \emph{and} the referee return $\sim$20\,rad of motion for a system that
+does not move, conserving energy the whole way, so every check passes it.\\[0.2em]
+\textbf{(B) Engines \emph{differ} in whether they do this ---
+\textcolor{holdred}{NOT supported}.} Every engine behaves identically
+everywhere measured, including in (A).
 
 \vspace{0.4em}
 
@@ -117,14 +121,15 @@ mode --- the acceptable one. The engines differ in reach, not in honesty.
 \section{The decision waiting for you}
 
 \begin{tabular}{@{}cL{0.90\textwidth}@{}}
-\todo & \textbf{Report the null result.} Three independent engines, adjudicated by a fourth derivation sharing no library, agreeing to machine precision across an adversarial set spanning both dynamical regimes. Real, well supported, and a different paper from the one planned. \\
-\todo & \textbf{Or keep hunting} in the untested ground: the constrained pathway and the \texttt{loops} axis, neither yet compared across engines. \\
+\todo & \textbf{Release the preprint now}, single-family, with the limitation in its own section rather than buried. Everything measured is done: derivation, integration, both regimes, amplitude, the 30-link ladder, and the constrained pathway. \\
+\todo & \textbf{Then add a second problem family --- the slider--crank.} This is the objection most likely to sink the paper: every result comes from one planar chain plus two constrained families built from the same ingredients. The slider--crank adds a prismatic joint, a genuine closed loop, and \textbf{dead-centre singularities} where the constraint Jacobian loses rank for \emph{geometric} reasons twice per revolution --- a failure mode nothing in the suite tests. It transcribes into all three engines without a modelling argument. Several days, not an evening. \\
 \end{tabular}
 
 \vspace{0.3em}
-Still open either way: whether \texttt{loops} enters the cross-engine claim, and
-whether to re-express the two spring systems as pendulum chains so they become
-portable to a rigid-body engine.
+If the slider--crank agrees, the null result generalises beyond one topology. If
+it disagrees --- and dead centre is the likeliest place in this study for that
+--- claim (B) becomes supported and you have the original paper after all.
+Still open either way: whether \texttt{loops} enters the cross-engine claim.
 
 \vspace{0.5em}
 {\color{rulegrey}\hrule height 0.5pt}

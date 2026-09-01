@@ -86,9 +86,16 @@ report presents those results together with a new axis --- initial amplitude
 pendulum chain only in its regular, non-chaotic regime. Across eight
 amplitudes spanning the quiescent to the inverted configuration, and across the
 chaotic regime at three degrees of freedom, no engine produced a wrong answer
-and no engine failed. One shared behaviour is recorded at the inverted
-equilibrium, where every engine \emph{and the independent reference} return
-success while producing motion the exact solution does not have. The report
+and no engine failed on any case the classifier scores as answerable.
+
+\textbf{The exception is the study's most important result.} At the inverted
+equilibrium every engine --- and the independent reference --- reports success
+while returning some twenty radians of motion for a system whose exact solution
+does not move, and does so while conserving energy to $2.7\times10^{-10}$. That
+the energy is conserved beautifully throughout the fall is precisely why every
+check in the suite passes it. This is the study's thesis demonstrated: success
+reported, physics wrong, no warning issued --- with the referee implicated
+alongside the engines. The report
 closes with an explicit account of what these measurements do and do not
 support, because the principal risk to the study at this stage is
 over-interpretation of agreement between engines as evidence of one engine's
@@ -173,6 +180,7 @@ the equation check, and a single pinned \texttt{DOP853} integration
 \cmidrule(l){4-6}
 (rad) & & & MechanicsDSL & SymPy & Drake \\
 \midrule
+$0.15$ & regular & $2.3$              & $7.302\!\times\!10^{-11}$ & $7.328\!\times\!10^{-11}$ & $7.445\!\times\!10^{-11}$ \\
 $0.50$ & regular & $3.9$              & $2.201\!\times\!10^{-11}$ & $2.201\!\times\!10^{-11}$ & $2.201\!\times\!10^{-11}$ \\
 $1.00$ & regular & $3.8$              & $2.702\!\times\!10^{-11}$ & $2.702\!\times\!10^{-11}$ & $5.123\!\times\!10^{-11}$ \\
 $1.50$ & chaotic & $3.5\times10^{4}$  & $1.723\!\times\!10^{-10}$ & $1.723\!\times\!10^{-10}$ & $2.860\!\times\!10^{-10}$ \\
@@ -186,8 +194,13 @@ $\pi$  & chaotic & $5.4\times10^{11}$ & $2.737\!\times\!10^{-10}$ & $2.737\!\tim
 
 \noindent Equation-of-motion residuals against the reference were constant
 across the axis, as expected --- the equations do not depend on where the
-system starts: MechanicsDSL $1.89\times10^{-15}$, Drake $1.07\times10^{-14}$,
-SymPy $2.62\times10^{-14}$.
+system starts. \textbf{Measured at $N=3$ over 16 probe states drawn uniformly
+from $[-0.5,0.5]$:} MechanicsDSL $1.89\times10^{-15}$, Drake
+$1.07\times10^{-14}$, SymPy $2.62\times10^{-14}$.
+
+\noindent These are \emph{not} the same quantity as the $N=5$ residuals used in
+Section~\ref{sec:divergence}, and the two orderings differ. Every residual in
+this report is therefore labelled with the system size it was measured at.
 
 \medskip
 \noindent\textbf{Twenty-four engine--amplitude pairs. Zero refusals. Zero wrong
@@ -197,8 +210,13 @@ identically for all three engines.
 
 \subsection{Integration in the chaotic regime}
 
-Separately, at three degrees of freedom with all links started at $3.0$\,rad
-(perturbation growth $1.3\times10^{11}$ over ten seconds):
+Separately, at three degrees of freedom with all links started at $3.0$\,rad.
+Perturbation growth here measures $1.26\times10^{11}$ over ten seconds against
+the $1.70\times10^{11}$ in the table above; the difference is the integrator
+tolerance used to measure it ($\mathrm{rtol}=10^{-10}$ here, $10^{-12}$ in the
+sweep). The implied Lyapunov rates agree to about one percent --- $2.556$
+against $2.586$\,s$^{-1}$ --- so this is one measurement at two instrument
+settings, not two results.
 
 \begin{center}
 \begin{tabular}{@{}lrr@{}}
@@ -292,29 +310,47 @@ magnitude below any physically meaningful quantity. Across the whole amplitude
 axis the worst values are $4.74$, $4.77$, and $7.78\times10^{-10}$ --- the same
 number to within a factor of $1.6$.
 
-\subsection{Divergence time is a restatement, not a ranking}
+\subsection{Divergence time cannot rank the engines}\label{sec:divergence}
 
 In a chaotic system, the time at which one trajectory departs from another is
-set by the size of the initial difference between their right-hand sides, which
-was measured directly. With a Lyapunov rate $\lambda \approx 2.56\,$s$^{-1}$
-implied by the measured growth, the predicted crossing of a $10^{-6}$ threshold
-is $t = \lambda^{-1}\ln(10^{-6}/s)$ for a seed $s$:
+governed by the size of the initial difference between their right-hand sides,
+amplified exponentially. With the Lyapunov rate $\lambda = 2.556\,$s$^{-1}$
+implied by the measured growth, a seed $s$ should cross a $10^{-6}$ threshold at
+$t = \lambda^{-1}\ln(10^{-6}/s)$. Using the residuals measured at the same
+$N=3$ as the trajectories themselves:
 
 \begin{center}
 \begin{tabular}{@{}lrrr@{}}
 \toprule
-\textbf{Engine} & \textbf{RHS residual $s$} & \textbf{Predicted} & \textbf{Observed} \\
+\textbf{Engine} & \textbf{$N{=}3$ residual $s$} & \textbf{Predicted} & \textbf{Observed} \\
 \midrule
-MechanicsDSL & $3.6\times10^{-15}$ & $7.6$\,s & $6.96$\,s \\
-SymPy        & $6.1\times10^{-15}$ & $7.4$\,s & $6.28$\,s \\
-Drake        & $7.2\times10^{-14}$ & $6.4$\,s & $5.69$\,s \\
+MechanicsDSL & $1.89\times10^{-15}$ & $7.86$\,s & $6.96$\,s \\
+Drake        & $1.07\times10^{-14}$ & $7.18$\,s & $5.69$\,s \\
+SymPy        & $2.62\times10^{-14}$ & $6.83$\,s & $6.28$\,s \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-\noindent The ordering and the magnitudes follow from the residuals alone.
-Divergence time carries no information that the residual column does not
-already carry.
+\begin{callout}
+\textbf{The band is predicted; the ordering is not.} Predicted times span
+$6.8$--$7.9$\,s and observed times span $5.7$--$7.0$\,s, so the mechanism is
+right. But the predicted order is MechanicsDSL, Drake, SymPy while the observed
+order is MechanicsDSL, SymPy, Drake --- Drake and SymPy are transposed.
+\end{callout}
+
+\noindent An earlier draft of this section claimed the ordering followed from
+the residuals. It does not, and the correction strengthens rather than weakens
+the conclusion.
+
+The reason the ordering fails is instructive. The three seeds span barely one
+order of magnitude ($1.9\times10^{-15}$ to $2.6\times10^{-14}$) while the
+amplification spans eleven. The effective seed is also the residual
+\emph{along the actual trajectory}, not the maximum over random probe states,
+and the threshold crossing is itself noisy in a chaotic system. Divergence time
+therefore has no resolving power between engines whose equations agree this
+closely: it measures the Lyapunov exponent, with the engine identity as a
+rounding error. That is a stronger reason not to rank engines with it than the
+one originally given.
 
 \subsection{Why Drake's residual is larger, and why it is not worse}
 
@@ -342,12 +378,18 @@ Accuracy, \texttt{nearsing\_e1e-05} & MechanicsDSL $5.0\times10^{-12}$ vs.\ SymP
 \subsection{What can be claimed}
 
 \begin{quote}
-MechanicsDSL's equations of motion for the planar $N$-link chain agree with an
-independent closed-form derivation, with \texttt{sympy.physics.mechanics}, and
-with Drake to within $4\times10^{-15}$, and conserve energy indistinguishably
-from both under a pinned integrator, across amplitudes spanning the regular and
-chaotic regimes.
+MechanicsDSL's equations of motion for the planar $N$-link chain and for both
+constrained families agree with an independent closed-form derivation, with
+\texttt{sympy.physics.mechanics}, and with Drake to within
+$3\times10^{-14}$, and conserve energy indistinguishably from both under a
+pinned integrator, across amplitudes spanning the regular and chaotic regimes.
 \end{quote}
+
+\noindent The bound is set by the largest residual anywhere in the study, not
+by the best one: SymPy at $2.62\times10^{-14}$ ($N=3$, \S2.1) and the worst
+constrained case at $1.23\times10^{-14}$ (\S5.3). An earlier draft claimed
+$4\times10^{-15}$, which is tighter than the data supports.
+$3\times10^{-14}$ is still an excellent number and survives checking.
 
 \noindent That is a genuine, independently adjudicated correctness result, and
 it is defensible. A claim of superiority would rest on a $0.2\,\%$ difference
@@ -378,36 +420,33 @@ Failures across the amplitude axis & 0 & 0 & 0 \\
 
 \subsection{The standing problem}
 
-The claim the study set out to defend is that engines disagree on the same
-system and some do not warn you. \textbf{After derivation tests, integration
-tests, and a new axis reaching into the chaotic regime, no disagreement has been
-found.} The one shared finding, at the inverted equilibrium, is a blind spot
-common to all three engines and to the reference, so it does not separate them.
+The claim the study set out to defend is that engines \emph{disagree} on the
+same system and some do not warn you. After derivation tests, integration tests,
+a new axis reaching into the chaotic regime, a ladder to thirty links, and the
+constrained pathway, \textbf{no engine-distinguishing disagreement has been
+found.} The two remaining subsections report the last two places it was looked
+for --- the scaling walls (\S\ref{sec:walls}) and the constrained pathway
+(\S\ref{sec:constrained}) --- and neither produced one. What those searches did
+produce is a three-tier capability result and the closure of the study's last
+blind spot.
 
-Two honest paths remain, and the choice belongs to the study rather than to
-this report.
-
-\begin{enumerate}[leftmargin=1.5em,itemsep=0.35em]
-  \item \textbf{Look where the engines are not equivalent.} The remaining
-        untested ground is the constrained pathway, the \texttt{loops} axis,
-        and the region past the scaling walls, where MechanicsDSL returns no
-        answer and the others do. A timeout is a form of disagreement --- an
-        absence of an answer rather than a wrong one --- and the study's
-        scoring already treats it as a separate category.
-  \item \textbf{Report the null result.} Three independently developed engines,
-        adjudicated by a fourth derivation sharing no library with any of them,
-        agreeing to machine precision across an adversarial case set spanning
-        both dynamical regimes. That is a real and unusually well-supported
-        finding, strengthened by the bit-exact reproduction of the frozen
-        baseline. It is a different paper from the one planned.
-\end{enumerate}
+The position at the end of Week 1 is therefore fixed, not open: claim (A) of
+\S\ref{sec:twoclaims} is demonstrated, claim (B) is not, and the honest write-up
+is a single-family study reporting a shared blind spot together with a
+capability comparison. The open question is no longer \emph{which path to take}
+but \emph{whether a second problem family fits before submission}, which
+\S\ref{sec:secondfamily} addresses.
 
 \subsection{Where the engines are not equivalent: the scaling walls}
 \label{sec:walls}
 
-Following path~1 above, each engine was climbed up a ladder of system sizes to
-$N=30$ --- the figure named in \texttt{SCOPE.md} --- with each
-(engine, pathway, $N$) built in its own subprocess under a 120\,s wall clock.
+Each engine was climbed up a ladder of system sizes to $N=30$ --- the figure
+named in \texttt{SCOPE.md} --- with each (engine, pathway, $N$) built in its own
+subprocess under a \textbf{120\,s} wall clock. Note that this differs from the
+\textbf{180\,s} wall used by the frozen baseline and quoted in \S5.3: the
+ladder is a separate experiment with its own budget, and the two numbers are
+not interchangeable. A wall is a property of the harness, so every timeout in
+this report is quoted with the budget that produced it.
 Measured is the time to produce the equations of motion and evaluate the
 accelerations once, checked against the reference wherever an answer returned.
 
@@ -464,12 +503,49 @@ Three observations follow.
 \end{itemize}
 
 \begin{callout}
-\textbf{But no engine gave a wrong answer.} Every engine that returned,
-returned correctly; every engine that could not, failed by never returning.
-Timing out is the \emph{loud} failure mode --- the acceptable one. So the
-engines differ in reach, not in honesty, and the study's original claim, that
-some engines fail silently, remains unsupported across every axis measured.
+\textbf{But no engine gave a wrong answer on the ladder.} Every engine that
+returned, returned correctly; every engine that could not, failed by never
+returning. Timing out is the \emph{loud} failure mode --- the acceptable one.
+On this axis the engines differ in reach, not in honesty.
 \end{callout}
+
+\subsection{Two claims, and only one of them is unsupported}
+\label{sec:twoclaims}
+
+The study's framing has been conflating two propositions that the evidence
+treats very differently. They should be separated, because one of them is a
+finding.
+
+\begin{center}
+\begin{tabular}{@{}L{0.42\textwidth}lL{0.34\textwidth}@{}}
+\toprule
+\textbf{Claim} & \textbf{Status} & \textbf{Evidence} \\
+\midrule
+\textbf{(A)} Dynamics engines can report success while returning wrong physics,
+without warning. & \textbf{Supported} & \S3: at the inverted equilibrium all
+three engines and the reference return $\sim$20\,rad of motion for a system
+that does not move, conserving energy throughout. A second instance: the
+harness accepts constrained initial conditions $10^{-4}$ off their own manifold
+without comment (\S5.3). \\
+\midrule
+\textbf{(B)} Engines \emph{differ} in whether they fail this way, so a user's
+choice of engine matters. & \textbf{Unsupported} & Every case measured: all
+three engines behave identically, including in the one instance of (A). \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Claim (A) is the study's original thesis and it is demonstrated,
+though in a weaker form than intended: the failure is a shared property of
+finite-precision computation on an ill-posed initial condition, not a defect
+distinguishing one engine from another. Claim (B) is what a cross-engine
+comparison was built to establish, and it is the one the data does not support.
+
+This distinction matters for how the work is written up. ``We found no silent
+failures'' would be false. ``We found a silent failure common to every engine
+tested, and no engine-specific ones'' is accurate, is more interesting, and
+implicates the measuring apparatus alongside the subjects --- which is a
+stronger position to write from than a bare null result.
 
 \subsection{The last blind spot: the constrained pathway}\label{sec:constrained}
 
@@ -541,16 +617,110 @@ nor the reference is troubled by that.
 \end{itemize}
 
 \begin{callout}
-With this, \textbf{every adjudicated case in the study that can be checked
-against an independent derivation has been.} Coverage rises from the original
-\textbf{22 of 45} to \textbf{35 of 45}, counted directly from the run record:
-\texttt{dof} 7, \texttt{mass\_ratio} 14, \texttt{redundancy} 7,
-\texttt{near\_singular} 6, \texttt{loops} 1. The ten that remain are the whole
-of the \texttt{symbolic} axis, which is non-portable by construction --- nested
-cosine depth is only meaningful to an engine that consumes raw Lagrangians, so
-no library-independent reference for it can exist. No disagreement was found
-anywhere.
+With this, \textbf{every adjudicated case that can be checked against a
+library-independent derivation has been.}
+
+\medskip
+\noindent\textbf{The coverage figures need care, because the two referees cover
+different sets and the increment is not additive.} Counted directly from the
+run record over the 45 adjudicated cases:
+
+\begin{center}
+\begin{tabular}{@{}lrL{0.42\textwidth}@{}}
+\toprule
+\textbf{Referee} & \textbf{Cases} & \textbf{Composition} \\
+\midrule
+SymPy oracle (original)       & 22 & Lagrangian pathway only, including 5 \texttt{symbolic} cases \\
+Library-independent reference & 35 & \texttt{dof} 7, \texttt{mass\_ratio} 14, \texttt{redundancy} 7, \texttt{near\_singular} 6, \texttt{loops} 1 \\
+\midrule
+\textbf{Union: any independent check} & \textbf{40} & \\
+\quad of which, gained by this work   & 18 & \\
+\quad of which, only the SymPy oracle reaches & 5 & the \texttt{symbolic} Lagrangian cases \\
+\midrule
+\textbf{Still unchecked}      & \textbf{5} & the \texttt{symbolic} Hamiltonian cases \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent So $22 + 18 = 40$, not $22 + 13 = 35$: the reference does not cover
+the five \texttt{symbolic} Lagrangian cases the SymPy oracle does, and no
+library-independent reference for them can exist --- nested cosine depth is
+only meaningful to an engine that consumes a raw Lagrangian, so there is no
+system to derive independently. The five \texttt{symbolic} Hamiltonian cases
+remain adjudicated by energy and structural checks alone, and that is now the
+whole of the study's residual blind spot.
+
+\medskip
+\noindent No disagreement was found anywhere in the 40.
 \end{callout}
+
+\subsection{The single-family limitation, and the second family}
+\label{sec:secondfamily}
+
+\begin{callout}
+\textbf{This is the objection most likely to sink the paper at review.} Every
+result in the study comes from one planar pendulum chain plus two constrained
+families built on the same ingredients: point masses, revolute freedom,
+quadratic constraints, a diagonal or trigonometric mass matrix. A reviewer will
+ask whether the agreement is a property of dynamics engines or a property of
+this particular problem. On the present evidence that question cannot be
+answered.
+\end{callout}
+
+\noindent A structurally different second family would convert the work from a
+case study into a study. The requirement is that it exercise machinery none of
+the current systems touch, while remaining transcribable into all three engines
+without a modelling argument.
+
+\subsubsection*{Recommended family: the slider--crank}
+
+\begin{center}
+\begin{tabular}{@{}L{0.30\textwidth}L{0.60\textwidth}@{}}
+\toprule
+\textbf{Property} & \textbf{Why it matters here} \\
+\midrule
+Mixed joint types & A prismatic slider alongside revolute joints. Nothing in the current suite has a translational degree of freedom, so an entire class of Jacobian structure is untested. \\
+Genuine closed loop & Crank, connecting rod, and slider form a loop whose constraint must be maintained, unlike the open chain. \\
+\textbf{Dead-centre singularities} & At top and bottom dead centre the mechanism is at a \emph{kinematic} singularity: the constraint Jacobian loses rank for geometric reasons, not numerical ones. This is a failure mode the study has not tested at all --- \texttt{near\_singular} degrades a mass matrix, whereas this degrades a constraint Jacobian at a specific configuration the mechanism passes through every cycle. \\
+Portable by transcription & Drake models it natively; SymPy takes it through \texttt{LagrangesMethod} with holonomic constraints; MechanicsDSL through its constrained pathway. No modelling argument is required of any of them, unlike \texttt{near\_singular} (TR-2026-03 \S5). \\
+Standard and citable & A textbook mechanism with a known closed-form solution, so the library-independent reference is tractable. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The dead-centre behaviour is the reason to prefer it over a cart-pole
+or a double slider. A cart-pole adds a prismatic joint but no loop and no
+singularity; it would test less than the chain already does. The slider--crank
+passes through a configuration where the mechanism's motion is genuinely
+indeterminate at first order, twice per revolution, in normal operation --- and
+what an engine reports there is exactly the study's question.
+
+\subsubsection*{Scheduling}
+
+\noindent The work is a reference implementation, three adapters, and a sweep:
+comparable to the whole of Week 1, which took roughly a day of concentrated
+effort but rested on infrastructure that now exists. The referee pattern,
+the adapter interfaces, the pinned-integrator comparison, and the scoring are
+all reusable. A realistic estimate is several days rather than several weeks,
+but it is not a single evening, and it competes with an academic term.
+
+\noindent\textbf{Recommendation.} Do not gate the preprint on it.
+
+\begin{enumerate}[leftmargin=1.5em,itemsep=0.3em]
+  \item Release the preprint as a single-family study, with the limitation
+        stated plainly in its own section rather than buried in threats to
+        validity. A stated limitation is a boundary; an unstated one that a
+        reviewer discovers is a flaw.
+  \item Add the slider--crank afterwards. If it agrees, the null result becomes
+        substantially stronger and generalises beyond one topology. If it
+        disagrees --- and the dead-centre singularity is the most likely place
+        in this study for an engine to differ --- then claim (B) of
+        \S\ref{sec:twoclaims} becomes supported, and that is the original paper
+        after all.
+\end{enumerate}
+
+\noindent Either outcome is worth having, and neither requires delaying what is
+already finished.
 
 \subsection{Open decisions}
 
