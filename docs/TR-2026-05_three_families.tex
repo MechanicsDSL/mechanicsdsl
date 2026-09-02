@@ -1,0 +1,419 @@
+%% ============================================================================
+%%  Technical Report TR-2026-05 -- Three Problem Families
+%% ============================================================================
+
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\let\Bbbk\relax
+\usepackage{newtxtext,newtxmath}
+\usepackage[margin=1.0in]{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage[expansion=false]{microtype}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage[colorlinks=true,linkcolor=linknavy,urlcolor=linknavy]{hyperref}
+
+\definecolor{linknavy}{RGB}{20,60,110}
+\definecolor{codebg}{RGB}{247,247,244}
+\definecolor{coderule}{RGB}{205,205,198}
+\definecolor{warnrule}{RGB}{198,150,80}
+
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection}{0.7em}{}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{0.6em}{}
+\titlespacing*{\section}{0pt}{1.9ex plus .4ex}{0.9ex}
+\renewcommand{\arraystretch}{1.18}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\lstdefinestyle{sh}{basicstyle=\ttfamily\small,
+  backgroundcolor=\color{codebg}, frame=single,
+  rulecolor=\color{coderule}, framesep=6pt, breaklines=true,
+  showstringspaces=false, columns=fullflexible}
+\lstset{style=sh}
+
+\newenvironment{callout}
+  {\par\medskip\noindent\begin{tabular}{@{}p{0.94\textwidth}@{}}
+   \arrayrulecolor{warnrule}\hline\rule{0pt}{2.6ex}}
+  {\\[0.8ex]\hline\arrayrulecolor{black}\end{tabular}\par\medskip}
+
+\newcommand{\gitsha}[1]{\texttt{#1}}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\footnotesize TR-2026-05}
+\chead{\footnotesize Three Problem Families}
+\rhead{\footnotesize \thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancypagestyle{plain}{\fancyhf{}\renewcommand{\headrulewidth}{0pt}}
+
+\begin{document}
+
+\begin{titlepage}
+\centering
+\vspace*{2.2cm}
+{\footnotesize\bfseries TECHNICAL REPORT TR-2026-05}\\[0.4em]
+{\footnotesize Silent-Failure Study}\\[2.0cm]
+{\LARGE\bfseries Three Problem Families,\\[0.35em]
+ and One Engine-Specific Defect}\\[1.5cm]
+{\large Noah Parsons}\\[0.5cm]
+{\normalsize 31 August 2026}\\[2.0cm]
+\begin{minipage}{0.82\textwidth}
+\small
+\textbf{Engines:} MechanicsDSL 2.1.3 (\gitsha{a8dc2b2}),
+\texttt{sympy.physics.mechanics} 1.14.0, Drake 1.56.0.\\[0.4em]
+\textbf{Referee:} closed-form \texttt{numpy} references, sharing no library
+with any engine under test.\\[0.4em]
+\textbf{Disclosure:} the author maintains one of the engines measured. AI
+assistance was used. See \S7.
+\end{minipage}
+\vfill
+\end{titlepage}
+
+\begin{abstract}
+\noindent
+The study's principal weakness was that every result came from one planar
+pendulum chain. Two structurally different families were therefore added: a
+slider--crank, which introduces a prismatic joint, a closed loop, and dead
+centres where the effective inertia collapses for geometric reasons; and a
+cart--pole, a tree with mixed joint types and a configuration-dependent mass
+matrix whose determinant collapses when the cart is light. Across 72
+engine--case pairs spanning both new families there were no disagreements and
+no refusals: all three engines matched the independent references to
+$1.3\times10^{-14}$ or better, on derivation and on integration, including at
+the degenerate configurations. One genuine engine-specific defect was found and
+is reported in \S5: Drake's continuous-mode API accepts a distance constraint
+and silently omits it from the dynamics. Its provenance is traced to a specific
+commit, its version range is bounded by tags, and the maintainers' own stated
+intent is recorded, which narrows the finding considerably. \S6 documents a
+diagnostic that caught three of this study's own errors and is the most
+transferable result here.
+\end{abstract}
+
+\tableofcontents
+\bigskip
+
+% ===========================================================================
+\section{Why more families}
+% ===========================================================================
+
+Everything through Week 1 rested on one planar pendulum chain plus two
+constrained systems built from the same ingredients: point masses, revolute
+freedom, quadratic constraints. A reviewer would reasonably ask whether the
+agreement observed between engines is a property of dynamics engines or a
+property of that problem, and on that evidence the question could not be
+answered.
+
+Two families were added, chosen so that each exercises machinery the chain does
+not and each degenerates by a different mechanism.
+
+\begin{center}
+\begin{tabular}{@{}lL{0.28\textwidth}L{0.32\textwidth}@{}}
+\toprule
+\textbf{Family} & \textbf{New machinery} & \textbf{Degeneracy} \\
+\midrule
+Pendulum chain (1) & --- & none intrinsic; amplitude drives it into chaos \\
+Slider--crank (2)  & prismatic joint; closed loop & dead centre: transmission ratio $\mathrm{d}x/\mathrm{d}\theta \to 0$ \\
+Cart--pole (3)     & mixed joints in a tree; coupled configuration-dependent mass matrix & light cart: $\det M \to 0$ at vertical \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ===========================================================================
+\section{Family 2: the slider--crank}
+% ===========================================================================
+
+\subsection{Construction}
+
+Crank pivot at the origin, crank length $r$, angle $\theta$; crank pin at
+$P = (r\cos\theta, r\sin\theta)$; slider at $S = (x, 0)$ on the $x$-axis;
+massless rod of length $l$ joining them. Coordinates $q = (\theta, x)$, one
+constraint, one degree of freedom. The constraint collapses pleasantly:
+\begin{equation}
+g = |S-P|^2 - l^2 = x^2 - 2rx\cos\theta + r^2 - l^2,
+\end{equation}
+the $\sin^2+\cos^2$ becoming a constant, so $J$ and $\dot J\dot q$ have closed
+forms and the reference needs no symbolic algebra.
+
+\subsection{Why dead centre is the point}
+
+At $\theta = 0$ and $\theta = \pi$ the crank and rod are collinear and
+$\mathrm{d}x/\mathrm{d}\theta = 0$: the slider is instantaneously stationary
+however fast the crank turns, so its mass contributes nothing to the effective
+inertia
+\begin{equation}
+M_{\text{eff}}(\theta) = m_c r^2 + m_s\left(\frac{\mathrm{d}x}{\mathrm{d}\theta}\right)^2 .
+\end{equation}
+With a heavy slider this collapses twice per revolution --- by $1.1\times10^{2}$
+at $m_s/m_c = 10^2$ and $1.1\times10^{6}$ at $10^6$. Unlike the suite's
+\texttt{near\_singular} axis, which degrades a hand-built mass matrix, this
+degeneracy is produced by geometry in normal operation.
+
+\subsection{Results}
+
+Two knobs: rod-to-crank ratio $l/r$ from $3.0$ toward the folding configuration
+at $1.01$, and slider-to-crank mass ratio to $10^6$. Each engine checked at 16
+probe states on the manifold \emph{and} evaluated exactly at both dead centres,
+then integrated for 5\,s under a pinned \texttt{DOP853}.
+
+\begin{center}
+\begin{tabular}{@{}rrlrrr@{}}
+\toprule
+$l/r$ & $m_s/m_c$ & \textbf{Engine} & \textbf{EOM vs.\ ref} & \textbf{Energy drift} & \textbf{Constraint} \\
+\midrule
+$3$    & $10^2$ & MechanicsDSL & $1.22\times10^{-15}$ & $1.51\times10^{-10}$ & $1.81\times10^{-10}$ \\
+$3$    & $10^2$ & SymPy        & $5.55\times10^{-16}$ & $1.51\times10^{-10}$ & $1.81\times10^{-10}$ \\
+$3$    & $10^2$ & Drake (disc.) & ---                 & ---                  & $1.77\times10^{-6}$ \\
+$1.5$  & $10^2$ & MechanicsDSL & $4.17\times10^{-15}$ & $2.11\times10^{-10}$ & $9.12\times10^{-10}$ \\
+$1.05$ & $10^2$ & MechanicsDSL & $5.66\times10^{-15}$ & $5.40\times10^{-10}$ & $1.40\times10^{-9}$ \\
+$3$    & $10^4$ & MechanicsDSL & $1.97\times10^{-15}$ & $2.92\times10^{-10}$ & $8.15\times10^{-10}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Both symbolic engines agree with the reference and with each other,
+and hold the rod to $\sim10^{-9}$ through repeated dead-centre crossings even
+at $l/r = 1.05$.
+
+\begin{callout}
+\textbf{Drake participates differently here, and the reason is a result rather
+than a choice.} Its continuous-mode API accepts the loop-closure constraint and
+silently ignores it (\S5), so a continuous comparison would measure that defect
+instead of the dynamics. Drake is therefore run in \emph{discrete} mode, where
+the constraint is honoured --- but a discrete plant integrates itself and
+cannot share the pinned integrator, so it is scored on constraint satisfaction
+rather than against the same trajectory. The asymmetry is reported rather than
+smoothed over.
+\end{callout}
+
+% ===========================================================================
+\section{Family 3: the cart--pole}
+% ===========================================================================
+
+\subsection{Why a tree}
+
+Both earlier families require a constraint or a loop, which is precisely where
+Drake's continuous API stops being usable. That makes them poor ground for a
+three-way comparison: one engine is excluded for a reason unrelated to its
+dynamics. The cart--pole is a \emph{tree} --- prismatic cart, revolute pole, no
+constraint --- so every engine participates in its ordinary mode with nothing
+set aside, and the comparison is genuinely three-way under one integrator.
+
+It remains structurally new: mixed joint types in one mechanism, and a coupled
+configuration-dependent mass matrix, where the study's two spring systems had
+constant ones.
+
+\subsection{Construction and degeneracy}
+
+Cart of mass $M$ at position $x$; pole of length $l$ carrying point mass $m$ at
+angle $\theta$ from the downward vertical. With $q = (x,\theta)$,
+\begin{equation}
+M(q) = \begin{bmatrix} M+m & ml\cos\theta \\ ml\cos\theta & ml^2\end{bmatrix},
+\qquad
+\det M(q) = ml^2\left(M + m\sin^2\theta\right).
+\end{equation}
+The determinant is bounded away from zero for a heavy cart, but as the cart is
+made light \emph{and} the pole passes through vertical it collapses --- by
+$10^{6}$ at $M/m = 10^{-6}$, twice per swing.
+
+\begin{callout}
+This is a different mechanism from the slider--crank's. There the effective
+inertia collapsed because a transmission ratio vanished. Here the mass matrix
+itself becomes near-singular because a nearly massless cart cannot resist the
+pole's horizontal reaction. Both are geometric rather than hand-built, and they
+degenerate for unrelated reasons, which is why both are worth having.
+\end{callout}
+
+\subsection{Results}
+
+Five mass ratios $\times$ four initial angles $\times$ three engines, 16 probe
+states each plus a 10\,s pinned integration.
+
+\begin{center}
+\begin{tabular}{@{}rrrrr@{}}
+\toprule
+$M/m$ & $\det M$ range & \textbf{MechanicsDSL} & \textbf{SymPy} & \textbf{Drake} \\
+\midrule
+$10^{-2}$ & $10^{2}$ & $5.02\times10^{-15}$ & $0.00$ & $2.05\times10^{-16}$ \\
+$10^{-4}$ & $10^{4}$ & $7.49\times10^{-15}$ & $0.00$ & $5.55\times10^{-17}$ \\
+$10^{-6}$ & $10^{6}$ & $1.25\times10^{-14}$ & $0.00$ & $1.96\times10^{-16}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Energy drift was $\sim10^{-10}$ for all three engines at every mass
+ratio and starting angle. \textbf{Drake's residuals are the smallest of the
+three} --- $10^{-16}$ against $10^{-14}$ --- which is what a recursive
+rigid-body algorithm should achieve on a two-body tree it was designed for, and
+is the reverse of the ordering on the pendulum chain, where the direct
+closed-form solve was tighter.
+
+\subsection{Totals}
+
+\begin{center}
+\begin{tabular}{@{}lr@{}}
+\toprule
+Engine--case pairs across families 2 and 3 & 72 \\
+Disagreements & \textbf{0} \\
+Refusals      & \textbf{0} \\
+Worst residual, any engine, any case & $1.3\times10^{-14}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ===========================================================================
+\section{The one engine-specific defect}
+% ===========================================================================
+
+\subsection{What happens}
+
+On a continuous \texttt{MultibodyPlant} carrying a distance constraint, Drake
+1.56.0 accepts the constraint, finalises, reports
+\texttt{num\_constraints() == 1}, and then returns a \emph{diagonal} mass
+matrix. The rod is absent from the equations; the computed slider acceleration
+is exactly $0.0$ against $-0.993$ from the closed form. No exception, no
+warning. In discrete mode the same model is correct, holding the rod to
+$\sim10^{-8}$ at $\mathrm{d}t = 10^{-4}$.
+
+\subsection{Provenance, from the artefact}
+
+\begin{center}
+\begin{tabular}{@{}lL{0.56\textwidth}@{}}
+\toprule
+2022-12-07 & \gitsha{baeadb5a4}, \#18196 introduces \texttt{AddDistanceConstraint} together with \texttt{if (!is\_discrete()) throw}. \\
+2026-02-17 & \gitsha{73c987a60}, \#24079 removes that build-time throw. \\
+\midrule
+\multicolumn{2}{@{}l}{From \texttt{git tag -{}-contains}: guard present \textbf{v1.11.0}--\textbf{v1.50.0},} \\
+\multicolumn{2}{@{}l}{absent \textbf{v1.51.0} onward. \#24079 merged the day v1.50.0 released and} \\
+\multicolumn{2}{@{}l}{missed that cut --- which release dates alone could not have settled.} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{The removal was deliberate and the risk was anticipated}
+
+\#24079's discussion states the reasoning: to allow continuous-time plants to
+be used with CENIC, the constraint-adding methods cannot throw at build time.
+The maintainers identified the consequence themselves --- with the build-time
+throw gone, every constraint-sensitive continuous-time method must throw
+instead, or the plant computes what one maintainer called ``wrong answers''
+(Jeremy Nimmer, \#24079, 2026-02-09). The PR added such a throw to
+\texttt{EvalTimeDerivatives} and noted that other constraint-aware methods
+still need the same treatment, with a manifest opened to work through the
+public API.
+
+\textbf{This is therefore an incomplete migration, not a guard dropped
+carelessly}, and the report should say so.
+
+\subsection{The precise gap}
+
+\begin{center}
+\begin{tabular}{@{}lc@{}}
+\toprule
+\textbf{Method, continuous plant with a constraint} & \textbf{Guarded?} \\
+\midrule
+\texttt{EvalTimeDerivatives}          & \textbf{throws} \\
+\texttt{CalcMassMatrix}               & no \\
+\texttt{CalcBiasTerm}                 & no \\
+\texttt{CalcGravityGeneralizedForces} & no \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The high-level entry point is protected; the three low-level
+accessors are not. Composing them --- $\texttt{solve}(M, \tau_g - Cv)$, the
+natural route when one wants accelerations rather than a simulation --- yields
+unconstrained dynamics silently. This study's own Drake adapter took exactly
+that route; had it called \texttt{EvalTimeDerivatives}, Drake would have caught
+the misuse on the first day.
+
+\subsection{Scope, and what it is worth}
+
+\begin{callout}
+\textbf{Measured} in Drake 1.56.0. \textbf{Read, not run} on master, whose
+source shows no continuous-mode rejection either --- but \#24079's own comment
+implies continuous support is integrator-dependent, so master's behaviour
+cannot be settled by reading at all. Any claim about master needs a master
+build.
+\end{callout}
+
+\noindent Honestly weighed: one open case in a migration the maintainers
+documented and are working through. It merits an upstream issue and it is the
+study's only engine-distinguishing silent failure --- which is what claim (B)
+of TR-2026-04 \S5.2 required and the single-family study did not have. It is
+not, by itself, a paper.
+
+% ===========================================================================
+\section{The exact-number diagnostic}
+% ===========================================================================
+
+Three times in this study an engine appeared to disagree, and three times the
+fault was in the comparison. All three shared a signature: \textbf{a relative
+error that was exactly the same suspiciously round number in every case}.
+
+\begin{center}
+\begin{tabular}{@{}lL{0.40\textwidth}l@{}}
+\toprule
+\textbf{Error} & \textbf{Cause} & \textbf{Cleanly wrong at} \\
+\midrule
+$4.53$ (then exactly $1.00$ at dead centre) & Hamiltonian pathway integrates $(q,p)$ and returns $\dot p$, compared against $\ddot q$ & vanished at $N{=}1$, where $M=I$ \\
+$2.5$--$6.4$, growing in $N$ & Drake reports \emph{relative} joint angles; the Lagrangian uses \emph{absolute} & exact at $N{=}1$ \\
+exactly $2.00$, all 20 cases & pole offset rotated about $+y$ mirrors the mechanism; flips the cart's acceleration & --- \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The last is the clearest. A sign flip gives
+$|a_d - a_r| = 2|a_r|$, which divides out to exactly $2$ wherever
+$|a_r| > 1$ --- so the number is a fingerprint of a mirrored convention, not a
+measurement of anything physical.
+
+\begin{callout}
+\textbf{The rule, with three independent confirmations:} in a cross-engine
+comparison, a relative error that is exactly $1.00$ or exactly $2.00$ across
+every case is a convention mismatch in the comparison, not a defect in the
+engine. A second tell is an error that vanishes in a degenerate case
+($N=1$, $M=I$, $\theta=0$) and grows away from it: genuine derivation errors
+rarely switch on at a particular system size, whereas convention mismatches
+characteristically do, because degenerate cases make differing conventions
+coincide.
+\end{callout}
+
+\noindent Checking this costs two minutes and would have produced three
+fabricated findings against widely used software had it been skipped.
+
+% ===========================================================================
+\section{Position of the study, and disclosure}
+% ===========================================================================
+
+Three problem families, three engines, independent closed-form referees sharing
+no library with any engine under test. Across derivation, integration, regular
+and chaotic regimes, amplitude, a thirty-link ladder, constrained pathways,
+closed loops with dead centres, and mixed joints with collapsing mass matrices:
+\textbf{no engine returned a wrong answer in its ordinary mode of use}, with
+the single exception of \S5.
+
+The engines differ in \emph{reach} --- idiomatic SymPy walls at 5 links,
+MechanicsDSL at 12, Drake handles 30 at constant cost --- and in one API guard.
+They do not differ in honesty.
+
+\medskip
+\noindent\textbf{Artefacts.} \texttt{reference\_slidercrank.py},
+\texttt{reference\_cartpole.py}, \texttt{sweep\_slidercrank.py},
+\texttt{sweep\_families.py}, \texttt{finding\_drake\_constraint.py} (standalone;
+imports \texttt{numpy} and \texttt{pydrake} only),
+\texttt{out/families.json}. Committed at \gitsha{f18a514}.
+
+\medskip
+\noindent\textbf{Disclosure.} The author is the maintainer of MechanicsDSL, one
+of the three engines measured. No engine adjudicates itself or any other; the
+referees share no library with any of them. AI assistance was used throughout.
+Every figure was produced by executing the committed code.
+
+\end{document}
