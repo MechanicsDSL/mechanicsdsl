@@ -1,0 +1,1120 @@
+%% ============================================================================
+%%  Library-Independent Adjudication of Three Rigid-Body Dynamics Engines
+%%  Draft v0.3 -- blanks filled from the run record.
+%%  Compile: pdflatex paper_silent_failure.tex  (twice for refs/ToC)
+%% ============================================================================
+
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\let\Bbbk\relax
+\usepackage{newtxtext,newtxmath}
+\usepackage[margin=1.05in]{geometry}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage[expansion=false]{microtype}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{titlesec}
+\usepackage{caption}
+\usepackage[colorlinks=true,linkcolor=linknavy,urlcolor=linknavy,citecolor=linknavy]{hyperref}
+
+\definecolor{linknavy}{RGB}{20,60,110}
+\definecolor{codebg}{RGB}{247,247,244}
+\definecolor{coderule}{RGB}{205,205,198}
+\definecolor{warnrule}{RGB}{198,150,80}
+\definecolor{todored}{RGB}{150,45,45}
+
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection}{0.7em}{}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{0.6em}{}
+\titlespacing*{\section}{0pt}{2.0ex plus .4ex}{1.0ex}
+
+\renewcommand{\arraystretch}{1.15}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\captionsetup{font=small,labelfont=bf}
+
+\lstdefinestyle{sh}{basicstyle=\ttfamily\small,
+  backgroundcolor=\color{codebg}, frame=single,
+  rulecolor=\color{coderule}, framesep=6pt, breaklines=true,
+  showstringspaces=false, columns=fullflexible}
+\lstset{style=sh}
+
+\newenvironment{callout}
+  {\par\medskip\noindent\begin{tabular}{@{}p{0.94\textwidth}@{}}
+   \arrayrulecolor{warnrule}\hline\rule{0pt}{2.6ex}}
+  {\\[0.8ex]\hline\arrayrulecolor{black}\end{tabular}\par\medskip}
+
+%% Author-facing marker for the one item that cannot be filled by measurement.
+\newcommand{\authortodo}[1]{\textcolor{todored}{\textbf{[#1]}}}
+
+\title{\bfseries Library-Independent Adjudication of Three Rigid-Body\\
+Dynamics Engines: Agreement, Divergence in Reach,\\
+and a Shared Failure at Unstable Equilibria}
+
+\author{Noah Parsons\\[0.3em]
+{\normalsize Independent Researcher, Newcastle, Wyoming}\\
+{\normalsize ORCID \href{https://orcid.org/0009-0000-7224-6040}{0009-0000-7224-6040}}}
+
+\date{Draft v0.3 --- \today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+Software that derives and integrates equations of motion is widely trusted to be
+correct, yet independent implementations are rarely compared against one another
+under adjudication that shares no code with any of them. This paper reports a
+differential study of three rigid-body dynamics engines --- a symbolic compiler,
+a general-purpose computer-algebra mechanics package, and a recursive
+articulated-body library --- evaluated against a closed-form reference
+implemented in NumPy alone that shares no library with any engine under test.
+
+A 55-case adversarial suite spanning six axes was frozen before measurement, and
+the comparison was extended to three structurally distinct mechanisms: an
+$N$-link chain exercised from its regular regime into chaos, a slider--crank
+whose closed loop and prismatic joint produce dead-centre configurations where
+the effective inertia varies by four orders of magnitude over one revolution,
+and a cart--pole whose mass-matrix determinant collapses by six orders of
+magnitude twice per swing. Integration was pinned to a single scheme with
+identical tolerances for all engines, which removes the integrator as a variable
+and, by construction, forecloses any ranking of the engines on integration
+accuracy.
+
+The engines agree with the reference and with one another to within
+$3\times10^{-14}$ on equations of motion and indistinguishably on energy
+conservation, across both dynamical regimes and across constrained and
+unconstrained pathways. Where they differ, they differ in reach rather than in
+correctness: the three return equations for chains of 5, 12 and 30 links
+respectively, and every engine that returned an answer returned a correct one.
+No engine was observed to return a wrong answer while reporting success.
+
+One failure was observed, and it is shared. At an unstable equilibrium, all
+three engines and the independent reference report success while returning
+approximately 20 radians of motion for a configuration whose exact solution does
+not move; none warns that the trajectory is dominated by round-off amplified by
+the instability. Silent failure in these tools is therefore a property of
+finite-precision dynamics rather than a property that distinguishes
+implementations --- a result that constrains what differential testing between
+implementations can be expected to reveal about correctness in this domain.
+\end{abstract}
+
+\tableofcontents
+\bigskip
+
+% ===========================================================================
+\section{Introduction}
+% ===========================================================================
+
+\subsection{The problem}
+Scientific results increasingly rest on software that derives the equations
+governing a physical system and integrates them forward. A researcher modelling
+a joint, a mechanism, or a robot selects an engine, states the system, and takes
+the resulting trajectory as an account of what the physical system would do. The
+correctness of that account is rarely tested directly. It is inferred from the
+engine's reputation, from its test suite, and from the absence of an error
+message.
+
+\subsection{The failure mode that motivates the study}
+An engine that raises an exception is not dangerous; the researcher knows to
+stop. The dangerous case is the engine that returns a plausible trajectory that
+is wrong, with no indication that anything has gone amiss. Call this a
+\emph{silent failure}. A silent failure is by construction the case nobody
+thought to check for, which is why it survives in test suites written by the
+same people who wrote the implementation.
+
+\subsection{Two claims, often conflated}\label{sec:claims}
+Discussion of this failure mode tends to run together two distinct propositions:
+
+\begin{itemize}[leftmargin=2.2em,itemsep=0.25em]
+  \item[\textbf{(A)}] These engines can report success while returning wrong
+        physics.
+  \item[\textbf{(B)}] Engines \emph{differ} in whether they do so, such that
+        comparing implementations reveals incorrectness.
+\end{itemize}
+
+\noindent Claim (B) is the premise of differential testing: if two independent
+implementations disagree, at least one is wrong, and the disagreement is the
+signal. This paper set out to test (B) and did not find it.
+
+\subsection{What was done}
+Three independently developed engines were compared against a closed-form
+reference implemented in NumPy alone, sharing no library with any of them. A
+55-case adversarial matrix was frozen before measurement under a governance rule
+forbidding removal of cases after their results were seen. Three mechanism
+families were examined, chosen so that each degenerates by a different
+mechanism. Integration was pinned to one scheme with identical tolerances for
+every engine. The author's conflict of interest is disclosed in
+\S\ref{sec:disclosure} and mitigated structurally rather than by declaration.
+
+\subsection{What was found}
+Agreement to the limit of double-precision arithmetic on every adjudicated case
+in every family. Divergence between the engines in \emph{reach} --- the largest
+system each will answer --- but not in correctness. One failure, at an unstable
+equilibrium, shared by all three engines and by the independent reference alike.
+
+\subsection{Why a negative result here is informative}
+The measurement was designed to detect disagreement and demonstrably can. It
+separated the engines by reach at $N=8$ and $N=20$
+(\S\ref{sec:reach}), and it detected \emph{four} convention mismatches within
+the measuring apparatus itself before any of them reached the reported results
+(\S\ref{sec:threats}, \S\ref{sec:diagnostic}). An instrument that catches four
+faults in its own construction, and that resolves a factor-of-six capability
+difference between engines, is not an instrument that would miss a correctness
+disagreement of the size differential testing is meant to expose. The absence of
+such a disagreement is therefore an observation about the engines rather than a
+limitation of the instrument.
+
+\subsection{Contributions}
+\begin{enumerate}[leftmargin=1.6em,itemsep=0.3em]
+  \item A differential comparison of three independently developed rigid-body
+        dynamics engines under adjudication by a reference sharing no library
+        with any of them, across three mechanism families and both dynamical
+        regimes.
+  \item A negative result: no correctness disagreement was found on any axis
+        measured; the engines separate by reach, not by honesty.
+  \item A shared blind spot at unstable equilibria, present in all three engines
+        \emph{and} in the independent reference, showing that the failure mode
+        is a property of finite-precision dynamics rather than of any
+        implementation.
+  \item A methodological account --- frozen case matrix, library-independent
+        referee, integrator pinning, maintainer disclosure --- reusable for
+        cross-implementation comparison in other computational domains.
+  \item A transferable diagnostic for convention mismatch in
+        cross-implementation comparison, derived from three independent
+        instances encountered in this study.
+\end{enumerate}
+
+% ===========================================================================
+\section{Related work}
+% ===========================================================================
+
+\authortodo{To write. Differential testing; metamorphic testing of scientific
+software; verification and validation of multibody codes; prior engine
+comparisons. No citations are supplied here: inventing them would be worse than
+leaving the section empty, and the surrounding argument does not depend on any
+particular prior result.}
+
+% ===========================================================================
+\section{Method}
+% ===========================================================================
+
+\subsection{The engines under test}
+Three engines were selected on the criterion that each derives the equations of
+motion of a mechanical system by a different route, and that no two share a
+substantial body of code.
+
+\begin{center}
+\begin{tabular}{@{}lL{0.30\textwidth}L{0.26\textwidth}@{}}
+\toprule
+\textbf{Engine} & \textbf{Route} & \textbf{Pathways exercised} \\
+\midrule
+MechanicsDSL 2.1.3 (\texttt{a8dc2b2}) & symbolic compiler; consumes a Lagrangian, direct solve for a fixed topology & Lagrangian, Hamiltonian, constrained \\
+\texttt{sympy.physics.mechanics} 1.14.0 & general-purpose computer algebra, driven as documented & Lagrangian, constrained \\
+Drake 1.56.0 & recursive articulated-body library for arbitrary topologies, contact, real-time control & model-building interface \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Versions were pinned for the duration of the study. Pinning is not a formality:
+an engine that changes between the derivation and integration phases of a
+comparison invalidates the comparison, and the version under test must be
+recoverable by a reader attempting to reproduce the measurement.
+
+Each engine was exercised through the pathways it exposes. Two support a
+Lagrangian formulation; one additionally supports a Hamiltonian formulation; one
+constructs models through a model-building interface rather than from a
+Lagrangian. This asymmetry is a property of the engines and is reported rather
+than normalised away, since normalising it would require driving at least one
+engine in a manner its documentation does not describe.
+
+\subsection{The referee}
+Adjudication is performed by a closed-form reference derived by hand and
+implemented in NumPy alone. The reference shares no library with any engine
+under test. This is the central design decision of the study, and its rationale
+is straightforward: two implementations that share a symbolic algebra layer, a
+linear solver, or a code-generation backend may agree because they inherit the
+same defect, and their agreement then carries no information about correctness.
+A referee that shares nothing with the engines cannot agree with them for that
+reason.
+
+For the unconstrained families the reference solves the equations of motion
+directly for a fixed topology. For the constrained families both systems admit a
+constant diagonal mass matrix and holonomic constraints, so accelerations and
+multipliers follow from the saddle-point system
+\begin{equation}
+\begin{bmatrix} M & J^{\top} \\ J & 0 \end{bmatrix}
+\begin{bmatrix} \ddot q \\ \lambda \end{bmatrix}
+=
+\begin{bmatrix} F(q) \\ -\dot J \dot q \end{bmatrix},
+\label{eq:kkt}
+\end{equation}
+in which both $J$ and $\dot J\dot q$ have closed forms for the rod and circle
+constraints involved. No symbolic algebra is required at any point in the
+reference, which is what permits the claim of library independence to be made
+literally rather than approximately.
+
+The reference is deliberately left unstabilised: no Baumgarte term and no
+projection. A stabilised reference would be solving different equations from
+those the engines are asked for, and the resulting comparison would be between
+two different problems. The cost of that choice is a constraint drift of order
+$10^{-4}$ over three seconds, which does not affect the derivation comparison
+because that comparison evaluates accelerations at given states.
+
+\subsection{The case matrix and the freeze}
+The case matrix comprises 55 cases over 36 systems across six axes: degrees of
+freedom, closed-loop topology, constraint redundancy, near-singular inertia,
+mass ratio, and symbolic nesting depth. The matrix was frozen --- fixed in
+content and recorded with a version identifier --- before the cross-engine
+measurements reported here were taken.
+
+The freeze is governed by an explicit rule. Extension of the harness is
+permitted where it adds adjudication without revising existing verdicts, and any
+new axis must be declared before it is measured. Removing a case after observing
+its result is selection on the outcome and is forbidden. The rule exists because
+the author maintains one of the engines under test, and the temptation it guards
+against is therefore not hypothetical.
+
+Of the 55 cases, 45 are adjudicated; the remainder exceed the wall-clock limit
+for at least one engine and are recorded as timeouts rather than as verdicts. A
+timeout is scored as a distinct category from a pass or a failure, because an
+absence of an answer and a wrong answer are different events and conflating them
+would obscure precisely the distinction this study exists to examine.
+
+\subsection{Integrator pinning}\label{sec:pinning}
+Every engine supplies only its right-hand side. Integration is performed by a
+single call to one explicit Runge--Kutta scheme (DOP853) with identical relative
+and absolute tolerances ($\mathrm{rtol}=10^{-10}$, $\mathrm{atol}=10^{-12}$) for
+all engines.
+
+Pinning has a consequence that must be stated plainly: it makes the measurement
+structurally incapable of ranking the engines on integration accuracy. Energy
+drift under a pinned integrator is dominated by the integrator the engines
+share, not by the engines. This is not a limitation of the design but its
+purpose. Identical drift across engines is evidence that their equations are
+equivalent, which is what the comparison exists to establish. Without pinning,
+one engine's native integrator would have been compared against another's, and
+the difference attributed to the engines.
+
+The design has a corresponding limitation, disclosed here rather than in the
+results. An engine whose constrained dynamics are enforced inside its own solver
+cannot participate in a pinned-integrator comparison on constrained systems
+without being asked to do something other than what it is built to do. Where
+this arises, the affected engine is scored on constraint satisfaction alone, and
+the asymmetry is reported rather than concealed. This is the case for the
+recursive library on the slider--crank (\S\ref{sec:slidercrank-results}); the
+same engine participates fully on the cart--pole, which is a tree and requires
+no constraint.
+
+\subsection{Adjudication criteria}
+Two quantities are compared. The first is the residual between an engine's
+computed accelerations and the reference's, evaluated at 16 probe states per
+case drawn from the constraint manifold where one applies. The second is energy
+drift over a fixed integration horizon under the pinned integrator. For
+constrained cases a third quantity, constraint residual drift from $t=0$, is
+recorded. The adjudication tolerance throughout is $10^{-8}$ relative.
+
+Constraint residual is measured as drift from the initial value rather than as
+an absolute quantity. The suite's constrained initial conditions are rounded to
+four decimal places, so every constrained case begins approximately $10^{-4}$
+off its own constraint manifold. This is harmless for the classifier as
+constructed, but a reader checking the absolute residual would find an apparent
+violation and might reasonably attribute it to the engine. The fact is recorded
+here so that it cannot mislead.
+
+\subsection{Threats to validity}\label{sec:threats}
+
+\paragraph{Common authorship of engine and referee.}
+The referee shares no library with any engine, but it does share an author with
+one of them. A misconception held by that author could in principle appear in
+both, and their agreement would then be uninformative. Two considerations bound
+this risk. The two engines the author did not write agree with the reference to
+the same tolerance, and a shared misconception would have to be present in all
+four independently.
+
+Separately, the study record documents \textbf{four} instances in which the
+author's expectation about the \emph{measuring apparatus} was contradicted by an
+independent artefact, and corrected before the affected results were reported:
+
+\begin{center}
+\begin{tabular}{@{}lL{0.42\textwidth}L{0.22\textwidth}@{}}
+\toprule
+\textbf{\#} & \textbf{Mistaken expectation} & \textbf{Caught by} \\
+\midrule
+1 & The Hamiltonian pathway's right-hand side returns accelerations; it returns $\dot p$ & discriminating $\dot q$ against $M^{-1}p$ \\
+2 & A revolute chain reports absolute joint angles; it reports relative ones & inspecting the mass matrix \\
+3 & A pole offset rotated about $+y$ matches a reference using $x + l\sin\theta$; it mirrors it & inspecting the mass matrix \\
+4 & An engine reporting motion at an exact equilibrium is wrong; the exact solution is unreachable in finite precision & the independent reference behaving identically \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Instances 1--3 are convention mismatches in the comparison and are the
+basis of the diagnostic in \S\ref{sec:diagnostic}; instance 4 is a mistaken
+adjudication criterion. All four concern the instrument, and all four were
+detected by consulting an artefact rather than by reasoning further.
+
+The study record contains further corrected errors that concern external facts
+rather than the instrument --- chiefly the provenance of a third-party API
+guard, established only after documentation, a cached search result, and an
+unvalidated repository query had each produced a different wrong answer. Those
+are omitted here. They bear on the author's diligence, not on whether the
+measurement detects its own faults, and only the latter is evidence.
+
+\paragraph{Mechanism coverage.}
+Three mechanism families are examined. They were chosen for structurally
+distinct degeneracies --- a vanishing transmission ratio, a collapsing
+mass-matrix determinant, and a chaotic regime reached by amplitude --- but they
+remain three families, and the results do not license claims about mechanism
+classes outside them.
+
+\paragraph{A comparator that is not independent on one family.}
+On the cart--pole the computer-algebra package's residual against the reference
+is \emph{exactly zero at all twenty configurations}, not merely small. This is
+addressed in \S\ref{sec:cartpole-results}: on that family the two are not
+independent, and the effective comparison is three-way rather than four-way.
+
+\paragraph{Wall-clock timeouts.}
+The reach results in \S\ref{sec:reach} rest on a wall-clock limit of 120\,s
+measured on a single machine in single runs. The ordering of the engines is
+robust to plausible variation in that limit, since the separations are of order
+minutes rather than seconds, but the specific link counts at which each engine
+ceases to return are machine-dependent and should be read as such.
+
+\paragraph{Non-portable axes.}
+One axis of the frozen matrix --- symbolic nesting depth --- is meaningful only
+to an engine that consumes raw Lagrangians, and no library-independent reference
+for it can exist. Those cases are excluded from the cross-engine claim by
+construction rather than by choice.
+
+\paragraph{Constrained continuous-time dynamics in the recursive library.}
+Constrained dynamics in the recursive library are enforced within its own
+discrete solver and are not available through the continuous-time interface used
+elsewhere in this study. The engine is therefore driven in its discrete mode on
+the slider--crank, where it cannot share the pinned integrator and is scored on
+constraint satisfaction alone. This is a property of the engine's supported
+interfaces and is reported as a limitation of the comparison; no defect claim is
+made here.
+
+\subsection{Disclosure}\label{sec:disclosure-method}
+The author maintains one of the three engines measured. The mitigation is
+structural rather than declarative: no engine adjudicates itself or any other,
+the referee shares no library with any of them, the case matrix was frozen
+before measurement under a rule forbidding post hoc removal, and the results
+reported include the measurements on which the author's engine performs worst
+(\S\ref{sec:behind}).
+
+\paragraph{Use of AI assistance.}
+An AI assistant (Anthropic Claude) was used throughout this work: in deriving
+and implementing the reference and the engine adapters, in constructing and
+executing the sweeps, in analysing the resulting records, and in drafting this
+manuscript. Every numerical result reported was produced by executing committed
+code, and the author verified each figure against the run record. The assistant
+also produced several of the erroneous expectations recorded in
+\S\ref{sec:threats} and \S\ref{sec:diagnostic}; those were detected by the same
+artefact-checking procedure described there, and are reported rather than
+removed. This disclosure is made because concealing such use is not permissible,
+and because the errors it produced are part of the evidence that the process
+detects its own faults.
+
+All figures reported were produced by executing committed code. Artefacts ---
+the case matrix, the reference implementation, the adapters, the sweep scripts,
+and the raw output records --- are available at \authortodo{Zenodo DOI: deposit
+the artefacts and insert the resolved DOI here before posting. This is the one
+blank that cannot be filled from the run record.}
+
+% ===========================================================================
+\section{Systems}
+% ===========================================================================
+
+Three mechanism families are examined. They were chosen so that each presents a
+degeneracy arising from a different mechanism, on the reasoning that a
+comparison exercising one kind of hard case repeatedly establishes less than one
+exercising several kinds once.
+
+\subsection{The planar \texorpdfstring{$N$}{N}-link chain}
+An open chain of $N$ links under gravity, with revolute joints and no
+constraint. The chain scales in degrees of freedom without changing its
+structure, which makes it the natural vehicle for the reach measurements of
+\S\ref{sec:reach}, and its dynamics pass from regular to chaotic as the initial
+amplitude increases, which makes it the vehicle for the amplitude axis.
+
+The degeneracy here is dynamical rather than geometric. At the suite's original
+initial angles the motion is quasi-periodic: perturbing the initial state by
+$10^{-10}$ and integrating for ten seconds produces growth of order $10^{0}$. At
+larger amplitudes the same perturbation grows by eleven orders of magnitude over
+the same horizon. Growth of order $10^{0}$ is polynomial and indicates regular
+motion; growth of order $10^{11}$ is exponential and indicates chaos.
+
+The amplitude axis was added after measurement showed that the frozen suite had
+been exercising the chain only in its regular regime --- that is, that a suite
+whose stated method is to increase difficulty until behaviour breaks down had
+been operating entirely within the well-behaved region of its principal system.
+The axis was declared before it was measured, in accordance with the governance
+rule, and the Lagrangian it uses is character-for-character the one already
+frozen; only the initial conditions differ.
+
+\subsection{The slider--crank}
+A crank rotating about a fixed pivot, connected by a rigid rod to a slider
+constrained to a straight line. The mechanism introduces two features absent
+from the chain: a closed kinematic loop, and a prismatic joint alongside a
+revolute one.
+
+The constraint admits a closed form. Expanding $|S-P|^2 - l^2$ yields
+$x^2 - 2rx\cos\theta + r^2 - l^2$, the trigonometric identity eliminating the
+remaining terms, so no symbolic algebra is required to construct the reference.
+
+The degeneracy is geometric and arises from the transmission ratio. The
+effective inertia
+\begin{equation}
+M_{\mathrm{eff}}(\theta) = m_c r^2 + m_s\left(\frac{\mathrm{d}x}{\mathrm{d}\theta}\right)^2
+\label{eq:meff}
+\end{equation}
+varies by four orders of magnitude over a single revolution when the slider is
+heavy, because $\mathrm{d}x/\mathrm{d}\theta$ vanishes exactly at $\theta=0$ and
+$\theta=\pi$. At those two configurations --- the dead centres --- the slider
+ceases to contribute inertia altogether and the mechanism approaches the loss of
+its mass matrix. The measured variation is $1.12\times10^{2}$ at
+$m_s/m_c = 10^{2}$, $1.11\times10^{4}$ at $10^{4}$, and $1.11\times10^{6}$ at
+$10^{6}$. The degeneracy is produced by the geometry rather than by a
+hand-constructed ill-conditioned matrix, which is what makes it a fair test.
+
+Two parameters were swept: the rod-to-crank length ratio, from 3.0 down to 1.01
+as the mechanism approaches its folding configuration, and the slider-to-crank
+mass ratio to $10^{6}$. Engines were evaluated both at random states on the
+constraint manifold and exactly at both dead centres.
+
+\subsection{The cart--pole}
+A cart translating on a horizontal prismatic joint with a pole suspended from it
+by a revolute joint. Unlike the slider--crank the system is a tree, with no loop
+and no constraint, which permits all three engines to be compared in their
+ordinary modes of operation under a single pinned integrator, with nothing
+excluded for reasons unrelated to dynamics.
+
+The system is structurally new to the study in two respects: it combines joint
+types within one mechanism, and its mass matrix is genuinely configuration
+dependent, where the suite's earlier multi-body systems had constant ones.
+
+Its degeneracy arises from a third mechanism again. The determinant
+\begin{equation}
+\det M(q) = m l^{2}\left(M + m\sin^{2}\theta\right)
+\label{eq:detM}
+\end{equation}
+collapses by six orders of magnitude twice per swing when the cart is light and
+the pole passes through vertical, because a near-massless cart cannot resist the
+pole's horizontal reaction. The slider--crank degenerates because a transmission
+ratio vanishes; the cart--pole degenerates because an inertia vanishes. The
+causes are unrelated, which is the reason for testing both.
+
+% ===========================================================================
+\section{Results: agreement}
+% ===========================================================================
+
+\subsection{Equations of motion}
+Residuals between each engine's computed accelerations and the reference's are
+constant across the amplitude axis, as expected: the equations of motion do not
+depend on where the system starts.
+
+\begin{table}[h]
+\centering
+\caption{Equation-of-motion residuals against the reference, three-link chain,
+16 probe states drawn uniformly from $[-0.5,0.5]$. Relative to the
+double-precision unit round-off $u \approx 2.22\times10^{-16}$.}
+\label{tab:eom}
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Engine} & \textbf{Residual} & \textbf{Multiple of $u$} \\
+\midrule
+MechanicsDSL & $1.887\times10^{-15}$ & $8.5$ \\
+Drake        & $1.072\times10^{-14}$ & $48$ \\
+SymPy        & $2.620\times10^{-14}$ & $118$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All three engines are therefore correct to the limit of the arithmetic, and the
+differences between them reflect accumulated rounding over differing operation
+counts rather than any difference in the equations derived.
+
+\subsection{The amplitude axis}
+Across eight amplitudes spanning perturbation growth from single figures to
+$5.4\times10^{11}$, and three engines, 24 engine--amplitude pairs were
+evaluated. There were no refusals, no incorrect equations, and no integration
+failures.
+
+\begin{table}[h]
+\centering
+\caption{Amplitude axis, three-link chain. Perturbation growth is the factor by
+which a $10^{-10}$ initial displacement grows over 10\,s, measured on the
+reference at $\mathrm{rtol}=10^{-12}$. Energy drift is relative, under the
+pinned integrator.}
+\label{tab:amplitude}
+\begin{tabular}{@{}rrlrrr@{}}
+\toprule
+\textbf{Amp.\ (rad)} & \textbf{Growth} & \textbf{Regime} & \textbf{MechanicsDSL} & \textbf{SymPy} & \textbf{Drake} \\
+\midrule
+$0.15$   & $2.3$                & regular & $7.302\times10^{-11}$ & $7.328\times10^{-11}$ & $7.445\times10^{-11}$ \\
+$0.50$   & $3.9$                & regular & $2.201\times10^{-11}$ & $2.201\times10^{-11}$ & $2.201\times10^{-11}$ \\
+$1.00$   & $3.8$                & regular & $2.702\times10^{-11}$ & $2.702\times10^{-11}$ & $5.123\times10^{-11}$ \\
+$1.50$   & $3.5\times10^{4}$    & chaotic & $1.723\times10^{-10}$ & $1.723\times10^{-10}$ & $2.860\times10^{-10}$ \\
+$2.00$   & $1.1\times10^{7}$    & chaotic & $2.137\times10^{-10}$ & $2.137\times10^{-10}$ & $2.139\times10^{-10}$ \\
+$2.50$   & $2.8\times10^{10}$   & chaotic & $4.737\times10^{-10}$ & $4.767\times10^{-10}$ & $7.783\times10^{-10}$ \\
+$3.00$   & $1.7\times10^{11}$   & chaotic & $3.036\times10^{-10}$ & $3.036\times10^{-10}$ & $3.042\times10^{-10}$ \\
+$\pi$    & $5.4\times10^{11}$   & chaotic & $2.737\times10^{-10}$ & $2.737\times10^{-10}$ & $2.737\times10^{-10}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Energy drift rises with amplitude, as harder dynamics demand more of the
+integrator, and does so almost identically for all three engines: at the worst
+case the three values are $4.74$, $4.77$ and $7.78\times10^{-10}$, the same
+quantity to within a factor of $1.6$.
+
+\subsection{The chaotic regime}\label{sec:chaotic}
+At three degrees of freedom with all links started well into the chaotic regime,
+energy drift is indistinguishable across the reference and all three engines.
+
+\begin{table}[h]
+\centering
+\caption{Chaotic regime, three-link chain, all links started at $3.0$\,rad.
+Perturbation growth $1.26\times10^{11}$ over 10\,s at
+$\mathrm{rtol}=10^{-10}$, implying a Lyapunov rate
+$\lambda = 2.556\,\mathrm{s}^{-1}$. Divergence is the time at which the
+trajectory departs the reference's by $10^{-6}$; \S\ref{sec:divergence}
+explains why it is not a ranking.}
+\label{tab:chaotic}
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Engine} & \textbf{Energy drift} & \textbf{Divergence} \\
+\midrule
+reference    & $3.0358\times10^{-10}$ & --- \\
+MechanicsDSL & $3.0356\times10^{-10}$ & $6.96$\,s \\
+SymPy        & $3.0361\times10^{-10}$ & $6.28$\,s \\
+Drake        & $3.0421\times10^{-10}$ & $5.69$\,s \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent The largest separation is $0.2$ per cent relative, twelve orders of
+magnitude below any physically meaningful quantity.
+
+\subsection{The constrained pathway}\label{sec:constrained-results}
+All eight constrained cases in the adjudicated set agree with the closed-form
+reference of equation~\eqref{eq:kkt}.
+
+\begin{table}[h]
+\centering
+\caption{Constrained pathway, MechanicsDSL against the saddle-point reference,
+16 probe states per case. \texttt{redund\_R$k$} carries $k+1$ constraints on two
+coordinates, all scalar multiples of one another.}
+\label{tab:constrained}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Case} & \textbf{Coordinates} & \textbf{Constraints} & \textbf{Residual} \\
+\midrule
+\texttt{loops\_N3}  & 4 & 3 & $5.788\times10^{-16}$ \\
+\texttt{redund\_R0} & 2 & 1 & $1.958\times10^{-16}$ \\
+\texttt{redund\_R1} & 2 & 2 & $1.084\times10^{-15}$ \\
+\texttt{redund\_R2} & 2 & 3 & $1.234\times10^{-14}$ \\
+\texttt{redund\_R3} & 2 & 4 & $2.554\times10^{-15}$ \\
+\texttt{redund\_R4} & 2 & 5 & $2.004\times10^{-15}$ \\
+\texttt{redund\_R6} & 2 & 7 & $3.266\times10^{-15}$ \\
+\texttt{redund\_R8} & 2 & 9 & $7.230\times10^{-15}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The redundancy family is the more informative half. Its constraint Jacobian
+retains rank one while its row count grows to nine, so the multipliers become
+underdetermined while the accelerations remain unique. The engines track the
+reference throughout. An exactly redundant constraint set does not determine how
+the constraint force is distributed, only its total, and neither the engines nor
+the reference is troubled by this.
+
+\paragraph{Coverage.}
+With these cases adjudicated, the number of adjudicated cases carrying an
+independent derivation check rises from \textbf{22 to 40} of 45. The arithmetic
+does not compose as a simple increment, and the reconciliation is given in
+Table~\ref{tab:coverage} because the figure is citable.
+
+\begin{table}[h]
+\centering
+\caption{Coverage reconciliation over the 45 adjudicated cases. The two referees
+cover overlapping but different sets, so the increment is not additive.}
+\label{tab:coverage}
+\begin{tabular}{@{}lrL{0.40\textwidth}@{}}
+\toprule
+\textbf{Referee} & \textbf{Cases} & \textbf{Composition} \\
+\midrule
+Computer-algebra oracle (original) & 22 & Lagrangian pathway only, including 5 symbolic-axis cases \\
+Library-independent reference      & 35 & \texttt{dof} 7, \texttt{mass\_ratio} 14, \texttt{redundancy} 7, \texttt{near\_singular} 6, \texttt{loops} 1 \\
+\midrule
+\textbf{Union: any independent check} & \textbf{40} & \\
+\quad gained by the reference & 18 & \\
+\quad reachable only by the original oracle & 5 & symbolic-axis Lagrangian cases \\
+\midrule
+\textbf{Carrying no independent check} & \textbf{5} & symbolic-axis Hamiltonian cases \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent The five cases that remain unchecked are the Hamiltonian half of the
+symbolic axis. No library-independent reference for that axis can exist: nested
+cosine depth is meaningful only to an engine that consumes a raw Lagrangian, so
+there is no system to derive independently.
+
+\subsection{The slider--crank and the cart--pole}\label{sec:cartpole-results}
+Across both additional families, 72 engine--case pairs were evaluated with no
+disagreements and no refusals.
+
+\begin{table}[h]
+\centering
+\caption{Cart--pole, five cart-to-pole mass ratios $\times$ four initial angles
+$\times$ three engines. Residuals are constant across the four angles at each
+mass ratio. Energy drift is the worst over the four angles.}
+\label{tab:cartpole}
+\begin{tabular}{@{}rrrrrr@{}}
+\toprule
+& & \multicolumn{2}{c}{\textbf{Residual}} & \multicolumn{2}{c}{} \\
+\cmidrule(lr){3-4}
+$M/m$ & $\det M$ range & MechanicsDSL & Drake & SymPy & Worst drift \\
+\midrule
+$10^{1}$  & $1.1$      & $3.72\times10^{-16}$ & $2.78\times10^{-17}$ & $0$ & $1.99\times10^{-11}$ \\
+$10^{0}$  & $2.0$      & $3.72\times10^{-16}$ & $1.86\times10^{-16}$ & $0$ & $3.75\times10^{-10}$ \\
+$10^{-2}$ & $10^{2}$   & $5.02\times10^{-15}$ & $2.05\times10^{-16}$ & $0$ & $1.60\times10^{-9}$ \\
+$10^{-4}$ & $10^{4}$   & $7.49\times10^{-15}$ & $5.55\times10^{-17}$ & $0$ & $1.11\times10^{-9}$ \\
+$10^{-6}$ & $10^{6}$   & $1.25\times10^{-14}$ & $1.96\times10^{-16}$ & $0$ & $3.36\times10^{-9}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All three engines agree with the reference at every mass ratio and every
+starting angle, including where the determinant collapses by six orders of
+magnitude, and energy drift is of order $10^{-9}$ or better throughout.
+
+\begin{callout}
+\textbf{The computer-algebra package is not an independent comparator on this
+family.} Its residual against the reference is \emph{exactly} zero --- not small
+--- at all twenty configurations, over all sixteen probe states each. A residual
+of exactly zero under a relative-error metric means the two implementations
+produced bit-identical floating-point results, which indicates that they
+executed the same arithmetic in the same order rather than that they agree by
+independent derivation. The likely cause is that the cart--pole's mass matrix
+and forcing vector are simple enough that the package's symbolic simplification
+reproduces the hand-derived closed form exactly, and its code generation then
+emits the same sequence of operations.
+
+Consequently the cart--pole comparison is effectively three-way --- reference,
+symbolic compiler, recursive library --- not four-way. This does not affect the
+other two families, where the same package returns non-zero residuals
+($2.62\times10^{-14}$ on the chain, $5.55\times10^{-16}$ to
+$1.96\times10^{-15}$ on the slider--crank) and is a genuine independent
+comparator.
+\end{callout}
+
+\noindent Subject to that qualification, the recursive library returns the
+smallest residuals on this family, of order $10^{-16}$ --- better than the
+symbolic compiler by two orders of magnitude. This is the expected outcome when
+an algorithm designed for arbitrary topologies is applied to a two-body tree,
+and it is the converse of the pattern observed on the longer chains, where its
+residuals are the largest.
+
+\begin{table}[h]
+\centering
+\caption{Slider--crank. Residual and energy drift under the pinned integrator
+for the two engines that can share it; the recursive library is driven in its
+discrete mode and scored on constraint satisfaction alone
+(\S\ref{sec:pinning}). Constraint column is the worst rod-length residual over
+a 5\,s integration.}
+\label{tab:slidercrank}
+\begin{tabular}{@{}rrlrrr@{}}
+\toprule
+$l/r$ & $m_s/m_c$ & \textbf{Engine} & \textbf{Residual} & \textbf{Energy drift} & \textbf{Constraint} \\
+\midrule
+$3$    & $10^{2}$ & MechanicsDSL   & $1.22\times10^{-15}$ & $1.51\times10^{-10}$ & $1.81\times10^{-10}$ \\
+$3$    & $10^{2}$ & SymPy          & $5.55\times10^{-16}$ & $1.51\times10^{-10}$ & $1.81\times10^{-10}$ \\
+$3$    & $10^{2}$ & Drake (disc.)  & ---                  & ---                  & $1.77\times10^{-6}$ \\
+$1.5$  & $10^{2}$ & MechanicsDSL   & $4.17\times10^{-15}$ & $2.11\times10^{-10}$ & $9.12\times10^{-10}$ \\
+$1.5$  & $10^{2}$ & SymPy          & $7.53\times10^{-16}$ & $2.12\times10^{-10}$ & $9.12\times10^{-10}$ \\
+$1.5$  & $10^{2}$ & Drake (disc.)  & ---                  & ---                  & $1.25\times10^{-7}$ \\
+$1.05$ & $10^{2}$ & MechanicsDSL   & $5.66\times10^{-15}$ & $5.40\times10^{-10}$ & $1.40\times10^{-9}$ \\
+$1.05$ & $10^{2}$ & SymPy          & $1.96\times10^{-15}$ & $5.40\times10^{-10}$ & $1.40\times10^{-9}$ \\
+$1.05$ & $10^{2}$ & Drake (disc.)  & ---                  & ---                  & $1.42\times10^{-7}$ \\
+$3$    & $10^{4}$ & MechanicsDSL   & $1.97\times10^{-15}$ & $2.92\times10^{-10}$ & $8.15\times10^{-10}$ \\
+$3$    & $10^{4}$ & SymPy          & $5.55\times10^{-16}$ & $2.90\times10^{-10}$ & $8.11\times10^{-10}$ \\
+$3$    & $10^{4}$ & Drake (disc.)  & ---                  & ---                  & $1.14\times10^{-6}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\label{sec:slidercrank-results}
+Both symbolic engines hold the rod length to approximately $10^{-9}$ through
+dead-centre crossings at a length ratio of $1.05$ and a mass ratio of $10^{4}$.
+The recursive library holds the rod to approximately $10^{-6}$ in its discrete
+mode.
+
+\subsection{Summary}
+No engine returned a wrong answer on any adjudicated case, in any family, in
+either dynamical regime, on either the constrained or the unconstrained pathway.
+Claim (B) of \S\ref{sec:claims} --- that engines differ in whether they report
+success on incorrect physics --- is unsupported by every measurement in this
+study.
+
+% ===========================================================================
+\section{Results: divergence in reach}\label{sec:reach}
+% ===========================================================================
+
+Agreement on cases all three engines can answer leaves open whether they can
+answer the same cases at all. Each engine was therefore taken up a ladder of
+system sizes to 30 links, with each engine--pathway--size combination built in
+its own subprocess under a fixed 120\,s wall-clock limit, and the time measured
+to produce the equations of motion and evaluate the accelerations once. Results
+were checked against the reference wherever an answer was returned.
+
+\begin{table}[h]
+\centering
+\caption{Scaling ladder, Lagrangian pathway, 120\,s wall clock per
+engine--size pair. Single runs on one machine. Times include model construction
+and one acceleration evaluation. Once an engine fails to return it is not
+retried at larger sizes.}
+\label{tab:scaling}
+\begin{tabular}{@{}rlrlrlr@{}}
+\toprule
+& \multicolumn{2}{c}{\textbf{MechanicsDSL}} & \multicolumn{2}{c}{\textbf{SymPy}} & \multicolumn{2}{c}{\textbf{Drake}} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
+$N$ & time & residual & time & residual & time & residual \\
+\midrule
+$1$  & $1.57$\,s  & $0$                & $0.33$\,s  & $0$                & $0.44$\,s & $0$ \\
+$2$  & $2.17$\,s  & $1\times10^{-16}$  & $0.38$\,s  & $4\times10^{-16}$  & $0.24$\,s & $2\times10^{-16}$ \\
+$3$  & $21.63$\,s & $4\times10^{-16}$  & $0.59$\,s  & $8\times10^{-15}$  & $0.25$\,s & $6\times10^{-15}$ \\
+$5$  & $7.45$\,s  & $2\times10^{-16}$  & $2.58$\,s  & $1\times10^{-15}$  & $0.24$\,s & $7\times10^{-14}$ \\
+$8$  & $42.03$\,s & $2\times10^{-15}$  & \multicolumn{2}{c}{\emph{timeout}}  & $0.22$\,s & $5\times10^{-14}$ \\
+$12$ & $64.43$\,s & $6\times10^{-15}$  & \multicolumn{2}{c}{---}             & $0.22$\,s & $1\times10^{-12}$ \\
+$20$ & \multicolumn{2}{c}{\emph{timeout}}  & \multicolumn{2}{c}{---}        & $0.23$\,s & $1\times10^{-11}$ \\
+$30$ & \multicolumn{2}{c}{---}             & \multicolumn{2}{c}{---}        & $0.23$\,s & $6\times10^{-11}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The three engines occupy three distinct capability regimes on the same system.
+The computer-algebra package returns equations to 5 links; the symbolic compiler
+to 12; the recursive library to 30, the largest size tested. At 8 links one
+engine returns nothing while the other two return correct equations; at 20, a
+second returns nothing while the third continues.
+
+Three observations follow.
+
+The recursive library is in a different class of behaviour. Its cost is flat at
+approximately $0.23$\,s from 5 links to 30, an $O(N)$ articulated-body algorithm
+set against two symbolic approaches whose cost grows explosively. Its residual
+grows with system size, from $6\times10^{-15}$ at 3 links to $6\times10^{-11}$
+at 30, remaining four orders of magnitude inside the adjudication tolerance.
+
+The symbolic compiler reaches further than the computer-algebra package driven
+as documented --- 12 links against 5. This is a defensible comparative claim
+against that engine used in the manner its documentation prescribes. It is not a
+claim against the recursive library, which exceeds both by a wide margin.
+
+Cost is not monotonic in system size for the symbolic compiler: three links cost
+$21.63$\,s against $7.45$\,s for five. The effect is attributable to a threshold
+in the engine's symbolic-to-numeric handling and is reported rather than
+smoothed.
+
+The finding that matters is what did not occur. Every engine that returned an
+answer returned a correct one, and every engine that could not, failed by never
+returning. A timeout is the loud failure mode: the researcher knows the
+computation did not finish. The engines therefore differ in reach, not in
+honesty, and the study's original hypothesis remains unsupported on this axis as
+on every other.
+
+% ===========================================================================
+\section{A failure shared by every implementation, including the referee}
+% ===========================================================================
+
+\subsection{The configuration}
+Consider the $N$-link chain with every joint angle set to $\pi$ and every
+velocity set to zero: the chain stands inverted, each link balanced directly
+above the one below. The exact solution is that nothing moves. Every term in the
+equations of motion vanishes analytically. The gravity term is proportional to
+$\sin\pi$, which is zero. The Coriolis term vanishes because the velocities are
+zero and the angles equal. The configuration is an equilibrium, and the exact
+trajectory is the constant function.
+
+It is, of course, an \emph{unstable} equilibrium. That distinction is the whole
+of what follows.
+
+\subsection{The observation}
+All three engines, and the independent reference, return approximately 20
+radians of motion over a ten-second horizon. All four report success. None emits
+a warning, a diagnostic, or any indication that the returned trajectory bears no
+relation to the exact solution of the system as specified.
+
+Energy is conserved throughout to $2.737\times10^{-10}$ --- the same tolerance
+as in every other case in the study, and identical across all three engines
+(Table~\ref{tab:amplitude}, final row). The trajectory is smooth, physically
+plausible in isolation, and entirely wrong. \textbf{That energy is conserved so
+well during the fall is precisely why every check in the suite passes it.}
+
+\subsection{The mechanism}
+The cause is arithmetic rather than algorithmic. In binary64, $\sin(\pi)$
+evaluates not to zero but to $1.2246\times10^{-16}$, because $\pi$ is not
+exactly representable. This leaves a residual gravitational acceleration of
+$1.20\times10^{-15}$ at the initial state. The equilibrium being unstable, that
+residual is amplified exponentially, and within the ten-second horizon it
+reaches full scale.
+
+No finite-precision computation can remain at an unstable equilibrium. The
+observation is a property of the problem in floating-point arithmetic, not a
+defect in any engine. That the independent reference --- which shares no code
+with any engine and was derived by hand --- exhibits the identical behaviour is
+what establishes this. Had the reference remained at rest, the finding would
+have been a defect in three engines. It did not, and the finding is something
+else.
+
+\subsection{Why the case is retained}
+An earlier version of this axis was written on the expectation that an engine
+reporting motion at the inverted equilibrium is wrong and an engine reporting no
+motion is right. That expectation was false. It is recorded here, and corrected
+in the module rather than silently revised, because the ease with which it was
+held is part of the finding: the intuition that a correct implementation should
+return the exact answer at an exact equilibrium is natural, widely shared, and
+incorrect. It is instance 4 of Table in \S\ref{sec:threats}.
+
+What the case exposes is real and shared. Every implementation tested returns
+success and hands back a large trajectory where the exact answer is no motion at
+all, and none warns that the initial condition is an unstable equilibrium whose
+evolution is dominated by round-off. This is the study's original thesis
+appearing as a universal blind spot rather than as a difference between engines.
+It is a weaker result than a disagreement would have been, and an honest one.
+
+\subsection{What follows for differential testing}
+Differential testing rests on the premise that independent implementations fail
+independently, so that disagreement localises incorrectness. This case is a
+counterexample of a specific kind. The failure is not independent across
+implementations because its cause is not in any implementation: it is in the
+interaction between the problem and the arithmetic every implementation shares.
+
+Cross-implementation comparison cannot detect a failure of this kind, because
+every implementation exhibits it identically. Adding a fourth engine, a fifth,
+or a reference derived from first principles by an independent author would not
+help --- this study added exactly such a reference, and it failed in the same
+way.
+
+The class of failures invisible to differential testing is therefore not empty,
+and it is not exotic. Unstable equilibria are not pathological configurations
+contrived for a test suite; they are the operating point of any
+inverted-pendulum control problem and appear throughout robotics and
+biomechanics. A method that cannot see them has a blind spot in a region
+practitioners actually work in.
+
+% ===========================================================================
+\section{What these measurements do and do not support}
+% ===========================================================================
+
+\subsection{The integrator was pinned, which removes the variable}
+Every engine supplied only its right-hand side, and integration was a single
+call with identical tolerances for all of them. Energy drift is therefore
+dominated by the shared integrator, not by the engines. Identical drift is
+evidence that the equations are equivalent, which is what pinning was intended
+to establish. The measurement is structurally incapable of ranking the engines
+on integration accuracy, and that was its purpose.
+
+\subsection{The differences are not differences}
+The worst energy-drift values across the amplitude axis are $4.74$, $4.77$ and
+$7.78\times10^{-10}$ --- the same quantity to within a factor of $1.6$. In the
+chaotic case the three values differ by $0.2$ per cent relative, twelve orders
+of magnitude below any physically meaningful quantity. No ranking can be built
+on separations of this size.
+
+\subsection{Divergence time cannot rank the engines}\label{sec:divergence}
+In a chaotic system the time at which one trajectory departs from another is
+governed by the size of the initial difference between their right-hand sides,
+amplified exponentially. With the Lyapunov rate
+$\lambda = 2.556\,\mathrm{s}^{-1}$ implied by the measured growth, a seed $s$
+should cross a $10^{-6}$ threshold at
+$t = \lambda^{-1}\ln(10^{-6}/s)$.
+
+\begin{center}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Engine} & \textbf{$N{=}3$ residual} & \textbf{Predicted} & \textbf{Observed} \\
+\midrule
+MechanicsDSL & $1.89\times10^{-15}$ & $7.86$\,s & $6.96$\,s \\
+Drake        & $1.07\times10^{-14}$ & $7.18$\,s & $5.69$\,s \\
+SymPy        & $2.62\times10^{-14}$ & $6.83$\,s & $6.28$\,s \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent \textbf{The band is predicted; the ordering is not.} Predicted times
+span $6.8$--$7.9$\,s and observed times span $5.7$--$7.0$\,s, so the mechanism
+is right --- but the predicted order is MechanicsDSL, Drake, SymPy while the
+observed order is MechanicsDSL, SymPy, Drake. Drake and SymPy transpose.
+
+The reason the ordering fails is instructive, and it strengthens rather than
+weakens the conclusion. The three seeds span barely one order of magnitude while
+the amplification spans eleven. The effective seed is also the residual
+\emph{along the actual trajectory}, not the maximum over random probe states,
+and the threshold crossing is itself noisy in a chaotic system. Divergence time
+therefore has no resolving power between engines whose equations agree this
+closely: it measures the Lyapunov exponent, with the engine identity as a
+rounding error.
+
+\subsection{Why one engine's residual is larger, and why that is not worse}
+The recursive library evaluates dynamics with an articulated-body algorithm
+built for arbitrary topologies, contact, and real-time control. The reference
+and the symbolic engines perform a direct solve of one hand-derived Lagrangian
+for one fixed topology. More arithmetic operations accumulate more rounding. At
+$7\times10^{-14}$ on the longer chains this is a deliberate
+generality-for-precision trade, not a defect, and it remains six orders of
+magnitude inside the adjudication tolerance. The cart--pole results of
+Table~\ref{tab:cartpole}, where the same engine returns the smallest residuals
+of the three, confirm the interpretation.
+
+\subsection{Where the engines genuinely differ, the author's engine is behind}
+\label{sec:behind}
+Compile time at three links is approximately 37 times slower than the
+computer-algebra package ($21.63$\,s against $0.59$\,s, Table~\ref{tab:scaling}).
+The Hamiltonian pathway times out from three links, where the other engines do
+not. On the near-singular axis its accuracy is $5.0\times10^{-12}$ against
+$1.7\times10^{-15}$. On the cart--pole its residuals are two orders of magnitude
+larger than the recursive library's. These measurements are reported for the
+same reason as the rest: a study that reported only the comparisons its author's
+engine wins would not be worth reading.
+
+\subsection{What can be claimed}
+That the three engines agree with an independent closed-form derivation, and
+with one another, to within $\mathbf{3\times10^{-14}}$ on equations of motion,
+and conserve energy indistinguishably under a pinned integrator, across
+amplitudes spanning the regular and chaotic regimes, across three mechanism
+families, and across constrained and unconstrained pathways.
+
+The bound is set by the largest residual anywhere in the study --- the
+computer-algebra package at $2.62\times10^{-14}$ on the three-link chain
+(Table~\ref{tab:eom}) --- not by the smallest. It is stated as
+$3\times10^{-14}$ rather than more tightly because a bound that does not cover
+every measurement is not a bound.
+
+That is an independently adjudicated correctness result. A claim of superiority
+for any one engine would rest on differences of a fraction of a per cent in a
+metric governed by a shared integrator, and --- in the case of the author's
+engine --- would be advanced by the party with an interest in it. Such a claim
+would be identified immediately and would discredit the work that is sound.
+
+% ===========================================================================
+\section{A diagnostic for convention mismatch}\label{sec:diagnostic}
+% ===========================================================================
+
+Three times during this study a comparison produced an error that was identical
+across every case in a sweep, to many significant figures. On each occasion the
+cause was a convention mismatch between the reference and the engine adapter,
+not a defect in the engine.
+
+\begin{center}
+\begin{tabular}{@{}lL{0.36\textwidth}L{0.24\textwidth}@{}}
+\toprule
+\textbf{Observed error} & \textbf{Cause} & \textbf{Degenerate case that hid it} \\
+\midrule
+$4.53$, and exactly $1.00$ at dead centre & Hamiltonian pathway integrates $(q,p)$ and returns $\dot p$; compared against $\ddot q$ & $N{=}1$, where $M = I$ makes $p = \dot q$ \\
+$2.5$--$6.4$, growing in $N$ & engine reports \emph{relative} joint angles; reference uses \emph{absolute} & $N{=}1$, where the two coincide \\
+exactly $2.00$, all 20 cases & pole offset rotated about $+y$ mirrors the mechanism, flipping the cart's acceleration & --- \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The signature generalises. A discrepancy arising from genuine numerical
+difference varies with configuration, because the quantities producing it vary
+with configuration. A discrepancy that is constant across cases with different
+parameters cannot have that origin. It indicates instead that two
+implementations are being asked different questions, and that the comparison
+rather than the implementation is at fault.
+
+Under a relative-error metric the two commonest degenerate cases produce
+characteristic values. A term absent entirely from one side yields a relative
+error of exactly $1$; a term present with the wrong sign yields exactly $2$,
+since $|a_d - a_r| = 2|a_r|$ divides out to exactly $2$ wherever
+$|a_r| > 1$. Both were observed here.
+
+A second tell is that the error vanishes in a degenerate configuration and grows
+away from it. Genuine derivation errors rarely switch on at a particular system
+size; convention mismatches characteristically do, because degenerate cases make
+differing conventions coincide.
+
+The rule is stated for use rather than for interest: \emph{in a
+cross-implementation comparison, a discrepancy identical to many significant
+figures across cases with different parameters indicates a convention mismatch
+in the comparison, not a defect in the implementation under test.} Its practical
+value is that it fires early, before a spurious defect is reported. Each of the
+three instances here was resolved by inspecting the mass matrix directly, and
+each would otherwise have been reported as a defect in widely used software.
+
+% ===========================================================================
+\section{Conclusion}
+% ===========================================================================
+
+Three independently developed rigid-body dynamics engines were compared under
+adjudication by a closed-form reference sharing no library with any of them,
+across a frozen adversarial case matrix, three structurally distinct mechanism
+families, both dynamical regimes, and constrained and unconstrained pathways.
+
+They agree to the limit of double-precision arithmetic. No engine returned an
+incorrect answer while reporting success on any adjudicated case. Where they
+differ, they differ in reach: the largest system each will answer varies by a
+factor of six across the three, and every engine that failed did so by not
+returning rather than by returning something wrong.
+
+The single failure observed is shared by all three engines and by the
+independent reference. At an unstable equilibrium every implementation reports
+success while returning a trajectory the exact solution does not have, and none
+warns. Its cause lies in the interaction between the problem and
+finite-precision arithmetic, not in any implementation.
+
+The consequence for method is the paper's main contribution. Differential
+testing between implementations is a strong instrument for the failures
+implementations make independently, and this study found none of those in three
+mature engines. It is structurally blind to the failures they share. Where the
+shared failure arises from arithmetic rather than from code, adding
+implementations does not help, because the reference exhibits the failure too.
+Detecting such cases requires reasoning about the problem --- here, recognising
+that the initial condition is an unstable equilibrium --- rather than comparing
+implementations of it.
+
+That the engines agree is a reassuring result for practitioners who rely on
+them. That they agree even when all of them are wrong is the more useful one.
+
+% ===========================================================================
+\section*{Disclosure}\label{sec:disclosure}
+\addcontentsline{toc}{section}{Disclosure}
+% ===========================================================================
+
+The author maintains one of the three engines measured. This is disclosed in
+every document of the study. The mitigation is structural: no engine adjudicates
+itself or any other, and the referee shares no library with any of them. The
+case matrix was frozen before measurement under a rule forbidding post hoc
+removal of cases, and \S\ref{sec:behind} reports the measurements on which the
+author's engine performs worst.
+
+\paragraph{Use of AI assistance.}
+An AI assistant (Anthropic Claude) was used throughout this work: in deriving
+and implementing the library-independent reference and the three engine
+adapters, in constructing and executing the sweeps, in analysing the resulting
+records, and in drafting this manuscript. Every numerical result reported was
+produced by executing committed code, and the author verified each figure
+against the run record. The assistant also produced several of the erroneous
+expectations recorded in \S\ref{sec:threats} and \S\ref{sec:diagnostic}; those
+were detected by the artefact-checking procedure described there and are
+reported rather than removed, because they are part of the evidence that the
+process detects its own faults.
+
+\paragraph{Artefacts.}
+Every figure reported was produced by executing committed code. Artefacts ---
+the case matrix, the reference implementations, the engine adapters, the sweep
+scripts, and the raw output records --- are available at
+\authortodo{Zenodo DOI --- deposit before posting so the link resolves}.
+
+\end{document}
