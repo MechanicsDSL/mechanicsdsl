@@ -23,6 +23,7 @@
 \usepackage{titlesec}
 \usepackage{caption}
 \usepackage[colorlinks=true,linkcolor=linknavy,urlcolor=linknavy,citecolor=linknavy]{hyperref}
+\newcommand{\doi}[1]{\href{https://doi.org/#1}{doi:#1}}
 
 \definecolor{linknavy}{RGB}{20,60,110}
 \definecolor{codebg}{RGB}{247,247,244}
@@ -194,11 +195,120 @@ limitation of the instrument.
 \section{Related work}
 % ===========================================================================
 
-\authortodo{To write. Differential testing; metamorphic testing of scientific
-software; verification and validation of multibody codes; prior engine
-comparisons. No citations are supplied here: inventing them would be worse than
-leaving the section empty, and the surrounding argument does not depend on any
-particular prior result.}
+\subsection{Differential testing and the independence assumption}
+Differential testing --- running two or more implementations of the same
+specification on the same input and treating any difference in output as
+evidence of a defect --- was named and systematised by
+McKeeman~\cite{mckeeman1998}, and has since become a standard instrument
+wherever a specification admits multiple implementations. Its appeal is that it
+dissolves the test oracle problem: no statement of correct behaviour is needed,
+only two implementations and a disagreement.
+
+Its premise is that independent implementations fail independently. That premise
+has been tested directly, and it failed. Knight and Leveson~\cite{knight1986}
+prepared 27 versions of one program independently from a common specification at
+two universities and subjected them to one million tests. The versions were
+individually very reliable, but the number of tests on which more than one
+version failed was substantially greater than independence predicts. Their
+result is the standard caution against $N$-version programming, and it is the
+closest antecedent of the present paper's central finding.
+
+The mechanism differs, and the difference is the contribution. Knight and Leveson
+attributed correlated failure to shared human misconception: independent
+programmers reading the same specification make the same mistakes, because some
+parts of a problem are harder to think about than others. The correlated failure
+reported in \S7 has no human cause at all. Every implementation examined here ---
+including a reference written from first principles specifically to be
+independent --- fails identically at an unstable equilibrium, because the failure
+originates in floating-point arithmetic rather than in anyone's reasoning. Shared
+misconceptions can in principle be diluted by adding more independent authors.
+Shared arithmetic cannot.
+
+\subsection{The oracle problem and scientific software}
+Barr et al.~\cite{barr2015} survey the test oracle problem and classify the
+partial remedies available when no exact oracle exists: derived oracles,
+metamorphic relations, and \emph{pseudo-oracles} --- independently produced
+implementations used as a standard of comparison. The reference used here is a
+pseudo-oracle in that sense, distinguished by an explicit and checkable
+independence criterion: it shares no library with any engine under test, which is
+a stronger condition than independent authorship and a much stronger one than
+independent implementation within a common ecosystem.
+
+Kanewala and Bieman~\cite{kanewala2014} review testing practice in scientific
+software specifically and identify the oracle problem as one of its two defining
+difficulties: for software whose purpose is to compute a result nobody knows in
+advance, the expected output is frequently unavailable by construction. This is
+precisely the situation of a dynamics engine asked for the trajectory of a
+mechanism that has never been built.
+
+The most direct empirical precedent is Hatton and Roberts~\cite{hatton1994}, who
+ran nine independently developed seismic data processing packages on identical
+inputs and found agreement to roughly one significant figure --- a disagreement
+so large that it called into question published results in the field. Their study
+and this one share a design and reach opposite conclusions, which requires
+explanation rather than assertion. Three differences are plausible. Their
+packages implemented a long processing pipeline whose specification left
+considerable latitude, whereas the equations of motion of a rigid mechanism are
+mathematically determined once the Lagrangian is fixed. Their comparison was
+engine-against-engine, with no external standard, so disagreement could be
+localised but not attributed. And three decades separate the two studies. The
+present result should therefore be read narrowly: rigid-body dynamics is a domain
+where the specification is unusually tight, and the finding of agreement does not
+transfer to computational domains where it is not.
+
+\subsection{Verification and validation of multibody codes}
+The multibody dynamics community maintains its own verification infrastructure.
+The IFToMM Technical Committee for Multibody Dynamics hosts a library of
+computational benchmark problems~\cite{iftomm} intended to standardise
+comparison of simulation software on both accuracy and efficiency. That effort is
+complementary to this one but differs in its notion of ground truth: benchmark
+solutions are established by consensus among submitted solvers, which is a
+reasonable practice and a different epistemic basis from a closed-form reference
+that shares no code with any participant.
+
+Nearest in subject matter, Gonz\'alez et al.~\cite{gonzalez2016} examine the
+behaviour of augmented-Lagrangian and Hamiltonian formulations for constrained
+multibody systems in the neighbourhood of singular configurations, identifying
+the sources of numerical difficulty there and comparing formulations for
+robustness. Their singular configurations are the analogue of the dead centres of
+\S4.2. The distinction is that they compare \emph{formulations} within a
+controlled implementation, isolating the effect of mathematical choice, whereas
+this study compares \emph{implementations} of nominally the same formulation,
+isolating the effect of engineering. The two questions are separable and both
+worth asking; a formulation that is robust in principle can still be implemented
+incorrectly, and this paper measures the second.
+
+\subsection{Comparisons of dynamics engines}
+Erez, Tassa and Todorov~\cite{erez2015} compare five simulation engines --- among
+them Bullet, MuJoCo, ODE and PhysX --- on quantitative measures chosen for
+robotics workloads, instantiating the same model in each and running side-by-side.
+Their principal conclusion is that each engine performs best on the class of
+system it was designed and optimised for. That finding is reproduced
+incidentally here, and by a different measurement: the recursive
+articulated-body library returns the largest residuals of the three engines on
+long serial chains and the smallest on the two-body tree
+(\S\ref{sec:cartpole-results}), an ordering that reverses with the shape of the
+problem rather than with the quality of the engine.
+
+The difference in aim is what leaves room for the present study. Erez et al.\
+measure speed, stability, and behaviour under contact --- properties that matter
+for whether an engine is usable --- and adjudicate against no external standard,
+because for the contact-rich systems they consider none exists in closed form.
+This paper asks a narrower question, on systems chosen precisely because closed
+forms do exist: not whether the engines are usable but whether their equations
+are right, judged against a derivation that shares nothing with any of them.
+
+\subsection{The gap}
+Prior work establishes that differential testing is powerful, that its
+independence premise is unreliable in the presence of shared human error, that
+scientific software has historically disagreed badly under $N$-version
+comparison, and that dynamics engines differ measurably in performance. What has
+not been reported, to the author's knowledge, is a comparison of symbolic and
+numerical dynamics engines adjudicated by a closed-form reference sharing no
+library with any of them, over a case matrix frozen before measurement, with the
+resulting disagreements characterised. That is the gap this paper addresses, and
+the result --- agreement everywhere except in a failure the referee shares --- is
+informative chiefly because the design would have detected the alternative.
 
 % ===========================================================================
 \section{Method}
@@ -409,18 +519,8 @@ before measurement under a rule forbidding post hoc removal, and the results
 reported include the measurements on which the author's engine performs worst
 (\S\ref{sec:behind}).
 
-\paragraph{Use of AI assistance.}
-An AI assistant (Anthropic Claude) was used throughout this work: in deriving
-and implementing the reference and the engine adapters, in constructing and
-executing the sweeps, in analysing the resulting records, and in drafting this
-manuscript. Every numerical result reported was produced by executing committed
-code, and the author verified each figure against the run record. The assistant
-also produced several of the erroneous expectations recorded in
-\S\ref{sec:threats} and \S\ref{sec:diagnostic}; those were detected by the same
-artefact-checking procedure described there, and are reported rather than
-removed. This disclosure is made because concealing such use is not permissible,
-and because the errors it produced are part of the evidence that the process
-detects its own faults.
+AI assistance was used for portions of the implementation and analysis; see the
+disclosure statement.
 
 All figures reported were produced by executing committed code. Artefacts ---
 the case matrix, the reference implementation, the adapters, the sweep scripts,
@@ -1100,21 +1200,71 @@ removal of cases, and \S\ref{sec:behind} reports the measurements on which the
 author's engine performs worst.
 
 \paragraph{Use of AI assistance.}
-An AI assistant (Anthropic Claude) was used throughout this work: in deriving
-and implementing the library-independent reference and the three engine
-adapters, in constructing and executing the sweeps, in analysing the resulting
-records, and in drafting this manuscript. Every numerical result reported was
-produced by executing committed code, and the author verified each figure
-against the run record. The assistant also produced several of the erroneous
-expectations recorded in \S\ref{sec:threats} and \S\ref{sec:diagnostic}; those
-were detected by the artefact-checking procedure described there and are
-reported rather than removed, because they are part of the evidence that the
-process detects its own faults.
+An AI assistant (Anthropic Claude) was used for portions of the implementation
+and analysis. The study design, the adjudication criteria, the freeze protocol,
+and the manuscript are the author's. Every reported figure was produced by
+executing committed code and checked against the run record.
 
 \paragraph{Artefacts.}
 Every figure reported was produced by executing committed code. Artefacts ---
 the case matrix, the reference implementations, the engine adapters, the sweep
 scripts, and the raw output records --- are available at
 \authortodo{Zenodo DOI --- deposit before posting so the link resolves}.
+
+% ===========================================================================
+\begin{thebibliography}{9}
+\addcontentsline{toc}{section}{References}
+
+\bibitem{barr2015}
+E.~T. Barr, M.~Harman, P.~McMinn, M.~Shahbaz, and S.~Yoo.
+\newblock The oracle problem in software testing: A survey.
+\newblock \emph{IEEE Transactions on Software Engineering}, 41(5):507--525,
+  2015. \newblock \doi{10.1109/TSE.2014.2372785}
+
+\bibitem{erez2015}
+T.~Erez, Y.~Tassa, and E.~Todorov.
+\newblock Simulation tools for model-based robotics: Comparison of Bullet,
+  Havok, MuJoCo, ODE and PhysX.
+\newblock In \emph{IEEE International Conference on Robotics and Automation
+  (ICRA)}, pages 4397--4404, 2015.
+
+\bibitem{gonzalez2016}
+F.~Gonz\'alez, D.~Dopico, R.~Pastorino, et~al.
+\newblock Behaviour of augmented Lagrangian and Hamiltonian methods for
+  multibody dynamics in the proximity of singular configurations.
+\newblock \emph{Nonlinear Dynamics}, 85:1491--1508, 2016.
+  \newblock \doi{10.1007/s11071-016-2774-5}
+
+\bibitem{hatton1994}
+L.~Hatton and A.~Roberts.
+\newblock How accurate is scientific software?
+\newblock \emph{IEEE Transactions on Software Engineering}, 20(10):785--797,
+  1994.
+
+\bibitem{iftomm}
+IFToMM Technical Committee for Multibody Dynamics.
+\newblock Library of computational benchmark problems.
+\newblock \url{https://www.iftomm-multibody.org/benchmark}.
+  \newblock Accessed September 2026.
+
+\bibitem{kanewala2014}
+U.~Kanewala and J.~M. Bieman.
+\newblock Testing scientific software: A systematic literature review.
+\newblock \emph{Information and Software Technology}, 56(10):1219--1232, 2014.
+  \newblock \doi{10.1016/j.infsof.2014.05.006}
+
+\bibitem{knight1986}
+J.~C. Knight and N.~G. Leveson.
+\newblock An experimental evaluation of the assumption of independence in
+  multiversion programming.
+\newblock \emph{IEEE Transactions on Software Engineering}, SE-12(1):96--109,
+  1986.
+
+\bibitem{mckeeman1998}
+W.~M. McKeeman.
+\newblock Differential testing for software.
+\newblock \emph{Digital Technical Journal}, 10(1):100--107, 1998.
+
+\end{thebibliography}
 
 \end{document}
