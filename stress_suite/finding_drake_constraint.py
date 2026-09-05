@@ -295,8 +295,15 @@ def main():
     print()
     print("  This is an API GUARD failure, not a dynamics failure. Drake's")
     print("  articulated-body algorithms are correct; the model-building API")
-    print("  accepted a model it does not implement. The guard that catches")
-    print("  it exists on master and in no released version tested.")
+    print("  accepted a model it does not implement.")
+    print()
+    print("  A build-time guard for exactly this existed from v1.11.0 (#18196,")
+    print("  2022-12-07) through v1.50.0, and was removed by #24079 on")
+    print("  2026-02-17 to permit continuous-time plants with CENIC. The PR")
+    print("  discussion records that constraint-sensitive continuous methods")
+    print("  must then throw instead; EvalTimeDerivatives does, and the three")
+    print("  accessors used above do not. An incomplete migration, not an")
+    print("  oversight. Measured on 1.56.0; master read but not run.")
     return 0
 
 
