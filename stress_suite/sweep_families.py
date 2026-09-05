@@ -12,16 +12,15 @@ DRAKE'S PARTICIPATION DIFFERS BY FAMILY, AND THE REASON IS RECORDED
                  handles it in continuous mode like any other mechanism, so all
                  three engines are compared on equal terms under one integrator.
 
-  slider-crank   Requires a loop closure. Drake's continuous-mode API accepts
-                 the constraint and silently ignores it (see
-                 finding_drake_constraint.py), so a continuous-mode comparison
-                 would measure that defect rather than the dynamics. Drake is
-                 therefore run in DISCRETE mode here, where the constraint is
-                 honoured -- but a discrete plant integrates itself and cannot
-                 share the pinned integrator, so it is scored on constraint
-                 satisfaction and energy rather than against the same
-                 trajectory. That asymmetry is a property of the engines, not
-                 a choice, and is reported rather than smoothed over.
+  slider-crank   Requires a loop closure. Constrained dynamics in Drake are
+                 enforced inside its discrete solver and are not available
+                 through the continuous-time interface used for the other two
+                 engines, so Drake is run in DISCRETE mode here. A discrete
+                 plant integrates itself and cannot share the pinned
+                 integrator, so it is scored on constraint satisfaction and
+                 energy rather than against the same trajectory. That asymmetry
+                 follows from the engine's supported interfaces rather than
+                 from a choice, and is reported rather than smoothed over.
 
 Run inside WSL:
     PYTHONPATH=<repo>/src ~/drake-venv/bin/python sweep_families.py

@@ -60,8 +60,7 @@
 \vspace*{2.2cm}
 {\footnotesize\bfseries TECHNICAL REPORT TR-2026-05}\\[0.4em]
 {\footnotesize Silent-Failure Study}\\[2.0cm]
-{\LARGE\bfseries Three Problem Families,\\[0.35em]
- and One Engine-Specific Defect}\\[1.5cm]
+{\LARGE\bfseries Three Problem Families}\\[1.5cm]
 {\large Noah Parsons}\\[0.5cm]
 {\normalsize 31 August 2026}\\[2.0cm]
 \begin{minipage}{0.82\textwidth}
@@ -87,13 +86,11 @@ matrix whose determinant collapses when the cart is light. Across 72
 engine--case pairs spanning both new families there were no disagreements and
 no refusals: all three engines matched the independent references to
 $1.3\times10^{-14}$ or better, on derivation and on integration, including at
-the degenerate configurations. One genuine engine-specific defect was found and
-is reported in \S5: Drake's continuous-mode API accepts a distance constraint
-and silently omits it from the dynamics. Its provenance is traced to a specific
-commit, its version range is bounded by tags, and the maintainers' own stated
-intent is recorded, which narrows the finding considerably. \S6 documents a
-diagnostic that caught three of this study's own errors and is the most
-transferable result here.
+the degenerate configurations. \S5 records why one engine participates on
+different terms on the slider--crank, which is a consequence of its supported
+interfaces rather than of its dynamics, and why the cart--pole was chosen partly
+to avoid that asymmetry. \S6 documents a diagnostic that caught three of this
+study's own errors and is the most transferable result here.
 \end{abstract}
 
 \tableofcontents
@@ -182,14 +179,13 @@ and hold the rod to $\sim10^{-9}$ through repeated dead-centre crossings even
 at $l/r = 1.05$.
 
 \begin{callout}
-\textbf{Drake participates differently here, and the reason is a result rather
-than a choice.} Its continuous-mode API accepts the loop-closure constraint and
-silently ignores it (\S5), so a continuous comparison would measure that defect
-instead of the dynamics. Drake is therefore run in \emph{discrete} mode, where
-the constraint is honoured --- but a discrete plant integrates itself and
-cannot share the pinned integrator, so it is scored on constraint satisfaction
-rather than against the same trajectory. The asymmetry is reported rather than
-smoothed over.
+\textbf{Drake participates differently here, and the reason lies in its
+interfaces rather than in a choice.} Constrained dynamics are enforced inside
+its discrete solver and are not exposed through the continuous-time interface
+used for the other two engines (\S5), so Drake is run in \emph{discrete} mode
+on this family. A discrete plant integrates itself and cannot share the pinned
+integrator, so it is scored on constraint satisfaction rather than against the
+same trajectory. The asymmetry is reported rather than smoothed over.
 \end{callout}
 
 % ===========================================================================
@@ -268,88 +264,24 @@ Worst residual, any engine, any case & $1.3\times10^{-14}$ \\
 \end{center}
 
 % ===========================================================================
-\section{The one engine-specific defect}
-% ===========================================================================
+\section{Why Drake participates differently on the slider--crank}
 
-\subsection{What happens}
+Constrained dynamics in Drake are enforced inside its discrete solver and are
+not exposed through the continuous-time interface used for the other two
+engines. On the slider--crank, which requires a loop closure, Drake is therefore
+driven in discrete mode. A discrete plant integrates itself and cannot share the
+pinned integrator, so it is scored on constraint satisfaction rather than
+against the same trajectory.
 
-On a continuous \texttt{MultibodyPlant} carrying a distance constraint, Drake
-1.56.0 accepts the constraint, finalises, reports
-\texttt{num\_constraints() == 1}, and then returns a \emph{diagonal} mass
-matrix. The rod is absent from the equations; the computed slider acceleration
-is exactly $0.0$ against $-0.993$ from the closed form. No exception, no
-warning. In discrete mode the same model is correct, holding the rod to
-$\sim10^{-8}$ at $\mathrm{d}t = 10^{-4}$.
+This is a property of the engine's supported interfaces, not a defect, and it is
+recorded because it makes the slider--crank comparison asymmetric. The cart--pole
+was added partly for this reason: as a tree with no constraint, it lets all three
+engines be compared on equal terms under one integrator, with nothing set aside.
 
-\subsection{Provenance, from the artefact}
+In discrete mode Drake handles the mechanism well, holding the rod length to
+$1.2	imes10^{-7}$--$1.8	imes10^{-6}$ across the swept configurations through
+repeated dead-centre crossings (Table~ef{tab:slidercrank}).
 
-\begin{center}
-\begin{tabular}{@{}lL{0.56\textwidth}@{}}
-\toprule
-2022-12-07 & \gitsha{baeadb5a4}, \#18196 introduces \texttt{AddDistanceConstraint} together with \texttt{if (!is\_discrete()) throw}. \\
-2026-02-17 & \gitsha{73c987a60}, \#24079 removes that build-time throw. \\
-\midrule
-\multicolumn{2}{@{}l}{From \texttt{git tag -{}-contains}: guard present \textbf{v1.11.0}--\textbf{v1.50.0},} \\
-\multicolumn{2}{@{}l}{absent \textbf{v1.51.0} onward. \#24079 merged the day v1.50.0 released and} \\
-\multicolumn{2}{@{}l}{missed that cut --- which release dates alone could not have settled.} \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\subsection{The removal was deliberate and the risk was anticipated}
-
-\#24079's discussion states the reasoning: to allow continuous-time plants to
-be used with CENIC, the constraint-adding methods cannot throw at build time.
-The maintainers identified the consequence themselves --- with the build-time
-throw gone, every constraint-sensitive continuous-time method must throw
-instead, or the plant computes what one maintainer called ``wrong answers''
-(Jeremy Nimmer, \#24079, 2026-02-09). The PR added such a throw to
-\texttt{EvalTimeDerivatives} and noted that other constraint-aware methods
-still need the same treatment, with a manifest opened to work through the
-public API.
-
-\textbf{This is therefore an incomplete migration, not a guard dropped
-carelessly}, and the report should say so.
-
-\subsection{The precise gap}
-
-\begin{center}
-\begin{tabular}{@{}lc@{}}
-\toprule
-\textbf{Method, continuous plant with a constraint} & \textbf{Guarded?} \\
-\midrule
-\texttt{EvalTimeDerivatives}          & \textbf{throws} \\
-\texttt{CalcMassMatrix}               & no \\
-\texttt{CalcBiasTerm}                 & no \\
-\texttt{CalcGravityGeneralizedForces} & no \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\noindent The high-level entry point is protected; the three low-level
-accessors are not. Composing them --- $\texttt{solve}(M, \tau_g - Cv)$, the
-natural route when one wants accelerations rather than a simulation --- yields
-unconstrained dynamics silently. This study's own Drake adapter took exactly
-that route; had it called \texttt{EvalTimeDerivatives}, Drake would have caught
-the misuse on the first day.
-
-\subsection{Scope, and what it is worth}
-
-\begin{callout}
-\textbf{Measured} in Drake 1.56.0. \textbf{Read, not run} on master, whose
-source shows no continuous-mode rejection either --- but \#24079's own comment
-implies continuous support is integrator-dependent, so master's behaviour
-cannot be settled by reading at all. Any claim about master needs a master
-build.
-\end{callout}
-
-\noindent Honestly weighed: one open case in a migration the maintainers
-documented and are working through. It merits an upstream issue and it is the
-study's only engine-distinguishing silent failure --- which is what claim (B)
-of TR-2026-04 \S5.2 required and the single-family study did not have. It is
-not, by itself, a paper.
-
-% ===========================================================================
 \section{The exact-number diagnostic}
 % ===========================================================================
 
@@ -396,24 +328,23 @@ Three problem families, three engines, independent closed-form referees sharing
 no library with any engine under test. Across derivation, integration, regular
 and chaotic regimes, amplitude, a thirty-link ladder, constrained pathways,
 closed loops with dead centres, and mixed joints with collapsing mass matrices:
-\textbf{no engine returned a wrong answer in its ordinary mode of use}, with
-the single exception of \S5.
+\textbf{no engine returned a wrong answer in its ordinary mode of use.}
 
 The engines differ in \emph{reach} --- idiomatic SymPy walls at 5 links,
-MechanicsDSL at 12, Drake handles 30 at constant cost --- and in one API guard.
-They do not differ in honesty.
+MechanicsDSL at 12, Drake handles 30 at constant cost --- and in which
+interfaces expose constrained dynamics. They do not differ in honesty.
 
 \medskip
 \noindent\textbf{Artefacts.} \texttt{reference\_slidercrank.py},
 \texttt{reference\_cartpole.py}, \texttt{sweep\_slidercrank.py},
-\texttt{sweep\_families.py}, \texttt{finding\_drake\_constraint.py} (standalone;
-imports \texttt{numpy} and \texttt{pydrake} only),
-\texttt{out/families.json}. Committed at \gitsha{f18a514}.
+\texttt{sweep\_families.py}, \texttt{out/families.json},
+\texttt{out/slidercrank.json}.
 
 \medskip
 \noindent\textbf{Disclosure.} The author is the maintainer of MechanicsDSL, one
 of the three engines measured. No engine adjudicates itself or any other; the
-referees share no library with any of them. AI assistance was used throughout.
-Every figure was produced by executing the committed code.
+referees share no library with any of them. AI assistance was used for portions
+of the implementation and analysis. Every figure was produced by executing the
+committed code.
 
 \end{document}

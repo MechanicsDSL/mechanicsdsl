@@ -3,10 +3,12 @@ Library-independent reference for the cart-pole -- the third problem family.
 
 WHY THIS FAMILY
 ---------------
-The first two families both required a closed loop or an explicit constraint,
-which is exactly where Drake's continuous-mode API stops being usable (see
-finding_drake_constraint.py). That makes them poor ground for a three-way
-comparison: one engine is disqualified for a reason unrelated to its dynamics.
+The first two families both required a closed loop or an explicit constraint.
+Constrained dynamics in Drake are enforced inside its discrete solver and are
+not available through the continuous-time interface used elsewhere here, so on
+those families Drake must be driven in discrete mode and cannot share the
+pinned integrator. That makes them poor ground for a three-way comparison: one
+engine participates on different terms for a reason unrelated to its dynamics.
 
 The cart-pole is a TREE -- a prismatic cart carrying a revolute pole, no loop,
 no constraint -- so every engine handles it in its ordinary mode with nothing

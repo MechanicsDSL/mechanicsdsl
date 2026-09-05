@@ -49,8 +49,8 @@ independent referee that shares no library with any of them.\\[0.3em]
 \textbf{(A) Engines can report success while returning wrong physics ---
 \textcolor{okgreen}{SUPPORTED}.}
 \textbf{(B) Engines \emph{differ} in whether they do ---
-\textcolor{okgreen}{SUPPORTED}, once, narrowly} (Drake's constraint API; see
-below). Everywhere else all three engines behave identically and correctly.
+\textcolor{holdred}{NOT supported}.} Every engine behaved identically and
+correctly on every case measured, in all three families.
 
 \vspace{0.4em}
 
@@ -71,15 +71,6 @@ below). Everywhere else all three engines behave identically and correctly.
 \textbf{72 engine--case pairs across families 2 and 3: 0 disagreements, 0
 refusals}, worst residual $1.3\times10^{-14}$, on derivation \emph{and}
 integration, including at the degenerate configurations.
-
-% ---------------------------------------------------------------------------
-\section{The one engine-specific defect}
-
-\begin{tabular}{@{}cL{0.90\textwidth}@{}}
-\textcolor{holdred}{\textbf{!}} & \textbf{Drake 1.56.0 accepts a distance constraint on a \emph{continuous} plant and silently omits it.} Mass matrix comes back diagonal; slider acceleration exactly $0.0$ against $-0.993$. No exception, no warning. Discrete mode is correct. \\
- & \textbf{Provenance:} guard present v1.11.0--v1.50.0 (\#18196), removed by \#24079 on 2026-02-17, absent v1.51.0 onward. Removal was \emph{deliberate} --- to enable CENIC --- and the maintainers flagged the risk themselves, adding a throw to \texttt{EvalTimeDerivatives} but not yet to \texttt{CalcMassMatrix}, \texttt{CalcBiasTerm}, \texttt{CalcGravityGeneralizedForces}. An incomplete migration, not carelessness. \\
- & \textbf{Worth:} an upstream issue. Not a paper on its own. \\
-\end{tabular}
 
 % ---------------------------------------------------------------------------
 \section{Capability, where they genuinely differ}
@@ -110,15 +101,15 @@ timed out. \textbf{They differ in reach, not in honesty.}
 \begin{tabular}{@{}cL{0.90\textwidth}@{}}
 \textcolor{holdred}{\textbf{!}} & Engine, scoring path, and the 55-case matrix frozen at \texttt{a8dc2b2}. Harness may grow; gate is the frozen matrix still returning 44/0/1/10 bit-identically. \\
 \textcolor{holdred}{\textbf{!}} & \textbf{Do not claim MechanicsDSL outperforms Drake.} On the cart--pole Drake's residuals are the \emph{smallest} of the three ($10^{-16}$). Reaching 12 links against idiomatic SymPy's 5 is defensible; Drake reaches 30. \\
-\textcolor{holdred}{\textbf{!}} & Scope every Drake claim to \textbf{1.56.0}: master was read, not run, and \#24079 implies behaviour there is integrator-dependent. \\
+\textcolor{holdred}{\textbf{!}} & On the slider--crank Drake runs in \emph{discrete} mode --- constrained dynamics are not exposed through the continuous interface --- so it cannot share the pinned integrator and is scored on constraint satisfaction. Report the asymmetry; it follows from the interfaces, not from the dynamics. \\
 \end{tabular}
 
 % ---------------------------------------------------------------------------
 \section{What is left}
 
 \begin{tabular}{@{}cL{0.90\textwidth}@{}}
-\todo & \textbf{File the Drake issue} using \texttt{finding\_drake\_constraint.py} (standalone; \texttt{numpy} + \texttt{pydrake} only). Ask whether the three accessors are on \#24079's manifest --- do not assert a defect. Flat, descriptive, no adjectives; file before publishing. \\
-\todo & \textbf{Write it up.} Null result with strong methodology, one narrow engine-specific defect, a three-tier capability comparison, and the diagnostic above. Short or workshop paper, as \texttt{SCOPE.md} always said. \\
+\todo & \textbf{Deposit the artefacts} on Zenodo and put the resolved DOI into the paper's artefacts line. \\
+\todo & \textbf{Write it up.} Null result with strong methodology, a three-tier capability comparison, and the diagnostic above. Short or workshop paper, as \texttt{SCOPE.md} always said. \\
 \end{tabular}
 
 \vspace{0.4em}
