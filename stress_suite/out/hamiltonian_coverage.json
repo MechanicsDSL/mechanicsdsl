@@ -1,0 +1,23 @@
+[
+ {
+  "N": 1,
+  "status": "ok",
+  "route": "via_ode_rhs",
+  "canonical_err": 0.0,
+  "legendre_err": 0.0,
+  "total_s": 1.957585334777832
+ },
+ {
+  "N": 2,
+  "status": "ok",
+  "route": "via_ode_rhs",
+  "canonical_err": 2.6645352591003757e-15,
+  "legendre_err": 1.1102230246251565e-16,
+  "total_s": 28.557121515274048
+ },
+ {
+  "N": 3,
+  "status": "TIMEOUT",
+  "total_s": 180.0330593585968
+ }
+]
