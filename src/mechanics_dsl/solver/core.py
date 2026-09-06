@@ -16,6 +16,7 @@ from ..utils import (
     _perf_monitor,
     config,
     logger,
+    maybe_simplify,
     profile_function,
     safe_array_access,
     safe_float_conversion,
@@ -95,17 +96,7 @@ class NumericalSimulator:
             if accel_key in accelerations:
                 eq = accelerations[accel_key].subs(param_subs)
 
-                # Attempt simplification with timeout
-                try:
-                    if config.simplification_timeout > 0:
-                        with timeout(config.simplification_timeout):
-                            eq = sp.simplify(eq)
-                    else:
-                        eq = sp.simplify(eq)
-                except TimeoutError:
-                    logger.debug(f"Simplification timeout for {accel_key}, skipping")
-                except (ValueError, TypeError, AttributeError) as e:
-                    logger.debug(f"Simplification error for {accel_key}: {e}, skipping")
+                eq = maybe_simplify(eq, accel_key)
 
                 eq = self._replace_derivatives(eq, coordinates)
 

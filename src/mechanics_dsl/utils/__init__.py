@@ -36,6 +36,7 @@ from .config import (  # noqa: F401  # re-exports for backward compat
     PLANCK_CONSTANT,
     PRIMARY_COLOR,
     SECONDARY_COLOR,
+    ENABLE_SIMPLIFICATION,
     SIMPLIFICATION_TIMEOUT,
     SINGULARITY_THRESHOLD,
     SPEED_OF_LIGHT,
@@ -57,6 +58,13 @@ from .path_validation import (
     validate_path_within_base,
 )
 from .profiling import PerformanceMonitor, TimeoutError, _perf_monitor, profile_function, timeout
+from .recursion import (
+    DEFAULT_DEEP_LIMIT,
+    DEFAULT_STACK_MB,
+    elevated_recursion,
+    run_with_deep_recursion,
+)
+from .simplification import maybe_simplify
 from .rate_limit import RateLimiter, RateLimitExceeded, SimulationRateLimiter, TokenBucket
 from .registry import (
     COMMON_CONSTANT_NAMES,
@@ -100,6 +108,11 @@ __all__ = [
     "profile_function",
     "timeout",
     "TimeoutError",
+    "maybe_simplify",
+    "elevated_recursion",
+    "run_with_deep_recursion",
+    "DEFAULT_DEEP_LIMIT",
+    "DEFAULT_STACK_MB",
     "_perf_monitor",
     # Validation
     "safe_float_conversion",
@@ -147,6 +160,7 @@ __all__ = [
     "DEFAULT_ATOL",
     "ENERGY_TOLERANCE",
     "DEFAULT_NUM_POINTS",
+    "ENABLE_SIMPLIFICATION",
     "SIMPLIFICATION_TIMEOUT",
     "MAX_PARSER_ERRORS",
     "MAX_SOLVER_ITERATIONS",

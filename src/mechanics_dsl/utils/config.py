@@ -43,6 +43,29 @@ DEFAULT_STIFFNESS_TEST_DURATION = 0.01
 # Simplification timeout (seconds)
 SIMPLIFICATION_TIMEOUT = 5.0
 
+# Whether to simplify derived equations at all.
+#
+# Simplification is COSMETIC: sp.simplify rewrites an expression into an
+# equivalent one, so it changes the size of the equations, never their value.
+# It is also, on coupled multi-coordinate systems, overwhelmingly the dominant
+# cost of compilation -- profiling an 8-link chain put 97% of compile time
+# inside sp.simplify, almost all of it in trigsimp's multivariate polynomial
+# factorisation. Disabling it on that system cut compilation from 86s to 2.0s
+# and left the computed accelerations bit-identical against an independent
+# closed-form reference.
+#
+# The timeout below CANNOT bound that cost on its own; see the note there.
+ENABLE_SIMPLIFICATION = True
+
+# Retry derivation with a raised recursion limit when CPython's default is the
+# thing that refused the system. Measured on the planar chain with
+# simplification disabled: N=32 refuses at the default limit and derives in
+# 145s at 60000; N=60 derives in 916s and agrees with an independent
+# closed-form reference to 4.1e-13.
+DEEP_RECURSION = True
+RECURSION_LIMIT = 200_000
+DERIVATION_STACK_MB = 128
+
 # Maximum parser errors before aborting
 MAX_PARSER_ERRORS = 10
 
@@ -127,6 +150,10 @@ class Config:
         self._enable_profiling: bool = False
         self._enable_debug_logging: bool = False
         self._simplification_timeout: float = SIMPLIFICATION_TIMEOUT
+        self._enable_simplification: bool = ENABLE_SIMPLIFICATION
+        self._deep_recursion: bool = DEEP_RECURSION
+        self._recursion_limit: int = RECURSION_LIMIT
+        self._derivation_stack_mb: int = DERIVATION_STACK_MB
         self._max_parser_errors: int = MAX_PARSER_ERRORS
         self._default_rtol: float = DEFAULT_RTOL
         self._default_atol: float = DEFAULT_ATOL
@@ -170,8 +197,98 @@ class Config:
         self._enable_debug_logging = value
 
     @property
+    def deep_recursion(self) -> bool:
+        """Retry derivation with a raised recursion limit if the default refuses.
+
+        The default limit rejects strongly coupled systems past roughly thirty
+        coordinates. That is an interpreter default, not a property of the
+        problem, so the retry is on by default. Set False to fail immediately
+        instead.
+        """
+        return self._deep_recursion
+
+    @deep_recursion.setter
+    def deep_recursion(self, value: bool) -> None:
+        if not isinstance(value, bool):
+            raise TypeError(f"deep_recursion must be bool, got {type(value).__name__}")
+        self._deep_recursion = value
+
+    @property
+    def recursion_limit(self) -> int:
+        """Recursion limit used for the deep-recursion retry."""
+        return self._recursion_limit
+
+    @recursion_limit.setter
+    def recursion_limit(self, value: int) -> None:
+        if not isinstance(value, int) or isinstance(value, bool):
+            raise TypeError(f"recursion_limit must be int, got {type(value).__name__}")
+        if value < 1000:
+            raise ValueError(f"recursion_limit must be at least 1000, got {value}")
+        self._recursion_limit = value
+
+    @property
+    def derivation_stack_mb(self) -> int:
+        """Stack size, in MiB, for the thread used by the deep-recursion retry.
+
+        A raised recursion limit without a matching stack turns a catchable
+        RecursionError into a hard interpreter crash, so the two are set
+        together. Platforms may refuse large values; the retry falls back to
+        smaller stacks rather than failing.
+        """
+        return self._derivation_stack_mb
+
+    @derivation_stack_mb.setter
+    def derivation_stack_mb(self, value: int) -> None:
+        if not isinstance(value, int) or isinstance(value, bool):
+            raise TypeError(
+                f"derivation_stack_mb must be int, got {type(value).__name__}"
+            )
+        if not (1 <= value <= 512):
+            raise ValueError(f"derivation_stack_mb must be in 1..512, got {value}")
+        self._derivation_stack_mb = value
+
+    @property
+    def enable_simplification(self) -> bool:
+        """Whether derived equations are simplified.
+
+        Simplification is cosmetic -- it rewrites expressions into equivalent
+        ones -- and is the dominant cost of compiling coupled systems. Set
+        False to skip it entirely; the equations are then bulkier and
+        numerically identical.
+
+        This is the only reliable way to avoid the cost.
+        `simplification_timeout` cannot bound it: see that property.
+        """
+        return self._enable_simplification
+
+    @enable_simplification.setter
+    def enable_simplification(self, value: bool) -> None:
+        if not isinstance(value, bool):
+            raise TypeError(
+                f"enable_simplification must be bool, got {type(value).__name__}"
+            )
+        self._enable_simplification = value
+
+    @property
     def simplification_timeout(self) -> float:
-        """Timeout for symbolic simplification operations in seconds."""
+        """Advisory timeout for symbolic simplification, in seconds.
+
+        ADVISORY, not enforced. The timeout is implemented with a watchdog
+        thread, and a Python thread cannot interrupt SymPy while it is inside
+        a C-level routine -- which is exactly where expensive simplification
+        spends its time. On such a call the deadline passes, the full cost is
+        paid regardless, and TimeoutError surfaces only once control returns
+        to the interpreter. The warning that the timeout fired is therefore
+        true about intent and misleading about effect.
+
+        It still bounds simplification that stays in Python, so it is kept.
+        To actually avoid the cost, set `enable_simplification = False`.
+
+        A value of 0 means "no deadline", NOT "no simplification": it removes
+        the watchdog and lets simplification run unbounded. It is accepted for
+        backwards compatibility and warns, because it selects the slowest
+        path and has been mistaken for an off switch.
+        """
         return self._simplification_timeout
 
     @simplification_timeout.setter
@@ -182,6 +299,12 @@ class Config:
             raise ValueError(f"simplification_timeout must be non-negative, got {value}")
         if value > 3600:
             raise ValueError(f"simplification_timeout too large (>{3600}s), got {value}")
+        if value == 0:
+            logger.warning(
+                "simplification_timeout=0 removes the deadline; it does NOT "
+                "disable simplification, and selects the slowest path. Set "
+                "config.enable_simplification = False to skip simplification."
+            )
         self._simplification_timeout = float(value)
 
     @property
