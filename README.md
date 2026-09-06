@@ -12,7 +12,7 @@
 
 ---
 
-MechanicsDSL is a domain-specific language and compiler for physical systems. You write a Lagrangian or Hamiltonian in a LaTeX-inspired syntax; the symbolic engine (built on SymPy) derives the equations of motion automatically, and the compiler generates simulation code in your choice of twelve target languages — from Python and C++ to CUDA, Rust, WebAssembly, and Arduino.
+MechanicsDSL is a domain-specific language and compiler for physical systems. You write a Lagrangian or Hamiltonian in a LaTeX-inspired syntax; the symbolic engine (built on SymPy) derives the equations of motion automatically, and the compiler generates simulation code in your choice of twelve target languages, from Python and C++ to CUDA, Rust, WebAssembly, and Arduino.
 
 The goal is to collapse the distance between textbook physics and a running simulation, while keeping the path to lower-level, performance-tuned code open through code generation.
 
@@ -146,7 +146,7 @@ gen.generate("pendulum.rs")
 
 ## Project status
 
-MechanicsDSL is under active development. The v2.0.x line is stable; new features, additional backends, and broader validation are ongoing. Issues, pull requests, and use-case reports are all welcome — what the project becomes next depends in part on how people are using it.
+MechanicsDSL is under active development. The v2.0.x line is stable; new features, additional backends, and broader validation are ongoing. Issues, pull requests, and use-case reports are all welcome.
 
 ## Documentation
 
@@ -158,4 +158,4 @@ Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT; see [LICENSE](LICENSE).
