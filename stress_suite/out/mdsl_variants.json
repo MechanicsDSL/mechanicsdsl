@@ -1,0 +1,163 @@
+[
+ {
+  "variant": "both",
+  "N": 12,
+  "engine": "MechanicsDSL",
+  "simplification_timeout": 0.05,
+  "status": "ok",
+  "route": "via_ode_rhs",
+  "build_s": 5.842226266860962,
+  "eval_s": 0.00012162327766418457,
+  "err": 2.843558721821182e-14,
+  "total_s": 5.844342231750488
+ },
+ {
+  "variant": "both",
+  "N": 16,
+  "engine": "MechanicsDSL",
+  "simplification_timeout": 0.05,
+  "status": "ok",
+  "route": "via_ode_rhs",
+  "build_s": 13.231050729751587,
+  "eval_s": 0.00021047890186309814,
+  "err": 3.985700658404312e-14,
+  "total_s": 13.234551906585693
+ },
+ {
+  "variant": "both",
+  "N": 20,
+  "engine": "MechanicsDSL",
+  "simplification_timeout": 0.05,
+  "status": "ok",
+  "route": "via_ode_rhs",
+  "build_s": 35.55778384208679,
+  "eval_s": 0.00035643577575683594,
+  "err": 3.497202527569243e-14,
+  "total_s": 35.56367015838623
+ },
+ {
+  "variant": "both",
+  "N": 24,
+  "engine": "MechanicsDSL",
+  "simplification_timeout": 0.05,
+  "status": "ok",
+  "route": "via_ode_rhs",
+  "build_s": 64.37128901481628,
+  "eval_s": 0.0008885413408279419,
+  "err": 6.222800053024002e-14,
+  "total_s": 64.38576364517212
+ },
+ {
+  "variant": "both",
+  "N": 30,
+  "engine": "MechanicsDSL",
+  "simplification_timeout": 0.05,
+  "status": "ok",
+  "route": "via_ode_rhs",
+  "build_s": 126.18320751190186,
+  "eval_s": 0.0010723769664764404,
+  "err": 7.421840919619171e-14,
+  "total_s": 126.20055055618286
+ },
+ {
+  "variant": "both",
+  "N": 40,
+  "status": "error",
+  "error": "RuntimeError: compile_success=False"
+ },
+ {
+  "variant": "cse",
+  "N": 8,
+  "engine": "MechanicsDSL",
+  "status": "ok",
+  "route": "via_ode_rhs",
+  "build_s": 106.97701048851013,
+  "eval_s": 0.00011710822582244873,
+  "err": 1.3697376566312869e-14,
+  "total_s": 106.97909307479858
+ },
+ {
+  "variant": "cse",
+  "N": 12,
+  "status": "TIMEOUT",
+  "total_s": 150.04520082473755
+ },
+ {
+  "variant": "frozen",
+  "N": 8,
+  "engine": "MechanicsDSL",
+  "status": "ok",
+  "route": "via_ode_rhs",
+  "build_s": 86.53785967826843,
+  "eval_s": 0.00017127394676208496,
+  "err": 2.1663226767998367e-14,
+  "total_s": 86.5408022403717
+ },
+ {
+  "variant": "frozen",
+  "N": 12,
+  "status": "TIMEOUT",
+  "total_s": 150.04400730133057
+ },
+ {
+  "variant": "nosimplify",
+  "N": 12,
+  "engine": "MechanicsDSL",
+  "status": "ok",
+  "route": "via_ode_rhs",
+  "build_s": 5.757007360458374,
+  "eval_s": 0.00019143521785736084,
+  "err": 2.724209746673978e-14,
+  "total_s": 5.760183811187744
+ },
+ {
+  "variant": "nosimplify",
+  "N": 16,
+  "engine": "MechanicsDSL",
+  "status": "ok",
+  "route": "via_ode_rhs",
+  "build_s": 13.046431303024292,
+  "eval_s": 0.00030399858951568604,
+  "err": 3.674838211509268e-14,
+  "total_s": 13.051429510116577
+ },
+ {
+  "variant": "nosimplify",
+  "N": 20,
+  "engine": "MechanicsDSL",
+  "status": "ok",
+  "route": "via_ode_rhs",
+  "build_s": 26.65984296798706,
+  "eval_s": 0.0009026974439620972,
+  "err": 3.785860513971784e-14,
+  "total_s": 26.674490451812744
+ },
+ {
+  "variant": "nosimplify",
+  "N": 24,
+  "engine": "MechanicsDSL",
+  "status": "ok",
+  "route": "via_ode_rhs",
+  "build_s": 67.05192947387695,
+  "eval_s": 0.0011505484580993652,
+  "err": 6.250555628639631e-14,
+  "total_s": 67.07059717178345
+ },
+ {
+  "variant": "nosimplify",
+  "N": 30,
+  "engine": "MechanicsDSL",
+  "status": "ok",
+  "route": "via_ode_rhs",
+  "build_s": 112.21789503097534,
+  "eval_s": 0.0009237527847290039,
+  "err": 9.758860386455126e-14,
+  "total_s": 112.23280596733093
+ },
+ {
+  "variant": "nosimplify",
+  "N": 40,
+  "status": "error",
+  "error": "RuntimeError: compile_success=False"
+ }
+]
