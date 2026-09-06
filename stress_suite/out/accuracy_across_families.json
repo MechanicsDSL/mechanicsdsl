@@ -1,0 +1,37 @@
+{
+ "seeds": [
+  20260905,
+  1,
+  7919
+ ],
+ "probes": 48,
+ "cartpole": {
+  "MechanicsDSL": {
+   "worst": 1.0031183673308018e-12,
+   "median": 7.556892304950005e-16,
+   "cases": 12
+  },
+  "SymPy": {
+   "worst": 0.0,
+   "median": 0.0,
+   "cases": 12
+  },
+  "Drake": {
+   "worst": 3.5652037365589915e-16,
+   "median": 1.912785947762236e-16,
+   "cases": 12
+  }
+ },
+ "slidercrank": {
+  "MechanicsDSL": {
+   "worst": 1.2209093879386215e-15,
+   "median": 7.465145095664626e-16,
+   "cases": 9
+  },
+  "SymPy": {
+   "worst": 9.745399499524657e-16,
+   "median": 4.829886389719103e-16,
+   "cases": 9
+  }
+ }
+}

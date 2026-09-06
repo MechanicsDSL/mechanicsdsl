@@ -1,0 +1,58 @@
+[
+ {
+  "digits": 16,
+  "residual": 1.1442377452219664e-17,
+  "t_divergence": 11.944999999999922,
+  "t_predicted": 11.940827582002733,
+  "lambda": 3.132091952673165,
+  "diverged": true
+ },
+ {
+  "digits": 25,
+  "residual": 1.8806274411915714e-26,
+  "t_divergence": 18.400000000000002,
+  "t_predicted": 18.398619807363126,
+  "lambda": 3.132091952673165,
+  "diverged": true
+ },
+ {
+  "digits": 35,
+  "residual": 5.505993038088143e-37,
+  "t_divergence": 26.145,
+  "t_predicted": 26.14239129095997,
+  "lambda": 3.132091952673165,
+  "diverged": true
+ },
+ {
+  "digits": 50,
+  "residual": 1.0106957375356833e-51,
+  "t_divergence": 36.980000000000004,
+  "t_predicted": 36.97585021048596,
+  "lambda": 3.132091952673165,
+  "diverged": true
+ },
+ {
+  "digits": 75,
+  "residual": 8.005852285054908e-77,
+  "t_divergence": 55.43,
+  "t_predicted": 55.42922879070201,
+  "lambda": 3.132091952673165,
+  "diverged": true
+ },
+ {
+  "digits": 100,
+  "residual": 2.8688928017596374e-102,
+  "t_divergence": 74.14,
+  "t_predicted": 74.13585517589999,
+  "lambda": 3.132091952673165,
+  "diverged": true
+ },
+ {
+  "digits": 150,
+  "residual": 1.3189548569762165e-151,
+  "t_divergence": 110.41,
+  "t_predicted": 110.40674306722396,
+  "lambda": 3.132091952673165,
+  "diverged": true
+ }
+]

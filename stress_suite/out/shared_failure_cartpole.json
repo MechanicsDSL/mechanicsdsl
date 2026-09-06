@@ -1,0 +1,86 @@
+[
+ {
+  "mass_ratio": 10.0,
+  "engine": "reference",
+  "success": true,
+  "max_dtheta": 0.0028027289310834647,
+  "max_dx": 0.0002547932056100213
+ },
+ {
+  "mass_ratio": 10.0,
+  "engine": "MechanicsDSL",
+  "success": true,
+  "max_dtheta": 0.0028027289315057935,
+  "max_dx": 0.0002547932056484052
+ },
+ {
+  "mass_ratio": 10.0,
+  "engine": "SymPy",
+  "success": true,
+  "max_dtheta": 0.0028027289310834647,
+  "max_dx": 0.0002547932056100213
+ },
+ {
+  "mass_ratio": 10.0,
+  "engine": "Drake",
+  "success": true,
+  "max_dtheta": 0.0028027289310834647,
+  "max_dx": 0.0002547932056100213
+ },
+ {
+  "mass_ratio": 1.0,
+  "engine": "reference",
+  "success": true,
+  "max_dtheta": 6.002294304741764,
+  "max_dx": 0.499731530055849
+ },
+ {
+  "mass_ratio": 1.0,
+  "engine": "MechanicsDSL",
+  "success": true,
+  "max_dtheta": 6.002294304739829,
+  "max_dx": 0.4997315419934779
+ },
+ {
+  "mass_ratio": 1.0,
+  "engine": "SymPy",
+  "success": true,
+  "max_dtheta": 6.002294304741764,
+  "max_dx": 0.499731530055849
+ },
+ {
+  "mass_ratio": 1.0,
+  "engine": "Drake",
+  "success": true,
+  "max_dtheta": 6.002294304741759,
+  "max_dx": 0.4997315300938362
+ },
+ {
+  "mass_ratio": 0.01,
+  "engine": "reference",
+  "success": true,
+  "max_dtheta": 6.283175042026691,
+  "max_dx": 0.9900911305364297
+ },
+ {
+  "mass_ratio": 0.01,
+  "engine": "MechanicsDSL",
+  "success": true,
+  "max_dtheta": 6.2831750446490595,
+  "max_dx": 0.9900766517696931
+ },
+ {
+  "mass_ratio": 0.01,
+  "engine": "SymPy",
+  "success": true,
+  "max_dtheta": 6.283175042026691,
+  "max_dx": 0.9900911304898177
+ },
+ {
+  "mass_ratio": 0.01,
+  "engine": "Drake",
+  "success": true,
+  "max_dtheta": 6.283175040631367,
+  "max_dx": 0.9900907494095792
+ }
+]

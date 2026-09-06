@@ -394,9 +394,23 @@ unfavourable to the author's engine.
         rung} --- $74$ against $145$\,s, $280$ against $468$\,s, $693$
         against $1101$\,s, consistently about $1.6\times$. Of the two symbolic
         engines the author's is the slower.
-  \item \textbf{MechanicsDSL is the more accurate of the two symbolic
-        engines}, by roughly a factor of two at every rung. Against a
-        $1.6\times$ time difference this is the minor consideration.
+  \item \textbf{MechanicsDSL returns the smaller residuals on this family},
+        by roughly a factor of two at every rung, and \textbf{that advantage does
+        not survive a change of mechanism.} On the slider--crank SymPy leads
+        (median $4.8\times10^{-16}$ against $7.5\times10^{-16}$); on the cart--pole
+        MechanicsDSL has the worst case of the three ($1.0\times10^{-12}$).
+        The lead is a property of the planar chain rather than of the
+        formulation and should not be claimed generally.
+
+        A caution attaches to the cart--pole column, and it is an instance of
+        the diagnostic of \S6: SymPy's residual there is \emph{exactly} zero
+        across 144 probes. That is not accuracy. SymPy derives the identical
+        mass matrix $\left[\begin{smallmatrix} M{+}m & ml\cos\theta \\ ml\cos\theta & ml^2\end{smallmatrix}\right]$ to
+        the hand reference and then performs the same \texttt{numpy} solve on the
+        same inputs, so the arithmetic is bit-identical and the residual measures
+        nothing. The derivations agreeing exactly is a real and strong result;
+        the zero cannot rank the engines, and \textbf{no accuracy ordering should
+        be read from that column at all.}
 \end{itemize}
 
 \paragraph{Provenance.}
@@ -433,9 +447,11 @@ Drake's $O(N)$ recursive algorithm is flat across the ladder and beats both
 symbolic engines by some $5500\times$ at $N=80$; that is a difference of
 algorithm class rather than of engineering quality, and no change of driving
 affects it. Between the two symbolic engines, SymPy driven well is about
-$1.6\times$ faster than MechanicsDSL at every rung, while MechanicsDSL is
-about twice as accurate. \textbf{On the axis the frozen sweep was read as
-separating them, they do not separate.}
+$1.6\times$ faster than MechanicsDSL at every rung. MechanicsDSL returns
+residuals about twice as small \emph{on this family}, an advantage that reverses
+on the cart--pole and the slider--crank and so should not be generalised.
+\textbf{On the axis the frozen sweep was read as separating them, they do not
+separate.}
 
 
 Two asymmetries must be reported together, because they point in opposite

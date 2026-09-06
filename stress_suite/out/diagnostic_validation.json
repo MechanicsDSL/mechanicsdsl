@@ -1,0 +1,58 @@
+[
+ {
+  "fault": "sign flip",
+  "kind": "convention",
+  "mean": 2.0,
+  "cov": 0.0,
+  "clean": true,
+  "cases": 15
+ },
+ {
+  "fault": "term absent",
+  "kind": "convention",
+  "mean": 1.0,
+  "cov": 0.0,
+  "clean": true,
+  "cases": 15
+ },
+ {
+  "fault": "coordinates permuted",
+  "kind": "convention",
+  "mean": 73.1471234360661,
+  "cov": 1.0616007651934098,
+  "clean": false,
+  "cases": 15
+ },
+ {
+  "fault": "relative vs absolute",
+  "kind": "convention",
+  "mean": 14.913491012087311,
+  "cov": 0.8159859461745301,
+  "clean": false,
+  "cases": 15
+ },
+ {
+  "fault": "mass entry +1e-6",
+  "kind": "arithmetic",
+  "mean": 2.6924979561684647e-05,
+  "cov": 0.8715181988023714,
+  "clean": false,
+  "cases": 15
+ },
+ {
+  "fault": "Coriolis dropped",
+  "kind": "arithmetic",
+  "mean": 0.6342063515111739,
+  "cov": 0.975558106517341,
+  "clean": false,
+  "cases": 15
+ },
+ {
+  "fault": "gravity 1% wrong",
+  "kind": "arithmetic",
+  "mean": 0.013308029630122259,
+  "cov": 0.3031180335064865,
+  "clean": false,
+  "cases": 15
+ }
+]

@@ -39,7 +39,7 @@
 \small
 
 {\LARGE\bfseries Silent-Failure Study}\\[0.3em]
-{\large Status as of 31 August 2026 \quad$\cdot$\quad \textbf{measurement complete}}\\[0.2em]
+{\large Status as of 5 September 2026 \quad$\cdot$\quad \textbf{measurement complete}}\\[0.2em]
 {\color{rulegrey}\hrule height 1pt}
 
 \vspace{0.55em}
@@ -73,20 +73,26 @@ refusals}, worst residual $1.3\times10^{-14}$, on derivation \emph{and}
 integration, including at the degenerate configurations.
 
 % ---------------------------------------------------------------------------
-\section{Capability, where they genuinely differ}
+\section{Capability: they do \emph{not} differ}
+
+The earlier 5 / 12 / 30 ladder measured how each engine was \emph{driven}, not what
+it can do. Given the best path through each engine's own public interface and
+an equal wall clock, in one session on one platform:
 
 \begin{tabular}{@{}lccc@{}}
 \toprule
-\textbf{Largest chain answered} & SymPy (idiomatic) & MechanicsDSL & Drake \\
+\textbf{Equal-budget ladder} & SymPy & MechanicsDSL & Drake \\
 \midrule
-Lagrangian & 5 & 12 & \textbf{30} (flat $0.23$\,s) \\
-Hamiltonian & --- & 3 & --- \\
+Largest answered & \textbf{80} & \textbf{80} & \textbf{80} \\
+Time at $N=80$ & 693\,s & 1101\,s & \textbf{0.2}\,\textbf{s} \\
+Residual at $N=80$ & $1.2\times10^{-12}$ & $\mathbf{5.9\times10^{-13}}$ & $9.9\times10^{-10}$ \\
 \bottomrule
 \end{tabular}
 
 \vspace{0.3em}
-Every engine that answered, answered correctly; every engine that could not,
-timed out. \textbf{They differ in reach, not in honesty.}
+No engine failed at any rung and none disagreed with the reference. $80$ is
+where the ladder stopped, not where anything broke. \textbf{Reach is not a
+differentiator; speed is.}
 
 % ---------------------------------------------------------------------------
 \section{The transferable result}
@@ -100,7 +106,7 @@ timed out. \textbf{They differ in reach, not in honesty.}
 
 \begin{tabular}{@{}cL{0.90\textwidth}@{}}
 \textcolor{holdred}{\textbf{!}} & Engine, scoring path, and the 55-case matrix frozen at \texttt{a8dc2b2}. Harness may grow; gate is the frozen matrix still returning 44/0/1/10 bit-identically. \\
-\textcolor{holdred}{\textbf{!}} & \textbf{Do not claim MechanicsDSL outperforms Drake.} On the cart--pole Drake's residuals are the \emph{smallest} of the three ($10^{-16}$). Reaching 12 links against idiomatic SymPy's 5 is defensible; Drake reaches 30. \\
+\textcolor{holdred}{\textbf{!}} & \textbf{Do not claim any reach advantage.} All three engines answer $N=80$ under an equal budget. On speed Drake beats both symbolic engines by ${\sim}5500\times$ at $N=80$, and SymPy driven well is ${\sim}1.6\times$ faster than MechanicsDSL at every rung. The one axis MechanicsDSL leads is accuracy (${\sim}2\times$ over SymPy), on one family, and everything is far inside tolerance. \\
 \textcolor{holdred}{\textbf{!}} & On the slider--crank Drake runs in \emph{discrete} mode --- constrained dynamics are not exposed through the continuous interface --- so it cannot share the pinned integrator and is scored on constraint satisfaction. Report the asymmetry; it follows from the interfaces, not from the dynamics. \\
 \end{tabular}
 
@@ -108,7 +114,9 @@ timed out. \textbf{They differ in reach, not in honesty.}
 \section{What is left}
 
 \begin{tabular}{@{}cL{0.90\textwidth}@{}}
-\todo & \textbf{Deposit the artefacts} on Zenodo and put the resolved DOI into the paper's artefacts line. \\
+\done & \textbf{Artefacts deposited} on Zenodo; the concept DOI is in the paper's artefacts line. \\
+\done & \textbf{Reach confound found and corrected.} The frozen ladder gave each engine one driving path; equal treatment dissolves the tiers (TR-2026-06). \\
+\done & \textbf{Shared failure measured, not asserted.} Divergence from the unstable equilibrium is linear in working precision at $\ln10/\lambda = 0.735$\,s per digit, and survives to 150 digits: structural, not an artefact of binary64. \\
 \todo & \textbf{Write it up.} Null result with strong methodology, a three-tier capability comparison, and the diagnostic above. Short or workshop paper, as \texttt{SCOPE.md} always said. \\
 \end{tabular}
 
@@ -116,7 +124,7 @@ timed out. \textbf{They differ in reach, not in honesty.}
 {\color{rulegrey}\hrule height 0.5pt}
 \vspace{0.25em}
 {\footnotesize \textbf{Reports:} TR-2026-01 referee $\cdot$ 02 SymPy $\cdot$ 03
-Drake $\cdot$ 04 Week 1 findings $\cdot$ 05 three families. \quad
+Drake $\cdot$ 04 Week 1 findings $\cdot$ 05 three families $\cdot$ 06 driving. \quad
 \textbf{Disclose:} you maintain one of the engines measured; AI assistance was
 used. Both permitted, concealing either is not.}
 

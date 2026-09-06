@@ -68,13 +68,17 @@ and a Shared Failure at Unstable Equilibria}
 
 \begin{abstract}
 \noindent
-Software that derives and integrates equations of motion is widely trusted to be
-correct, yet independent implementations are rarely compared against one another
-under adjudication that shares no code with any of them. This paper reports a
-differential study of three rigid-body dynamics engines --- a symbolic compiler,
-a general-purpose computer-algebra mechanics package, and a recursive
-articulated-body library --- evaluated against a closed-form reference
-implemented in NumPy alone that shares no library with any engine under test.
+Differential testing detects the failures that independent implementations make
+independently. It is structurally blind to the failures they share, and this paper
+demonstrates that such failures exist in widely used scientific software and are
+not reachable by adding implementations. Three rigid-body dynamics engines --- a
+symbolic compiler, a general-purpose computer-algebra mechanics package, and a
+recursive articulated-body library --- were compared against a closed-form
+reference implemented in NumPy alone that shares no library with any of them,
+a stronger independence criterion than independent authorship. On every
+adjudicated case the engines agree, and on one configuration all three fail
+identically --- as does the reference, which is what makes the failure invisible
+to the method.
 
 A 55-case adversarial suite spanning six axes was frozen before measurement, and
 the comparison was extended to three structurally distinct mechanisms: an
@@ -88,9 +92,12 @@ and, by construction, forecloses any ranking of the engines on integration
 accuracy.
 
 The engines agree with the reference and with one another to within
-$3\times10^{-14}$ on equations of motion and indistinguishably on energy
-conservation, across both dynamical regimes and across constrained and
-unconstrained pathways. Every engine that returned an answer returned a correct one, and no engine
+$3\times10^{-14}$ on the equations of motion themselves, across both dynamical
+regimes and across constrained and unconstrained pathways. Energy drift is
+likewise indistinguishable, but that is a consistency check rather than
+independent evidence: all four share the pinned integrator, so near-identical
+drift is close to guaranteed by construction. The weight rests on the
+acceleration residuals, which do not. Every engine that returned an answer returned a correct one, and no engine
 was observed to return a wrong answer while reporting success. The engines
 were initially found to differ in reach --- returning equations for chains
 of 5, 12 and 30 links --- but that separation proved to be an artefact of
@@ -123,6 +130,17 @@ the resulting trajectory as an account of what the physical system would do. The
 correctness of that account is rarely tested directly. It is inferred from the
 engine's reputation, from its test suite, and from the absence of an error
 message.
+
+Where that inference is tested, it is usually tested by comparison: run two
+implementations and treat disagreement as evidence of a defect. The method is
+powerful and its limit is well known in principle --- it can only find failures
+the implementations do not share. What that limit means in practice is less
+often examined, because it requires finding a shared failure and showing that
+no amount of implementation diversity would have exposed it. This paper does
+that, and the answer is not reassuring: the shared failure reported here
+originates in floating-point arithmetic rather than in anyone's code, so every
+implementation exhibits it, including a reference written from first principles
+specifically to be independent.
 
 \subsection{The failure mode that motivates the study}
 An engine that raises an exception is not dangerous; the researcher knows to
@@ -414,13 +432,45 @@ engine in a manner its documentation does not describe.
 
 \subsection{The referee}\label{sec:reference}
 Adjudication is performed by a closed-form reference derived by hand and
-implemented in NumPy alone. The reference shares no library with any engine
-under test. This is the central design decision of the study, and its rationale
-is straightforward: two implementations that share a symbolic algebra layer, a
-linear solver, or a code-generation backend may agree because they inherit the
-same defect, and their agreement then carries no information about correctness.
-A referee that shares nothing with the engines cannot agree with them for that
-reason.
+implemented in NumPy alone. This is the central design decision of the study,
+and its rationale is straightforward: two implementations that share a symbolic
+algebra layer, a linear solver, or a code-generation backend may agree because
+they inherit the same defect, and their agreement then carries no information
+about correctness.
+
+\textbf{The independence criterion, stated exactly.} The reference shares no
+symbolic algebra system, no mechanics library, no code-generation backend and no
+derivation code with any engine under test. Every equation of motion it evaluates
+was derived by hand and transcribed. This is a stronger criterion than
+independent authorship, which permits two authors to import the same package,
+and much stronger than independent implementation within one ecosystem.
+
+\paragraph{The referee is corroborated from outside the study.}
+Adjudication by a single reference concentrates risk: if it is wrong, every
+engine agreeing with it is evidence of nothing. Its eleven self-tests do not
+dispose of this, since self-tests share the author's misconceptions --- the
+objection Knight and Leveson~\cite{knight1986} raise against independent
+implementation. The reference was therefore checked against a classical result
+predating the study: a uniform chain of length $L$ hanging under gravity has
+small-oscillation frequencies $\omega_k = (z_k/2)\sqrt{g/L}$, where $z_k$ is the
+$k$-th zero of $J_0$. Linearising the reference's own mass matrix and potential
+and taking $N$ to the continuum reproduces it: relative errors on the first
+three modes fall from $5.5\%$, $4.3\%$, $1.6\%$ at $N=4$ to $0.19\%$ on all three at
+$N=128$, halving as $N$ doubles. The reference reproduces a result it was never
+fitted to.
+
+It is not, and cannot be, total independence, and overstating it would be the
+kind of claim this paper exists to scrutinise. The reference shares NumPy for
+array arithmetic with the evaluation paths of all three engines; it shares the
+pinned integrator (\S\ref{sec:pinning}); and it shares IEEE-754 binary64 semantics
+and the host processor. What it does not share is any code that decides \emph{what}
+the equations of motion are, which is the quantity under adjudication.
+
+That distinction is load-bearing for \S\ref{sec:shared}, where a failure common to
+the engines \emph{and} the reference is reported. A reader is entitled to ask
+whether such a failure is shared because the phenomenon is structural or merely
+because the substrate is. \S\ref{sec:precision} answers that question by measurement rather
+than by assertion.
 
 For the unconstrained families the reference solves the equations of motion
 directly for a fixed topology. For the constrained families both systems admit a
@@ -729,6 +779,57 @@ All three engines are therefore correct to the limit of the arithmetic, and the
 differences between them reflect accumulated rounding over differing operation
 counts rather than any difference in the equations derived.
 
+\subsection{Robustness of the probe sampling}\label{sec:probes}
+Adjudication compares accelerations at probe states, so agreement could in
+principle be an artefact of where those states were drawn. The comparison was
+therefore repeated with five seeds and four sampling regimes chosen to stress
+different mechanisms: the study's own moderate box; velocities an order of
+magnitude larger, where Coriolis terms dominate and any error in the
+$C(q,\dot q)\dot q$ bracket is amplified; angles clustered within $10^{-3}$ of $\pi$,
+where the gravity terms nearly cancel; and nearly aligned angles, where a serial
+chain's mass matrix is worst-conditioned and the linear solve most fragile.
+
+\begin{table}[h]
+\centering
+\caption{Worst relative disagreement with the reference over 5 seeds\,$\times$\,64
+probe states per cell, each engine driven along its best available path. 19{,}200
+comparisons in total.}
+\label{tab:probes}
+\begin{tabular}{@{}rlrrrr@{}}
+\toprule
+$N$ & \textbf{Engine} & \textbf{uniform} & \textbf{wide} & \textbf{near-$\pi$} & \textbf{aligned} \\
+\midrule
+$3$  & MechanicsDSL & $1.0\times10^{-14}$ & $3.0\times10^{-14}$ & $2.9\times10^{-16}$ & $2.5\times10^{-14}$ \\
+     & SymPy        & $8.0\times10^{-15}$ & $2.9\times10^{-14}$ & $1.3\times10^{-16}$ & $1.6\times10^{-14}$ \\
+     & Drake        & $2.8\times10^{-14}$ & $4.1\times10^{-14}$ & $9.0\times10^{-16}$ & $8.1\times10^{-14}$ \\
+\addlinespace
+$8$  & MechanicsDSL & $1.9\times10^{-14}$ & $1.7\times10^{-13}$ & $1.7\times10^{-16}$ & $1.4\times10^{-14}$ \\
+     & SymPy        & $3.4\times10^{-14}$ & $3.1\times10^{-13}$ & $1.7\times10^{-15}$ & $6.4\times10^{-14}$ \\
+     & Drake        & $9.3\times10^{-13}$ & $6.1\times10^{-13}$ & $8.9\times10^{-14}$ & $1.6\times10^{-12}$ \\
+\addlinespace
+$12$ & MechanicsDSL & $5.2\times10^{-14}$ & $4.0\times10^{-13}$ & $3.3\times10^{-16}$ & $2.8\times10^{-14}$ \\
+     & SymPy        & $9.4\times10^{-14}$ & $6.2\times10^{-13}$ & $7.6\times10^{-15}$ & $1.3\times10^{-13}$ \\
+     & Drake        & $6.5\times10^{-12}$ & $2.8\times10^{-12}$ & $4.6\times10^{-13}$ & $5.0\times10^{-12}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent \textbf{No cell exceeds the $10^{-8}$ adjudication tolerance, and the worst
+disagreement anywhere in 19{,}200 comparisons is $6.5\times10^{-12}$.} Agreement is
+not an artefact of the sampling: it survives a tenfold increase in velocity
+range, the near-cancellation of gravity near $\pi$, and the worst-conditioned
+configurations a serial chain admits.
+
+Two features of the table are worth noting rather than passing over. The
+near-$\pi$ column shows the \emph{smallest} residuals of the four regimes, because the
+accelerations there are themselves near zero and the comparison is relative;
+this is the regime in which \S\ref{sec:shared} nonetheless finds every implementation
+failing, which is precisely the point that residual agreement cannot detect a
+shared failure. And the recursive library's residuals are consistently one to
+two orders larger than the symbolic engines', growing with $N$ --- expected of a
+recursive numerical algorithm against a closed form, and far inside tolerance at
+every point.
+
 \subsection{The amplitude axis}
 Across eight amplitudes spanning perturbation growth from single figures to
 $5.4\times10^{11}$, and three engines, 24 engine--amplitude pairs were
@@ -829,6 +930,27 @@ underdetermined while the accelerations remain unique. The engine tracks the
 reference throughout. An exactly redundant constraint set does not determine how
 the constraint force is distributed, only its total, and neither the engine nor
 the reference is troubled by this.
+
+\paragraph{The Hamiltonian pathway.}
+The canonical route is the thinnest part of the study's coverage: the frozen
+ladder reached three coordinates before walling, and until now the pathway had
+no independent check at all, only energy conservation. It was therefore
+adjudicated directly in canonical coordinates, comparing the engine's $\dot p$
+against the reference's own Legendre transform $p = M(q)\dot q$ at 64 probe states
+per size. The pathway agrees where it is reachable --- $0$ at one coordinate and
+$2.7\times10^{-15}$ at two --- with the transform self-consistent to
+$1.1\times10^{-16}$, and walls at three coordinates as the frozen ladder records.
+No disagreement was found on the pathway most likely to harbour one.
+
+The first attempt at this measurement reported a disagreement of $0.517$ at
+two coordinates. It was instance~1 of Table~\ref{tab:apparatus} a fourth time: the
+engine's canonical right-hand side is a function of $(q,p)$ and had been given
+$(q,\dot q)$. The error vanished exactly at one coordinate, where $M=I$ makes the
+two coincide, which is the second tell described in \S\ref{sec:diagnostic} and the
+one that applies when the magnitude is not a clean $1$ or $2$. It is recorded here
+because it is the same fault recurring in the same place under a new harness,
+which is evidence about how easily the convention is confused rather than about
+any engine.
 
 \paragraph{Coverage.}
 With these cases adjudicated, the number of adjudicated cases carrying an
@@ -1061,8 +1183,11 @@ $0.2$--$0.3$\,s across the ladder and exceeds both symbolic engines by some
 $5500\times$ at 80 coordinates --- a difference of algorithm class, not of
 engineering quality, and one that no change of driving affects. Between the
 two symbolic engines the computer-algebra package driven well is about
-$1.6\times$ faster at every rung, while the symbolic compiler is about twice as
-accurate. Neither difference is a capability boundary.
+$1.6\times$ faster at every rung, while the symbolic compiler returns residuals
+about twice as small on this family. The residual advantage is family-specific:
+it reverses on the cart--pole and the slider--crank, and is reported here only
+to be qualified. Neither difference is a capability boundary, and every value
+involved is orders of magnitude inside the adjudication tolerance.
 
 The generalisable point is not about these three engines. It is that a
 comparison of engines on capability is a comparison of engines-as-driven, and
@@ -1071,7 +1196,7 @@ left implicit. The confound here survived a pre-registered case matrix and a
 frozen baseline, neither of which was designed to catch it.
 
 % ===========================================================================
-\section{A failure shared by every implementation, including the referee}
+\section{A failure shared by every implementation, including the referee}\label{sec:shared}
 % ===========================================================================
 
 \subsection{The configuration}
@@ -1086,6 +1211,24 @@ trajectory is the constant function.
 It is, of course, an \emph{unstable} equilibrium. That distinction is the whole
 of what follows.
 
+\paragraph{What is and is not claimed here.}
+An objection presents itself immediately and should be answered before the
+result rather than after it. A physical pendulum released at the inverted
+position falls, so returning a large trajectory might be called right rather
+than wrong. The objection misses which system is under test. The engines were
+not asked what a physical pendulum does; they were asked to integrate a stated
+initial-value problem, and for that problem --- exact angles of $\pi$, exact zero
+velocities --- the exact solution is the constant function. Every engine returns
+something else.
+
+The claim is therefore not that the engines are defective, nor that the returned
+trajectory is unphysical. It is narrower and, for a user, worse: \textbf{every
+implementation returns an answer dominated by its own round-off, reports
+success, and gives no indication that it has done so.} A researcher who did not
+already know the initial condition was an unstable equilibrium would have no way
+of learning it from the output. That is the silent failure the study set out to
+look for, and it is the one case in which it was found.
+
 \subsection{The observation}
 All three engines, and the independent reference, return approximately 20
 radians of motion over a ten-second horizon. All four report success. None emits
@@ -1098,7 +1241,7 @@ as in every other case in the study, and identical across all three engines
 plausible in isolation, and entirely wrong. \textbf{That energy is conserved so
 well during the fall is precisely why every check in the suite passes it.}
 
-\subsection{The mechanism}
+\subsection{The mechanism}\label{sec:precision}
 The cause is arithmetic rather than algorithmic. In binary64, $\sin(\pi)$
 evaluates not to zero but to $1.2246\times10^{-16}$, because $\pi$ is not
 exactly representable. This leaves a residual gravitational acceleration of
@@ -1106,9 +1249,47 @@ $1.20\times10^{-15}$ at the initial state. The equilibrium being unstable, that
 residual is amplified exponentially, and within the ten-second horizon it
 reaches full scale.
 
-No finite-precision computation can remain at an unstable equilibrium. The
-observation is a property of the problem in floating-point arithmetic, not a
-defect in any engine. That the independent reference --- which shares no code
+This raises an alternative the argument so far does not exclude. Every engine
+and the reference ran at the same precision on the same hardware, so the failure
+might be shared because the substrate is shared rather than because the
+phenomenon is structural. The two predict different things and the difference
+is measurable: if the failure is an artefact of binary64, sufficient precision
+removes it; if it is structural, precision only delays it.
+
+Integrating the perturbation in arbitrary precision settles it (Table~\ref{tab:precision}).
+Linearising about the equilibrium gives $\ddot{\varphi} = \lambda^2\varphi$ with
+$\lambda=\sqrt{g/l}=3.1321$\,s$^{-1}$, so a residual $\varepsilon\sim10^{-p}$ at $p$ working
+digits should reach a fixed threshold after a time linear in $p$, with slope
+$\ln 10/\lambda = 0.735$\,s per digit. That is what is observed, to the integration
+step, across nine orders of magnitude in precision.
+
+\begin{table}[h]
+\centering
+\caption{Divergence from the inverted equilibrium against working precision.
+Fixed-step RK4 in arbitrary precision, perturbation coordinates, threshold
+$0.1$\,rad. Predicted time is $\operatorname{arccosh}(0.1/\varepsilon)/\lambda$.}
+\label{tab:precision}
+\begin{tabular}{@{}rrrr@{}}
+\toprule
+\textbf{Digits} & $\varepsilon=|\sin\pi_p|$ & \textbf{Measured} & \textbf{Predicted} \\
+\midrule
+$16$  & $1.14\times10^{-17}$  & $11.94$\,s & $11.94$\,s \\
+$25$  & $1.88\times10^{-26}$  & $18.40$\,s & $18.40$\,s \\
+$35$  & $5.51\times10^{-37}$  & $26.14$\,s & $26.14$\,s \\
+$50$  & $1.01\times10^{-51}$  & $36.98$\,s & $36.98$\,s \\
+$75$  & $8.01\times10^{-77}$  & $55.43$\,s & $55.43$\,s \\
+$100$ & $2.87\times10^{-102}$ & $74.14$\,s & $74.14$\,s \\
+$150$ & $1.32\times10^{-151}$ & $110.41$\,s & $110.41$\,s \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent The measured slope is $0.735$\,s per digit against a predicted $0.735$, the
+relation is monotone in precision, and \textbf{at no precision tested does the
+failure disappear}. Precision buys delay proportional to the number of digits
+and never buys immunity. \textbf{No finite-precision computation can remain at an
+unstable equilibrium}, and the behaviour is a property of the problem rather
+than a defect in any engine. That the independent reference --- which shares no code
 with any engine and was derived by hand --- exhibits the identical behaviour is
 what establishes this. Had the reference remained at rest, the finding would
 have been a defect in three engines. It did not, and the finding is something
@@ -1122,6 +1303,25 @@ in the module rather than silently revised, because the ease with which it was
 held is part of the finding: the intuition that a correct implementation should
 return the exact answer at an exact equilibrium is natural, widely shared, and
 incorrect. It is instance 4 of Table~\ref{tab:apparatus}.
+
+\subsection{The same failure in a second mechanism}
+One instance of a shared failure is a curiosity; the claim that differential
+testing is blind to a \emph{class} of failure requires more. The cart--pole
+supplies a structurally different test: a tree rather than a chain, mixed joint
+types, and an inverted equilibrium in which the cart is free to recoil, so the
+instability couples two coordinates rather than one.
+
+Started with the pole vertical and everything at rest, at cart-to-pole mass
+ratios of $10$, $1$ and $10^{-2}$, \textbf{all four participants --- the three
+engines and the reference --- report success and return motion}, and do so in
+agreement with one another to every digit displayed: $2.803\times10^{-3}$\,rad at
+$M/m=10$, $6.002$\,rad at $M/m=1$, $6.283$\,rad at $M/m=10^{-2}$. Not one of the
+twelve cases stayed at rest, and not one warned.
+
+The phenomenon is therefore not a property of the chain. Four independent
+implementations agree closely on a trajectory that is entirely round-off, in
+two mechanisms whose only common feature is that the initial condition is an
+unstable equilibrium.
 
 What the case exposes is real and shared. Every implementation tested returns
 success and hands back a large trajectory where the exact answer is no motion at
@@ -1248,10 +1448,12 @@ would be identified immediately and would discredit the work that is sound.
 \section{A diagnostic for convention mismatch}\label{sec:diagnostic}
 % ===========================================================================
 
-Three times during this study a comparison produced an error that was identical
-across every case in a sweep, to many significant figures. On each occasion the
+Three times during this study a comparison produced an error whose pattern across
+a sweep, rather than its magnitude, revealed the cause. On each occasion that
 cause was a convention mismatch between the reference and the engine adapter,
-not a defect in the engine.
+not a defect in the engine. Two of the three produced an error identical across
+every case to many significant figures; the third did not, and the difference
+between them turns out to matter.
 
 \begin{center}
 \begin{tabular}{@{}lL{0.36\textwidth}L{0.24\textwidth}@{}}
@@ -1265,12 +1467,51 @@ exactly $2.00$, all 20 cases & pole offset rotated about $+y$ mirrors the mechan
 \end{tabular}
 \end{center}
 
-The signature generalises. A discrepancy arising from genuine numerical
-difference varies with configuration, because the quantities producing it vary
-with configuration. A discrepancy that is constant across cases with different
-parameters cannot have that origin. It indicates instead that two
-implementations are being asked different questions, and that the comparison
-rather than the implementation is at fault.
+A discrepancy arising from genuine numerical difference varies with
+configuration, because the quantities producing it vary with configuration. A
+discrepancy that is constant across cases with different parameters cannot have
+that origin: it indicates that two implementations are being asked different
+questions, and that the comparison rather than the implementation is at fault.
+
+\paragraph{How far the rule actually reaches.}
+Because that rule was inferred from the three incidents that produced it, it was
+tested against faults of known type: four convention faults and three arithmetic
+ones injected into the reference and scored by the study's own metric over $15$
+systems of differing size and mass. The result qualifies the rule in one
+direction and confirms it in the other.
+
+\begin{table}[h]
+\centering
+\caption{Injected faults of known type, scored by relative error over 15
+systems. Spread is the coefficient of variation across systems.}
+\label{tab:diagnostic}
+\begin{tabular}{@{}llrrl@{}}
+\toprule
+\textbf{Injected fault} & \textbf{Kind} & \textbf{Mean error} & \textbf{Spread} & \textbf{Clean 1 or 2?} \\
+\midrule
+sign flip             & convention & $2.0000$  & $0$        & yes \\
+term absent           & convention & $1.0000$  & $0$        & yes \\
+coordinates permuted  & convention & $73.15$   & $1.06$     & no \\
+relative vs.\ absolute & convention & $14.91$   & $0.82$     & no \\
+\addlinespace
+mass entry $+10^{-6}$ & arithmetic & $10^{-5}$ & $0.87$     & no \\
+Coriolis dropped      & arithmetic & $0.634$   & $0.98$     & no \\
+gravity $1\%$ wrong     & arithmetic & $0.0133$  & $0.30$     & no \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent \textbf{No arithmetic fault produced a clean constant (0 of 3), so the
+rule does not raise false alarms.} But only two of four convention faults did.
+Permuted coordinates and relative-versus-absolute angles both vary with
+configuration exactly as an arithmetic fault would --- and the second of those
+is the third incident in the table above, which is why it was caught by
+inspecting the mass matrix rather than by the signature.
+
+\textbf{The rule is therefore sufficient but not necessary.} A clean constant
+error is strong evidence of a convention mismatch; a varying error is no
+evidence against one. Stated the other way round it would have dismissed half
+the convention faults in this study as genuine numerical difference.
 
 Under a relative-error metric the two commonest degenerate cases produce
 characteristic values. A term absent entirely from one side yields a relative
@@ -1345,10 +1586,12 @@ removal of cases, and \S\ref{sec:behind} reports the measurements on which the
 author's engine performs worst.
 
 \paragraph{Use of AI assistance.}
-An AI assistant (Anthropic Claude) was used for portions of the implementation
-and analysis. The study design, the adjudication criteria, the freeze protocol,
-and the manuscript are the author's. Every reported figure was produced by
-executing committed code and checked against the run record.
+An AI assistant (Anthropic Claude) was used for portions of the implementation,
+the analysis, and the drafting of parts of this manuscript. The study design, the
+adjudication criteria, the freeze protocol, the interpretation of the results,
+and every decision about what is and is not claimed are the author's, as is
+responsibility for the whole. Every reported figure was produced by executing
+committed code and checked against the run record.
 
 \paragraph{Post-freeze changes to the author's engine.}
 Diagnosing the reach confound located two defects in the author's engine:
