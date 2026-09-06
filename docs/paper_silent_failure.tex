@@ -1,6 +1,6 @@
 %% ============================================================================
 %%  Library-Independent Adjudication of Three Rigid-Body Dynamics Engines
-%%  Draft v0.3 -- blanks filled from the run record.
+%%  Silent-failure study -- manuscript.
 %%  Compile: pdflatex paper_silent_failure.tex  (twice for refs/ToC)
 %% ============================================================================
 
@@ -61,7 +61,7 @@ and a Shared Failure at Unstable Equilibria}
 {\normalsize Independent Researcher, Newcastle, Wyoming}\\
 {\normalsize ORCID \href{https://orcid.org/0009-0000-7224-6040}{0009-0000-7224-6040}}}
 
-\date{Draft v0.3 --- \today}
+\date{\today}
 
 \begin{document}
 \maketitle
@@ -90,10 +90,13 @@ accuracy.
 The engines agree with the reference and with one another to within
 $3\times10^{-14}$ on equations of motion and indistinguishably on energy
 conservation, across both dynamical regimes and across constrained and
-unconstrained pathways. Where they differ, they differ in reach rather than in
-correctness: the three return equations for chains of 5, 12 and 30 links
-respectively, and every engine that returned an answer returned a correct one.
-No engine was observed to return a wrong answer while reporting success.
+unconstrained pathways. Every engine that returned an answer returned a correct one, and no engine
+was observed to return a wrong answer while reporting success. The engines
+were initially found to differ in reach --- returning equations for chains
+of 5, 12 and 30 links --- but that separation proved to be an artefact of
+how each engine was driven rather than a property of the engines: given the
+same systems and the same budget, all three answer chains of 80 links
+(\S\ref{sec:reach}).
 
 One failure was observed, and it is shared. At an unstable equilibrium, all
 three engines and the independent reference report success while returning
@@ -151,7 +154,8 @@ forbidding removal of cases after their results were seen. Three mechanism
 families were examined, chosen so that each degenerates by a different
 mechanism. Integration was pinned to one scheme with identical tolerances for
 every engine. The author's conflict of interest is disclosed in
-\S\ref{sec:disclosure} and mitigated structurally rather than by declaration.
+\S\ref{sec:disclosure-method}, and again in the Disclosure statement following
+the conclusion, and is mitigated structurally rather than by declaration.
 
 \subsection{What was found}
 Agreement to the limit of double-precision arithmetic on every adjudicated case
@@ -160,16 +164,26 @@ system each will answer --- but not in correctness. One failure, at an unstable
 equilibrium, shared by all three engines and by the independent reference alike.
 
 \subsection{Why a negative result here is informative}
-The measurement was designed to detect disagreement and demonstrably can. It
-separated the engines by reach at $N=8$ and $N=20$
-(\S\ref{sec:reach}), and it detected \emph{four} convention mismatches within
-the measuring apparatus itself before any of them reached the reported results
-(\S\ref{sec:threats}, \S\ref{sec:diagnostic}). An instrument that catches four
-faults in its own construction, and that resolves a factor-of-six capability
-difference between engines, is not an instrument that would miss a correctness
-disagreement of the size differential testing is meant to expose. The absence of
-such a disagreement is therefore an observation about the engines rather than a
-limitation of the instrument.
+The measurement was designed to detect disagreement, and the evidence that it
+can is its record against itself. It detected \emph{four} faults in its own
+construction --- three convention mismatches and one mistaken adjudication
+criterion --- before any of them reached the reported results
+(\S\ref{sec:threats}, \S\ref{sec:diagnostic}). Each was caught by consulting an
+independent artefact rather than by reasoning further, and each would otherwise
+have produced a fabricated finding against widely used software. An instrument
+that catches four faults in itself is not one that would miss a correctness
+disagreement of the size differential testing exists to expose.
+
+A second argument was originally made here and is withdrawn. The instrument
+appeared to resolve a large capability difference between the engines, and
+that was offered as further evidence of its sensitivity. The difference was
+an artefact of how each engine was driven (\S\ref{sec:reach}). It is recorded
+here because a study of measurements that mislead should not quietly discard
+its own: the reach comparison was confounded, the confound survived the freeze,
+and it was found only when each engine was driven along more than one path.
+The correctness measurements are unaffected, because they adjudicate each
+engine against an independent reference at fixed size rather than against
+each other.
 
 \subsection{Contributions}
 \begin{enumerate}[leftmargin=1.6em,itemsep=0.3em]
@@ -256,6 +270,59 @@ present result should therefore be read narrowly: rigid-body dynamics is a domai
 where the specification is unusually tight, and the finding of agreement does not
 transfer to computational domains where it is not.
 
+\subsection{Code verification and the V\&V literature}\label{sec:vv}
+Computational science has a mature body of work on exactly the question asked
+here, with a settled vocabulary, and this study is best located inside it rather
+than beside it. Oberkampf and Trucano~\cite{oberkampf2002} and the subsequent
+monograph of Oberkampf and Roy~\cite{oberkampf2010} draw the distinction that
+organises the field: \emph{code verification} asks whether a program correctly
+solves the equations it claims to solve, \emph{solution verification} asks how
+accurate one particular computed solution is, and \emph{validation} asks whether
+those equations describe physical reality. Roache~\cite{roache1998} states the
+separation in its sharpest form --- verification is mathematics, validation is
+physics --- and ASME V\&V 10~\cite{asmevv10} codifies the resulting process for
+computational solid mechanics.
+
+In that taxonomy this paper is a code-verification study and nothing else. No
+measurement here is compared against an experiment, so no validation claim is
+made or implied; the reference is a mathematical standard, not a physical one.
+Three consequences follow, and stating them in the literature's own terms is
+more honest than restating them in ad hoc language.
+
+First, the standard instrument of code verification is the method of manufactured
+solutions~\cite{roache2002}, in which an exact solution is chosen in advance and
+a source term is added to the governing equations to make it exact. Its purpose
+is to supply a known answer for equations that possess no useful closed-form
+solutions. The systems studied here are unusual in not needing that device: a
+rigid mechanism of modest size has a genuine closed-form acceleration field, so
+the reference of \S\ref{sec:reference} plays the role of a manufactured solution
+without manufacturing anything, and without the residual doubt that attaches to
+whether a source-augmented problem still exercises the same code paths as the
+original. Where closed forms are unavailable --- contact, friction, large
+flexible systems --- manufactured solutions remain the appropriate tool and this
+design does not extend.
+
+Second, code verification in the V\&V sense conventionally rests on
+\emph{order-of-accuracy} testing: refine the discretisation and confirm that the
+error falls at the rate the scheme promises, which detects a broad class of
+defects that a single-resolution comparison cannot. This study deliberately does
+not do that. Pinning one integrator at fixed tolerances across all engines
+(\S\ref{sec:pinning}) is what makes the derivations comparable, and it is also
+what forecloses an order-of-accuracy claim. What is verified here is the
+right-hand side --- the equations of motion each engine derives --- and not the
+discretisation applied to it. A reader from this tradition should read the
+results as consistency verification of the derived equations at a fixed
+operating point, which is a narrower statement than code verification is
+sometimes taken to mean.
+
+Third, the frozen case matrix and its governance rule
+(\S\ref{sec:matrix}) are an informal instance of the pre-specified verification
+plan that ASME V\&V 10~\cite{asmevv10} requires: the cases and the criteria are
+fixed before measurement, and cases may be added but not withdrawn once scored.
+The motivation there is the same as here --- a verification result is worth
+little if the set of tests it passed was chosen after seeing which ones it
+failed.
+
 \subsection{Verification and validation of multibody codes}
 The multibody dynamics community maintains its own verification infrastructure.
 The IFToMM Technical Committee for Multibody Dynamics hosts a library of
@@ -302,7 +369,9 @@ are right, judged against a derivation that shares nothing with any of them.
 Prior work establishes that differential testing is powerful, that its
 independence premise is unreliable in the presence of shared human error, that
 scientific software has historically disagreed badly under $N$-version
-comparison, and that dynamics engines differ measurably in performance. What has
+comparison, that dynamics engines differ measurably in performance, and that
+code verification has a mature methodology built largely around manufactured
+solutions and order-of-accuracy testing. What has
 not been reported, to the author's knowledge, is a comparison of symbolic and
 numerical dynamics engines adjudicated by a closed-form reference sharing no
 library with any of them, over a case matrix frozen before measurement, with the
@@ -343,7 +412,7 @@ Lagrangian. This asymmetry is a property of the engines and is reported rather
 than normalised away, since normalising it would require driving at least one
 engine in a manner its documentation does not describe.
 
-\subsection{The referee}
+\subsection{The referee}\label{sec:reference}
 Adjudication is performed by a closed-form reference derived by hand and
 implemented in NumPy alone. The reference shares no library with any engine
 under test. This is the central design decision of the study, and its rationale
@@ -376,7 +445,7 @@ two different problems. The cost of that choice is a constraint drift of order
 $10^{-4}$ over three seconds, which does not affect the derivation comparison
 because that comparison evaluates accelerations at given states.
 
-\subsection{The case matrix and the freeze}
+\subsection{The case matrix and the freeze}\label{sec:matrix}
 The case matrix comprises 55 cases over 36 systems across six axes: degrees of
 freedom, closed-loop topology, constraint redundancy, near-singular inertia,
 mass ratio, and symbolic nesting depth. The matrix was frozen --- fixed in
@@ -427,7 +496,11 @@ computed accelerations and the reference's, evaluated at 16 probe states per
 case drawn from the constraint manifold where one applies. The second is energy
 drift over a fixed integration horizon under the pinned integrator. For
 constrained cases a third quantity, constraint residual drift from $t=0$, is
-recorded. The adjudication tolerance throughout is $10^{-8}$ relative.
+recorded. The adjudication tolerance throughout is $10^{-8}$ relative. In the
+vocabulary of \S\ref{sec:vv}, the first quantity is the code-verification
+measurement proper --- it compares derived equations against an exact standard
+--- while the second and third are consistency checks on the integrated
+trajectory and are not independent of the shared integrator.
 
 Constraint residual is measured as drift from the initial value rather than as
 an absolute quantity. The suite's constrained initial conditions are rounded to
@@ -451,7 +524,11 @@ Separately, the study record documents \textbf{four} instances in which the
 author's expectation about the \emph{measuring apparatus} was contradicted by an
 independent artefact, and corrected before the affected results were reported:
 
-\begin{center}
+\begin{table}[h]
+\centering
+\caption{Faults in the measuring apparatus, each contradicted by an independent
+artefact and corrected before the affected results were reported.}
+\label{tab:apparatus}
 \begin{tabular}{@{}lL{0.42\textwidth}L{0.22\textwidth}@{}}
 \toprule
 \textbf{\#} & \textbf{Mistaken expectation} & \textbf{Caught by} \\
@@ -462,7 +539,7 @@ independent artefact, and corrected before the affected results were reported:
 4 & An engine reporting motion at an exact equilibrium is wrong; the exact solution is unreachable in finite precision & the independent reference behaving identically \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 \noindent Instances 1--3 are convention mismatches in the comparison and are the
 basis of the diagnostic in \S\ref{sec:diagnostic}; instance 4 is a mistaken
@@ -490,11 +567,22 @@ addressed in \S\ref{sec:cartpole-results}: on that family the two are not
 independent, and the effective comparison is three-way rather than four-way.
 
 \paragraph{Wall-clock timeouts.}
-The reach results in \S\ref{sec:reach} rest on a wall-clock limit of 120\,s
-measured on a single machine in single runs. The ordering of the engines is
-robust to plausible variation in that limit, since the separations are of order
-minutes rather than seconds, but the specific link counts at which each engine
-ceases to return are machine-dependent and should be read as such.
+The reach results rest on a wall clock measured on a single machine in single
+runs, so the specific link counts at which an engine ceases to return are
+machine-dependent and should be read as such.
+
+\paragraph{Driving style confounds capability comparison.}
+This threat was realised rather than avoided, and is reported because it bears
+on how the reach results should be read. Each engine was initially exercised
+along a single path, and for the computer-algebra package that path was the one
+its documentation prescribes, which routes through a symbolic linear solve whose
+cost grows explosively. The resulting ladder was read as a capability
+separation. Driving each engine along the best path available through its own
+public interface removes the separation entirely (\S\ref{sec:reach}). A comparison
+of engines on capability is therefore a comparison of engines-as-driven, and
+the choice of path belongs in the method rather than being left implicit. The
+correctness results are not affected: they adjudicate each engine against an
+independent reference rather than against each other.
 
 \paragraph{Non-portable axes.}
 One axis of the frozen matrix --- symbolic nesting depth --- is meaningful only
@@ -525,7 +613,7 @@ disclosure statement.
 All figures reported were produced by executing committed code. Artefacts ---
 the case matrix, the reference implementation, the adapters, the sweep scripts,
 and the raw output records --- are archived at
-\href{https://doi.org/10.5281/zenodo.22315173}{\texttt{doi:10.5281/zenodo.22315173}}
+\href{https://doi.org/10.5281/zenodo.22315172}{\texttt{doi:10.5281/zenodo.22315172}}
 under the MIT licence.
 
 % ===========================================================================
@@ -704,8 +792,14 @@ Drake        & $3.0421\times10^{-10}$ & $5.69$\,s \\
 magnitude below any physically meaningful quantity.
 
 \subsection{The constrained pathway}\label{sec:constrained-results}
-All eight constrained cases in the adjudicated set agree with the closed-form
-reference of equation~\eqref{eq:kkt}.
+MechanicsDSL agrees with the closed-form reference of
+equation~\eqref{eq:kkt} on all eight constrained cases in the adjudicated set.
+It is the only engine scored here: the other two expose no interface for
+imposing holonomic constraints on a coordinate set supplied directly, so this
+pathway is single-engine by construction. Their constrained behaviour is
+measured instead on the slider--crank (\S\ref{sec:slidercrank-results}), where
+the constraint is intrinsic to the mechanism and each engine can impose it in
+its own idiom.
 
 \begin{table}[h]
 \centering
@@ -731,9 +825,9 @@ coordinates, all scalar multiples of one another.}
 
 The redundancy family is the more informative half. Its constraint Jacobian
 retains rank one while its row count grows to nine, so the multipliers become
-underdetermined while the accelerations remain unique. The engines track the
+underdetermined while the accelerations remain unique. The engine tracks the
 reference throughout. An exactly redundant constraint set does not determine how
-the constraint force is distributed, only its total, and neither the engines nor
+the constraint force is distributed, only its total, and neither the engine nor
 the reference is troubled by this.
 
 \paragraph{Coverage.}
@@ -901,24 +995,21 @@ $30$ & \multicolumn{2}{c}{---}             & \multicolumn{2}{c}{---}        & $0
 \end{tabular}
 \end{table}
 
-The three engines occupy three distinct capability regimes on the same system.
-The computer-algebra package returns equations to 5 links; the symbolic compiler
-to 12; the recursive library to 30, the largest size tested. At 8 links one
-engine returns nothing while the other two return correct equations; at 20, a
-second returns nothing while the third continues.
+Read on its own, this ladder appears to show three distinct capability
+regimes: 5 links, 12 links, and 30, the largest size tested. \S\ref{sec:equalbudget}
+shows that reading to be wrong. Each engine here was driven along a single
+path, and for the computer-algebra package that path was the one its
+documentation prescribes, which routes through a symbolic linear solve whose
+cost grows explosively in the number of coordinates. The ladder measures
+those choices as much as it measures the engines.
 
-Three observations follow.
+Two observations from it survive that correction.
 
 The recursive library is in a different class of behaviour. Its cost is flat at
 approximately $0.23$\,s from 5 links to 30, an $O(N)$ articulated-body algorithm
 set against two symbolic approaches whose cost grows explosively. Its residual
 grows with system size, from $6\times10^{-15}$ at 3 links to $6\times10^{-11}$
 at 30, remaining four orders of magnitude inside the adjudication tolerance.
-
-The symbolic compiler reaches further than the computer-algebra package driven
-as documented --- 12 links against 5. This is a defensible comparative claim
-against that engine used in the manner its documentation prescribes. It is not a
-claim against the recursive library, which exceeds both by a wide margin.
 
 Cost is not monotonic in system size for the symbolic compiler: three links cost
 $21.63$\,s against $7.45$\,s for five. The effect is attributable to a threshold
@@ -928,9 +1019,56 @@ smoothed.
 The finding that matters is what did not occur. Every engine that returned an
 answer returned a correct one, and every engine that could not, failed by never
 returning. A timeout is the loud failure mode: the researcher knows the
-computation did not finish. The engines therefore differ in reach, not in
-honesty, and the study's original hypothesis remains unsupported on this axis as
-on every other.
+computation did not finish. No engine returned a wrong answer at any size,
+and the study's original hypothesis remains unsupported on this axis as on
+every other.
+
+\subsection{The same systems, the same budget}\label{sec:equalbudget}
+The ladder above gave each engine one path. Giving each engine the best
+path available through its own public interface --- Kane's formulation with a
+numeric solve and common-subexpression elimination for the computer-algebra
+package, simplification disabled for the symbolic compiler, and the single
+path the recursive library exposes --- and asking all three for the same
+systems under the same wall clock in one session gives a different picture.
+
+\begin{table}[h]
+\centering
+\caption{Equal-budget reach. Each engine driven along the best path available
+through its public interface, same systems, same $5400$\,s wall clock, one
+session on one machine, adjudicated against the same reference at 6 probe
+states. Residual is the worst relative disagreement with the reference.}
+\label{tab:equalbudget}
+\begin{tabular}{@{}rlrlrlr@{}}
+\toprule
+& \multicolumn{2}{c}{\textbf{MechanicsDSL}} & \multicolumn{2}{c}{\textbf{SymPy}} & \multicolumn{2}{c}{\textbf{Drake}} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
+$N$ & time & residual & time & residual & time & residual \\
+\midrule
+$40$ & $145.0$\,s & $1.7\times10^{-13}$ & $74.3$\,s & $3.6\times10^{-13}$ & $0.3$\,s & $1.7\times10^{-10}$ \\
+$60$ & $468.0$\,s & $4.2\times10^{-13}$ & $280.2$\,s & $7.1\times10^{-13}$ & $0.2$\,s & $4.1\times10^{-10}$ \\
+$80$ & $1100.9$\,s & $5.9\times10^{-13}$ & $693.3$\,s & $1.2\times10^{-12}$ & $0.2$\,s & $9.9\times10^{-10}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent \textbf{All three engines answer every rung to 80 coordinates, with no
+failures and no disagreements.} The apparent capability separation of
+Table~\ref{tab:scaling} does not survive equal treatment; 80 is where the ladder
+stopped, not where any engine failed.
+
+What separates the engines is speed. The recursive library is flat at
+$0.2$--$0.3$\,s across the ladder and exceeds both symbolic engines by some
+$5500\times$ at 80 coordinates --- a difference of algorithm class, not of
+engineering quality, and one that no change of driving affects. Between the
+two symbolic engines the computer-algebra package driven well is about
+$1.6\times$ faster at every rung, while the symbolic compiler is about twice as
+accurate. Neither difference is a capability boundary.
+
+The generalisable point is not about these three engines. It is that a
+comparison of engines on capability is a comparison of engines-as-driven, and
+that the path taken through each tool belongs in the method rather than being
+left implicit. The confound here survived a pre-registered case matrix and a
+frozen baseline, neither of which was designed to catch it.
 
 % ===========================================================================
 \section{A failure shared by every implementation, including the referee}
@@ -983,7 +1121,7 @@ motion is right. That expectation was false. It is recorded here, and corrected
 in the module rather than silently revised, because the ease with which it was
 held is part of the finding: the intuition that a correct implementation should
 return the exact answer at an exact equilibrium is natural, widely shared, and
-incorrect. It is instance 4 of Table in \S\ref{sec:threats}.
+incorrect. It is instance 4 of Table~\ref{tab:apparatus}.
 
 What the case exposes is real and shared. Every implementation tested returns
 success and hands back a large trajectory where the exact answer is no motion at
@@ -1163,10 +1301,17 @@ across a frozen adversarial case matrix, three structurally distinct mechanism
 families, both dynamical regimes, and constrained and unconstrained pathways.
 
 They agree to the limit of double-precision arithmetic. No engine returned an
-incorrect answer while reporting success on any adjudicated case. Where they
-differ, they differ in reach: the largest system each will answer varies by a
-factor of six across the three, and every engine that failed did so by not
-returning rather than by returning something wrong.
+incorrect answer while reporting success on any adjudicated case, and every
+engine that failed did so by not returning rather than by returning something
+wrong.
+
+An apparent difference in reach --- the largest system each engine would
+answer --- proved on examination to measure how each engine had been driven
+rather than what it could do. Given the best path through each engine's own
+public interface and an equal budget, all three answer systems of 80
+coordinates (\S\ref{sec:equalbudget}). That correction is reported rather than
+quietly applied, because a study of measurements that mislead has no standing
+to conceal one of its own.
 
 The single failure observed is shared by all three engines and by the
 independent reference. At an unstable equilibrium every implementation reports
@@ -1205,18 +1350,34 @@ and analysis. The study design, the adjudication criteria, the freeze protocol,
 and the manuscript are the author's. Every reported figure was produced by
 executing committed code and checked against the run record.
 
+\paragraph{Post-freeze changes to the author's engine.}
+Diagnosing the reach confound located two defects in the author's engine:
+a dominant cost in a cosmetic simplification step, and a configuration
+control that reported bounding that cost while having no effect. Both were
+corrected after measurement. \textbf{The corrections are not present in the
+version measured here}, which remains pinned for the study; no figure in this
+paper reflects them. They are reported separately so that the improvement to
+the author's own tool is not presented as a result of a study in which that
+tool is a subject.
+
 \paragraph{Artefacts.}
 Every figure reported was produced by executing committed code. Artefacts ---
 the case matrix, the reference implementations, the engine adapters, the sweep
 scripts, and the raw output records --- are available at
-\href{https://doi.org/10.5281/zenodo.22315173}{\texttt{doi:10.5281/zenodo.22315173}},
+\href{https://doi.org/10.5281/zenodo.22315172}{\texttt{doi:10.5281/zenodo.22315172}},
 archived under the MIT licence. The repository is at
 \url{https://github.com/MechanicsDSL/mechanicsdsl} (study material under
 \texttt{stress\_suite/}).
 
 % ===========================================================================
-\begin{thebibliography}{9}
+\begin{thebibliography}{13}
 \addcontentsline{toc}{section}{References}
+
+\bibitem{asmevv10}
+American Society of Mechanical Engineers.
+\newblock \emph{ASME V\&V 10-2019: Standard for Verification and Validation in
+  Computational Solid Mechanics}.
+\newblock ASME, New York, 2019.
 
 \bibitem{barr2015}
 E.~T. Barr, M.~Harman, P.~McMinn, M.~Shahbaz, and S.~Yoo.
@@ -1267,6 +1428,31 @@ J.~C. Knight and N.~G. Leveson.
 W.~M. McKeeman.
 \newblock Differential testing for software.
 \newblock \emph{Digital Technical Journal}, 10(1):100--107, 1998.
+
+\bibitem{oberkampf2002}
+W.~L. Oberkampf and T.~G. Trucano.
+\newblock Verification and validation in computational fluid dynamics.
+\newblock \emph{Progress in Aerospace Sciences}, 38(3):209--272, 2002.
+  \newblock \doi{10.1016/S0376-0421(02)00005-2}
+
+\bibitem{oberkampf2010}
+W.~L. Oberkampf and C.~J. Roy.
+\newblock \emph{Verification and Validation in Scientific Computing}.
+\newblock Cambridge University Press, Cambridge, 2010.
+  \newblock ISBN 978-0-521-11360-1.
+
+\bibitem{roache1998}
+P.~J. Roache.
+\newblock \emph{Verification and Validation in Computational Science and
+  Engineering}.
+\newblock Hermosa Publishers, Albuquerque, NM, 1998.
+  \newblock ISBN 978-0-913478-08-0.
+
+\bibitem{roache2002}
+P.~J. Roache.
+\newblock Code verification by the method of manufactured solutions.
+\newblock \emph{Journal of Fluids Engineering}, 124(1):4--10, 2002.
+  \newblock \doi{10.1115/1.1436090}
 
 \end{thebibliography}
 
