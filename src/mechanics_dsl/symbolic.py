@@ -21,7 +21,16 @@ from .parser import (
     VectorExpr,
     VectorOpExpr,
 )
-from .utils import LRUCache, TimeoutError, _perf_monitor, config, logger, profile_function, timeout
+from .utils import (
+    LRUCache,
+    TimeoutError,
+    _perf_monitor,
+    config,
+    logger,
+    maybe_simplify,
+    profile_function,
+    timeout,
+)
 
 __all__ = ["SymbolicEngine"]
 
@@ -430,17 +439,10 @@ class SymbolicEngine:
                             if str(term).startswith(f"Derivative({coord}"):
                                 equation = equation.subs(term, coord_dots[coord])
 
-            # Simplify with timeout (after substitution to preserve acceleration terms)
-            try:
-                if config.simplification_timeout > 0:
-                    with timeout(config.simplification_timeout):
-                        equation = sp.simplify(equation)
-                else:
-                    equation = sp.simplify(equation)
-            except TimeoutError:
-                logger.warning(f"Simplification timeout for {q}, using unsimplified equation")
-            except (ValueError, TypeError, AttributeError) as e:
-                logger.warning(f"Simplification error for {q}: {e}, using unsimplified equation")
+            # Cosmetic, and the dominant cost of compiling a coupled system:
+            # see utils/simplification.py. Done after substitution so the
+            # acceleration terms are preserved.
+            equation = maybe_simplify(equation, f"the equation for {q}")
 
             # Verify acceleration terms are present after simplification
             missing_accels = [
@@ -571,7 +573,7 @@ class SymbolicEngine:
         for q, accel_sym in zip(coordinates, accel_syms):
             accel_key = f"{q}_ddot"
             if accel_sym in sol:
-                accelerations[accel_key] = sp.simplify(sol[accel_sym])
+                accelerations[accel_key] = maybe_simplify(sol[accel_sym], accel_key)
                 logger.info(f"Solved {accel_key} (constrained, multipliers eliminated)")
             else:
                 msg = (
@@ -613,30 +615,12 @@ class SymbolicEngine:
 
             # dq/dt = ∂H/∂p
             q_dot = sp.diff(hamiltonian, p_sym)
-            try:
-                if config.simplification_timeout > 0:
-                    with timeout(config.simplification_timeout):
-                        q_dot = sp.simplify(q_dot)
-                else:
-                    q_dot = sp.simplify(q_dot)
-            except TimeoutError:
-                logger.debug(f"Simplification timeout for d{q}/dt, using unsimplified")
-            except (ValueError, TypeError, AttributeError) as e:
-                logger.debug(f"Simplification error for d{q}/dt: {e}")
+            q_dot = maybe_simplify(q_dot, f"d{q}/dt")
             q_dot_equations.append(q_dot)
 
             # dp/dt = -∂H/∂q
             p_dot = -sp.diff(hamiltonian, q_sym)
-            try:
-                if config.simplification_timeout > 0:
-                    with timeout(config.simplification_timeout):
-                        p_dot = sp.simplify(p_dot)
-                else:
-                    p_dot = sp.simplify(p_dot)
-            except TimeoutError:
-                logger.debug(f"Simplification timeout for dp_{q}/dt, using unsimplified")
-            except (ValueError, TypeError, AttributeError) as e:
-                logger.debug(f"Simplification error for dp_{q}/dt: {e}")
+            p_dot = maybe_simplify(p_dot, f"dp_{q}/dt")
             p_dot_equations.append(p_dot)
 
             logger.debug(f"Hamilton equations for {q}:")
@@ -703,17 +687,7 @@ class SymbolicEngine:
         hamiltonian = sum(p * sol[qd] for p, qd in zip(p_syms, q_dot_syms))
         hamiltonian = hamiltonian - lagrangian.subs(sol)
 
-        # Simplify with timeout
-        try:
-            if config.simplification_timeout > 0:
-                with timeout(config.simplification_timeout):
-                    hamiltonian = sp.simplify(hamiltonian)
-            else:
-                hamiltonian = sp.simplify(hamiltonian)
-        except TimeoutError:
-            logger.warning("Hamiltonian simplification timeout, using unsimplified form")
-        except (ValueError, TypeError, AttributeError) as e:
-            logger.warning(f"Hamiltonian simplification error: {e}, using unsimplified form")
+        hamiltonian = maybe_simplify(hamiltonian, "the Hamiltonian")
 
         logger.info(f"Hamiltonian: {hamiltonian}")
         return hamiltonian
@@ -834,7 +808,7 @@ class SymbolicEngine:
             B = eq.subs(accel_sym, 0)
 
             if A != 0:
-                sol = sp.simplify(-B / A)
+                sol = maybe_simplify(-B / A, "the single-coordinate solution")
                 accel_key = f"{coordinates[0]}_ddot"
                 logger.info(f"Solved {accel_key} (single coordinate)")
                 return {accel_key: sol}
@@ -862,7 +836,8 @@ class SymbolicEngine:
                     accel_key = f"{q}_ddot"
                     accel_sym = accel_syms[j]
                     if accel_sym in sol_dict:
-                        accelerations[accel_key] = sp.simplify(sol_dict[accel_sym])
+                        accelerations[accel_key] = maybe_simplify(
+                            sol_dict[accel_sym], accel_key)
                         logger.info(f"Solved {accel_key} via simultaneous solution")
                     else:
                         msg = (
@@ -903,7 +878,7 @@ class SymbolicEngine:
                 accelerations = {}
                 for j, q in enumerate(coordinates):
                     accel_key = f"{q}_ddot"
-                    accelerations[accel_key] = sp.simplify(a_vec[j])
+                    accelerations[accel_key] = maybe_simplify(a_vec[j], accel_key)
                     logger.info(f"Solved {accel_key} via matrix inversion")
                 return accelerations
             else:

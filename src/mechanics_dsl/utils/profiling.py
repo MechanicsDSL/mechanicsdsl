@@ -155,15 +155,23 @@ def timeout(seconds: float):
         raise ValueError(f"seconds must be positive, got {seconds}")
 
     if platform.system() == "Windows":
-        # Windows: Use threading.Timer (cannot interrupt CPU-bound operations)
+        # Windows: threading.Timer. This CANNOT interrupt a CPU-bound
+        # operation, and in particular cannot interrupt SymPy while it is
+        # inside a C-level routine, which is where expensive symbolic work
+        # spends its time. The deadline is therefore ADVISORY here: the body
+        # runs to completion and TimeoutError is raised afterwards, so the
+        # caller learns the budget was exceeded but the cost has been paid.
+        #
+        # Previously the handler raised inside the timer thread. A raise there
+        # cannot propagate to the caller -- it printed a traceback to stderr,
+        # killed the timer thread, and left the `except TimeoutError` around
+        # the call site permanently unreachable. The deadline was inert and
+        # noisy at once. The flag is now set in the thread and checked here,
+        # on the caller's thread, where it can actually be raised.
         timer: Optional[threading.Timer] = None
         timeout_occurred = threading.Event()
 
-        def timeout_handler() -> None:
-            timeout_occurred.set()
-            raise TimeoutError(f"Operation timed out after {seconds} seconds")
-
-        timer = threading.Timer(seconds, timeout_handler)
+        timer = threading.Timer(seconds, timeout_occurred.set)
         timer.daemon = True
         timer.start()
 
@@ -173,8 +181,29 @@ def timeout(seconds: float):
             if timer is not None:
                 timer.cancel()
                 timer.join(timeout=0.1)
+
+        if timeout_occurred.is_set():
+            raise TimeoutError(f"Operation timed out after {seconds} seconds")
+    elif threading.current_thread() is not threading.main_thread():
+        # Unix, but off the main thread. signal.signal() and signal.alarm()
+        # are main-thread only and raise ValueError anywhere else, so the
+        # SIGALRM path below cannot be used here. Deriving on a worker thread
+        # is a supported configuration (see utils/recursion.py, which uses one
+        # to obtain a larger stack), and it must not turn a working deadline
+        # into a crash. Degrade to the advisory behaviour used on Windows.
+        occurred = threading.Event()
+        t = threading.Timer(seconds, occurred.set)
+        t.daemon = True
+        t.start()
+        try:
+            yield
+        finally:
+            t.cancel()
+            t.join(timeout=0.1)
+        if occurred.is_set():
+            raise TimeoutError(f"Operation timed out after {seconds} seconds")
     else:
-        # Unix: Use signal.SIGALRM (can interrupt operations)
+        # Unix, main thread: SIGALRM, which can genuinely interrupt.
         def timeout_handler(signum: int, frame: Any) -> None:
             raise TimeoutError(f"Operation timed out after {seconds} seconds")
 

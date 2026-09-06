@@ -50,6 +50,7 @@ from .utils import (
     is_likely_coordinate,
     logger,
     profile_function,
+    run_with_deep_recursion,
     validate_file_path,
 )
 from .visualization import MechanicsVisualizer
@@ -501,35 +502,72 @@ class PhysicsCompiler:
                 use_hamiltonian = True
 
             # Derive equations with error handling
-            try:
-                equations: Any = None
-
+            def _derive() -> Any:
+                """The derivation proper, isolated so it can be retried."""
                 if self.fluid_particles and self.lagrangian is None:
                     logger.info("Fluid system detected: Skipping symbolic derivation")
-                    equations: Any = {}  # No symbolic equations needed for SPH
                     self.use_hamiltonian_formulation = False
+                    return {}  # No symbolic equations needed for SPH
 
-                elif use_hamiltonian:
-                    equations = self.derive_hamiltonian_equations()
+                if use_hamiltonian:
+                    eqs = self.derive_hamiltonian_equations()
                     self.use_hamiltonian_formulation = True
                     logger.info("Using Hamiltonian formulation")
-                # Only try this if have a Lagrangian
-                elif self.lagrangian is not None:
-                    # Check for constraints
+                    return eqs
+
+                # Only try this if we have a Lagrangian
+                if self.lagrangian is not None:
                     if use_constraints and len(self.constraints) > 0:
-                        equations = self.derive_constrained_equations()
+                        eqs = self.derive_constrained_equations()
                         logger.info(
                             f"Using constrained Lagrangian with {len(self.constraints)} constraints"
                         )
                     else:
-                        equations = self.derive_equations()
+                        eqs = self.derive_equations()
                         logger.info("Using standard Lagrangian formulation")
                     self.use_hamiltonian_formulation = False
+                    return eqs
+
+                return None
+
+            try:
+                equations: Any = None
+                try:
+                    equations = _derive()
+                except RecursionError:
+                    # CPython's default recursion limit, not an intractable
+                    # problem: a strongly coupled system past roughly thirty
+                    # coordinates exceeds it routinely. Retry once with a
+                    # raised limit on an enlarged stack. utils/recursion.py
+                    # explains why a worker thread is required for that to be
+                    # safe rather than merely a deferred crash.
+                    if not config.deep_recursion:
+                        raise
+                    logger.info(
+                        "Derivation exceeded the recursion limit; retrying "
+                        f"with limit {config.recursion_limit} on a "
+                        f"{config.derivation_stack_mb}MB stack."
+                    )
+                    equations = run_with_deep_recursion(
+                        _derive,
+                        limit=config.recursion_limit,
+                        stack_mb=config.derivation_stack_mb,
+                    )
 
                 if equations is None:
                     raise ValueError("Equation derivation returned None")
 
                 self.equations = equations
+            except RecursionError as e:
+                logger.error(f"Equation derivation failed: {e}", exc_info=True)
+                raise ValueError(
+                    "Equation derivation exceeded the recursion limit. This is "
+                    "CPython's own limit rather than a limit of the derivation: "
+                    "strongly coupled systems past roughly 30 coordinates need "
+                    "more. Enable config.deep_recursion (on by default) to "
+                    "retry automatically, or raise config.recursion_limit. "
+                    f"Original error: {e}"
+                ) from e
             except Exception as e:
                 logger.error(f"Equation derivation failed: {e}", exc_info=True)
                 raise ValueError(f"Equation derivation failed: {e}") from e
