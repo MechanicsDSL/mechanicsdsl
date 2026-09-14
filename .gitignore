@@ -115,6 +115,21 @@ dmypy.json
 !docs/*.pdf
 !October_Brief.pdf
 !paper_figures*/*.pdf
+!docs/figures/*.pdf
+
+# LaTeX build byproducts (regenerated on every compile)
+docs/*.aux
+docs/*.out
+docs/*.toc
+docs/*.spl
+docs/*.bak
+docs/LaTeX_Source_Files.zip
+
+# Journal submission paperwork (kept private while under review)
+docs/*.docx
+docs/Highlights.txt
+docs/cover_letter.txt
+docs/Graphical_Abstract.*
 18_exported_system.json
 18_simulation_results.npz
 *.npz
