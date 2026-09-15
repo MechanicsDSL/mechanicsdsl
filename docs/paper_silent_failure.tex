@@ -91,9 +91,8 @@
 
 \begin{frontmatter}
 
-\title{Library-Independent Adjudication of Three Rigid-Body Dynamics
-Engines: Agreement, a Confounded Comparison, and a Shared Failure at
-Unstable Equilibria}
+\title{Limits of Differential Testing: Three Rigid-Body Dynamics Engines
+Under Library-Independent Adjudication}
 
 \author[ind]{Noah Parsons}
 \ead{parsons.m.noah@gmail.com}
@@ -116,10 +115,13 @@ them. A 55-case adversarial suite was frozen before measurement and extended to
 three structurally distinct mechanisms; integration was pinned to one scheme
 for every engine. The engines agree with the
 reference and with one another to within $3\times10^{-14}$ on the equations of
-motion, and no engine returned a wrong answer while reporting success. An
+motion, and on no adjudicated case was an engine observed to return a wrong
+answer while reporting success. An
 apparent divergence in reach proved to measure how each engine had been driven
 rather than what it could do: given equal budgets, all three answer
-80-coordinate systems. One failure was observed, and it is shared. At an
+80-coordinate systems. One failure was observed, and every implementation
+shares it: a numerically induced departure from an exact unstable equilibrium.
+At an
 unstable equilibrium every engine, and the reference, reports success while
 returning approximately 20 radians of motion for a configuration whose exact
 solution does not move, and none warns. Arbitrary-precision measurement shows
@@ -161,7 +163,7 @@ powerful and its limit is well known in principle --- it can only find failures
 the implementations do not share. What that limit means in practice is less
 often examined, because it requires finding a shared failure and showing that
 no amount of implementation diversity would have exposed it. This paper does
-that, and the answer is not reassuring: the shared failure reported here
+that, and the result runs against the premise: the shared failure reported here
 originates in floating-point arithmetic rather than in anyone's code, so every
 implementation exhibits it, including a reference written from first principles
 specifically to be independent.
@@ -187,6 +189,25 @@ Discussion of this failure mode tends to run together two distinct propositions:
 \noindent Claim (B) is the premise of differential testing: if two independent
 implementations disagree, at least one is wrong, and the disagreement is the
 signal. This paper set out to test (B) and did not find it.
+
+\subsection{Research questions}\label{sec:rqs}
+Three questions follow from the distinction, each answered by a distinct part of
+the study:
+
+\begin{itemize}[leftmargin=3.6em,itemsep=0.3em]
+  \item[\textbf{RQ1}] Under adjudication by a reference sharing no derivation
+        code with any engine, do independently developed rigid-body dynamics
+        engines disagree on correctness? (\S\ref{sec:agreement})
+  \item[\textbf{RQ2}] Does a comparison of such engines measure the engines, or
+        the way they were driven? (\S\ref{sec:reach})
+  \item[\textbf{RQ3}] Are there failures every implementation exhibits
+        identically --- including a reference constructed to be independent ---
+        and what follows for differential testing if there are?
+        (\S\ref{sec:shared}, \S\ref{sec:practice})
+\end{itemize}
+
+\noindent RQ1 is answered in the negative, RQ2 in the second sense, and RQ3 by
+exhibiting one such failure.
 
 \subsection{What was done}
 Three independently developed engines were compared against a closed-form
@@ -709,13 +730,33 @@ reported in the same spirit --- as the absence of a disagreement across every
 case measured, not as evidence that disagreements are rare.
 
 \paragraph{Constrained continuous-time dynamics in the recursive library}
-Constrained dynamics in the recursive library are enforced within its own
-discrete solver and are not available through the continuous-time interface used
-elsewhere in this study. The engine is therefore driven in its discrete mode on
-the slider--crank, where it cannot share the pinned integrator and is scored on
-constraint satisfaction alone. This is a property of the engine's supported
-interfaces and is reported as a limitation of the comparison; no defect claim is
-made here.
+Constrained dynamics are not reachable through the continuous-time interface
+used elsewhere in this study: in the pinned version a continuous-time
+\texttt{MultibodyPlant} carrying a distance constraint refuses to evaluate time
+derivatives, in its rigid and compliant forms alike. The library does provide a
+newer integrator, CENIC, which does solve constrained continuous models and
+whose distance-constraint support is present in the pinned version. It reaches
+them, however, by building its own model and implementing stepping directly
+rather than by exposing a right-hand side: what it returns are the positions and
+velocities resulting from a step. The plant's generalised-acceleration output
+port does not reflect the dynamics CENIC actually solved, and is not expected to
+until the issue tracking constraint-aware reporting is closed; even then it may
+report the trailing step rather than the instantaneous value. This study
+adjudicates on acceleration residuals, so for a constrained continuous model in
+the pinned version no acceleration field is available by any route. The engine
+is therefore driven in its discrete mode on the slider--crank, where it cannot
+share the pinned integrator and is scored on constraint satisfaction alone.
+
+This is the study's design meeting a design decision in the integrator rather
+than a defect in either, and the account above was confirmed by the library's
+maintainers in a public discussion.\footnote{\texttt{RobotLocomotion/drake}
+discussion \#24975,
+\url{https://github.com/RobotLocomotion/drake/discussions/24975}.
+Distance-constraint support in CENIC was added in \#24776 and is included in
+v1.56.0; constraint-aware reporting of reaction forces and accelerations is
+tracked by \#24061.} An adjudication on positions and velocities
+rather than accelerations could step that integrator directly for a purely
+continuous system; that is a different protocol, and a separate study.
 
 \subsection{Disclosure}\label{sec:disclosure-method}
 The author maintains one of the three engines measured. The mitigation is
@@ -819,7 +860,7 @@ ratio vanishes; the cart--pole degenerates because an inertia vanishes. The
 causes are unrelated, which is the reason for testing both.
 
 % ===========================================================================
-\section{Results: agreement}
+\section{Results: agreement}\label{sec:agreement}
 % ===========================================================================
 
 \subsection{Equations of motion}
@@ -1220,11 +1261,11 @@ in the engine's symbolic-to-numeric handling and is reported rather than
 smoothed.
 
 The finding that matters is what did not occur. Every engine that returned an
-answer returned a correct one, and every engine that could not, failed by never
-returning. A timeout is the loud failure mode: the researcher knows the
-computation did not finish. No engine returned a wrong answer at any size,
-and the study's original hypothesis remains unsupported on this axis as on
-every other.
+answer on this ladder returned a correct one, and every engine that could not,
+failed by never returning. A timeout is the loud failure mode: the researcher
+knows the computation did not finish. No engine was observed to return a wrong
+answer at any size measured, and the study's original hypothesis remains
+unsupported on this axis as on every other.
 
 \subsection{The same systems, the same budget}\label{sec:equalbudget}
 The ladder above gave each engine one path. Giving each engine the best
@@ -1303,7 +1344,8 @@ left implicit. The confound here survived a pre-registered case matrix and a
 frozen baseline, neither of which was designed to catch it.
 
 % ===========================================================================
-\section{A failure shared by every implementation, including the referee}\label{sec:shared}
+\section{A numerically induced departure from an exact unstable equilibrium,
+shared by every implementation}\label{sec:shared}
 % ===========================================================================
 
 \subsection{The configuration}
@@ -1322,7 +1364,8 @@ of what follows.
 An objection presents itself immediately and should be answered before the
 result rather than after it. A physical pendulum released at the inverted
 position falls, so returning a large trajectory might be called right rather
-than wrong. The objection misses which system is under test. The engines were
+than wrong. The objection concerns a different system from the one under test.
+The engines were
 not asked what a physical pendulum does; they were asked to integrate a stated
 initial-value problem, and for that problem --- exact angles of $\pi$, exact zero
 velocities --- the exact solution is the constant function. Every engine returns
@@ -1333,8 +1376,12 @@ trajectory is unphysical. It is narrower and, for a user, worse: \textbf{every
 implementation returns an answer dominated by its own round-off, reports
 success, and gives no indication that it has done so.} A researcher who did not
 already know the initial condition was an unstable equilibrium would have no way
-of learning it from the output. That is the silent failure the study set out to
-look for, and it is the one case in which it was found.
+of learning it from the output. That is the failure mode the study set out to
+look for --- a wrong answer returned with every indication of success --- and it
+is the one case in which it was found. Because its cause lies in the arithmetic
+rather than in a defect in any implementation, it is described here as a
+numerically induced departure from the exact solution rather than as a fault in
+any engine.
 
 \subsection{The observation}\label{sec:observation}
 All three engines, and the independent reference, return approximately 20
