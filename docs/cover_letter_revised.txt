@@ -1,0 +1,71 @@
+Noah Parsons
+Newcastle, Wyoming, United States
+parsons.m.noah@gmail.com
+ORCID 0009-0000-7224-6040
+
+To the Editors, Journal of Systems and Software
+
+Dear Editors,
+
+I am submitting "Limits of Differential Testing: Three Rigid-Body Dynamics
+Engines Under Library-Independent Adjudication" for consideration as a research
+paper.
+
+Differential testing rests on the premise that independent implementations fail
+independently. Knight and Leveson showed that premise is unreliable when the
+correlation comes from shared human misconception. This paper reports a failure
+correlated for a different reason, and one that no amount of implementation
+diversity can address: it originates in floating-point arithmetic rather than in
+anyone's code, and is therefore exhibited by every implementation, including a
+reference written from first principles specifically to be independent.
+
+The contribution is methodological. I exhibit a concrete failure invisible to
+the method, identify the property that makes it invisible, and give a reusable
+design -- adjudication by a referee sharing no derivation code with any
+implementation under test -- for telling shared failures from independent ones.
+The argument is an existence proof rather than a frequency estimate, and the
+manuscript says so explicitly in its threats to validity. Section 1.4 states the
+three research questions the study answers.
+
+Four points a reader may wish to know in advance.
+
+First, the study includes a correction to its own earlier result. An apparent
+capability separation between the engines proved on examination to measure how
+each engine had been driven rather than what it could do; under equal budgets
+the separation disappears. The retraction is reported in the text rather than
+quietly applied, and Section 1.7 withdraws an argument the manuscript previously
+made on the strength of it.
+
+Second, I maintain one of the three engines evaluated. This is declared
+formally, and mitigated structurally rather than by declaration alone: no engine
+adjudicates itself or any other, the case matrix was frozen before measurement
+under a rule forbidding removal of cases once scored, and the reported results
+include every measurement on which my engine performs worst.
+
+Third, one asymmetry in the comparison -- a family on which one engine cannot
+share the pinned integrator -- was characterised in a public discussion with
+that library's maintainers, who confirmed the account given in the threats to
+validity. The manuscript cites the thread so that a reader can check the
+limitation against its source rather than take my description of it.
+
+Fourth, all data and code needed to reproduce every figure and table are
+archived at doi:10.5281/zenodo.22315172 under the MIT licence, together with the
+raw output records from which each reported figure was computed.
+
+On length: the manuscript is 19 pages in the journal double-column format,
+marginally above the 18-page guidance. The additional page is the reproduction
+map in Appendix A, which maps each reported result to the script that produces
+it and the record it is stored in. I judged that a study whose contribution is
+methodological is better served by making every claim independently checkable
+than by removing that table, but I am happy to move it to supplementary material
+if the editors prefer.
+
+The manuscript is original, is not under consideration elsewhere, and has not
+been published previously. I have used generative AI in both the research and
+the writing, declared in the two places Elsevier's policy requires.
+
+Thank you for your consideration.
+
+Yours faithfully,
+
+Noah Parsons

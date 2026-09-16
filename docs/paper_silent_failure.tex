@@ -105,28 +105,26 @@ Under Library-Independent Adjudication}
 
 \begin{abstract}
 Differential testing detects the failures that independent implementations make
-independently; it is structurally blind to the failures they share. This paper
-demonstrates that such failures exist in widely used scientific software and are
-not reachable by adding implementations. Three rigid-body dynamics engines ---
-a symbolic compiler, a general-purpose computer-algebra mechanics package, and
-a recursive articulated-body library --- were adjudicated against a closed-form
+independently; it is structurally blind to the failures they share. Such failures exist in
+widely used scientific software and are not reachable by adding
+implementations. Three rigid-body dynamics engines ---
+a symbolic compiler, a computer-algebra package, and a recursive
+articulated-body library --- were adjudicated against a closed-form
 reference implemented in NumPy alone, sharing no derivation code with any of
 them. A 55-case adversarial suite was frozen before measurement and extended to
 three structurally distinct mechanisms; integration was pinned to one scheme
 for every engine. The engines agree with the
 reference and with one another to within $3\times10^{-14}$ on the equations of
-motion, and on no adjudicated case was an engine observed to return a wrong
-answer while reporting success. An
-apparent divergence in reach proved to measure how each engine had been driven
-rather than what it could do: given equal budgets, all three answer
-80-coordinate systems. One failure was observed, and every implementation
-shares it: a numerically induced departure from an exact unstable equilibrium.
-At an
-unstable equilibrium every engine, and the reference, reports success while
-returning approximately 20 radians of motion for a configuration whose exact
-solution does not move, and none warns. Arbitrary-precision measurement shows
-the divergence time grows linearly with working precision and survives to 150
-digits, so the failure is structural rather than an artefact of binary64. The
+motion, and no engine returned a wrong answer while reporting success on any
+adjudicated case. An
+apparent divergence in reach measured how each engine had been driven rather
+than what it could do: given equal budgets, all three answer 80-coordinate
+systems. One failure was observed, and every implementation
+shares it: at an exact unstable equilibrium every engine, and the reference,
+reports success while returning approximately 20 radians of motion for a
+configuration whose exact solution does not move, and none warns. Divergence time grows linearly with
+working precision and survives to 150 decimal digits, so it is structural:
+numerically induced rather than a defect in any implementation. The
 contribution is methodological: a concrete failure that no amount of
 implementation diversity would expose, and a reusable design for
 distinguishing shared failures from independent ones.

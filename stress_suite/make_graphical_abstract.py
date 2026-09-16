@@ -85,7 +85,7 @@ def main() -> int:
     axL.set_ylim(-0.35, 3.4)
     axL.set_xlabel("time (s)")
     axL.set_ylabel("departure from equilibrium (rad)")
-    axL.set_title("All implementations fail identically", fontsize=7.4,
+    axL.set_title("All implementations depart identically", fontsize=7.4,
                   pad=3.5)
     axL.legend(loc="upper left", handlelength=1.6)
     axL.grid(True, color=C_GRID, linewidth=0.5)
