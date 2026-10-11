@@ -3,7 +3,7 @@ message: "If you use this software, please cite it as below."
 authors:
   - family-names: Parsons
     given-names: Noah
-title: "MechanicsDSL: A Domain-Specific Language for Classical Mechanics"
+title: "MechanicsDSL: A Domain-Specific Language and Compiler for Physical Systems"
 version: 2.1.3
 doi: 10.5281/zenodo.17771040
 date-released: 2026-08-15
@@ -17,7 +17,7 @@ keywords:
   - simulation
   - symbolic computation
   - numerical methods
-abstract: "MechanicsDSL is a comprehensive framework for symbolic and numerical analysis of classical mechanical systems using a LaTeX-inspired domain-specific language. It automatically derives equations of motion from Lagrangians or Hamiltonians and provides advanced numerical simulation capabilities."
+abstract: "MechanicsDSL is a comprehensive framework for symbolic and numerical analysis of physical systems using a LaTeX-inspired domain-specific language. It automatically derives equations of motion from Lagrangians or Hamiltonians and provides numerical simulation capabilities."
 
 
 
