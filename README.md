@@ -174,7 +174,7 @@ Full documentation, tutorials, and DSL reference at **[mechanicsdsl.readthedocs.
 
 If you use MechanicsDSL in your work, please cite the software:
 
-> Parsons, N. *MechanicsDSL: A Domain-Specific Language for Classical Mechanics* (v2.1.3). Zenodo. [doi:10.5281/zenodo.17771040](https://doi.org/10.5281/zenodo.17771040)
+> Parsons, N. *MechanicsDSL: A Domain-Specific Language and compiler for physical systems* (v2.1.3). Zenodo. [doi:10.5281/zenodo.17771040](https://doi.org/10.5281/zenodo.17771040)
 
 Citation metadata is also in [`CITATION.cff`](https://github.com/MechanicsDSL/mechanicsdsl/blob/main/CITATION.cff).
 
