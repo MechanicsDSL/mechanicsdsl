@@ -118,9 +118,9 @@ Any compiled system can be exported as standalone code in any of the supported t
 | OpenMP | Multi-threaded C++ |
 | WebAssembly | Emscripten WASM |
 
-That makes twelve targets. Modelica isn't one of them. It's an *integration*
+Modelica is an *integration*
 (`mechanics_dsl.integrations.modelica`) that writes a `.mo` model for an external
-Modelica tool to compile, so it isn't a code generator registered with
+Modelica tool to compile, it isn't a code generator registered with
 `PhysicsCompiler.export()`.
 
 ```python
