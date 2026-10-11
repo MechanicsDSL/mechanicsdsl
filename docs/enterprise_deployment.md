@@ -1,6 +1,6 @@
-# Enterprise Deployment Guide
+# Deployment Guide
 
-This guide covers deploying MechanicsDSL in enterprise environments.
+This guide covers deploying MechanicsDSL in various environments.
 
 ## Docker Deployment
 
@@ -180,9 +180,3 @@ export MDSL_MAX_WORKERS=4
 export MDSL_CACHE_DIR=/tmp/mdsl_cache
 export OMP_NUM_THREADS=4
 ```
-
-## Support
-
-- GitHub Issues: https://github.com/MechanicsDSL/mechanicsdsl/issues
-- Documentation: https://mechanicsdsl.readthedocs.io
-- Email: support@mechanicsdsl.io
