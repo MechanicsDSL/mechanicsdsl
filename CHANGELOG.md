@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.1.3] - 2026-08-15
 
-### ⚠️ Correctness Release
+### Correctness Release
 
 Three pathways produced wrong answers without saying so. **If you used the
 bare-metal ARM generator, the Hamiltonian formulation with coupled momenta, or
@@ -155,7 +155,7 @@ same class of failure from recurring silently.
 
 ## [2.1.2] - 2026-06-04
 
-### 🧹 Cleanup & Latent-Bug Release
+### Cleanup & Latent-Bug Release
 
 Closes the high- and medium-priority findings surfaced in the v2.1.1
 take-stock review. Every item below corresponds to a real defect or
@@ -253,7 +253,7 @@ cleanup.
 
 ## [2.1.1] - 2026-05-29
 
-### 🔬 Quality & Validation Release
+### Quality & Validation Release
 
 Backs up v2.1.0's correctness fixes with verification. Adds physics
 validation against textbook closed-form answers, smoke tests for every
@@ -342,7 +342,7 @@ features. Each batch of new tests surfaced a real bug, all fixed here.
 
 ## [2.1.0] - 2026-05-29
 
-### 🛡️ Correctness, Security & Consolidation Release
+### Correctness, Security & Consolidation Release
 
 A focused pass over the compile pipeline, the server, and the package
 layout. Most users should upgrade; two behaviors changed in ways callers
@@ -479,7 +479,7 @@ state = PhysicsCompiler.import_system("system.pkl", allow_pickle=True)
 
 ## [2.0.6] - 2026-01-18
 
-### 🔧 Integration & Infrastructure Release
+### Integration & Infrastructure Release
 
 This release fixes critical issues with code generation integrations and Docker builds.
 
@@ -510,7 +510,7 @@ This release fixes critical issues with code generation integrations and Docker 
 
 ## [2.0.5] - 2026-01-17
 
-### 🎮 Interactive Mode & Presets Release
+### Interactive Mode & Presets Release
 
 This release adds an interactive REPL, built-in physics presets, and improved test infrastructure.
 
@@ -545,7 +545,7 @@ This release adds an interactive REPL, built-in physics presets, and improved te
 
 ## [2.0.1] - 2026-01-17
 
-### 🛠️ Developer Experience & Documentation Release
+### Developer Experience & Documentation Release
 
 This release adds a command-line interface, expanded tutorials, internationalization infrastructure, and quality-of-life improvements following the v2.0.0 enterprise release.
 
@@ -598,18 +598,18 @@ First 3 hours after v2.0.0 release:
 
 ## [2.0.0] - 2026-01-16
 
-### 🚀 Major Release: Enterprise & Embedded Support
+### Embedded Support
 
-This release adds comprehensive support for enterprise deployment, ARM/embedded platforms, and enhanced code generation based on analysis of real-world user adoption patterns.
+This release adds comprehensive support for ARM/embedded platforms and code generation.
 
 ### Added
 
-#### Enterprise Deployment
+#### Deployment
 - **Docker Support** - Multi-stage Dockerfile with CPU and GPU variants
   - `Dockerfile` - Production-ready container image
   - `docker-compose.yml` - API server, Jupyter, and worker services
   - `docker-compose.gpu.yml` - NVIDIA GPU override for CUDA acceleration
-- **Enterprise Deployment Guide** (`docs/enterprise_deployment.md`)
+- **Deployment Guide** (`docs/deployment.md`)
   - Docker and Kubernetes deployment instructions
   - Internal PyPI mirror setup (Nexus, bandersnatch)
   - Security sandboxing and monitoring configuration
@@ -624,7 +624,7 @@ This release adds comprehensive support for enterprise deployment, ARM/embedded 
   - Real-time control examples
 - **Optional embedded dependencies** - `pip install mechanicsdsl-core[embedded]`
 
-#### Enhanced Code Generation
+#### Code Generation
 - **C++ CMake Support** (`codegen/cpp.py`)
   - New `generate_cmake()` method for CMakeLists.txt generation
   - New `generate_project()` for complete project scaffolding
@@ -645,16 +645,6 @@ This release adds comprehensive support for enterprise deployment, ARM/embedded 
 - Bumped version to 2.0.0
 - Updated `pyproject.toml` with new classifiers and keywords
 - Black configuration extended to Python 3.13
-
-### User Impact Analysis
-
-This release specifically addresses needs identified from our global enterprise adoption:
-- 🇸🇬 **Singapore** (Rust developer, 42 downloads) → Enhanced Rust/C++ codegen
-- 🇬🇧 **UK** (Raspberry Pi user) → ARM examples and optimization guide
-- 🇨🇳 **China** (regulated industry) → Python 3.8 support maintained
-- 🇯🇵 **Japan** (Python 3.14 tester) → CI support for bleeding-edge Python
-- 🇰🇷 **Korea** (enterprise deployment) → Docker and enterprise docs
-
 
 
 ## [1.5.1] - 2026-01-11
@@ -803,14 +793,14 @@ This release specifically addresses needs identified from our global enterprise 
 
 ---
 
-## [1.2.3] - 2024-12-06
+## [1.2.3] - 2025-12-06
 
 ### Added
 - `HamiltonJacobi.solve()` method for solving Hamilton-Jacobi equations with an intuitive API
 
 ---
 
-## [1.2.2] - 2024-12-06
+## [1.2.2] - 2025-12-06
 
 ### Added
 
@@ -927,7 +917,7 @@ This release specifically addresses needs identified from our global enterprise 
 
 ---
 
-## [1.1.0] - 2024-09-01
+## [1.1.0] - 2025-09-01
 
 ### Added
 - SPH fluid dynamics support
@@ -943,7 +933,7 @@ This release specifically addresses needs identified from our global enterprise 
 
 ---
 
-## [1.0.0] - 2024-06-15
+## [1.0.0] - 2025-06-15
 
 ### Added
 - Initial release
