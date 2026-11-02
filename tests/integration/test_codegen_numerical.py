@@ -37,7 +37,12 @@ from scipy.integrate import solve_ivp
 
 from mechanics_dsl import PhysicsCompiler
 
-pytestmark = [pytest.mark.slow, pytest.mark.integration]
+pytestmark = [
+    pytest.mark.slow,
+    pytest.mark.integration,
+    # the build and run commands below are POSIX shell; on Windows run these under WSL
+    pytest.mark.skipif(sys.platform == "win32", reason="needs a POSIX shell"),
+]
 
 SYSTEMS = {
     "pendulum": (
@@ -151,6 +156,16 @@ int main(void) {
     return 0;
 }
 """
+
+
+def _openmp_works(tmp_path):
+    """Apple clang (macOS's g++) has no -fopenmp; GCC does."""
+    src = tmp_path / "omp_probe.cpp"
+    src.write_text("#include <omp.h>\nint main() { return omp_get_max_threads() > 0 ? 0 : 1; }\n")
+    p = subprocess.run(  # nosec B603 B607 - fixed probe command
+        ["g++", "-fopenmp", str(src), "-o", str(tmp_path / "omp_probe")], capture_output=True
+    )
+    return p.returncode == 0
 
 
 def _have(*tools):
@@ -288,6 +303,8 @@ def test_generated_program_matches_reference(system, target, tmp_path):
     tools, float32 = TARGETS[target]
     if not _have(*tools):
         pytest.skip(f"{', '.join(tools)} not installed")
+    if target == "openmp" and not _openmp_works(tmp_path):
+        pytest.skip("this C++ compiler does not support OpenMP")
     source, window = SYSTEMS[system]
     comp = PhysicsCompiler()
     result = comp.compile_dsl(source)
