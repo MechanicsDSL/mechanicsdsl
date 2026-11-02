@@ -341,8 +341,10 @@ def equations_of_motion(t: float, {sv}: np.ndarray) -> np.ndarray:
 # =============================================================================
 def simulate(
     t_span: tuple = (0, 10),
-    num_points: int = 1000,
+    num_points: int = 1001,
     method: str = "{self.integrator}",
+    rtol: float = 1e-9,
+    atol: float = 1e-12,
 ) -> Any:
     """
     Run simulation.
@@ -350,7 +352,9 @@ def simulate(
     Args:
         t_span: Time span (t_start, t_end)
         num_points: Number of output points
-        method: Integration method ({", ".join(self.SUPPORTED_INTEGRATORS)})
+        method: SciPy solve_ivp method (RK45, DOP853, Radau, BDF, LSODA, ...)
+        rtol, atol: Relative and absolute error tolerances. SciPy's defaults
+            (1e-3, 1e-6) are too loose for mechanics: trajectories drift visibly.
 
     Returns:
         SciPy OdeResult object with t and y arrays
@@ -364,6 +368,8 @@ def simulate(
         y0,
         t_eval=t_eval,
         method=method,
+        rtol=rtol,
+        atol=atol,
         dense_output=True,
     )
 

@@ -273,11 +273,16 @@ int main() {{
     CUDA_CHECK(cudaMalloc(&d_particles.type, NUM_PARTICLES * sizeof(int)));
 
     // Copy to device
-    CUDA_CHECK(cudaMemcpy(d_particles.x, h_x, NUM_PARTICLES * sizeof(float), cudaMemcpyHostToDevice));  # noqa: E501
-    CUDA_CHECK(cudaMemcpy(d_particles.y, h_y, NUM_PARTICLES * sizeof(float), cudaMemcpyHostToDevice));  # noqa: E501
-    CUDA_CHECK(cudaMemcpy(d_particles.vx, h_vx, NUM_PARTICLES * sizeof(float), cudaMemcpyHostToDevice));  # noqa: E501
-    CUDA_CHECK(cudaMemcpy(d_particles.vy, h_vy, NUM_PARTICLES * sizeof(float), cudaMemcpyHostToDevice));  # noqa: E501
-    CUDA_CHECK(cudaMemcpy(d_particles.type, h_type, NUM_PARTICLES * sizeof(int), cudaMemcpyHostToDevice));  # noqa: E501
+    CUDA_CHECK(cudaMemcpy(d_particles.x, h_x, NUM_PARTICLES * sizeof(float),
+                          cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(d_particles.y, h_y, NUM_PARTICLES * sizeof(float),
+                          cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(d_particles.vx, h_vx, NUM_PARTICLES * sizeof(float),
+                          cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(d_particles.vy, h_vy, NUM_PARTICLES * sizeof(float),
+                          cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(d_particles.type, h_type, NUM_PARTICLES * sizeof(int),
+                          cudaMemcpyHostToDevice));
 
     // Simulation parameters
     float dt = 0.0001f;
@@ -297,11 +302,14 @@ int main() {{
         integrate<<<blocks, BLOCK_SIZE>>>(d_particles, NUM_PARTICLES, dt);
 
         if (step % output_interval == 0) {{
-            CUDA_CHECK(cudaMemcpy(h_x, d_particles.x, NUM_PARTICLES * sizeof(float), cudaMemcpyDeviceToHost));  # noqa: E501
-            CUDA_CHECK(cudaMemcpy(h_y, d_particles.y, NUM_PARTICLES * sizeof(float), cudaMemcpyDeviceToHost));  # noqa: E501
+            CUDA_CHECK(cudaMemcpy(h_x, d_particles.x, NUM_PARTICLES * sizeof(float),
+                                  cudaMemcpyDeviceToHost));
+            CUDA_CHECK(cudaMemcpy(h_y, d_particles.y, NUM_PARTICLES * sizeof(float),
+                                  cudaMemcpyDeviceToHost));
 
             for (int i = 0; i < NUM_FLUID; i++) {{
-                outfile << step << "," << i << "," << h_x[i] << "," << h_y[i] << ",1000" << std::endl;  # noqa: E501
+                outfile << step << "," << i << "," << h_x[i] << "," << h_y[i]
+                        << ",1000" << std::endl;
             }}
             std::cout << "Step " << step << "/" << steps << std::endl;
         }}
@@ -318,7 +326,8 @@ int main() {{
     cudaFree(d_particles.p);
     cudaFree(d_particles.type);
 
-    std::cout << "Simulation complete. Results saved to {self.system_name}_sph_results.csv" << std::endl;  # noqa: E501
+    std::cout << "Simulation complete. Results saved to "
+              << "{self.system_name}_sph_results.csv" << std::endl;
     return EXIT_SUCCESS;
 }}
 """
@@ -569,7 +578,8 @@ int main() {{
     }}
 
     outfile.close();
-    std::cout << "Simulation complete. Results saved to {self.system_name}_sph_cpu_results.csv" << std::endl;  # noqa: E501
+    std::cout << "Simulation complete. Results saved to "
+              << "{self.system_name}_sph_cpu_results.csv" << std::endl;
 
     return 0;
 }}

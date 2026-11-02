@@ -5,6 +5,84 @@ All notable changes to MechanicsDSL will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.4] - 2026-11-01
+
+### Code generation: every target now checked against a reference solution
+
+The generated programs were compiled, run and compared with an independent
+solution of the same equations (SciPy DOP853 at rtol 1e-12) for eleven targets
+and twelve systems. Several produced wrong numbers, or did not compile, for
+ordinary systems. **If you used exported Rust, Fortran, OpenMP, Python or
+JavaScript (adaptive) code, re-run it with this version.**
+
+### Fixed
+
+- **Rust: wrong equations for coupled systems.** SymPy's Rust printer drops
+  the brackets round a sum multiplied by `.recip()` when the symbols carry
+  assumptions, so `(a + b)/c` became `a + b*c.recip()`. The exported double
+  pendulum, pendulum on a cart and elastic pendulum left the true motion
+  within two seconds. Expressions are now printed with plain
+  symbols and every literal as `f64` (`2_f64*x`), and `PI` and `E` are imported.
+- **Rust, JavaScript, Fortran, C/C++: name clashes.** A parameter called `k2`
+  collided with an RK4 stage (Rust refuses to compile), a coordinate called `y`
+  with the state array (JavaScript and Rust), `gamma`, `y1` or `j0` with the C
+  maths library, `lambda` with a Python keyword, and `M` with `m` in Fortran.
+  Coordinates and parameters whose names clash with anything the generated
+  program, a target language or the C library uses now get a trailing
+  underscore, the same for every target (`CodeGenerator.renamed` maps them back).
+- **Energy functions were wrong for every target that had one.** The parser's
+  symbols are `real=True`, the generator's were plain, so `diff(L, x_dot)` was
+  zero: T came out as 0 and the "energy" as -L, with the parameters left
+  unsubstituted. All expressions are now rebuilt with plain symbols.
+  JavaScript, Fortran and MATLAB, which printed a kinetic-only "approximate"
+  energy, now use T + V from the Lagrangian (NaN without one).
+- **Fortran did not compile** (`y_temp(DP)`, an expression passed to an
+  `intent(inout)` argument, and `# noqa` inside the source). The adaptive step
+  now accepts or rejects steps and never advances time on a rejected one, the
+  CSV header matches the column order, and steps are 0.001 s like C++.
+- **CUDA's CPU reference and the SPH template did not compile**: `# noqa: E501`
+  had been written into the C++. MATLAB had the same in a `fprintf` line.
+- **OpenMP wrote a perturbed trajectory.** System 0, the one saved to the CSV,
+  started 0.005 away from the initial conditions in every component.
+- **Python used SciPy's default tolerances** (rtol 1e-3), which drift by about
+  1% on a pendulum in ten seconds. Now rtol 1e-9, atol 1e-12, adjustable.
+- **JavaScript adaptive stepping recorded the wrong times.** Time advanced by
+  the *next* step size, and rejected steps still advanced it. Fixed steps are
+  now counted rather than accumulated, and running the file in Node writes
+  `<name>_results.csv`.
+- **Arduino and WebAssembly ignored the stage time.** The right-hand side saw
+  `t` at the start of the step, so forced systems were only first-order
+  accurate in time. The stage time is now passed in.
+- **Bare-metal ARM maths was wrong beyond small angles.** `arm_sinf` was a
+  fifth-order Taylor series with no range reduction (0.71 for sin 2.5, true
+  value 0.60) and `arm_sqrtf` lost accuracy for large arguments. Both are now
+  accurate to about 1e-7, and `physics_step` uses RK4 instead of Euler. The
+  unused NEON helpers (Taylor sin/cos, an "RK4" that was an Euler step) are
+  removed. The ARM CSV names its columns.
+- **Systems with four or more coordinates could not be exported.** The
+  compiler keeps M q'' = F unsolved for them; export now solves it in closed
+  form block by block (diagonal mass matrices, such as particles and N-body
+  problems, always work; coupled blocks of up to three coordinates are solved
+  symbolically).
+- **A `\defvar` whose type was a description was not a coordinate.**
+  `\defvar{x4}{Position of mass 4}{m}` fell through to a list of common
+  names, so x4 was left out of the coordinates and treated as an unknown
+  symbol, and the compile still reported success. A variable whose velocity
+  appears in the Lagrangian (or whose momentum appears in the Hamiltonian) is
+  now a coordinate unless its type marks it as a constant. Export also refuses
+  equations that use a name that is neither a coordinate nor a parameter.
+- Exporting a Hamiltonian-form system now says that export needs the
+  Lagrangian form, instead of reporting missing equations.
+
+### Added
+
+- `tests/integration/test_codegen_numerical.py`: builds and runs the generated
+  program for every target whose toolchain is installed (C++, OpenMP, the CUDA
+  CPU reference, Python, Rust, Fortran, JavaScript, WebAssembly as C, ARM C,
+  Arduino with a serial shim, MATLAB under Octave) on five systems chosen to
+  catch the faults above, and compares the trajectories with a reference.
+  Julia and the CUDA GPU kernels are not covered.
+
 ## [2.1.3] - 2026-08-15
 
 ### Correctness Release

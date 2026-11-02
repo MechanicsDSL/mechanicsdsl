@@ -334,8 +334,8 @@ float compute_energy(const float* state, int n) {{
 
         for idx, coord in enumerate(self.coordinates):
             pos, vel = 2 * idx, 2 * idx + 1
-            unpack.append(f"    float {coord} = state[{pos}];")
-            unpack.append(f"    float {coord}_dot = state[{vel}];")
+            unpack.append(f"    float {coord} = s[{pos}];")
+            unpack.append(f"    float {coord}_dot = s[{vel}];")
 
             derivatives.append(f"    dydt[{pos}] = {coord}_dot;  // d({coord})/dt")
 
@@ -400,44 +400,10 @@ float compute_energy(const float* state, int n) {{
         return """
 #ifdef __ARM_NEON
 #include <arm_neon.h>
-
-// Vectorized sin/cos approximations for NEON
-static inline float32x4_t neon_sin_f32(float32x4_t x) {
-    // Taylor series approximation: sin(x) ~ x - x^3/6 + x^5/120
-    float32x4_t x2 = vmulq_f32(x, x);
-    float32x4_t x3 = vmulq_f32(x2, x);
-    float32x4_t x5 = vmulq_f32(x3, x2);
-
-    float32x4_t term1 = x;
-    float32x4_t term2 = vmulq_n_f32(x3, -1.0f/6.0f);
-    float32x4_t term3 = vmulq_n_f32(x5, 1.0f/120.0f);
-
-    return vaddq_f32(vaddq_f32(term1, term2), term3);
-}
-
-static inline float32x4_t neon_cos_f32(float32x4_t x) {
-    // Taylor series: cos(x) ~ 1 - x^2/2 + x^4/24
-    float32x4_t one = vdupq_n_f32(1.0f);
-    float32x4_t x2 = vmulq_f32(x, x);
-    float32x4_t x4 = vmulq_f32(x2, x2);
-
-    float32x4_t term1 = one;
-    float32x4_t term2 = vmulq_n_f32(x2, -0.5f);
-    float32x4_t term3 = vmulq_n_f32(x4, 1.0f/24.0f);
-
-    return vaddq_f32(vaddq_f32(term1, term2), term3);
-}
-
-// Vectorized RK4 step for 4 parallel simulations
-static inline void neon_rk4_step(float32x4_t* y, float32x4_t* dydt,
-                                  float32x4_t dt, int dim) {
-    float32x4_t half_dt = vmulq_n_f32(dt, 0.5f);
-    float32x4_t sixth_dt = vmulq_n_f32(dt, 1.0f/6.0f);
-
-    for (int i = 0; i < dim; i++) {
-        y[i] = vaddq_f32(y[i], vmulq_f32(dydt[i], dt));
-    }
-}
+// NEON is available. The integrator below is scalar double precision, which the
+// compiler auto-vectorises at -O3 (with -mcpu set for the board); the equations
+// are evaluated in full double precision rather than with vector
+// approximations of sin and cos.
 #endif // __ARM_NEON
 """
 
@@ -485,6 +451,7 @@ static inline void neon_rk4_step(float32x4_t* y, float32x4_t* dydt,
 
         # NEON intrinsics (if enabled)
         neon_code = self._generate_neon_intrinsics() if self.use_neon else ""
+        csv_names = ",".join(f"{c},{c}_dot" for c in self.coordinates)
 
         template = f"""/**
  * ARM-Optimized Simulation: {self.system_name}
@@ -544,9 +511,7 @@ int main(void) {{
         return 1;
     }}
 
-    fprintf(fp, "t");
-    for (int i = 0; i < DIM; i++) fprintf(fp, ",y%d", i);
-    fprintf(fp, "\\n");
+    fprintf(fp, "t,{csv_names}\\n");
 
     printf("Simulating {self.system_name} on ARM ({self.target})...\\n");
 
@@ -554,7 +519,7 @@ int main(void) {{
     while (t < t_end) {{
         if (step % 10 == 0) {{
             fprintf(fp, "%.6f", t);
-            for (int i = 0; i < DIM; i++) fprintf(fp, ",%.6f", y[i]);
+            for (int i = 0; i < DIM; i++) fprintf(fp, ",%.10g", y[i]);
             fprintf(fp, "\\n");
         }}
         rk4_step(y, t, dt);
@@ -576,7 +541,7 @@ int main(void) {{
         # #define would leave every parameter reference undefined.
         param_lines = []
         for name, val in self.parameters.items():
-            param_lines.append(f"static const float {name} = {val}f;")
+            param_lines.append(f"static const float {name} = {float(val)!r}f;")
         param_str = "\n".join(param_lines)
 
         state_dim = len(self.coordinates) * 2
@@ -588,7 +553,7 @@ int main(void) {{
             needed = ", ".join(f"{fn}()" for fn in unsupported)
             libm_guard = (
                 f'#error "MechanicsDSL: {self.system_name} needs libm ({needed}), '
-                'which the bare-metal target does not provide. Regenerate with '
+                "which the bare-metal target does not provide. Regenerate with "
                 'embedded=False, or link libm and remove this #error."\n'
             )
         else:
@@ -596,8 +561,8 @@ int main(void) {{
 
         init_vals = []
         for coord in self.coordinates:
-            init_vals.append(str(self.initial_conditions.get(coord, 0.0)) + "f")
-            init_vals.append(str(self.initial_conditions.get(f"{coord}_dot", 0.0)) + "f")
+            init_vals.append(f"{float(self.initial_conditions.get(coord, 0.0))!r}f")
+            init_vals.append(f"{float(self.initial_conditions.get(f'{coord}_dot', 0.0))!r}f")
         init_str = ", ".join(init_vals)
 
         template = f"""/**
@@ -615,41 +580,58 @@ int main(void) {{
 
 #define DIM {state_dim}
 
-// Minimal math functions (no libm dependency)
+// Minimal math functions (no libm dependency), accurate to about 1e-7.
+// sin/cos reduce the argument to [-pi/2, pi/2] before the polynomial, so they
+// hold for any angle a simulation reaches, not only small ones.
 static inline float arm_sinf(float x) {{
+    const float TWO_PI = 6.28318531f, PI_F = 3.14159265f, HALF_PI = 1.57079633f;
+    float k = (float)(int)(x / TWO_PI + (x >= 0.0f ? 0.5f : -0.5f));
+    x -= k * TWO_PI;                       /* now in [-pi, pi] */
+    if (x > HALF_PI) x = PI_F - x;         /* sin(pi - x) = sin(x) */
+    else if (x < -HALF_PI) x = -PI_F - x;
     float x2 = x * x;
-    float x3 = x2 * x;
-    return x - x3 * 0.16666667f + x3 * x2 * 0.00833333f;
+    return x * (1.0f + x2 * (-1.66666667e-1f + x2 * (8.33333333e-3f + x2 * (-1.98412698e-4f
+             + x2 * (2.75573192e-6f + x2 * -2.50521084e-8f)))));
 }}
 
 static inline float arm_cosf(float x) {{
-    float x2 = x * x;
-    float x4 = x2 * x2;
-    return 1.0f - x2 * 0.5f + x4 * 0.04166667f;
+    return arm_sinf(x + 1.57079633f);
 }}
 
 static inline float arm_sqrtf(float x) {{
-    // Newton-Raphson
-    float guess = x * 0.5f;
-    for (int i = 0; i < 5; i++) {{
-        guess = 0.5f * (guess + x / guess);
-    }}
-    return guess;
+    if (x <= 0.0f) return 0.0f;
+    union {{ float f; unsigned int i; }} u = {{ x }};
+    u.i = 0x1fbd1df5u + (u.i >> 1);        /* first guess, within about 4% */
+    float g = u.f;
+    g = 0.5f * (g + x / g);                /* three Newton steps */
+    g = 0.5f * (g + x / g);
+    g = 0.5f * (g + x / g);
+    return g;
 }}
 
 // State
 static float state[DIM] = {{ {init_str} }};
 
 {libm_guard}
-// Step simulation (call from main loop)
-void physics_step(float dt) {{
-    // Simplified Euler integration for embedded
-    float dydt[DIM];
-
+// Right-hand side of the equations of motion
+static void derivatives(const float* s, float* dydt) {{
 {derivative_str}
+}}
 
-    for (int i = 0; i < DIM; i++) {{
-        state[i] += dydt[i] * dt;
+// Advance the simulation by dt with classical RK4 (call from the main loop)
+void physics_step(float dt) {{
+    float k1[DIM], k2[DIM], k3[DIM], k4[DIM], tmp[DIM];
+    int i;
+
+    derivatives(state, k1);
+    for (i = 0; i < DIM; i++) tmp[i] = state[i] + 0.5f * dt * k1[i];
+    derivatives(tmp, k2);
+    for (i = 0; i < DIM; i++) tmp[i] = state[i] + 0.5f * dt * k2[i];
+    derivatives(tmp, k3);
+    for (i = 0; i < DIM; i++) tmp[i] = state[i] + dt * k3[i];
+    derivatives(tmp, k4);
+    for (i = 0; i < DIM; i++) {{
+        state[i] += dt / 6.0f * (k1[i] + 2.0f * k2[i] + 2.0f * k3[i] + k4[i]);
     }}
 }}
 

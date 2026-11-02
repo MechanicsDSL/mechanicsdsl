@@ -47,6 +47,7 @@ from .utils import (
     LRUCache,
     _perf_monitor,
     config,
+    is_constant_type,
     is_likely_coordinate,
     logger,
     profile_function,
@@ -857,14 +858,46 @@ class PhysicsCompiler:
             List of coordinate variable names
         """
         coordinates = []
+        moving = self._variables_with_velocity()
 
         for var_name, var_info in self.variables.items():
-            # Use registry-based classification
-            if is_likely_coordinate(var_name, var_info["type"]):
+            # Use registry-based classification. A variable whose velocity appears
+            # in the Lagrangian (or whose momentum appears in the Hamiltonian) is
+            # dynamical whatever its \defvar type says, unless the type marks it
+            # as a constant: otherwise \defvar{x4}{Position of mass 4}{m} would be
+            # left out and x4 treated as an undeclared symbol.
+            var_type = var_info["type"]
+            if is_likely_coordinate(var_name, var_type) or (
+                var_name in moving and not is_constant_type(var_type)
+            ):
                 coordinates.append(var_name)
 
         logger.debug(f"Coordinates: {coordinates}")
         return coordinates
+
+    def _variables_with_velocity(self) -> set:
+        """Names q for which q_dot appears in the Lagrangian or p_q in the Hamiltonian."""
+        key = (id(self.lagrangian), id(self.hamiltonian))
+        cached = getattr(self, "_velocity_cache", None)
+        if cached is not None and cached[0] == key:
+            return cached[1]
+        names: set = set()
+        try:
+            for node, suffix in ((self.lagrangian, "_dot"), (self.hamiltonian, None)):
+                if node is None:
+                    continue
+                expr = self.symbolic.ast_to_sympy(node)
+                for sym in getattr(expr, "free_symbols", ()):
+                    n = getattr(sym, "name", "")
+                    if suffix and n.endswith(suffix):
+                        names.add(n[: -len(suffix)])
+                    elif suffix is None and n.startswith("p_"):
+                        names.add(n[2:])
+        except Exception as e:  # classification must never break compilation
+            logger.debug(f"Velocity scan failed ({e}); using type-based classification only")
+            names = set()
+        self._velocity_cache = (key, names)
+        return names
 
     def process_fluids(self):
         """Generate particles for all fluid and boundary definitions"""
@@ -1309,16 +1342,23 @@ class PhysicsCompiler:
         if self.equations is None:
             raise ValueError("No equations derived. Call compile_dsl() first.")
 
-        if isinstance(self.equations, dict) and "__mass_matrix__" in self.equations:
-            raise ValueError(
-                "This system uses the numeric mass-matrix formulation (too many "
-                "coordinates for closed-form accelerations), which code "
-                "generators do not support. Reduce the number of coordinates "
-                f"below {NUMERIC_MASS_MATRIX_MIN_COORDS} to export."
-            )
-
         # Lazy import - keeps PhysicsCompiler import cheap.
         from . import codegen as _codegen
+
+        equations = self.equations
+        if isinstance(equations, dict) and "__mass_matrix__" in equations:
+            # Many coordinates: the compiler keeps M q_ddot = F unsolved. Generated
+            # programs need explicit accelerations; get them block by block.
+            from .codegen.base import accelerations_from_mass_matrix
+
+            M, F = equations["__mass_matrix__"]
+            equations = accelerations_from_mass_matrix(M, F, self.get_coordinates())
+        elif not isinstance(equations, dict):
+            raise ValueError(
+                "Code export needs the Lagrangian form of the equations of motion "
+                "(accelerations q_ddot); this system was compiled in Hamiltonian "
+                "form. Give it a \\lagrangian{} to export it."
+            )
 
         generator_cls = getattr(_codegen, self._GENERATOR_REGISTRY[target_key])
 
@@ -1332,7 +1372,7 @@ class PhysicsCompiler:
             coordinates=self.get_coordinates(),
             parameters=self.simulator.parameters,
             initial_conditions=self.initial_conditions,
-            equations=self.equations,
+            equations=equations,
             lagrangian=lagrangian_sympy,
             hamiltonian=hamiltonian_sympy,
         )

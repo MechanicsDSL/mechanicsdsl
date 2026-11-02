@@ -242,7 +242,7 @@ float compute_energy(float* state, int n) {{
   Serial.print(t);
   for (int i = 0; i < STATE_DIM; i++) {
     Serial.print(",");
-    Serial.print(state[i], 4);
+    Serial.print(state[i], 6);
   }
   Serial.println();"""
 
@@ -267,7 +267,7 @@ const float dt = 0.01f;  // 10ms timestep
 unsigned long lastMicros = 0;
 
 // Compute derivatives
-void computeDerivatives(const float* state, float* dydt) {{
+void computeDerivatives(const float* state, float* dydt, float t) {{
 {unpack}
 
 {self.generate_equations()}
@@ -278,16 +278,16 @@ void rk4Step() {{
   float k1[STATE_DIM], k2[STATE_DIM], k3[STATE_DIM], k4[STATE_DIM];
   float temp[STATE_DIM];
 
-  computeDerivatives(state, k1);
+  computeDerivatives(state, k1, t);
 
   for (int i = 0; i < STATE_DIM; i++) temp[i] = state[i] + 0.5f * dt * k1[i];
-  computeDerivatives(temp, k2);
+  computeDerivatives(temp, k2, t + 0.5f * dt);
 
   for (int i = 0; i < STATE_DIM; i++) temp[i] = state[i] + 0.5f * dt * k2[i];
-  computeDerivatives(temp, k3);
+  computeDerivatives(temp, k3, t + 0.5f * dt);
 
   for (int i = 0; i < STATE_DIM; i++) temp[i] = state[i] + dt * k3[i];
-  computeDerivatives(temp, k4);
+  computeDerivatives(temp, k4, t + dt);
 
   for (int i = 0; i < STATE_DIM; i++) {{
     state[i] += dt * (k1[i] + 2.0f*k2[i] + 2.0f*k3[i] + k4[i]) / 6.0f;

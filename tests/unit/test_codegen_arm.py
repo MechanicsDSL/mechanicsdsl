@@ -236,14 +236,18 @@ class TestARMGenerator:
         assert "pow" not in code
 
     def test_generate_neon_intrinsics(self, simple_pendulum):
-        """Test NEON SIMD intrinsics generation."""
+        """NEON is enabled without approximate vector maths.
+
+        The old helpers replaced sin and cos by short Taylor series (wrong by
+        20% at 2.5 rad) and a "neon_rk4_step" that was an Euler step. Nothing
+        called them, but anyone who did would have got wrong physics.
+        """
         neon_code = simple_pendulum._generate_neon_intrinsics()
 
         assert "#ifdef __ARM_NEON" in neon_code
         assert "#include <arm_neon.h>" in neon_code
-        assert "float32x4_t" in neon_code
-        assert "neon_sin_f32" in neon_code
-        assert "neon_cos_f32" in neon_code
+        assert "neon_sin_f32" not in neon_code
+        assert "neon_rk4_step" not in neon_code
 
     def test_generate_makefile(self, simple_pendulum):
         """Test Makefile generation."""

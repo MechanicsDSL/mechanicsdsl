@@ -18,6 +18,97 @@ from typing import Dict, List, Optional, Tuple
 import sympy as sp
 from sympy import Symbol, simplify, symbols
 
+# Names a coordinate or parameter must not take in generated code (see
+# CodeGenerator._normalise_names). Three groups: identifiers the generated programs
+# declare where user names are visible; keywords of the target languages; and C/C++
+# library globals that a global ``const double`` of the same name would redeclare.
+_PROGRAM_NAMES = """
+    y t dt dydt du u p state states tmp temp temp_y k1 k2 k3 k4 i j n s idx step steps
+    n_steps t_end tEnd t_span tspan t_eval dim DIM STATE_DIM NUM_SYSTEMS num_systems
+    BATCH_SIZE WP DP PI params PARAMETERS result results sol solution y0 u0 prob error tol
+    tolerance dt_new newDt currentDt y_half y_full y_temp yFull energy kinetic potential
+    file outfile output_interval log_interval unit_out now lastMicros initial initial_state
+    base_ic systems data config options opts method integrator trackEnergy d_state d_states
+    h_state h_states h_params my_state elapsed start_time main setup loop Serial
+"""
+_KEYWORDS = """
+    auto break case char const continue default do double else enum extern float for goto
+    if inline int long register restrict return short signed sizeof static struct switch
+    typedef union unsigned void volatile while bool true false class delete new this
+    template typename namespace operator private public protected friend virtual try catch
+    throw using explicit mutable export asm and or not xor
+    as async await crate dyn fn impl in let match mod move mut pub ref self Self super trait
+    type unsafe use where abstract become box final macro override priv typeof unsized yield
+    False None True assert def del elif except finally from global import is lambda
+    nonlocal pass raise with
+    arguments debugger eval extends function implements instanceof interface null package
+    var undefined NaN Infinity Math
+    baremodule begin elseif end local module quote primitive
+    classdef otherwise parfor persistent spmd pi eps inf Inf nan ans
+"""
+_C_LIBRARY = """
+    gamma y1 yn j0 j1 jn time rand abs exp log div round floor remainder drem significand
+    lgamma tgamma erf hypot trunc sin cos tan asin acos atan atan2 sinh cosh tanh sqrt pow
+"""
+RESERVED_NAMES = frozenset((_PROGRAM_NAMES + _KEYWORDS + _C_LIBRARY).split())
+
+
+def accelerations_from_mass_matrix(
+    M: sp.Matrix, F: sp.Matrix, coordinates: List[str], max_block: int = 3
+) -> Dict[str, sp.Expr]:
+    """
+    Closed-form accelerations from M(q, q_dot) * q_ddot = F(q, q_dot), for export.
+
+    The compiler keeps M and F unsolved for systems with many coordinates and
+    solves the linear system numerically at each step. Generated programs need
+    explicit accelerations, so M is split into independent blocks (coordinates
+    that share no off-diagonal mass terms): 1x1 blocks are a division, and blocks
+    of up to ``max_block`` coordinates are solved symbolically, as the compiler
+    itself does for small systems. Particles, N-body problems and chains of
+    masses have diagonal mass matrices and always export.
+
+    Raises:
+        ValueError: if a block of coupled coordinates is larger than max_block.
+    """
+    n = len(coordinates)
+    # Connected components of the nonzero pattern of M
+    parent = list(range(n))
+
+    def find(i: int) -> int:
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            if M[i, j] != 0 or M[j, i] != 0:
+                parent[find(i)] = find(j)
+    blocks: Dict[int, List[int]] = {}
+    for i in range(n):
+        blocks.setdefault(find(i), []).append(i)
+
+    accelerations: Dict[str, sp.Expr] = {}
+    for idx in blocks.values():
+        if len(idx) == 1:
+            i = idx[0]
+            accelerations[f"{coordinates[i]}_ddot"] = sp.cancel(F[i, 0] / M[i, i])
+            continue
+        if len(idx) > max_block:
+            names = ", ".join(coordinates[i] for i in idx)
+            raise ValueError(
+                f"Coordinates {names} are coupled through the mass matrix, and "
+                f"solving {len(idx)} coupled accelerations in closed form is too "
+                "large to generate code for. Code export supports systems whose "
+                f"coupled groups have at most {max_block} coordinates."
+            )
+        Mb = sp.Matrix([[M[i, j] for j in idx] for i in idx])
+        Fb = sp.Matrix([F[i, 0] for i in idx])
+        sol = Mb.LUsolve(Fb)
+        for k, i in enumerate(idx):
+            accelerations[f"{coordinates[i]}_ddot"] = sp.simplify(sol[k])
+    return accelerations
+
 
 class CodeGenerator(ABC):
     """
@@ -51,6 +142,8 @@ class CodeGenerator(ABC):
     """
 
     # Class-level configuration
+    #: False for targets such as Fortran where ``M`` and ``m`` are the same name
+    CASE_SENSITIVE_NAMES: bool = True
     SUPPORTED_INTEGRATORS: List[str] = ["rk4", "euler", "verlet", "rk45"]
     DEFAULT_TIMESTEP: float = 0.01
     DEFAULT_DURATION: float = 10.0
@@ -82,14 +175,21 @@ class CodeGenerator(ABC):
             constraints: Optional list of holonomic constraint expressions
         """
         self.system_name = system_name
-        self.coordinates = coordinates or []
-        self.parameters = parameters or {}
-        self.initial_conditions = initial_conditions or {}
-        self.equations = equations or {}
+        self.coordinates = list(coordinates or [])
+        self.parameters = dict(parameters or {})
+        self.initial_conditions = dict(initial_conditions or {})
+        self.equations = dict(equations or {})
         self.lagrangian = lagrangian
         self.hamiltonian = hamiltonian
-        self.forces = forces or []
-        self.constraints = constraints or []
+        self.forces = list(forces or [])
+        self.constraints = list(constraints or [])
+
+        # Generated programs use names of their own (y, dt, k1..k4, ...), keywords of
+        # the target language and library functions such as C's gamma(). Rename any
+        # coordinate or parameter that would collide, and give every symbol plain
+        # assumptions so that it matches by name (see _normalise_names).
+        self.renamed: Dict[str, str] = {}
+        self._normalise_names()
 
         # Compute state dimension
         self.state_dim = len(self.coordinates) * 2
@@ -104,6 +204,72 @@ class CodeGenerator(ABC):
         # Add parameter symbols
         for param in self.parameters:
             self._symbols[param] = symbols(param)
+
+    def _normalise_names(self) -> None:
+        """
+        Make user names safe to emit and make every symbol match by name.
+
+        1. Symbols from the DSL parser carry assumptions (``real=True``). A plain
+           ``Symbol('x')`` is a different object, so lookups such as ``diff(L, x_dot)``
+           silently returned zero, and SymPy's Rust printer drops the brackets
+           round a sum multiplied by ``.recip()`` for real symbols, which changed
+           the equations. All expressions are rebuilt with plain symbols.
+        2. A coordinate or parameter whose name the generated program already uses
+           (the state array ``y``, the stages ``k1``..``k4``), that is a keyword in
+           one of the target languages (``lambda``, ``end``, ``fn``) or that clashes
+           with a C library function (``gamma``, ``y0``, ``j1``) gets a trailing
+           underscore. The same names are used for every target, and
+           ``self.renamed`` maps each new name back to the original.
+        """
+        key = (lambda n: n) if self.CASE_SENSITIVE_NAMES else (lambda n: n.lower())
+        reserved = {key(n) for n in RESERVED_NAMES}
+        used: set = set()
+        rename: Dict[str, str] = {}
+
+        def pick(name: str, extra_suffixes: Tuple[str, ...] = ()) -> str:
+            new = name
+            while any(
+                key(new + sfx) in reserved or key(new + sfx) in used
+                for sfx in ("",) + extra_suffixes
+            ):
+                new += "_"
+            for sfx in ("",) + extra_suffixes:
+                used.add(key(new + sfx))
+            return new
+
+        for coord in self.coordinates:
+            new = pick(coord, ("_dot", "_ddot"))
+            if new != coord:
+                rename[coord] = new
+                rename[f"{coord}_dot"] = f"{new}_dot"
+                rename[f"{coord}_ddot"] = f"{new}_ddot"
+        for param in self.parameters:
+            if param == "t":
+                continue
+            new = pick(param)
+            if new != param:
+                rename[param] = new
+
+        def plain(expr):
+            if expr is None or not isinstance(expr, sp.Basic):
+                return expr
+            subs = {
+                s: Symbol(rename.get(s.name, s.name))
+                for s in expr.free_symbols
+                if isinstance(s, Symbol)
+            }
+            return expr.xreplace(subs) if subs else expr
+
+        self.coordinates = [rename.get(c, c) for c in self.coordinates]
+        self.parameters = {rename.get(k, k): v for k, v in self.parameters.items()}
+        self.initial_conditions = {rename.get(k, k): v for k, v in self.initial_conditions.items()}
+        if isinstance(self.equations, dict):
+            self.equations = {rename.get(k, k): plain(v) for k, v in self.equations.items()}
+        self.lagrangian = plain(self.lagrangian)
+        self.hamiltonian = plain(self.hamiltonian)
+        self.forces = [plain(f) for f in self.forces]
+        self.constraints = [plain(c) for c in self.constraints]
+        self.renamed = {new: old for old, new in rename.items()}
 
     @property
     @abstractmethod
@@ -348,6 +514,25 @@ class CodeGenerator(ABC):
                 errors.append(f"missing equation for {accel_key}")
             elif self.equations[accel_key] is None:
                 errors.append(f"equation for {accel_key} is None")
+
+        # Every symbol in the equations must be a coordinate, a velocity, a
+        # parameter or the time t; anything else would be an undeclared name in
+        # the generated program (for example a \defvar the compiler did not
+        # recognise as a coordinate).
+        known = {"t"} | set(self.parameters)
+        for coord in self.coordinates:
+            known |= {coord, f"{coord}_dot"}
+        stray = set()
+        for expr in self.equations.values():
+            if isinstance(expr, sp.Basic):
+                stray |= {s.name for s in expr.free_symbols if isinstance(s, Symbol)} - known
+        if stray:
+            names = ", ".join(sorted(self.renamed.get(n, n) for n in stray))
+            errors.append(
+                f"the equations use {names}, which is neither a coordinate nor a "
+                "parameter (declare it with \\parameter{}, or give its \\defvar a "
+                "coordinate type such as Position or Angle)"
+            )
 
         # Check parameters for invalid values
         import math

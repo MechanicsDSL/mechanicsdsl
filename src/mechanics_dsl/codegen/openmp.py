@@ -293,7 +293,7 @@ int main() {{
     std::cout << "OpenMP Simulation: {self.system_name}" << std::endl;
     std::cout << "Using " << omp_get_max_threads() << " threads" << std::endl;
 
-    // Initialize multiple systems with slightly different initial conditions
+    // Initialize the ensemble: system 0 at the initial conditions, the rest perturbed
     std::vector<std::vector<double>> systems(NUM_SYSTEMS, std::vector<double>(STATE_DIM));
 
     double base_ic[STATE_DIM] = {{ {init_str} }};
@@ -301,8 +301,9 @@ int main() {{
     #pragma omp parallel for
     for (int s = 0; s < NUM_SYSTEMS; s++) {{
         for (int i = 0; i < STATE_DIM; i++) {{
-            // Add small perturbation to each system
-            systems[s][i] = base_ic[i] + 0.01 * (s - NUM_SYSTEMS/2.0) / NUM_SYSTEMS;
+            // System 0 starts exactly at the initial conditions (it is the one
+            // written to the CSV); the others are offset by up to 0.01 for the ensemble
+            systems[s][i] = base_ic[i] + 0.01 * s / NUM_SYSTEMS;
         }}
     }}
 

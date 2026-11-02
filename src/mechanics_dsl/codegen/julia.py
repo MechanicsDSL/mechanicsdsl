@@ -200,14 +200,10 @@ class JuliaGenerator(CodeGenerator):
         if T is None or V is None:
             if self.hamiltonian is None and self.lagrangian is None:
                 return ""
-            # Fallback if extraction fails but Lagrangian/Hamiltonian exists
+            # No T and V to work from: say so rather than return a partial energy
             return """
-# Compute total energy (approximation)
-function compute_energy(u)
-    n_coords = div(length(u), 2)
-    KE = sum(0.5 * u[2*i]^2 for i in 1:n_coords)
-    return KE
-end
+# Total energy is not available for this system (no Lagrangian to derive it from)
+compute_energy(u) = NaN
 """
 
         T_code = self.expr_to_code(T)
@@ -264,8 +260,11 @@ end
         # Energy function
         energy_fn = self.generate_energy_function()
 
-        # CSV header
-        csv_coords = ", ".join(f'"{c}", "{c}_dot"' for c in self.coordinates)  # noqa: F841
+        # CSV columns: each coordinate followed by its velocity
+        df_columns = ", ".join(
+            f"{c} = sol[{2 * i + 1}, :], {c}_dot = sol[{2 * i + 2}, :]"
+            for i, c in enumerate(self.coordinates)
+        )
 
         template = f'''#=
     {self.system_name} Simulation
@@ -392,7 +391,7 @@ end
 function export_csv(sol; filename::String = "{self.system_name}_results.csv")
     df = DataFrame(
         t = sol.t,
-        {", ".join(f'{c} = sol[{2*i+1}, :], {c}_dot = sol[{2*i+2}, :]' for i, c in enumerate(self.coordinates))}  # noqa: E501
+        {df_columns}
     )
     CSV.write(filename, df)
     println("Exported $(length(sol.t)) points to $filename")

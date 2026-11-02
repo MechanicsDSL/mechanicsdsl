@@ -332,7 +332,8 @@ int main(int argc, char** argv) {{
     CUDA_CHECK(cudaMalloc(&d_params, {len(self.parameters)} * sizeof(double)));
 
     CUDA_CHECK(cudaMemcpy(d_state, h_state, STATE_DIM * sizeof(double), cudaMemcpyHostToDevice));
-    CUDA_CHECK(cudaMemcpy(d_params, h_params, {len(self.parameters)} * sizeof(double), cudaMemcpyHostToDevice));  # noqa: E501
+    CUDA_CHECK(cudaMemcpy(d_params, h_params, {len(self.parameters)} * sizeof(double),
+                          cudaMemcpyHostToDevice));
 
     // Simulation parameters
     double t = 0.0;
@@ -350,7 +351,8 @@ int main(int argc, char** argv) {{
     for (int step = 0; step <= steps; step++) {{
         // Output every N steps
         if (step % output_interval == 0) {{
-            CUDA_CHECK(cudaMemcpy(h_state, d_state, STATE_DIM * sizeof(double), cudaMemcpyDeviceToHost));  # noqa: E501
+            CUDA_CHECK(cudaMemcpy(h_state, d_state, STATE_DIM * sizeof(double),
+                                  cudaMemcpyDeviceToHost));
             outfile << t;
             for (int i = 0; i < STATE_DIM; i++) {{
                 outfile << "," << h_state[i];
@@ -369,7 +371,8 @@ int main(int argc, char** argv) {{
     CUDA_CHECK(cudaFree(d_state));
     CUDA_CHECK(cudaFree(d_params));
 
-    std::cout << "Simulation complete. Results saved to {self.system_name}_cuda_results.csv" << std::endl;  # noqa: E501
+    std::cout << "Simulation complete. Results saved to "
+              << "{self.system_name}_cuda_results.csv" << std::endl;
     return EXIT_SUCCESS;
 }}
 """
@@ -528,7 +531,8 @@ int main() {{
         t += dt;
     }}
 
-    std::cout << "Simulation complete. Results saved to {self.system_name}_cpu_results.csv" << std::endl;  # noqa: E501
+    std::cout << "Simulation complete. Results saved to "
+              << "{self.system_name}_cpu_results.csv" << std::endl;
     return 0;
 }}
 """
