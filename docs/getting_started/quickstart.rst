@@ -172,6 +172,16 @@ The ``solution`` dictionary contains:
 Accessing State Variables
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
+``solution['y']`` has one row per state variable, **interleaved** by
+coordinate: ``[q1, q1_dot, q2, q2_dot, ...]``. ``solution['state_vars']``
+lists the row names in that order, so the safest way to pull out a variable
+is by name:
+
+.. code-block:: python
+
+   rows = {name: solution['y'][i] for i, name in enumerate(solution['state_vars'])}
+   theta2 = rows['theta2']          # not solution['y'][1], which is theta1_dot
+
 For a single coordinate system like the pendulum:
 
 .. code-block:: python

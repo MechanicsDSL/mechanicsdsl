@@ -238,6 +238,15 @@ def cmd_export(args):
 
     format_type = args.format.lower()
 
+    # Row names for solution["y"]. The simulator returns the state interleaved
+    # as [q1, q1_dot, q2, q2_dot, ...]; never label it from the coordinate
+    # names alone (that shifted every label after the first for multi-DOF).
+    coords = list(result.get("coordinates", []))
+    state_names = list(solution.get("state_vars") or
+                       [name for q in coords for name in (q, f"{q}_dot")])
+    if len(state_names) != len(solution["y"]):
+        state_names = [f"y{i}" for i in range(len(solution["y"]))]
+
     if format_type == "json":
         output_file = output_path.with_suffix(".json")
         output_data = {
@@ -247,17 +256,16 @@ def cmd_export(args):
             "y": [yi.tolist() if hasattr(yi, "tolist") else list(yi) for yi in solution["y"]],
             "system": result.get("system_name", "unknown"),
             "coordinates": result.get("coordinates", []),
+            "state_vars": state_names,
         }
         with open(output_file, "w") as f:
             json.dump(output_data, f, indent=2)
 
     elif format_type == "csv":
         output_file = output_path.with_suffix(".csv")
-        coords = result.get("coordinates", [f"y{i}" for i in range(len(solution["y"]))])
-
         with open(output_file, "w") as f:
-            # Header
-            header = ["t"] + coords
+            # Header: one name per row of solution["y"]
+            header = ["t"] + state_names
             f.write(",".join(header) + "\n")
 
             # Data

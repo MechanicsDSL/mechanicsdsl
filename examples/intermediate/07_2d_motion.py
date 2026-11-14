@@ -67,9 +67,10 @@ print(f"   Maximum height: {v0y**2 / (2*g):.3f} m")
 
 solution1 = compiler1.simulate(t_span=(0, t_flight * 1.2), num_points=500)
 
+# State rows are interleaved: [x, x_dot, y, y_dot] (see solution1['state_vars'])
 x = solution1['y'][0]
-y = solution1['y'][1]
-x_dot = solution1['y'][2]
+x_dot = solution1['y'][1]
+y = solution1['y'][2]
 y_dot = solution1['y'][3]
 t = solution1['t']
 

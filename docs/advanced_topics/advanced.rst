@@ -138,16 +138,18 @@ Extend the solver framework:
            y = np.zeros((len(y0), len(t)))
            y[:, 0] = y0
            
+           # MechanicsDSL solutions store the state interleaved,
+           # [q1, p1, q2, p2, ...], so positions are the even rows.
            for i in range(len(t) - 1):
-               q = y[:n, i]
-               p = y[n:, i]
-               
+               q = y[0::2, i]
+               p = y[1::2, i]
+
                # Symplectic update
                p_new = p + dt * self.dp_dt(q, p)
                q_new = q + dt * self.dq_dt(q, p_new)
-               
-               y[:n, i+1] = q_new
-               y[n:, i+1] = p_new
+
+               y[0::2, i+1] = q_new
+               y[1::2, i+1] = p_new
            
            return {'t': t, 'y': y, 'success': True}
 

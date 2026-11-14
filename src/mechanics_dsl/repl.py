@@ -320,7 +320,11 @@ class REPL:
         elif fmt == "csv":
             filename = "results.csv"
             with open(filename, "w", encoding="utf-8", newline="") as f:
-                f.write("t," + ",".join(f"y{i}" for i in range(len(self.solution["y"]))) + "\n")
+                n_rows = len(self.solution["y"])
+                names = list(self.solution.get("state_vars") or [])
+                if len(names) != n_rows:
+                    names = [f"y{i}" for i in range(n_rows)]
+                f.write("t," + ",".join(names) + "\n")
                 for i, t in enumerate(self.solution["t"]):
                     row = [str(t)] + [
                         str(self.solution["y"][j][i]) for j in range(len(self.solution["y"]))
