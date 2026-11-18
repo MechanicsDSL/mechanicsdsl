@@ -1317,7 +1317,9 @@ class PhysicsCompiler:
         "arm": "ARMGenerator",
     }
 
-    def export(self, target: str, filename: str) -> str:
+    def export(
+        self, target: str, filename: str, generator_options: Optional[Dict[str, Any]] = None
+    ) -> str:
         """
         Generate standalone simulation code for a target language.
 
@@ -1325,6 +1327,9 @@ class PhysicsCompiler:
             target: Target language identifier (see _GENERATOR_REGISTRY for the
                 list, e.g. 'cpp', 'python', 'rust', 'julia', 'cuda', ...).
             filename: Output file path for the generated source.
+            generator_options: Keyword arguments passed to the target's
+                generator, for example ``{"target": "cortex_m", "embedded": True}``
+                for the ARM generator.
 
         Returns:
             Path to the generated file.
@@ -1345,14 +1350,23 @@ class PhysicsCompiler:
         # Lazy import - keeps PhysicsCompiler import cheap.
         from . import codegen as _codegen
 
+        options = dict(generator_options or {})
         equations = self.equations
+        extra: Dict[str, Any] = {}
         if isinstance(equations, dict) and "__mass_matrix__" in equations:
-            # Many coordinates: the compiler keeps M q_ddot = F unsolved. Generated
-            # programs need explicit accelerations; get them block by block.
-            from .codegen.base import accelerations_from_mass_matrix
-
             M, F = equations["__mass_matrix__"]
-            equations = accelerations_from_mass_matrix(M, F, self.get_coordinates())
+            if target_key == "arm" and options.get("embedded"):
+                # The bare-metal ARM target solves M q_ddot = F numerically on
+                # the device, so any size of coupled system can be generated.
+                extra["mass_matrix"] = (M, F)
+                equations = {}
+            else:
+                # Many coordinates: the compiler keeps M q_ddot = F unsolved.
+                # Generated programs need explicit accelerations; get them block
+                # by block.
+                from .codegen.base import accelerations_from_mass_matrix
+
+                equations = accelerations_from_mass_matrix(M, F, self.get_coordinates())
         elif not isinstance(equations, dict):
             raise ValueError(
                 "Code export needs the Lagrangian form of the equations of motion "
@@ -1375,6 +1389,8 @@ class PhysicsCompiler:
             equations=equations,
             lagrangian=lagrangian_sympy,
             hamiltonian=hamiltonian_sympy,
+            **options,
+            **extra,
         )
         return generator.generate(filename)
 

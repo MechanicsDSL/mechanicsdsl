@@ -16,7 +16,7 @@ Features:
 
 import os
 import re
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import sympy as sp
 from sympy.codegen.ast import float32, real
@@ -188,6 +188,7 @@ class ARMGenerator(CodeGenerator):
         target: str = "raspberry_pi",
         use_neon: bool = True,
         embedded: bool = False,
+        mass_matrix: Optional[Tuple[sp.Matrix, sp.Matrix]] = None,
     ) -> None:
         """
         Initialize ARM code generator.
@@ -205,6 +206,12 @@ class ARMGenerator(CodeGenerator):
             target: Target platform ('raspberry_pi', 'jetson', 'cortex_m', 'generic')
             use_neon: Enable NEON SIMD optimizations
             embedded: Generate bare-metal code (no stdlib)
+            mass_matrix: Optional (M, F) with M(q, q_dot) q_ddot = F(q, q_dot),
+                as kept by the compiler for systems with many coordinates. With
+                embedded=True the generated C evaluates M and F and solves for
+                the accelerations at every step, so coupled systems too large
+                for closed-form accelerations can still be generated. When given,
+                ``equations`` may be empty.
         """
         super().__init__(
             system_name=system_name,
@@ -225,6 +232,15 @@ class ARMGenerator(CodeGenerator):
         self.target = target
         self.use_neon = use_neon
         self.embedded = embedded
+        self.mass_matrix = mass_matrix
+        if mass_matrix is not None:
+            M, F = mass_matrix
+            n = len(coordinates)
+            if M.shape != (n, n) or F.shape != (n, 1):
+                raise ValueError(
+                    f"mass_matrix must be an {n}x{n} M and an {n}x1 F for "
+                    f"{n} coordinates; got {M.shape} and {F.shape}"
+                )
 
         # Set compiler flags based on target
         self._set_target_flags()
@@ -358,6 +374,128 @@ float compute_energy(const float* state, int n) {{
         voids += [f"    (void){name};" for name in self.parameters]
 
         return "\n".join(unpack + voids + [""] + derivatives)
+
+    def validate(self):
+        """
+        Validate, accepting a mass-matrix system in place of explicit accelerations.
+
+        The base checks look for one acceleration per coordinate and for stray
+        symbols in it. For a mass-matrix system each row of M and F stands in for
+        that coordinate's acceleration, so the same checks run on those entries.
+        """
+        if self.mass_matrix is None:
+            return super().validate()
+        M, F = self.mass_matrix
+        saved = self.equations
+        self.equations = {
+            f"{c}_ddot": F[i, 0] + sum(M[i, j] for j in range(len(self.coordinates)))
+            for i, c in enumerate(self.coordinates)
+        }
+        try:
+            ok, errors = super().validate()
+        finally:
+            self.equations = saved
+        if not self.embedded:
+            errors.append(
+                "mass-matrix code generation is only implemented for the bare-metal "
+                "target (embedded=True)"
+            )
+        return len(errors) == 0, errors
+
+    def generate_mass_matrix_derivatives(self) -> str:
+        """
+        Bare-metal derivative block for M(q, q_dot) q_ddot = F(q, q_dot).
+
+        M and F are evaluated with common subexpressions shared, M is filled
+        from its upper triangle when it is symmetric, and the accelerations come
+        from mdsl_solve (Gaussian elimination with partial pivoting). A singular
+        M is counted in mdsl_singular_events and turns the accelerations into
+        NaN, so a failure shows up in the state rather than being integrated
+        as a plausible number.
+        """
+        M, F = self.mass_matrix
+        n = len(self.coordinates)
+        symmetric = all(
+            sp.expand(M[i, j] - M[j, i]) == 0 for i in range(n) for j in range(i + 1, n)
+        )
+        slots = []  # (C lvalue, expression)
+        for i in range(n):
+            for j in range(n):
+                if symmetric and j < i:
+                    continue
+                slots.append((f"M[{i}][{j}]", M[i, j]))
+        for i in range(n):
+            slots.append((f"a[{i}]", F[i, 0]))
+
+        replacements, reduced = sp.cse(
+            [e for _, e in slots], symbols=sp.numbered_symbols("mdsl_t"), order="none"
+        )
+
+        unpack = []
+        for idx, coord in enumerate(self.coordinates):
+            unpack.append(f"    float {coord} = s[{2 * idx}];")
+            unpack.append(f"    float {coord}_dot = s[{2 * idx + 1}];")
+        voids = [f"    (void){c}; (void){c}_dot;" for c in self.coordinates]
+        voids += [f"    (void){name};" for name in self.parameters]
+
+        body = [f"    float M[{n}][{n}];", f"    float a[{n}];"]
+        for sym, expr in replacements:
+            body.append(f"    const float {sym} = {sympy_to_c_arm_embedded(expr)};")
+        for (lhs, _), expr in zip(slots, reduced):
+            body.append(f"    {lhs} = {sympy_to_c_arm_embedded(expr)};")
+        if symmetric:
+            for i in range(n):
+                for j in range(i):
+                    body.append(f"    M[{i}][{j}] = M[{j}][{i}];")
+        body.append("    mdsl_solve(M, a);")
+        for idx, coord in enumerate(self.coordinates):
+            body.append(f"    dydt[{2 * idx}] = {coord}_dot;  // d({coord})/dt")
+            body.append(f"    dydt[{2 * idx + 1}] = a[{idx}];  // d({coord}_dot)/dt")
+        return "\n".join(unpack + voids + [""] + body)
+
+    def generate_mass_matrix_solver(self) -> str:
+        """C helper that solves the mass-matrix system in place (no libm)."""
+        n = len(self.coordinates)
+        return f"""
+#define NQ {n}
+
+// Number of times the mass matrix was found singular. Nonzero means the
+// accelerations (and so the state) have become NaN; check it in the main loop.
+static int mdsl_singular_events = 0;
+int physics_singular_events(void) {{ return mdsl_singular_events; }}
+
+// Solve A x = b in place (x is returned in b) by Gaussian elimination with
+// partial pivoting. A and b are overwritten.
+static void mdsl_solve(float A[NQ][NQ], float b[NQ]) {{
+    for (int k = 0; k < NQ; k++) {{
+        int p = k;
+        float best = A[k][k] < 0.0f ? -A[k][k] : A[k][k];
+        for (int r = k + 1; r < NQ; r++) {{
+            float v = A[r][k] < 0.0f ? -A[r][k] : A[r][k];
+            if (v > best) {{ best = v; p = r; }}
+        }}
+        if (!(best > 1e-12f)) {{
+            mdsl_singular_events++;
+            for (int r = 0; r < NQ; r++) b[r] = __builtin_nanf("");
+            return;
+        }}
+        if (p != k) {{
+            for (int c = 0; c < NQ; c++) {{ float t = A[k][c]; A[k][c] = A[p][c]; A[p][c] = t; }}
+            float t = b[k]; b[k] = b[p]; b[p] = t;
+        }}
+        for (int r = k + 1; r < NQ; r++) {{
+            float f = A[r][k] / A[k][k];
+            for (int c = k; c < NQ; c++) A[r][c] -= f * A[k][c];
+            b[r] -= f * b[k];
+        }}
+    }}
+    for (int k = NQ - 1; k >= 0; k--) {{
+        float acc = b[k];
+        for (int c = k + 1; c < NQ; c++) acc -= A[k][c] * b[c];
+        b[k] = acc / A[k][k];
+    }}
+}}
+"""
 
     def generate_initial_conditions(self) -> str:
         """Generate initial conditions as comma-separated values."""
@@ -546,7 +684,12 @@ int main(void) {{
 
         state_dim = len(self.coordinates) * 2
 
-        derivative_str = self.generate_embedded_derivatives()
+        if self.mass_matrix is not None:
+            derivative_str = self.generate_mass_matrix_derivatives()
+            solver_str = self.generate_mass_matrix_solver()
+        else:
+            derivative_str = self.generate_embedded_derivatives()
+            solver_str = ""
 
         unsupported = sorted(set(_UNSUPPORTED_LIBM.findall(derivative_str)))
         if unsupported:
@@ -612,7 +755,7 @@ static inline float arm_sqrtf(float x) {{
 // State
 static float state[DIM] = {{ {init_str} }};
 
-{libm_guard}
+{libm_guard}{solver_str}
 // Right-hand side of the equations of motion
 static void derivatives(const float* s, float* dydt) {{
 {derivative_str}

@@ -240,6 +240,15 @@ class SymbolicEngine:
                 "^": lambda l, r: l**r,  # noqa: E741
             }
 
+            if expr.operator == "^" and isinstance(right, sp.Float) and float(right).is_integer():
+                # The parser reads every number as a float, so x^2 arrives as
+                # x**2.0. SymPy treats a float exponent as possibly non-integer:
+                # it will not expand (a + b)**2.0, and differentiating such a
+                # power twice leaves terms like (v*s)**2.0/v**2, which are 0/0
+                # at v = 0. In an unsimplified mass matrix that makes M NaN for
+                # any system released from rest. An integral exponent is
+                # written as an integer.
+                right = sp.Integer(int(float(right)))
             if expr.operator in ops:
                 return ops[expr.operator](left, right)
             else:
