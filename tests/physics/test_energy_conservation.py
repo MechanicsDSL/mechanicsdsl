@@ -224,22 +224,24 @@ class TestEnergyConservation:
         solution = compiler.simulate(t_span=(0, 50), num_points=2000, method="LSODA")
         assert solution["success"]
 
-        EnergyCalc = get_energy_calculator()
+        # The coordinates must evolve: r is declared with type Length, which once
+        # made the simulator register it as a parameter and hold it at 1.0.
         params = compiler.simulator.parameters
-        KE = EnergyCalc.compute_kinetic_energy(solution, params)
-        PE = EnergyCalc.compute_potential_energy(solution, params, "kepler_energy")
-        E_total = KE + PE
+        assert "r" not in params
 
-        if E_total[0] != 0 and np.abs(E_total[0]) > 1e-10:
-            energy_error = np.abs((E_total - E_total[0]) / E_total[0])
-            # Kepler problem can have significant errors due to long integration
-            tolerance = 10.0
-            assert (
-                np.max(energy_error) < tolerance
-            ), f"Energy error: {np.max(energy_error):.6f} (tolerance: {tolerance:.6f})"
-        else:
-            # If initial energy is zero or very small, just check that energy stays small
-            assert np.all(np.abs(E_total) < 1e-5), "Energy should remain near zero"
+        # Energy from this system's own Lagrangian. (The generic energy
+        # calculator assumes a pendulum or a mass on a spring, and does not
+        # apply to the Kepler problem.)
+        r, r_dot, _, phi_dot = np.asarray(solution["y"])
+        m, M, G = params["m"], params["M"], params["G"]
+        E_total = 0.5 * m * (r_dot**2 + r**2 * phi_dot**2) - G * M * m / r
+        energy_error = np.abs((E_total - E_total[0]) / E_total[0])
+        assert np.max(energy_error) < 1e-6, f"Energy error: {np.max(energy_error):.3e}"
+
+        # With G*M negligible the orbit is a straight line at constant speed:
+        # r(t) = sqrt(r0^2 + (r0 * phi_dot0 * t)^2).
+        t = np.asarray(solution["t"])
+        assert np.allclose(r, np.sqrt(100.0 + (1.0 * t) ** 2), rtol=1e-4)
 
 
 if __name__ == "__main__":
