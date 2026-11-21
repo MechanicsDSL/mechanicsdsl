@@ -1179,8 +1179,14 @@ class PhysicsCompiler:
         for param_name, param_info in self.parameters_def.items():
             parameters[param_name] = param_info["value"]
 
-        # Add default parameters
+        # Add default parameters. Never for a coordinate: a coordinate declared
+        # with one of these types (e.g. \defvar{x}{Length}{m}) would otherwise be
+        # registered as a parameter, and its default value would replace the
+        # state in the numerical equations, pinning it at 1.0 without warning.
+        coordinates = set(self.get_coordinates())
         for var_name, var_info in self.variables.items():
+            if var_name in coordinates:
+                continue
             if var_info["type"] in ["Real", "Mass", "Length", "Acceleration", "Spring Constant"]:
                 if var_name not in parameters:
                     defaults = {

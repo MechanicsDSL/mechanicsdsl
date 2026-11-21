@@ -693,16 +693,45 @@ class SymbolicEngine:
         return hamiltonian
 
     def _substitute_derivative_symbols(
-        self, equations: List[sp.Expr], coordinates: List[str]
+        self, equations: List[sp.Expr], coordinates: List[str], expand: bool = True
     ) -> Tuple[List[sp.Expr], List[sp.Symbol]]:
         """Replace Derivative(q(t), ...) / q(t) notation in each equation with
         the flat q, q_dot, q_ddot symbol basis. Returns (processed equations,
-        acceleration symbols in coordinate order)."""
+        acceleration symbols in coordinate order).
+
+        All coordinates are replaced in one structural pass (xreplace with a
+        single dictionary), which is exact for the canonical forms the
+        derivation produces. Only an equation that still contains a coordinate
+        function or one of its derivatives afterwards goes through the slower
+        per-coordinate substitution. With expand=False the equations are left
+        in the compact form the derivation produced; the mass-matrix path uses
+        this, since M and F are exact without expansion (the equations are
+        linear in the accelerations) and expanding large three-dimensional
+        systems dominated the cost of deriving them.
+        """
         accel_syms = [self.get_symbol(f"{q}_ddot") for q in coordinates]
+        t = self.time_symbol
+        replacements = {}
+        for q, accel_sym in zip(coordinates, accel_syms):
+            q_func = sp.Function(q)(t)
+            replacements[sp.Derivative(q_func, (t, 2))] = accel_sym
+            replacements[sp.Derivative(q_func, t)] = self.get_symbol(f"{q}_dot")
+            replacements[q_func] = self.get_symbol(q)
+        names = set(coordinates)
+
+        def leftover(expr):
+            return any(
+                getattr(f, "func", None) is not None and str(f.func) in names
+                for f in expr.atoms(sp.Function)
+            )
 
         processed_eqs = []
         for i, eq in enumerate(equations):
-            eq_clean = eq
+            eq_clean = eq.xreplace(replacements) if isinstance(eq, sp.Basic) else eq
+            if isinstance(eq_clean, sp.Basic) and not leftover(eq_clean):
+                processed_eqs.append(sp.expand(eq_clean) if expand else eq_clean)
+                logger.debug(f"Processed equation {i}: {eq_clean}")
+                continue
 
             for j, q in enumerate(coordinates):
                 accel_sym = accel_syms[j]
@@ -743,7 +772,7 @@ class SymbolicEngine:
                     except Exception:
                         pass
 
-            processed_eqs.append(sp.expand(eq_clean))
+            processed_eqs.append(sp.expand(eq_clean) if expand else eq_clean)
             logger.debug(f"Processed equation {i}: {eq_clean}")
 
         return processed_eqs, accel_syms
@@ -761,15 +790,18 @@ class SymbolicEngine:
         step avoids the factorial blow-up of symbolic matrix inversion, which
         is what makes large coupled systems time out.
         """
-        processed_eqs, accel_syms = self._substitute_derivative_symbols(equations, coordinates)
+        processed_eqs, accel_syms = self._substitute_derivative_symbols(
+            equations, coordinates, expand=False
+        )
         n = len(coordinates)
         M = sp.zeros(n, n)
         F = sp.zeros(n, 1)
+        at_rest = {a: 0 for a in accel_syms}
         for i in range(n):
             eq = processed_eqs[i]
             for j in range(n):
                 M[i, j] = sp.diff(eq, accel_syms[j])
-            F[i, 0] = -eq.subs([(a, 0) for a in accel_syms])
+            F[i, 0] = -eq.xreplace(at_rest)
         return M, F
 
     def solve_for_accelerations(
