@@ -379,13 +379,23 @@ class SymbolicEngine:
 
         # Substitute ALL coordinates and velocities as time-functions SIMULTANEOUSLY
         # This is critical for coupled systems where cos(theta1 - theta2) involves both
-        L_with_funcs = lagrangian
+        # One structural pass (xreplace) instead of 2n sequential subs() calls, each of
+        # which traverses the whole Lagrangian; the replacements are plain symbols, so
+        # the simultaneous structural replacement is exact.
+        forward = {}
         for q in coordinates:
-            L_with_funcs = L_with_funcs.subs(coord_syms[q], coord_funcs[q])
-        for q in coordinates:
-            L_with_funcs = L_with_funcs.subs(
-                coord_dots[q], sp.diff(coord_funcs[q], self.time_symbol)
-            )
+            forward[coord_syms[q]] = coord_funcs[q]
+            forward[coord_dots[q]] = sp.diff(coord_funcs[q], self.time_symbol)
+        L_with_funcs = sp.sympify(lagrangian).xreplace(forward)
+
+        # Back-substitution map, applied in one pass per equation. xreplace matches
+        # from the root down, so each Derivative node is replaced whole before its
+        # inner q(t) could be.
+        backward = {}
+        for coord in coordinates:
+            backward[sp.diff(coord_funcs[coord], self.time_symbol, 2)] = coord_ddots[coord]
+            backward[sp.diff(coord_funcs[coord], self.time_symbol)] = coord_dots[coord]
+            backward[coord_funcs[coord]] = coord_syms[coord]
 
         equations = []
 
@@ -405,16 +415,7 @@ class SymbolicEngine:
 
             # Back-substitute ALL coordinates' derivatives and functions
             # Order matters: most specific (second derivatives) first
-            for coord in coordinates:
-                d2coord_dt2 = sp.diff(coord_funcs[coord], self.time_symbol, 2)
-                equation = equation.subs(d2coord_dt2, coord_ddots[coord])
-
-            for coord in coordinates:
-                dcoord_dt = sp.diff(coord_funcs[coord], self.time_symbol)
-                equation = equation.subs(dcoord_dt, coord_dots[coord])
-
-            for coord in coordinates:
-                equation = equation.subs(coord_funcs[coord], coord_syms[coord])
+            equation = equation.xreplace(backward)
 
             # Handle any remaining Derivative objects by pattern matching
             for term in equation.atoms(sp.Derivative):
